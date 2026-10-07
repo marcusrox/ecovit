@@ -1,0 +1,26 @@
+.editor { display: grid; grid-template-columns: 270px 1fr; grid-template-rows: 83px 1fr 35px; min-height: 100vh; }
+.header { grid-column: 1 / -1; display: flex; gap: 32px; align-items: center; padding: 16px 28px; background: #fcfdf9; border-bottom: 1px solid #d7dfd1; }
+.header > a { font-size: 12px; }
+.header h1 { font-size: 20px; margin: 0 0 4px; overflow-wrap: anywhere; }
+.header span { font-size: 10px; color: #657663; }
+.header .cloud { margin-left: auto; color: #3d6747; background: #e9f0e1; border-radius: 30px; padding: 8px 14px; }
+.sidebar { background: #fcfdf9; padding: 30px 24px; border-right: 1px solid #d7dfd1; }
+.eyebrow { font-size: 9px; font-weight: 600; letter-spacing: 1.6px; color: #6a8064; }
+.sidebar h2 { font-size: 23px; }
+.sidebar dl { margin-bottom: 38px; }
+.sidebar dt { font-size: 11px; color: #70816a; margin-top: 20px; }
+.sidebar dd { font-size: 14px; margin: 6px 0 0; }
+.sidebar > p { font-size: 12px; }
+.note { color: #788471; border-top: 1px solid #dce2d7; padding-top: 18px; margin-top: 28px; }
+.canvas { position: relative; min-height: 570px; display: grid; place-items: center; background-color: #f4f6ef; background-image: radial-gradient(#c4cfb9 .8px, transparent .8px); background-size: 20px 20px; padding: 70px 25px; }
+.canvasTop { position: absolute; top: 23px; left: 25px; right: 25px; display: flex; justify-content: space-between; font-size: 10px; color: #6b7d63; }
+.placeholder { text-align: center; padding: 38px; border: 1px solid #d9e1d0; border-radius: 12px; background: #fafbf7f2; max-width: 560px; }
+.placeholder h2 { font-size: 30px; margin-bottom: 14px; }
+.placeholder > p:not(.eyebrow) { font-size: 13px; color: #697b61; }
+.symbol { font-size: 64px; color: #74915f; display: block; margin-bottom: 20px; }
+.pill { display: inline-block; background: #e7eddd; border-radius: 24px; padding: 8px 15px; font-size: 10px; color: #557344; margin-top: 12px; }
+.origin { position: absolute; bottom: 24px; left: 28px; font-family: monospace; color: #718461; font-size: 11px; }
+.footer { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 20px; background: #fcfdf9; border-top: 1px solid #d7dfd1; padding: 8px 24px; font-size: 9px; color: #6b7d63; }
+.loading { margin: 10vh auto; padding: 32px; max-width: 650px; }
+.loading > a { display: block; margin-bottom: 28px; }
+@media (max-width: 750px) { .editor { grid-template-columns: 1fr; } .sidebar { display: none; } .header { flex-wrap: wrap; gap: 15px; } .header .cloud { margin-left: 0; } .footer { flex-wrap: wrap; } }

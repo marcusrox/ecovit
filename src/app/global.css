@@ -1,0 +1,16 @@
+:root { font-family: 'Segoe UI', system-ui, sans-serif; color: #263a32; background: #f7f8f4; font-synthesis: none; text-rendering: optimizeLegibility; font-weight: 400; font-size: 15px; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 360px; }
+button, input, select { font: inherit; }
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; border: 1px solid #c4cec5; border-radius: 7px; background: transparent; color: #294d3d; padding: 11px 18px; font-weight: 600; }
+button:hover:not(:disabled) { background: #e9eee6; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+a { color: #2d6048; text-underline-offset: 4px; }
+input, select { display: block; width: 100%; min-height: 46px; padding: 11px 13px; background: #fff; color: #263a32; border: 1px solid #bcc9bd; border-radius: 6px; }
+input::placeholder { color: #778078; }
+:focus-visible { outline: 3px solid #9f743b; outline-offset: 4px; }
+h1, h2, p { margin-top: 0; }
+h1, h2 { font-weight: 500; letter-spacing: -.035em; }
+p { line-height: 1.65; }
+::selection { color: #183c2c; background: #d2dfba; }
