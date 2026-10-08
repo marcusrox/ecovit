@@ -2,6 +2,15 @@
 
 Base do sistema de projetos em tijolo ecológico, conforme o **PRD versão 1.1**, preservado na raiz. Uma SPA React + TypeScript strict + Vite, npm e CSS Modules, com Supabase direto do navegador. Sem servidor próprio e sem Docker.
 
+## Documentação do projeto
+
+- [PRD 1.1 integral](docs/PRD.md) e [roadmap dos marcos M0–M5](docs/ROADMAP.md).
+- [Arquitetura](docs/architecture/overview.md), [modelo de dados](docs/architecture/data-model.md) e [módulos](docs/architecture/modules.md).
+- Decisões: [stack](docs/adr/ADR-001-stack-tecnologica.md), [modelo](docs/adr/ADR-002-modelo-de-dados.md) e [renderização 2D](docs/adr/ADR-003-renderizacao-2d.md).
+- [Changelog](docs/CHANGELOG.md) e [verificação inicial de M0](docs/M0-verificacao.md).
+
+Os seis arquivos em `docs/milestones/` seguem diretamente os marcos M0–M5 do PRD: Base, Núcleo, Editor, Inspeção, Persistência e Liberação.
+
 ## Estado da entrega
 
 Implementados: rotas de login/cadastro/recuperação/redefinição, sessão Supabase, proteção de rotas, lista paginada de projetos privados, configuração inicial com altura/juntas confirmadas, criação na nuvem via RPC, leitura validada e editor vazio. O projeto só abre após confirmação da criação; falhas não simulam salvamento. Repetir a criação após uma resposta perdida usa os mesmos IDs enquanto o formulário permanece aberto e inalterado.
