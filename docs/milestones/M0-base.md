@@ -40,7 +40,7 @@ RF01 e RF14 têm apenas sua base iniciada: renomeação, exclusão, autosave, re
 
 ## Evidências
 
-- [Relatório M0](../M0-verificacao.md)
+- [Relatório M0](../verification/M0-verificacao.md)
 - [Testes de navegador](../../tests/e2e/m0.spec.ts)
 - [Teste de homologação](../../scripts/test-cloud.ts)
 - [ADR da stack](../adr/ADR-001-stack-tecnologica.md)

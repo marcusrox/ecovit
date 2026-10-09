@@ -1,39 +1,34 @@
 # ADR-003 — Renderização 2D
 
-Data do registro: 07/10/2026. Status: **escolha definida no PRD 1.1; implementação e validação de desempenho pendentes em M1**.
+Registro: 07/10/2026. Revisão editorial: 08/10/2026. Estado da decisão: **vigente, conforme o PRD 1.1**.
 
 ## Contexto
 
-O editor precisa de pan, zoom, seleção, snapping, fiadas e elevações sem bloquear a interação. Até 50.000 peças podem ser derivadas, mas não precisam aparecer simultaneamente na árvore visual.
-
-Referências: [PRD](../PRD.md), seções 4–5 e 11; [M1 — Núcleo](../milestones/M1-nucleo.md) e [M2 — Editor](../milestones/M2-editor.md).
+O editor precisa de pan, zoom, seleção e vistas de planta/fiadas/elevações, mantendo interação responsiva durante os cálculos. O domínio deve permanecer independente da tecnologia de desenho. Referência: [PRD](../PRD.md), seções 4–5 e 11.
 
 ## Decisão
 
-- Usar Konva + react-konva para o Canvas 2D quando M1 começar.
-- Manter controles, formulários e alternativas numéricas em HTML semântico com CSS Modules.
-- Calcular geometria/paginação em módulos TypeScript puros, executados por Web Worker.
-- Separar documento, seleção, histórico, ferramentas e viewport; usar Zustand quando esses estados forem implementados.
-- Aplicar inversão de Y apenas na transformação de coordenadas para a tela.
-- Renderizar a fiada selecionada na planta, recortar pela viewport e organizar redesenho por camadas.
-- Recalcular o projeto inteiro após comando confirmado; durante arraste, calcular apenas prévia/snap. Otimização incremental depende do benchmark.
+- Usar Konva + react-konva para o Canvas 2D e HTML semântico/CSS Modules para controles e edição numérica.
+- Executar geometria/paginação em TypeScript puro por Web Worker, consumindo resultados identificados pela revisão do documento.
+- Separar documento e estados de interação com Zustand; transformações de tela pertencem à renderização.
+- Limitar o desenho à viewport e à fiada selecionada na planta. Começar com recálculo completo após comandos confirmados; adotar processamento incremental apenas se as medições justificarem.
 
-O worker recebe e devolve identificadores de requisição, revisão e motor. Resultados antigos são descartados; resultados em cálculo não podem aparecer como exportação atualizada.
+## Motivos
 
-## Alternativas e limites
+Konva reduz o trabalho próprio de desenho e interação. O worker permite executar cálculos fora da thread da interface. Renderizar somente o necessário evita manter todas as peças de todas as fiadas na árvore visual. O recálculo completo inicial simplifica consistência e manutenção.
 
-Canvas nativo e SVG seriam alternativas de renderização, mas a decisão do PRD usa Konva para reduzir implementação própria de interação. SVG permanece formato de exportação. Three.js/React Three Fiber ficam para evolução posterior ao 2D, sem dependências 3D neste MVP.
+## Alternativas
 
-A tela de M0 usa HTML/CSS e um fundo quadriculado; **não é um Canvas Konva nem prova de desempenho**. Konva/react-konva e worker ainda não estão implementados.
+- **Canvas nativo:** oferece controle direto, com mais código próprio para interação e organização da cena.
+- **SVG como renderizador principal:** é uma alternativa vetorial; o PRD escolhe Konva para o editor e mantém SVG como formato de exportação.
+- **Three.js/React Three Fiber:** atende à evolução 3D, fora do escopo deste MVP.
 
 ## Consequências
 
-Canvas exige atenção a escala, seleção e acessibilidade. Lista de paredes/vãos com edição numérica, foco visível e botões equivalentes a atalhos continuam necessários. Acessibilidade espacial integral requer validação específica.
+Canvas exige alternativas acessíveis em controles DOM. Workers introduzem comunicação assíncrona e necessidade de descartar respostas antigas. A separação entre domínio e renderização permite revisar a biblioteca sem reescrever as regras construtivas.
 
-O modelo independente permite trocar renderizador sem reescrever as regras construtivas. A escolha de biblioteca não homologa encontros ou paginação.
+A escolha de biblioteca não comprova desempenho nem homologa paginação; essas evidências pertencem aos critérios dos marcos.
 
-## Validação e revisão
+## Documentos relacionados
 
-Em M1, medir build de produção em equipamento/navegador registrados, com 30 execuções após aquecimento. Demonstrar as metas de pan/zoom, snap, feedback, motor e abertura previstas no PRD.
-
-Se o benchmark não atender às metas, registrar medições e alternativas antes de alterar a escolha. Catálogo de encontros revisado e desempenho são critérios distintos, ambos pendentes.
+Implementação, benchmark e aceite: [M1 — Núcleo](../milestones/M1-nucleo.md), [M2 — Editor](../milestones/M2-editor.md) e [M3 — Inspeção](../milestones/M3-inspecao.md). Fluxos e fronteiras: [arquitetura](../architecture/overview.md).

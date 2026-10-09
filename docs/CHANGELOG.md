@@ -4,12 +4,27 @@ Histórico de alterações relevantes do Ecovit. Versões de pacote não represe
 
 ## Não publicado
 
+### Simplificação dos ADRs — 08/10/2026
+
+- ADRs limitados ao contexto, decisão, motivos, alternativas e consequências, com links para os marcos correspondentes.
+- Removido o acompanhamento de implementação e testes dos ADRs: execução/aceite permanecem nos milestones e evidências em `docs/verification/`.
+- Decisões técnicas e requisitos do PRD preservados; esclarecida no README a finalidade de cada documento.
+
+### Relatórios de verificação — 07/10/2026
+
+- Relatório inicial de M0 movido para `docs/verification/M0-verificacao.md`, com conteúdo preservado e referências atualizadas.
+
+### Centralização do PRD — 07/10/2026
+
+- Após o commit `69c7c8f`, removida a cópia duplicada da raiz; `docs/PRD.md` passa a ser o documento oficial, com conteúdo inalterado.
+- Referências de README, roadmap e AGENTS atualizadas. O arquivo original continua recuperável no histórico do Git.
+
 ### Documentação — 07/10/2026
 
 - Organização de `docs/` com PRD 1.1 integral, roadmap, seis documentos de marcos, três ADRs e arquitetura.
 - Marcos alinhados diretamente ao PRD: M0 Base, M1 Núcleo, M2 Editor, M3 Inspeção, M4 Persistência e M5 Liberação. Substituída a divisão temática inicial para manter uma única numeração e o mesmo escopo do PRD.
 - Registro da arquitetura vigente com Supabase e da alternativa discutida de API própria/SQLite/MySQL, ainda não adotada.
-- PRD original e relatório `M0-verificacao.md` preservados.
+- PRD original e relatório `M0-verificacao.md` preservados no commit de organização `69c7c8f`.
 
 ## 0.1.0 — Base M0 — 07/10/2026
 
@@ -36,4 +51,4 @@ Commit: `95ed59c` — `feat: implementa base M0 com React e Supabase`. Essa iden
 
 ## Documento inicial — 07/10/2026
 
-Commit: `62b9e21` — `Initial commit`. Inclusão do PRD versão 1.1, preservado na raiz do repositório.
+Commit: `62b9e21` — `Initial commit`. Inclusão do PRD versão 1.1 originalmente na raiz do repositório, recuperável pelo histórico do Git.

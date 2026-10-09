@@ -1,15 +1,17 @@
 # Ecovit · M0
 
-Base do sistema de projetos em tijolo ecológico, conforme o **PRD versão 1.1**, preservado na raiz. Uma SPA React + TypeScript strict + Vite, npm e CSS Modules, com Supabase direto do navegador. Sem servidor próprio e sem Docker.
+Base do sistema de projetos em tijolo ecológico, conforme o **[PRD versão 1.1](docs/PRD.md)**, documento oficial em `docs/PRD.md`. Uma SPA React + TypeScript strict + Vite, npm e CSS Modules, com Supabase direto do navegador. Sem servidor próprio e sem Docker.
 
 ## Documentação do projeto
 
 - [PRD 1.1 integral](docs/PRD.md) e [roadmap dos marcos M0–M5](docs/ROADMAP.md).
 - [Arquitetura](docs/architecture/overview.md), [modelo de dados](docs/architecture/data-model.md) e [módulos](docs/architecture/modules.md).
 - Decisões: [stack](docs/adr/ADR-001-stack-tecnologica.md), [modelo](docs/adr/ADR-002-modelo-de-dados.md) e [renderização 2D](docs/adr/ADR-003-renderizacao-2d.md).
-- [Changelog](docs/CHANGELOG.md) e [verificação inicial de M0](docs/M0-verificacao.md).
+- [Changelog](docs/CHANGELOG.md) e [verificação inicial de M0](docs/verification/M0-verificacao.md).
 
 Os seis arquivos em `docs/milestones/` seguem diretamente os marcos M0–M5 do PRD: Base, Núcleo, Editor, Inspeção, Persistência e Liberação.
+
+O PRD define os requisitos. Os milestones concentram entregáveis, dependências, critérios de aceite e situação da implementação. Os ADRs registram contexto, decisão, motivos, alternativas e consequências; seu estado indica se a decisão está vigente, não se a entrega foi concluída. As evidências de execução ficam em `docs/verification/`, com data e limitações dos testes.
 
 ## Estado da entrega
 
@@ -17,7 +19,7 @@ Implementados: rotas de login/cadastro/recuperação/redefinição, sessão Supa
 
 Sem configuração externa, a aplicação abre e explica quais variáveis faltam. **Não existe login fictício nem armazenamento de projetos em memória na aplicação.** Os testes E2E interceptam a rede exclusivamente no Playwright.
 
-**Aceite externo do M0 ainda pendente:** aplicar migrações em Supabase de homologação, configurar Auth/SMTP e comprovar login, criação e reabertura reais. O CI foi preparado; sua execução hospedada depende de enviar o repositório ao GitHub. Consulte `docs/M0-verificacao.md` para evidências locais.
+**Aceite externo do M0 ainda pendente:** aplicar migrações em Supabase de homologação, configurar Auth/SMTP e comprovar login, criação e reabertura reais. O CI foi preparado; sua execução hospedada depende de enviar o repositório ao GitHub. Consulte `docs/verification/M0-verificacao.md` para evidências locais.
 
 ## Windows / PowerShell
 

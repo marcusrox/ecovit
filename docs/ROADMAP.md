@@ -4,7 +4,7 @@ Referência: [PRD 1.1](PRD.md), seção 13. Atualização: 07/10/2026.
 
 ## Como ler esta documentação
 
-`PRD.md` é a cópia integral da versão 1.1 do documento original, preservado na raiz. Requisitos e critérios de aceite vêm do PRD; esta organização não os substitui. Revisões futuras devem declarar a nova versão e registrar as decisões afetadas, preservando o original 1.1.
+`docs/PRD.md` é o documento oficial, com o conteúdo integral da versão 1.1. A cópia duplicada da raiz foi removida após o commit `69c7c8f`, que preserva ambos os arquivos no histórico do Git. Requisitos e critérios de aceite vêm do PRD; esta organização não os substitui. Revisões futuras devem declarar a nova versão e registrar as decisões afetadas, mantendo as versões anteriores no histórico.
 
 Cada arquivo em `milestones/` corresponde diretamente a um dos seis marcos M0–M5 do PRD, com a mesma numeração, nome, entregáveis e critérios de aceite. Paredes, tijolos, aberturas e quantitativos são assuntos dentro dos marcos, não marcos adicionais.
 
@@ -39,7 +39,7 @@ Conta e armazenamento remoto básico começam em M0. A configuração externa pe
 - Executar `npm run test:cloud` com duas contas distintas e registrar o resultado.
 - Verificar a execução hospedada do CI; a existência do workflow não comprova que o GitHub Actions passou.
 
-Há evidências de lint, tipos, build, 28 testes unitários e 8 E2E com rede simulada. Consulte [verificação inicial](M0-verificacao.md) e [instruções operacionais](../README.md). Reconhecer as variáveis de ambiente no navegador não comprova integração real.
+Há evidências de lint, tipos, build, 28 testes unitários e 8 E2E com rede simulada. Consulte [verificação inicial](verification/M0-verificacao.md) e [instruções operacionais](../README.md). Reconhecer as variáveis de ambiente no navegador não comprova integração real.
 
 ## M4 — Persistência
 

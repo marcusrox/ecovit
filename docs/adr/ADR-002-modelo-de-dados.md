@@ -1,42 +1,35 @@
 # ADR-002 — Modelo de dados
 
-Data do registro: 07/10/2026. Status: **decisão vigente do PRD 1.1; implementação parcial em M0**.
+Registro: 07/10/2026. Revisão editorial: 08/10/2026. Estado da decisão: **vigente, conforme o PRD 1.1**.
 
 ## Contexto
 
-Planta, fiadas, elevações e quantitativos precisam representar a mesma revisão, sem divergência entre desenhos independentes. A persistência deve preservar identidade, permitir evolução do formato e suportar recuperação/conflitos.
-
-Referências: [PRD](../PRD.md), seções 5–7 e 10; [modelo detalhado](../architecture/data-model.md).
+Planta, fiadas, elevações e quantitativos precisam representar o mesmo projeto, preservando identidade e permitindo evolução do formato, recuperação e tratamento de conflitos. Referência: [PRD](../PRD.md), seções 5–7 e 10.
 
 ## Decisão
 
-- Persistir um documento paramétrico versionado (`schemaVersion: 1`), validado por Zod e pelo banco.
-- Usar milímetros inteiros no modelo e UUIDs para entidades/referências; rótulos não são chaves.
-- Um pavimento de elevação zero, uma configuração de tijolo e espessura derivada da largura do tijolo.
-- Paredes com eixos orientados; aberturas vinculadas por `wallId`; cotas com âncoras associativas.
-- Derivar peças, encontros, diagnósticos e quantitativos a partir do modelo; não salvar objetos Konva como fonte principal.
-- Separar `schemaVersion`, revisão do documento/remota e `engineVersion`.
-- Persistir documento atual em `projects` e histórico em `project_revisions`, com proprietário definido pela sessão do banco.
-- Mutações por RPC transacional e idempotente; escrita direta de clientes nas tabelas revogada.
+- Persistir um documento paramétrico versionado, em milímetros inteiros, com UUIDs para entidades/referências e validação por Zod e pelo banco.
+- Derivar peças, encontros, diagnósticos e quantitativos desse documento; viewport, seleção e objetos de renderização ficam separados.
+- Distinguir versão de schema, revisão do documento e versão do motor.
+- Guardar documento atual e snapshots de revisões; mutações transacionais e idempotentes por RPC, com proprietário determinado pela sessão do banco.
 
-## Estado de implementação
+## Motivos
 
-O [schema TypeScript](../../src/domain/project.ts) e as migrações iniciais representam paredes, aberturas e cotas, embora as respectivas ferramentas ainda não existam. M0 oferece criação/revisão 1, lista e leitura. A equivalência estrutural entre Zod e JSON Schema SQL é conferida por `npm run schema:check`.
+Uma fonte paramétrica única evita divergência entre vistas e permite recalcular resultados. Milímetros inteiros tornam explícita a precisão dos dados de entrada; UUIDs preservam vínculos independentemente dos rótulos. Versionamento e revisão separados permitem evoluir o formato e controlar concorrência sem confundir essas operações.
 
-Referências, unicidade, proporção dimensional e limites têm verificações complementares nas duas camadas. A prova comportamental no banco depende da execução de `npm run test:cloud`; comparar schemas não a substitui.
+## Alternativas
 
-`save_project`, `delete_project`, retenção de 20 revisões, recuperação e conflitos estão previstos para M4. Não interpretar colunas já criadas como implementação dessas operações.
+- **Persistir desenhos independentes por vista:** exigiria sincronização adicional e criaria risco de versões divergentes.
+- **Persistir cada tijolo como fonte principal:** aumentaria armazenamento e manutenção de dados derivados. O MVP pode reconstruí-los a partir do documento.
 
 ## Consequências
 
-O documento facilita exportação JSON e mantém renderização desacoplada. A duplicação de snapshots no histórico exige retenção e limites. UUIDs estáveis permitem vínculos e diagnósticos rastreáveis.
+O documento facilita exportação JSON e desacopla o domínio da renderização. Snapshots exigem retenção e limites de tamanho. Cálculos podem produzir coordenadas fracionárias, apesar de as medidas de entrada serem inteiras.
 
 Uma incompatibilidade geométrica editável pode ser salva e diagnosticada pelo motor; ela não deve ser confundida com schema inválido. Versões futuras desconhecidas são recusadas sem substituir o projeto aberto.
 
-SQLite/MySQL poderiam armazenar o mesmo documento, mas exigiriam adaptação da persistência, autorização, SQL e transações. A portabilidade do modelo não torna portáveis as RPCs e políticas atuais.
+Novos formatos exigem migração explícita; migrações de banco já aplicadas são imutáveis. O documento pode ser reutilizado com outro banco, mas isso não torna portáveis as RPCs e políticas PostgreSQL.
 
-## Alternativas e revisão
+## Documentos relacionados
 
-Não adotar desenho independente por vista nem tijolos persistidos como fonte principal. Normalizar cada peça em tabela ampliaria armazenamento e risco de divergência sem necessidade no MVP.
-
-Novos pavimentos, perfis construtivos ou formatos exigem migração explícita do documento. Migrações de banco já aplicadas são imutáveis; evoluções geram novos arquivos e testes de compatibilidade.
+Contrato e campos: [modelo de dados](../architecture/data-model.md). Entregas e aceite: [M0 — Base](../milestones/M0-base.md), [M1 — Núcleo](../milestones/M1-nucleo.md), [M3 — Inspeção](../milestones/M3-inspecao.md) e [M4 — Persistência](../milestones/M4-persistencia.md).

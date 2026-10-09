@@ -1,6 +1,6 @@
 # Ecovit
 
-- Fonte de escopo: PRD versão 1.1. Preserve o documento; implemente por marcos.
+- Fonte de escopo: `docs/PRD.md`, versão 1.1. Preserve o documento; implemente por marcos.
 - Uma SPA React + TypeScript strict + Vite, npm, CSS Modules, pt-BR. Sem servidor próprio, ORM, Docker ou framework visual.
 - `src/domain` é TypeScript puro. `src/persistence` concentra Supabase e contratos de dados. UI em `src/app`; editor em `src/editor`.
 - Modelo em milímetros inteiros; valide documentos com Zod. Peças e objetos de canvas nunca são a fonte persistida.
