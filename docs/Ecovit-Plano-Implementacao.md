@@ -360,3 +360,80 @@ Corrigida a mensagem indevida “Composição salva inconsistente com o modelo.�
 Reprodução confirmada antes da correção: os dois novos testes de reabertura (T e cruz) falharam com a mensagem relatada. Após corrigir, **43 testes passaram**, incluindo IndexedDB, importação de arquivo e rejeição de diagnóstico adulterado. Os **20 testes de navegador passaram em Chrome/Edge**, com cobertura ampliada para sair/reabrir e recarregar/reabrir um projeto com T e cruz, conferindo o documento inteiro exportado. Lint e build (incluindo verificação de tipos) passaram; permanecem apenas os avisos de build já registrados. Servidor local respondeu HTTP 200 em `http://127.0.0.1:5173/`.
 
 Para conferir no projeto pessoal: atualizar a página e abrir novamente o projeto já salvo. Os testes automatizados usaram documentos próprios, sem modificar o armazenamento pessoal do solicitante. Confirmação manual desta correção pendente; M3 não iniciada.
+
+### Refinamento visual da página inicial — 11/10/2026
+
+Estado anterior registrado no commit `66bf3db`, antes das alterações visuais. A pasta não possuía repositório; Git foi inicializado e o commit usou identidade local à execução `Codex <codex@localhost>`, sem alterar configuração global.
+
+Página inicial reorganizada com cabeçalho e conteúdo alinhados, introdução compacta, cartão de criação verde profundo, lista com espaçamentos regulares e ícones de planta, nomes com quebra de linha e metadados com melhor contraste. Fundo areia com variação suave em verde, fonte de sistema e detalhe em Georgia no título, sem fonte remota ou dependência nova. Rolagem natural da página e composição em uma coluna nas larguras menores; formulário de criação ajustado à largura disponível. Diretriz visual registrada na seção 8 do PRD. Fluxos de criação, abertura e importação preservados; motor e persistência não foram alterados. M3 não iniciada.
+
+Verificações do Codex:
+
+- Lint passou; build com verificação de tipos passou. Permanecem os avisos já conhecidos de Zod e tamanho do bundle.
+- Os 20 testes existentes de navegador passaram em Chrome e Edge, incluindo criação, reabertura, importação/exportação e fluxos do editor.
+- Capturas do estado vazio, dois projetos e formulário inspecionadas em perfil isolado. Em 1359 × 636, conteúdo e orientação de backup cabem sem rolagem; em 390 × 844 não há transbordamento horizontal. Capturas em `.tools/home-*.png`, ignoradas pelo Git. Os projetos pessoais não foram alterados.
+- Build e acesso ao servidor inicialmente bloqueados pelo sandbox; verificação concluída com execução autorizada fora dessa restrição. O roteiro auxiliar de captura teve seu seletor corrigido para incluir o botão “Criar projeto →”; nova execução passou.
+- Testes unitários não repetidos nesta alteração de apresentação; os fluxos de navegador cobrem a integração. Após a suíte, removida somente uma regra antiga de espaçamento da página inicial; capturas e build repetidos.
+
+Pendente do solicitante: atualizar `http://localhost:5173/` (mantendo a origem onde seus projetos já estão salvos), avaliar a aparência com os nomes reais e confirmar conforto de leitura e espaçamento. O aceite visual/manual permanece pendente. A adaptação estreita se limita à página inicial e ao formulário; o editor mantém o foco desktop.
+
+### Composição de U aberto — 11/10/2026
+
+Definição acordada: pontas livres e ausência de fechamento são situações normais de desenho. Não exigem correção da planta. O arquivo real do solicitante demonstrou recusa por ausência de padrão no motor, não por incompatibilidade modular. PRD, arquitetura, CT-05 e README atualizados; EX-19/20 acrescentados, EX-18 preservado como conflito da fase com reservas sobrepostas. Extensão nominal derivada das regras documentadas; sem nova regra física, peça especial ou escopo de M3.
+
+Implementado padrão explícito de U com duas pernas paralelas no mesmo sentido, ponte com quatro ou mais células incluindo cantos e pernas com duas ou mais incluindo canto. A reserva os inteiros dos dois cantos na ponte; B os reserva nas pernas; os intervalos retos recebem inteiros/meios. Compatível com os ramais separados pelos T existentes. A alternativa inverte a fase de todo o conjunto. Não há exigência de fechamento, alteração das paredes ou solução parcial artificial.
+
+Persistência: composição `nominal-v2`, envelope de arquivo ainda versão 2. O caminho `nominal-v1` permanece para validar snapshots antigos antes da migração. Após validar, a abertura recalcula pelo fluxo sequencial existente, preservando modelo/IDs/ajustes. Reabertura pelo IndexedDB e importação de arquivo cobertas; conteúdo adulterado continua recusado. Arquivo original em Downloads não foi modificado; cópia em `tests/fixtures/open-u-legacy.ecovit` serve como regressão.
+
+Verificações do Codex:
+
+- **51 testes passaram**: domínio, composição, falhas, integridade e IndexedDB. Incluem posições independentes de EX-19, comprimentos pares/ímpares, oito transformações por comprimento, cobertura exata de todas as 40 fiadas do arquivo real sem sobreposição, fases invertidas, ordem/sentido de desenho, migração e recusa de diagnóstico adulterado.
+- **Lint e build com verificação de tipos passaram.** Permanecem somente os avisos conhecidos de Zod e bundle acima de 500 kB. A primeira execução de Vitest foi bloqueada por EPERM do sandbox; passou após execução autorizada fora dessa restrição.
+- **Navegador:** 21 de 22 fluxos passaram na suíte inicial, incluindo o novo fluxo do projeto real nos dois navegadores. O teste anterior de liberar bloqueio após fechar outra aba falhou uma vez no Chrome (continuou somente leitura), mas passou no Edge e em três repetições isoladas no Chrome, sem mudanças no código. Causa dessa ocorrência isolada não confirmada; registrar se reaparecer.
+- Fluxo novo em Chrome/Edge: importar snapshot real antigo, compor, confirmar fase B, navegar até fiada 40, baixar e recarregar/reabrir; documento exportado preservado integralmente após reabertura. Captura da fiada 40 inspecionada: todas as paredes com peças e apenas informação de ligação complementar dos T. Testes em perfis isolados.
+
+Limitações mantidas: U com ponte de três células continua sem esse padrão completo (EX-18); não se afirma impossibilidade física. Caminhos arbitrários, cruz e alturas distintas em conjuntos com múltiplos encontros não foram adicionados. A informação de ligação complementar dos T permanece. Não houve reformulação da interface de diagnósticos nesta alteração.
+
+**Pendente de teste manual do solicitante:** atualizar `http://localhost:5173/`, reabrir “Meu projeto FR”, entrar em Fiada e conferir primeira/segunda/última, prévia de alternativa e retorno à Planta. Esperado: 40 fiadas compostas, “Geometria nominal verificada”, sem a antiga pendência de combinação; medidas preservadas. Teste manual e aceite não presumidos.
+
+### Revisão da paginação após feedback dos cantos — 11/10/2026
+
+Substitui a definição do U descrita no relatório anterior. A reserva de inteiros na mesma direção nos dois cantos cobria a área, mas forçava meio tijolo no interior da parede. A convenção **nominal-v3** usa um único pareamento contínuo para percursos sem ramificações e ciclos após a separação dos ramais dos T. A orientação dos demais cantos segue a paridade do percurso; só o primeiro canto geométrico ancora a fase A horizontalmente para conservar a referência do L. B desloca os pares em uma célula. Meios ficam somente nas extremidades dos percursos, incluindo contatos dos ramais, quando necessários.
+
+O projeto FR tem agora na primeira fase 16 inteiros horizontais até o canto direito, seguido de inteiro vertical ocupando o canto. O único meio dessa fiada fica na ponta inferior direita: 52 inteiros + 1 meio, sem alterar paredes. O U estreito de EX-18 passa a ser composto com cantos coordenados; não se mantém uma recusa causada pela antiga imposição de orientações iguais. EX-19 foi atualizado com posições independentes, e EX-20 registra o resultado real. Não há nova regra para ligação física dos T nem ampliação para cruz ou transições de altura em conjuntos múltiplos.
+
+Documentação sincronizada: PRD, Caderno técnico revisão 4 (CT-05, EX-18/19/20), arquitetura e README. Retas, L e anel anteriores conservam seus critérios de contagem/alternância; caminhos com vários cantos e ciclos ortogonais não retangulares usam a mesma regra, sem caso especial por formato. A implementação antiga fica restrita à validação dos snapshots nominal-v1/v2.
+
+Migração: conferir integralmente o snapshot com sua própria convenção; depois marcar desatualizado para recalcular e salvar como nominal-v3 pelo fluxo existente. Preservar modelo, IDs e escolhas. Snapshots antigos adulterados não são aceitos por migração. Fixtures v1 e v2 representam estados anteriores do projeto FR; o arquivo original do solicitante não foi modificado.
+
+Validações de geometria: 55 testes passaram, incluindo EX-19 por posições esperadas, ausência de meios interiores em U com pontes de 3–7 módulos e oito transformações, sequência de cantos, ciclo não retangular, duas fases/40 fiadas do projeto real, ordem e sentido de desenho, migração v1/v2, adulteração e IndexedDB. Os dois testes que codificavam a antiga regra de U falharam na execução inicial e foram atualizados para os novos resultados independentes acordados (EX-18/19). Demais regressões passaram.
+
+Aceite manual pendente: atualizar o aplicativo na mesma origem, reabrir “Meu projeto FR” e conferir primeira/segunda fiadas e alternativa. A fase A automática deve mostrar o canto direito ocupado pelo inteiro vertical; uma escolha de fase B já salva é preservada e apresenta a paginação inversa. O meio necessário permanece em ponta livre; não há promessa de eliminar todos os meios. A interface de diagnósticos não foi redesenhada.
+
+Verificação final desta revisão: lint, typecheck e build passaram; permanecem avisos conhecidos de Zod e tamanho do bundle. A primeira rodada de navegador teve timeout no carregamento inicial do Chrome; o servidor respondeu HTTP 200 e o fluxo passou na rodada seguinte. A suíte ampliada executou 24 fluxos: 23 passaram, incluindo importar snapshots v1 e v2, conferir o único meio na ponta direita, alternar fase, chegar à fiada 40 e reabrir integralmente, em Chrome e Edge. O teste antigo de duas abas falhou no Edge por tentar reabrir antes da liberação assíncrona do Web Lock; o teste foi ajustado para aguardar a ausência do bloqueio via `navigator.locks.query()`, sem sleep fixo, desbloqueio forçado ou mudança no produto. Passou nas quatro repetições finais (duas por navegador). Não se alega uma rodada única de 24 aprovações; todos os fluxos foram verificados com essa correção específica.
+
+Captura da primeira fiada migrada de v2 inspecionada: horizontal com inteiros e canto direito vertical, meio somente na ponta inferior direita. Evidência local em `.tools/pagination-v3.png` (ignorada pelo Git). Os 55 testes unitários passaram novamente após acrescentar a verificação de meios somente nas pontas em todas as transformações. `git diff --check` revisado. Aceite manual continua pendente.
+
+### Editor compacto inspirado na referência TijoCAD — 11/10/2026
+
+Aplicado no editor existente, preservando a identidade verde e a página inicial. Cabeçalho de 48 px com marca reduzida, nome e ações do arquivo; ferramentas e controles Planta/Fiada reunidos na faixa seguinte. Módulo e face externa transferidos para o rodapé compacto com térreo, contagem e estado da composição. Faixa permite quebra em larguras menores; controles mantêm nomes acessíveis, estados ativos e foco de teclado.
+
+Painéis laterais de 224 px (208 px até 1000 px) com tipografia e espaçamento mais compactos. Propriedades continuam recolhíveis; inspeção de fiadas agora também pode ser recolhida/reaberta, liberando a largura do canvas. Legenda inicia recolhida, com conteúdo preservado. Não foram adicionados 3D, instalações, graute, junta, login ou ferramentas vistas somente na referência. Motor, projetos e persistência não foram alterados nesta entrega.
+
+Verificação visual pelo Codex: perfis isolados, Planta/Fiada em 1359 × 636 e Fiada em 1024 × 768, painel aberto e recolhido. Canvas medido em 1135 × 522, começando em y=88 na tela maior; sem transbordamento horizontal em 1024 px. Conferido aumento de largura ao recolher inspeção e reabertura acessível. Capturas em `.tools/compact-*.png` (ignoradas pelo Git). PRD atualizado na organização dos controles. Lint e build com verificação de tipos passaram; permanecem avisos conhecidos de Zod e tamanho do bundle. Testes unitários não repetidos por se tratar de apresentação e recolhimento local do painel; integração verificada no navegador.
+
+Pendente de teste manual do solicitante: atualizar o aplicativo, avaliar leitura na resolução e zoom usados, alternar Planta/Fiada e recolher/reabrir ambos os painéis. Editor continua focado em desktop; o mínimo de 800 px de largura foi preservado. Aprovação visual/manual não presumida.
+
+Resultado final do navegador nesta alteração: **24 testes passaram em Chrome e Edge**, incluindo criação/edição, salvamento, bloqueio entre abas, importação/migração, navegação de fiadas, alternativa de encontros e reabertura. Nenhuma falha nessa execução.
+
+### Navegação com botão do meio — 11/10/2026
+
+Decisão de usabilidade registrada no PRD, seção 8 (organização dos controles), e no README: botão do meio pressionado + arraste é o gesto principal para deslocar o viewport; Espaço + botão esquerdo + arraste permanece como alternativa. Roda continua controlando zoom. Ambos funcionam em Planta/Fiada sem trocar a ferramenta nem editar paredes; navegação permanece permitida em somente leitura e bloqueada durante processamento.
+
+Implementado em `src/editor/Canvas.tsx`: gesto guarda qual botão o iniciou; eventos de movimento/liberação na janela permitem continuar fora do canvas e encerrar ao soltar o botão correto. Soltar outro botão não confirma desenho nem encerra navegação; Espaço não interrompe arraste central. Perda de foco e Escape cancelam; perda do estado de botão pressionado também libera o gesto. Mão fechada durante navegação. Mousedown/auxclick central no canvas suprimem ação padrão do navegador. Um gesto em andamento não é substituído por outro botão. Orientação principal no canvas atualizada e alternativa disponível na dica de navegação.
+
+Verificações: lint e build com tipos passaram, com os avisos conhecidos de Zod e tamanho de bundle. Novo fluxo de navegador confere deslocamento exato da câmera em Planta/Fiada, cursor, combinação de botões, liberação dentro/fora do canvas, perda de foco, alternativa Espaço, zoom pela roda e documento exportado integralmente inalterado. Testes unitários do motor não repetidos, pois geometria/persistência não foram alteradas.
+
+Pendente do solicitante: atualizar a página e testar com seu mouse, incluindo arrastar além da borda do canvas e soltar. Teste físico/manual e aceite não presumidos. Nenhuma função futura foi adicionada.
+
+Conclusão registrada em 12/10/2026: **26 testes de navegador passaram em Chrome e Edge**, incluindo o novo gesto com botão central, alternativa Espaço, saída do canvas, liberação de botões, perda de foco, zoom e preservação integral do projeto. Lint e build com tipos passaram. Aceite manual do solicitante permanece pendente.

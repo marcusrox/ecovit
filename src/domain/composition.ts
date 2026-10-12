@@ -35,7 +35,7 @@ export type Component = {
   phase: 0 | 1;
 };
 export type Composition = {
-  convention: "nominal-v1";
+  convention: "nominal-v1" | "nominal-v2" | "nominal-v3";
   courses: { number: number; bottom: number; top: number; pieces: Piece[] }[];
   components: Component[];
   diagnostics: Diagnostic[];
@@ -97,11 +97,53 @@ function pack(cells: Cell[], phase: number): Cell[][] {
   if (i < cells.length) result.push([cells[i]]);
   return result;
 }
-// Explicit straight, isolated L and rectangular ring patterns. No search solver.
+// Pair consecutive cells along a non-branching path or cycle. Corners inherit
+// parity from the route; a pair always occupies two orthogonally adjacent cells.
+function continuousPattern(
+  cells: Cell[],
+  adjacent: (c: Cell) => Cell[],
+  phase: number,
+): Cell[][] | null {
+  if (cells.length === 1) return [[cells[0]]];
+  const ends = cells.filter((c) => adjacent(c).length === 1);
+  if (
+    cells.some((c) => adjacent(c).length < 1 || adjacent(c).length > 2) ||
+    (ends.length !== 0 && ends.length !== 2)
+  )
+    return null;
+  const closed = ends.length === 0;
+  const route = [closed ? cells[0] : ends[0]];
+  const visited = new Set(route);
+  while (route.length < cells.length) {
+    const next = adjacent(route.at(-1)!)
+      .filter((c) => !visited.has(c))
+      .sort((a, b) => b.x - a.x || a.y - b.y)[0];
+    if (!next) return null;
+    route.push(next);
+    visited.add(next);
+  }
+  if (closed) {
+    if (route.length % 2 || !adjacent(route.at(-1)!).includes(route[0]))
+      return null;
+    return pack(phase ? [...route.slice(1), route[0]] : route, 0);
+  }
+  const firstCorner = cells.find((c) => {
+    const ns = adjacent(c);
+    return ns.length === 2 && ns[0].x !== ns[1].x && ns[0].y !== ns[1].y;
+  });
+  if (!firstCorner) return pack(route, phase);
+  const index = route.indexOf(firstCorner);
+  // Anchor A horizontally only at the first geometric corner. Other corners
+  // follow the route, rather than receiving independent orientation mandates.
+  const offset = (index % 2) ^ (route[index + 1].y === firstCorner.y ? 0 : 1);
+  return pack(route, offset ^ phase);
+}
+// Legacy patterns retained solely to validate saved v1/v2 snapshots.
 function pattern(
   cells: Cell[],
   adjacent: (c: Cell) => Cell[],
   phase: number,
+  openU: boolean,
 ): Cell[][] | null {
   if (
     cells.every((c) => c.x === cells[0].x) ||
@@ -135,6 +177,55 @@ function pattern(
       ? [...pack(vertical, 0), ...pack(horizontal.slice(1), 0)]
       : [...pack(horizontal, 0), ...pack(vertical.slice(1), 0)];
   }
+  if (
+    openU &&
+    corners.length === 2 &&
+    ends.length === 2 &&
+    cells.every((c) => adjacent(c).length <= 2)
+  ) {
+    const [a, b] = corners;
+    const horizontal = a.y === b.y;
+    if (!horizontal && a.x !== b.x) return null;
+    const along = (c: Cell) => (horizontal ? c.x : c.y);
+    const across = (c: Cell) => (horizontal ? c.y : c.x);
+    const bridge = cells
+      .filter((c) => across(c) === across(a))
+      .sort((c, d) => along(c) - along(d));
+    const legs = [a, b].map((corner) =>
+      cells
+        .filter((c) => along(c) === along(corner))
+        .sort(
+          (c, d) =>
+            Math.abs(across(c) - across(corner)) -
+            Math.abs(across(d) - across(corner)),
+        ),
+    );
+    // Reserve a whole brick at each corner before filling the straight spans.
+    // Three bridge cells would make the two horizontal reservations collide.
+    if (
+      bridge.length < 4 ||
+      legs.some((leg) => leg.length < 2) ||
+      bridge[0] !== a ||
+      bridge.at(-1) !== b ||
+      Math.sign(across(legs[0][1]) - across(a)) !==
+        Math.sign(across(legs[1][1]) - across(b)) ||
+      bridge.length + legs[0].length + legs[1].length - 2 !== cells.length
+    )
+      return null;
+    return phase
+      ? [
+          ...pack(legs[0], 0),
+          ...pack(bridge.slice(1, -1), 0),
+          ...pack(legs[1], 0),
+        ]
+      : [
+          [bridge[0], bridge[1]],
+          ...pack(bridge.slice(2, -2), 0),
+          [bridge.at(-2)!, bridge.at(-1)!],
+          ...pack(legs[0].slice(1), 0),
+          ...pack(legs[1].slice(1), 0),
+        ];
+  }
   if (corners.length === 4 && cells.every((c) => adjacent(c).length === 2)) {
     const xs = cells.map((c) => c.x),
       ys = cells.map((c) => c.y),
@@ -167,7 +258,11 @@ function pattern(
   }
   return null;
 }
-function tile(cells: Cell[], phase: number): Cell[][] | null {
+function tile(
+  cells: Cell[],
+  phase: number,
+  convention: Composition["convention"],
+): Cell[][] | null {
   const map = new Map(cells.map((c) => [key(c.x, c.y), c]));
   const cuts = new Set<string>();
   const edge = (a: Cell, b: Cell) =>
@@ -188,7 +283,10 @@ function tile(cells: Cell[], phase: number): Cell[][] | null {
     neighbors(c, map).filter((n) => !cuts.has(edge(c, n)));
   const result: Cell[][] = [];
   for (const group of groups(map, adjacent)) {
-    let p = pattern(group, adjacent, phase);
+    let p =
+      convention === "nominal-v3"
+        ? continuousPattern(group, adjacent, phase)
+        : pattern(group, adjacent, phase, convention === "nominal-v2");
     // A T branch is paginated from its contact, including reversed branches.
     if (
       group.every((c) => c.x === group[0].x) ||
@@ -207,11 +305,14 @@ function tile(cells: Cell[], phase: number): Cell[][] | null {
   }
   return result;
 }
-export function generate(doc: Project): Composition {
+export function generate(
+  doc: Project,
+  convention: Composition["convention"] = "nominal-v3",
+): Composition {
   const { width: m, height: h } = doc.project.base,
     floor = doc.model.floors[0];
   const result: Composition = {
-    convention: "nominal-v1",
+    convention,
     courses: [],
     components: [],
     diagnostics: [],
@@ -413,8 +514,11 @@ export function generate(doc: Project): Composition {
         courses.push([]);
         continue;
       }
-      const pieces = tile(active, ((n - 1) % 2) ^ comp.phase);
-      if (!pieces || !tile(active, ((n - 1) % 2) ^ (1 - comp.phase))) {
+      const pieces = tile(active, ((n - 1) % 2) ^ comp.phase, convention);
+      if (
+        !pieces ||
+        !tile(active, ((n - 1) % 2) ^ (1 - comp.phase), convention)
+      ) {
         error(
           "unsupported",
           "Sem solução automática para esta combinação de encontros.",

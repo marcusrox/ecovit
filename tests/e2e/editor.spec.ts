@@ -169,6 +169,18 @@ test("E1 segunda aba bloqueada e desbloqueada após encerrar a primeira", async 
     other.getByRole("button", { name: "▰ Parede", exact: true }),
   ).toBeDisabled();
   await page.close();
+  // Closing the tab and releasing its Web Lock are asynchronous in the browser.
+  // Reopen only after the old owner is gone; no fixed sleep or forced unlock.
+  await expect
+    .poll(() =>
+      other.evaluate(
+        async () =>
+          (await navigator.locks.query()).held?.some((lock) =>
+            lock.name?.startsWith("ecovit:"),
+          ) ?? false,
+      ),
+    )
+    .toBe(false);
   await other.getByRole("button", { name: "Projetos", exact: true }).click();
   await other.getByRole("button", { name: /Casa de teste/ }).click();
   await expect(other.getByRole("status")).toContainText("Salvo");
@@ -212,4 +224,66 @@ test("E1 encontro L/T, seleção, excluir e atalhos sem interferir em campos", a
   await page.keyboard.press("Delete");
   await page.getByLabel("Nome do projeto", { exact: true }).press("Tab");
   expect((await exported(page)).model.walls).toHaveLength(3);
+});
+
+test("navegação com botão do meio, Espaço e saída do canvas preserva projeto", async ({
+  page,
+}) => {
+  await create(page, "Navegação");
+  await drag(page, [0, 0], [10000, 0]);
+  const original = await exported(page);
+  const drawing = page.getByTestId("drawing");
+  const camera = async () =>
+    JSON.parse((await drawing.getAttribute("data-camera"))!);
+  for (const mode of ["Planta", "Fiada"]) {
+    await page.getByRole("button", { name: mode, exact: true }).click();
+    const box = (await drawing.boundingBox())!;
+    const x = box.x + 300,
+      y = box.y + 220,
+      before = await camera();
+    await page.mouse.move(x, y);
+    await page.mouse.down({ button: "middle" });
+    await expect(drawing).toHaveCSS("cursor", "grabbing");
+    // Releasing Space or a different mouse button must not end a middle pan.
+    await page.keyboard.down("Space");
+    await page.keyboard.up("Space");
+    await page.mouse.down({ button: "left" });
+    await page.mouse.up({ button: "left" });
+    await page.mouse.move(x + 80, y + 45, { steps: 4 });
+    await expect
+      .poll(camera)
+      .toEqual({ ...before, x: before.x + 80, y: before.y + 45 });
+    await page.mouse.up({ button: "middle" });
+    await expect(drawing).not.toHaveCSS("cursor", "grabbing");
+    const stopped = await camera();
+    await page.mouse.move(x + 110, y + 70);
+    expect(await camera()).toEqual(stopped);
+    // The pan follows the pointer outside the canvas and ends there too.
+    await page.mouse.down({ button: "middle" });
+    await page.mouse.move(10, 15, { steps: 4 });
+    await page.mouse.up({ button: "middle" });
+    await expect(drawing).not.toHaveCSS("cursor", "grabbing");
+    const outside = await camera();
+    await page.mouse.move(x, y);
+    expect(await camera()).toEqual(outside);
+    // Space + left drag remains available.
+    await page.keyboard.down("Space");
+    await page.mouse.down();
+    await page.mouse.move(x + 30, y + 20);
+    await page.mouse.up();
+    await page.keyboard.up("Space");
+    await expect
+      .poll(camera)
+      .toEqual({ ...outside, x: outside.x + 30, y: outside.y + 20 });
+    await page.mouse.down({ button: "middle" });
+    await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+    await page.mouse.up({ button: "middle" });
+    await expect(drawing).not.toHaveCSS("cursor", "grabbing");
+    const beforeWheel = await camera();
+    await page.mouse.wheel(0, -100);
+    await expect
+      .poll(async () => (await camera()).scale)
+      .toBeGreaterThan(beforeWheel.scale);
+    expect(await exported(page)).toEqual(original);
+  }
 });

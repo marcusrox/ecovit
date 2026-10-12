@@ -429,7 +429,7 @@ export default function App() {
     }
   };
   return (
-    <div className={styles.app}>
+    <div className={`${styles.app} ${doc ? styles.editorApp : styles.homeApp}`}>
       <input
         type="file"
         ref={input}
@@ -507,7 +507,7 @@ export default function App() {
           </>
         ) : (
           <div className={styles.headerActions}>
-            <span className={styles.localBadge}>● NO SEU NAVEGADOR</span>
+            <span className={styles.localBadge}>Salvo neste navegador</span>
             <button
               disabled={busy || importing}
               onClick={() => input.current?.click()}
@@ -538,51 +538,51 @@ export default function App() {
       )}
       {doc ? (
         <>
-          <div className={styles.toolbar}>
-            <div className={styles.tools}>
-              <button
-                className={tool === "select" ? styles.active : ""}
-                aria-pressed={tool === "select"}
-                disabled={busy || readonly}
-                onClick={() => setTool("select")}
-              >
-                ↖ Selecionar
-              </button>
-              <button
-                className={tool === "wall" ? styles.active : ""}
-                aria-pressed={tool === "wall"}
-                disabled={busy || readonly}
-                onClick={() => {
-                  useStore.getState().inspect({ mode: "plan", preview: null });
-                  setTool("wall");
-                }}
-              >
-                ▰ Parede
-              </button>
-              <span className={styles.divider} />
-              <button
-                aria-label="Desfazer"
-                title="Desfazer (Ctrl+Z)"
-                disabled={busy || readonly || !history.past.length}
-                onClick={() => void useStore.getState().undo()}
-              >
-                ↶
-              </button>
-              <button
-                aria-label="Refazer"
-                title="Refazer (Ctrl+Y)"
-                disabled={busy || readonly || !history.future.length}
-                onClick={() => void useStore.getState().undo(true)}
-              >
-                ↷
-              </button>
+          <div className={styles.editorControls}>
+            <div className={styles.toolbar}>
+              <div className={styles.tools}>
+                <button
+                  className={tool === "select" ? styles.active : ""}
+                  aria-pressed={tool === "select"}
+                  disabled={busy || readonly}
+                  onClick={() => setTool("select")}
+                >
+                  ↖ Selecionar
+                </button>
+                <button
+                  className={tool === "wall" ? styles.active : ""}
+                  aria-pressed={tool === "wall"}
+                  disabled={busy || readonly}
+                  onClick={() => {
+                    useStore
+                      .getState()
+                      .inspect({ mode: "plan", preview: null });
+                    setTool("wall");
+                  }}
+                >
+                  ▰ Parede
+                </button>
+                <span className={styles.divider} />
+                <button
+                  aria-label="Desfazer"
+                  title="Desfazer (Ctrl+Z)"
+                  disabled={busy || readonly || !history.past.length}
+                  onClick={() => void useStore.getState().undo()}
+                >
+                  ↶
+                </button>
+                <button
+                  aria-label="Refazer"
+                  title="Refazer (Ctrl+Y)"
+                  disabled={busy || readonly || !history.future.length}
+                  onClick={() => void useStore.getState().undo(true)}
+                >
+                  ↷
+                </button>
+              </div>
             </div>
-            <span className={styles.moduleLabel}>
-              Módulo <b>{display(doc.project.base.width)} cm</b>
-              <span>·</span>Face externa
-            </span>
+            <FiadaToolbar />
           </div>
-          <FiadaToolbar />
           <main className={styles.workspace}>
             <Canvas
               key={doc.project.id}
@@ -594,6 +594,10 @@ export default function App() {
             {mode === "plan" ? <Properties doc={doc} /> : <FiadaPanel />}
           </main>
           <footer className={styles.footer}>
+            <span className={styles.moduleLabel}>
+              Térreo · Módulo <b>{display(doc.project.base.width)} cm</b> · Face
+              externa
+            </span>
             <span>
               {doc.model.walls.length}{" "}
               {doc.model.walls.length === 1 ? "parede" : "paredes"} · Planta em
@@ -613,13 +617,26 @@ export default function App() {
       ) : (
         <main className={styles.home}>
           <div className={styles.homeIntro}>
-            <span className={styles.eyebrow}>DO PRIMEIRO TRAÇO AO PROJETO</span>
-            <h1>Ideias que se encaixam.</h1>
+            <div>
+              <span className={styles.eyebrow}>
+                DO PRIMEIRO TRAÇO AO PROJETO
+              </span>
+              <h1>
+                Ideias que se <em>encaixam.</em>
+              </h1>
+            </div>
             <p>
               Desenhe sua planta com tijolos ecológicos.
               <br />
               Uma malha precisa, um espaço para criar.
             </p>
+          </div>
+          <div className={styles.listHeading}>
+            <h2 id="projects-title">Seu espaço de projetos</h2>
+            <span>
+              {projects.length}{" "}
+              {projects.length === 1 ? "projeto salvo" : "projetos salvos"}
+            </span>
           </div>
           <div className={styles.homeGrid}>
             <button
@@ -629,19 +646,20 @@ export default function App() {
                 setCreating(true);
               }}
             >
-              <span className={styles.bigPlus}>+</span>
+              <span className={styles.bigPlus} aria-hidden="true">
+                +
+              </span>
               <strong>Novo projeto</strong>
-              <span>Escolha o tijolo e comece a desenhar</span>
+              <span>Escolha o tijolo-base e dê forma à sua próxima ideia.</span>
               <b>Criar planta →</b>
             </button>
-            <section className={styles.projectList}>
-              <div className={styles.listHeading}>
-                <h2>Seus projetos</h2>
-                <span>{projects.length} locais</span>
-              </div>
+            <section
+              className={styles.projectList}
+              aria-labelledby="projects-title"
+            >
               {!projects.length ? (
                 <div className={styles.empty}>
-                  <span>⌂</span>
+                  <span aria-hidden="true">⌂</span>
                   <h3>Um espaço para suas ideias</h3>
                   <p>
                     Os projetos salvos neste navegador
@@ -661,23 +679,38 @@ export default function App() {
                         .catch((e) => useStore.getState().notify(e.message))
                     }
                   >
-                    <span className={styles.projectIcon}>▱</span>
-                    <span>
+                    <span className={styles.projectIcon} aria-hidden="true">
+                      <svg
+                        width="26"
+                        height="26"
+                        viewBox="0 0 32 32"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                      >
+                        <path d="M5 5h22v22H5zM5 17h12V5M17 17v10M22 17h5" />
+                      </svg>
+                    </span>
+                    <span className={styles.projectInfo}>
                       <strong>{p.name}</strong>
                       <small>
-                        {p.walls} paredes ·{" "}
+                        {p.walls} {p.walls === 1 ? "parede" : "paredes"} ·
+                        Atualizado em{" "}
                         {new Date(p.updatedAt).toLocaleDateString("pt-BR")}
                       </small>
                     </span>
-                    <b>→</b>
+                    <b aria-hidden="true">↗</b>
                   </button>
                 ))
               )}
             </section>
           </div>
           <p className={styles.localNote}>
-            Seus desenhos ficam neste navegador. Baixe o arquivo .ecovit para
-            fazer backup ou levar seu projeto para outro dispositivo.
+            <span aria-hidden="true">↳</span>
+            <span>
+              Seus desenhos ficam neste navegador. Baixe o arquivo .ecovit para
+              fazer backup ou levar seu projeto para outro dispositivo.
+            </span>
           </p>
         </main>
       )}

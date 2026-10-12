@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { generate } from "../domain/composition";
 import { display } from "../domain/project";
 import { useStore } from "../state/store";
@@ -117,6 +117,7 @@ export function FiadaToolbar() {
   );
 }
 export function FiadaPanel() {
+  const [collapsed, setCollapsed] = useState(false);
   const s = useStore(),
     doc = s.doc!,
     generated = doc.generated;
@@ -143,8 +144,27 @@ export function FiadaPanel() {
       },
     };
   }
+  if (collapsed)
+    return (
+      <button
+        className={styles.reopen}
+        aria-label="Abrir inspeção de fiadas"
+        onClick={() => setCollapsed(false)}
+      >
+        Inspeção de fiadas ‹
+      </button>
+    );
   return (
     <aside className={styles.properties} aria-label="Inspeção de fiadas">
+      <div className={styles.panelTitle}>
+        <span>FIADAS E ENCONTROS</span>
+        <button
+          aria-label="Recolher inspeção de fiadas"
+          onClick={() => setCollapsed(true)}
+        >
+          ›
+        </button>
+      </div>
       <h2>Inspeção de fiadas</h2>
       <p className={styles.muted}>
         Modelo nominal: passo igual à altura-base; furos indicam eixos. Confira
@@ -155,7 +175,7 @@ export function FiadaPanel() {
           Resultado antigo: não representa as últimas alterações.
         </p>
       )}
-      <details open>
+      <details>
         <summary>Legenda</summary>
         <p>
           <span style={{ color: "#b88b67" }}>■</span> Inteiro · dois eixos

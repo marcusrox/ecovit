@@ -150,6 +150,10 @@ Não adicionar event sourcing ou persistência de cada movimento do mouse.
 
 ## 9. Persistência e arquivo .ecovit
 
+Revisão posterior ao feedback de paginação: `nominal-v3` substitui a reserva de cantos do U por pareamento contínuo de percursos/ciclos sem ramificações após separar os T. Um único algoritmo atende os cantos, sem busca combinatória. Os caminhos `nominal-v1` e `nominal-v2` são mantidos somente para conferir snapshots antigos; ambos são marcados desatualizados após validação e recalculados no fluxo existente. Envelope permanece versão 2. Esta revisão substitui a convenção vigente descrita no parágrafo histórico abaixo.
+
+Revisão de 11/10/2026: composição `nominal-v2` acrescenta o padrão explícito de U aberto (CT-05, EX-19/20), mantendo o envelope de arquivo versão 2. Ao abrir snapshot `nominal-v1` atual, primeiro validar integralmente peças e diagnósticos por recomputação com a convenção antiga; somente após aprovação marcá-lo desatualizado para o fluxo sequencial normal gerar e salvar `nominal-v2`. Preservar modelo, IDs e ajustes; snapshots adulterados continuam recusados. Em leitura bloqueada por outra aba, conservar resultado antigo identificado como desatualizado, sem salvar. Esta migração explícita substitui a preservação do snapshot apenas quando sua convenção é antiga.
+
 IndexedDB, via Dexie, armazenará registros de projetos com id, nome, datas e documento. Usar localStorage somente para pequenas preferências de interface, se necessário. [Dexie e IndexedDB](https://dexie.org/docs).
 
 Salvar o documento inteiro em uma transação após cada alteração confirmada. Para alterações que exigem cálculo, salvar primeiro o modelo com resultado desatualizado e, após sucesso, salvar o documento com a nova composição. Aguardar cada escrita nesse fluxo único; não adicionar temporizadores, fila de salvamento ou persistência de movimentos do mouse. O indicador diferencia trabalho salvo, salvamento em andamento e falha, independentemente do estado do cálculo.

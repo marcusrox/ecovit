@@ -210,3 +210,56 @@ test("M2 altura incompatível oferece alternativas e não altera silenciosamente
   await expect(page.getByRole("status")).toContainText("Salvo");
   expect((await exported(page)).generated!.courses).toHaveLength(2);
 });
+
+for (const snapshot of ["legacy", "v2"])
+  test(`U real ${snapshot}: importar, compor, alternar e reabrir sem alterar paredes`, async ({
+    page,
+  }) => {
+    const old = JSON.parse(
+      await readFile(`tests/fixtures/open-u-${snapshot}.ecovit`, "utf8"),
+    ) as Project;
+    await page.goto("/");
+    await page
+      .getByTestId("import-file")
+      .setInputFiles(`tests/fixtures/open-u-${snapshot}.ecovit`);
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    await page.getByRole("button", { name: "Fiada", exact: true }).click();
+    await expect(
+      page.getByText("Geometria nominal verificada", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        "Composição geométrica resolvida; ligação complementar necessária.",
+      ),
+    ).toBeVisible();
+    let d = await exported(page);
+    expect(d.model).toEqual(old.model);
+    expect(d.generated!.convention).toBe("nominal-v3");
+    expect(
+      d
+        .generated!.courses[0].pieces.filter((p) => p.kind === "half")
+        .map((p) => [p.x, p.y]),
+    ).toEqual([[52500, 22500]]);
+    expect(d.generated!.courses).toHaveLength(40);
+    expect(d.generated!.courses.every((c) => c.pieces.length > 0)).toBe(true);
+    await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
+    await page.screenshot({
+      path: `test-results/open-u-first-${snapshot}-${test.info().project.name}.png`,
+    });
+    await page.getByRole("button", { name: /Conjunto 1/ }).click();
+    await page.getByRole("button", { name: "Prévia da alternativa B" }).click();
+    await page.getByRole("button", { name: "Confirmar alternativa" }).click();
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    d = await exported(page);
+    expect(d.adjustments.junctions[0].phase).toBe(1);
+    await page.getByLabel("Número da fiada").fill("40");
+    await expect(page.getByText("273–280 cm em relação ao piso")).toBeVisible();
+    await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
+    await page.screenshot({
+      path: `test-results/open-u-${test.info().project.name}.png`,
+    });
+    await page.reload();
+    await page.getByRole("button", { name: /Meu projeto FR/ }).click();
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    expect(await exported(page)).toEqual(d);
+  });

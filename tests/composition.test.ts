@@ -215,12 +215,23 @@ describe("M2 composição nominal", () => {
         y: 0,
       });
   });
-  it("EX-18: U sem padrão completo recebe diagnóstico, sem composição parcial", () => {
+  it("EX-18: U estreito coordena cantos sem disputa na célula intermediária", () => {
     const d = l();
     wall(d, [2, 0], [2, 3]);
-    const g = generate(d);
-    expect(g.diagnostics.some((d) => d.code === "unsupported")).toBe(true);
-    expect(g.courses.every((c) => !c.pieces.length)).toBe(true);
+    const g = coverage(d);
+    expect(g.diagnostics).toEqual([]);
+    expect(counts(g, 0)).toEqual([3, 1]);
+    expect(counts(g, 1)).toEqual([3, 1]);
+    expect(
+      g.courses[0].pieces
+        .filter((p) => p.kind === "half")
+        .map((p) => [p.x, p.y]),
+    ).toEqual([[2500, 2500]]);
+    expect(
+      g.courses[1].pieces
+        .filter((p) => p.kind === "half")
+        .map((p) => [p.x, p.y]),
+    ).toEqual([[0, 2500]]);
   });
   it("ordem e sentido do desenho não alteram peças", () => {
     const d = l(),

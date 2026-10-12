@@ -18,7 +18,7 @@ type Camera = { x: number; y: number; scale: number };
 type Gesture =
   | { type: "draw"; start: Point }
   | { type: "resize"; wall: Wall; end: "a" | "b" }
-  | { type: "pan"; start: Point; camera: Camera };
+  | { type: "pan"; start: Point; camera: Camera; button: 0 | 1 };
 export function Canvas({
   tool,
   setTool,
@@ -86,23 +86,45 @@ export function Canvas({
     const up = (e: KeyboardEvent) => {
       if (e.code === "Space") {
         space.current = false;
-        if (gesture.current?.type === "pan") cancel();
+        if (gesture.current?.type === "pan" && gesture.current.button === 0)
+          cancel();
       }
     };
     const outside = (e: MouseEvent) => {
-      if (gesture.current && !host.current?.contains(e.target as Node))
+      const g = gesture.current;
+      if (
+        g &&
+        e.button === (g.type === "pan" ? g.button : 0) &&
+        (g.type === "pan" || !host.current?.contains(e.target as Node))
+      )
         cancel();
+    };
+    const pan = (e: MouseEvent) => {
+      const g = gesture.current,
+        rect = host.current?.getBoundingClientRect();
+      if (g?.type !== "pan" || !rect) return;
+      if (!(e.buttons & (g.button === 1 ? 4 : 1))) {
+        cancel();
+        return;
+      }
+      setCamera({
+        ...g.camera,
+        x: g.camera.x + e.clientX - rect.left - g.start.x,
+        y: g.camera.y + e.clientY - rect.top - g.start.y,
+      });
     };
     window.addEventListener("blur", blur);
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("mouseup", outside);
+    window.addEventListener("mousemove", pan);
     return () => {
       observer.disconnect();
       window.removeEventListener("blur", blur);
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
       window.removeEventListener("mouseup", outside);
+      window.removeEventListener("mousemove", pan);
     };
   }, [setTool]);
   useEffect(() => {
@@ -139,14 +161,7 @@ export function Canvas({
   const update = (screen: Point) => {
     const p = world(screen),
       g = gesture.current;
-    if (g?.type === "pan") {
-      setCamera({
-        ...g.camera,
-        x: g.camera.x + screen.x - g.start.x,
-        y: g.camera.y + screen.y - g.start.y,
-      });
-      return;
-    }
+    if (g?.type === "pan") return;
     const connected = endpoint(p, g?.type === "resize" ? g.wall.id : undefined);
     setTarget(connected);
     if (g?.type === "draw") {
@@ -269,8 +284,10 @@ export function Canvas({
               : "default",
         }}
         onMouseDown={(e) => {
+          if (e.button === 1) e.preventDefault();
           if (
-            e.button !== 0 ||
+            (e.button !== 0 && e.button !== 1) ||
+            gesture.current ||
             busy ||
             (e.target as HTMLElement).closest("button")
           )
@@ -278,8 +295,14 @@ export function Canvas({
           const screen = pointer(e.clientX, e.clientY),
             p = world(screen);
           setChoices([]);
-          if (space.current) {
-            gesture.current = { type: "pan", start: screen, camera };
+          if (e.button === 1 || space.current) {
+            e.preventDefault();
+            gesture.current = {
+              type: "pan",
+              start: screen,
+              camera,
+              button: e.button as 0 | 1,
+            };
             setPanning(true);
             return;
           }
@@ -324,9 +347,16 @@ export function Canvas({
           useStore.getState().choose(hits[0]?.id ?? null);
           if (hits.length > 1) setChoices(hits);
         }}
-        onMouseMove={(e) => update(pointer(e.clientX, e.clientY))}
-        onMouseUp={() => {
+        onAuxClick={(e) => {
+          if (e.button === 1) e.preventDefault();
+        }}
+        onMouseMove={(e) => {
+          if (gesture.current?.type !== "pan")
+            update(pointer(e.clientX, e.clientY));
+        }}
+        onMouseUp={(e) => {
           const g = gesture.current;
+          if (e.button !== (g?.type === "pan" ? g.button : 0)) return;
           if (g && g.type !== "pan" && !busy && !readonly) {
             if (preview) {
               const newWalls =
@@ -603,14 +633,15 @@ export function Canvas({
         </div>
       )}
       <div className={styles.canvasBottom}>
-        <span>
+        <span title="Navegar: botão do meio + arraste ou Espaço + arraste. Roda: zoom.">
           {readonly
             ? "Somente leitura"
             : mode === "course"
-              ? "Inspecione um conjunto · Espaço + arraste para navegar"
+              ? "Inspecione um conjunto"
               : tool === "wall"
                 ? "Arraste para desenhar · Esc cancela"
                 : "Clique para selecionar · Arraste uma alça para editar"}
+          {" · Botão do meio + arraste para navegar"}
         </span>
         <div className={styles.zoom}>
           <button

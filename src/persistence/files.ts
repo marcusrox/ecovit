@@ -46,7 +46,7 @@ const component = z
   .strict();
 const composition = z
   .object({
-    convention: z.literal("nominal-v1"),
+    convention: z.enum(["nominal-v1", "nominal-v2", "nominal-v3"]),
     courses: z
       .array(
         z
@@ -221,13 +221,20 @@ export function validateProject(
     if (checkGenerated) {
       // Normalize both snapshots through the same schema before comparing JSON:
       // object property insertion order is not a change in project contents.
-      const expected = composition.parse(generate(doc));
+      const expected = composition.parse(
+        generate(doc, doc.generated.convention),
+      );
       if (
         JSON.stringify(doc.generated) !== JSON.stringify(expected) ||
         JSON.stringify(doc.generationState.diagnostics) !==
           JSON.stringify(expected.diagnostics)
       )
         throw new Error("Composição salva inconsistente com o modelo.");
+      // Validate the old snapshot before requesting regeneration on open.
+      // Never accept tampered legacy data merely because the engine evolved.
+      if (doc.generated.convention !== "nominal-v3") {
+        doc.generationState = { status: "outdated", diagnostics: [] };
+      }
     }
   }
   return doc;

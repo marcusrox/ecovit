@@ -312,7 +312,17 @@ A stack e as decisões de implementação estão propostas no documento compleme
 
 ## 8. Requisitos não funcionais
 
+### Apresentação da página inicial
+
+A página inicial reúne criação, abertura de projetos locais e carregamento de arquivos `.ecovit`, com introdução breve e ações visíveis em telas de notebook. Cabeçalho e conteúdo compartilham alinhamento; os cartões usam espaçamentos regulares, nomes com quebra de linha e metadados legíveis. A rolagem pertence à página, sem painel interno rolável. Em larguras menores, a composição passa para uma coluna.
+
+A identidade visual usa verde profundo, verde oliva e fundo areia, com fonte de sistema para controles e detalhe serifado no título inicial, sem depender de fontes remotas. A lista vazia explica onde aparecerão os projetos, e a orientação de backup permanece visível após os cartões. Essa adaptação da página inicial não altera o foco do editor em computadores com mouse e teclado.
+
 ### Interface centrada no canvas
+
+Revisão da paginação: retas conectadas e cantos devem seguir a continuidade do percurso. Orientação igual para todos os cantos de uma fiada não é requisito. Inteiros ocupam o canto conforme a paridade do trecho; meios não devem ser introduzidos no interior para atender orientação imposta. As duas fases devem alternar cada canto e cobrir exatamente a geometria. Meios necessários nas extremidades permanecem permitidos. A definição nominal e o tratamento específico dos T estão em CT-05.
+
+Paredes com pontas livres e contornos abertos, inclusive U, são estados normais do projeto e não exigem fechamento de recintos para compor fiadas. A composição deve atender aos padrões nominais documentados no caderno técnico, incluindo U aberto com T compatíveis. Ausência de padrão implementado é limitação do motor, não prova de erro no desenho. Permanecem as verificações de malha, alturas, cobertura e conflitos entre peças.
 
 O canvas de desenho será o foco da interface e ocupará a maior parte da área disponível. Barras de ferramentas, seletores, controles e indicadores deverão ser discretos e compactos, preservando espaço para desenhar.
 
@@ -322,11 +332,13 @@ Informações adicionais e explicações serão acessíveis ao clicar em ícones
 
 ### Organização dos controles e interação comum
 
+Refinamento visual do editor (11/10/2026), inspirado na referência TijoCAD fornecida: cabeçalho de 48 px, seguido de faixa compacta reunindo ferramentas, Planta/Fiada e controles de fiada. Em larguras menores, permitir quebra da faixa sem ocultar ações. Preservar identidade verde do Ecovit. Propriedades e inspeção de fiadas usam painel estreito recolhível; legenda inicia recolhida e pode ser aberta. Rodapé compacto reúne térreo, módulo, referência externa, contagem de paredes e situação da composição. Não acrescentar ferramentas, modos ou parâmetros presentes apenas na referência.
+
 A barra compacta do editor mostrará projeto, salvamento, desfazer/refazer, pavimento e os modos Planta/Fiada. Ferramentas mudarão com o modo: Selecionar, Parede, Porta, Janela, Vão e Laje em Planta; Selecionar, Grauteamento e Encontro em Fiada, com controles das fiadas. Funções secundárias ficarão em menu; não incluir botões para 3D ou funcionalidades ainda indisponíveis.
 
 A ferramenta e o modo ativos terão indicação persistente por realce e texto acessível. O cursor, a prévia e uma orientação curta explicarão o gesto em andamento. O canvas vazio oferecerá instrução breve que desaparecerá após o primeiro desenho.
 
-Usar roda do mouse para zoom centrado no cursor; Espaço + arraste para deslocar o canvas, sem modificar elementos; oferecer também controles compactos de ampliar, reduzir e enquadrar projeto. Impedir que gestos de navegação criem paredes. Escape cancelará o gesto ou fechará a edição contextual; ao sair de uma ferramenta, retornará à seleção. Delete excluirá a seleção quando o foco não estiver num campo de texto. Ctrl+Z e Ctrl+Y/Ctrl+Shift+Z desfazem/refazem; cada arraste concluído e suas atualizações automáticas constituem uma única ação.
+Usar roda do mouse para zoom centrado no cursor; botão do meio pressionado + arraste como gesto principal para deslocar o viewport, mantendo Espaço + botão esquerdo + arraste como alternativa para touchpads e mouses sem botão central, sem modificar elementos; oferecer também controles compactos de ampliar, reduzir e enquadrar projeto. Impedir que gestos de navegação criem ou redimensionem paredes, alterem seleção ou troquem a ferramenta ativa. Ambos funcionam em Planta/Fiada, inclusive somente leitura, respeitando o bloqueio durante processamento. Mostrar mão fechada durante o arraste; um clique central isolado não desloca. Suprimir a rolagem automática/ação auxiliar do navegador apenas no canvas. Acompanhar o deslocamento fora do canvas e encerrar ao soltar o botão que iniciou o gesto, ao perder foco ou ao cancelar. Soltar Espaço encerra apenas o gesto iniciado com Espaço, não o iniciado pelo botão central. Não substituir um desenho/redimensionamento em andamento por navegação; soltar outro botão não confirma nem encerra o gesto original. Escape cancelará o gesto ou fechará a edição contextual; ao sair de uma ferramenta, retornará à seleção. Delete excluirá a seleção quando o foco não estiver num campo de texto. Ctrl+Z e Ctrl+Y/Ctrl+Shift+Z desfazem/refazem; cada arraste concluído e suas atualizações automáticas constituem uma única ação.
 
 Selecionar uma ferramenta de desenho permitirá repetir a operação até trocar a ferramenta ou pressionar Escape. Campos numéricos não poderão acionar atalhos do canvas durante digitação. Zoom reduzido poderá simplificar detalhes visuais; a geometria e a edição continuarão com precisão modular. Definir o limiar de detalhe por testes, sem prometer um valor específico nesta etapa.
 

@@ -68,3 +68,29 @@ it.each(["T", "cruz"])(
     }
   },
 );
+
+it("migra U legado do IndexedDB sem sobrescrever antes do fluxo de salvamento", async () => {
+  const { readFileSync } = await import("node:fs");
+  const old = JSON.parse(
+    readFileSync(
+      new URL("./fixtures/open-u-legacy.ecovit", import.meta.url),
+      "utf8",
+    ),
+  );
+  await saveProject(old);
+  try {
+    const loaded = await loadProject(old.project.id);
+    expect(loaded.model).toEqual(old.model);
+    expect(loaded.generationState.status).toBe("outdated");
+    expect((await db.table("projects").get(old.project.id)).doc).toEqual(old);
+    loaded.generated = generate(loaded);
+    loaded.generationState = {
+      status: "current",
+      diagnostics: loaded.generated.diagnostics,
+    };
+    await saveProject(loaded);
+    expect(await loadProject(old.project.id)).toEqual(loaded);
+  } finally {
+    await db.table("projects").delete(old.project.id);
+  }
+});
