@@ -1,8 +1,8 @@
 # Ecovit — Documento de requisitos do produto (PRD)
 
-**Versão:** 0.13 — M3.3 implementado, aguardando teste manual\
+**Versão:** 0.14 — Evolução da edição no canvas em M3.4\
 **Data:** 13 de outubro de 2026\
-**Status:** M1/M2, M3.1 e M3.2 aprovados pelo solicitante; M3.3 implementado, com teste manual e aceite pendentes.\
+**Status:** M1/M2 e M3.1/M3.2/M3.3 aprovados pelo solicitante; M3.4 especificado documentalmente, sem implementação.\
 **Plataforma:** aplicação web, inicialmente com interface e documentação em português brasileiro.
 
 ## 1. Visão do produto
@@ -132,19 +132,21 @@ O editor terá um único canvas e dois modos principais: **Planta** e **Fiada**.
 
 No modo Planta, o usuário cria e altera a arquitetura: paredes, portas, janelas, vãos e lajes. Paredes aparecem como faixas contínuas com contorno e espessura, sobre o grid de meio tijolo. A modulação das peças é calculada ao concluir cada desenho, mas a visualização padrão da Planta não mostra furos nem a divisão de cada tijolo; essa distribuição será inspecionada no modo Fiada.
 
-Cada parede reta terá identificador próprio e poderá ser criada, selecionada, excluída e redimensionada a partir de qualquer uma das duas extremidades. Não haverá ferramentas de mover ou dividir paredes nesta versão. A seleção mostrará realce, comprimento modular e propriedades compactas.
+Cada parede reta terá identificador próprio e poderá ser criada, selecionada, excluída, redimensionada a partir de qualquer uma das duas extremidades e movida com seus dependentes. Criar ou mover uma parede para continuidade colinear poderá unir paredes compatíveis, conforme §21. Não haverá ferramenta de dividir paredes. A seleção mostrará realce, comprimento modular e propriedades compactas. Movimento e união são evolução especificada para M3.4, ainda não disponível no aplicativo.
 
 A referência de desenho e encaixe será sempre a **face externa**, com espessura igual à largura do tijolo-base. A prévia mostrará a face de referência e o lado ocupado pela espessura, permitindo inverter esse lado antes de confirmar. Em paredes internas, “face externa” identifica a face adotada como referência, sem exigir detecção de recintos. Essa face permanecerá estável ao editar a parede. Encontros em L alinharão as faces externas no canto; o motor resolverá a região compartilhada sem duplicar peças. Cotas externas serão a referência principal; cotas internas poderão ser consultadas sem alterar o encaixe.
 
 **Desenho de paredes:** ativar Parede, pressionar o botão esquerdo no ponto inicial e arrastar. A direção será horizontal ou vertical conforme o deslocamento predominante. Uma prévia mostrará a faixa, extremidades, comprimento efetivo e encaixe no grid. Ao soltar, confirmar a parede modular, gerar as peças e atualizar os encontros. Um arraste sem comprimento mínimo de um módulo não criará parede. Escape antes de soltar cancelará o gesto sem alterar o projeto.
 
-**Conexões:** a proximidade de outra parede mostrará um alvo de conexão. Soltar sobre esse alvo alinhará a geometria e gerará o encontro. A tolerância visual acompanhará o zoom; uma conexão só será confirmada na posição modular indicada. As paredes participantes manterão seus identificadores; o motor evitará duplicar peças compartilhadas. Soltar no meio de uma parede poderá criar encontro em T.
+**Conexões:** a proximidade de outra parede mostrará um alvo de conexão. Soltar sobre esse alvo alinhará a geometria e gerará o encontro. A tolerância visual acompanhará o zoom; uma conexão só será confirmada na posição modular indicada. Nos encontros entre paredes distintas, as participantes manterão seus identificadores e o motor evitará duplicar peças compartilhadas. A exceção é a união colinear de §21, que consolida paredes e remapeia referências. Soltar no meio de uma parede poderá criar encontro em T.
 
 **Redimensionamento:** selecionar a parede e arrastar qualquer uma das duas extremidades, mantendo a extremidade oposta fixa e a orientação da parede. Mostrar prévia e comprimento durante o gesto; ao soltar, atualizar o trecho e suas dependências. Também permitir informar o comprimento, indicando qual extremidade será alterada. Vãos existentes manterão sua posição na planta; os que deixarem de caber serão sinalizados, sem exclusão ou deslocamento silencioso. Redimensionar uma parede não moverá automaticamente as demais; encontros serão recalculados pela nova geometria.
 
 **Seleção:** com a ferramenta Selecionar ativa, clicar seleciona um elemento e clicar em área vazia limpa a seleção. O realce de passagem do mouse será distinto da seleção. Controles do elemento terão prioridade sobre o desenho de uma nova parede. Paredes sobrepostas ou próximas permitirão escolher o elemento por um seletor contextual compacto.
 
-**Aceite:** desenhar, selecionar e redimensionar mantém a malha; conexões são antecipadas visualmente; a planta fica legível sem os detalhes de tijolos; abrir Fiada apresenta a distribuição gerada para a mesma geometria.
+**Movimento:** em Selecionar, arrastar o corpo de uma parede na Planta deslocará essa parede e seus dependentes, com prévia modular antes da soltura. Outras paredes permanecerão no lugar; conexões antigas serão desfeitas geometricamente e novas conexões serão recalculadas. Regras de dependências, conflitos e cancelamento em §21.
+
+**Aceite:** desenhar, selecionar, redimensionar e mover mantém a malha; continuidade compatível gera uma única parede; conexões e movimentos são antecipados visualmente; dependentes preservados conforme §21; a planta fica legível sem detalhes de tijolos; abrir Fiada apresenta a distribuição gerada para a mesma geometria. Verificação específica da evolução em M3.4.
 
 ### RF-03 — Modulação obrigatória de meio tijolo
 
@@ -153,6 +155,8 @@ Grid, desenho de paredes, portas, janelas e demais vãos usarão sempre o módul
 As extremidades da face externa de referência serão encaixadas na malha. A posição de um vão será medida ao longo dessa face, a partir da extremidade de menor coordenada da parede; a largura será a do vão bruto. Alterar essa extremidade recalculará a distância de referência, preservando a posição do vão na planta.
 
 Durante o arraste, o usuário verá a medida modular que será efetivada. Medidas digitadas incompatíveis mostrarão alternativas antes da confirmação. Não haverá modo de desenho livre fora da malha na primeira versão.
+
+Antes de iniciar paredes, portas, janelas ou vãos, destacar o quadrado do módulo correspondente ao ponto inicial que será efetivado, conforme §21. O destaque acompanha o encaixe real e não altera o projeto.
 
 A modulação vertical considerará altura-base, passo de assentamento e fiadas. Alturas de parede, peitoris e vãos serão compatibilizadas com as fiadas, mostrando diferenças para a altura solicitada.
 
@@ -558,3 +562,52 @@ Ajustes autorizados neste recorte: incluir/remover grautes e remover/restaurar c
 O [plano, seção 7](Ecovit-Plano-Implementacao.md) organiza a implementação por incremento e registra os resultados de M3.1/M3.2/M3.3. CT-09/10 e exemplos do [caderno, seção 8](Ecovit-Caderno-Tecnico.md) substituem os antigos bloqueios físicos de M3; fontes anteriores continuam como contexto, não parâmetros estruturais do aplicativo. Na migração para M3.2, níveis globais iniciam vazios e sua ativação exige configuração explícita; as faixas locais de vãos existentes seguem CT-09 automaticamente. Na migração para M3.3, categorias automáticas de graute iniciam desligadas, ativadas explicitamente por configuração; níveis/supressões existentes são preservados. Canaletas e controles de graute aparecem somente na Fiada.
 
 As fórmulas, limites geométricos, paginação e exemplos são definidos em CT-07–10 do caderno; representação persistente, identidade dos ajustes e processamento estão na Arquitetura §15. Os critérios e evidências de cada incremento ficam no plano.
+
+## 21. M3.4 — Evolução da edição no canvas — 13/10/2026
+
+Esta revisão evolui RF-02/03/06/07/09/10/11/12. M1/M2/M3.1–3.3 mantêm os relatos e aceites da versão entregue; M3.4 terá verificação e aceite próprios. A documentação autoriza especificação, não implementação. As regras abaixo substituem a antiga proibição de mover paredes e complementam as regras de identidade e supressão de §20, apenas nas operações novas.
+
+### Continuidade e união ao desenhar ou mover
+
+Com Parede ativa, desenhar para fora a partir da extremidade de uma parede compatível prolonga essa parede. Desenhar o intervalo entre duas paredes existentes contíguas ao novo trecho, colineares e compatíveis, consolida a cadeia em uma única parede. Vale nas duas direções de desenho, em horizontal ou vertical. A prévia deve realçar as paredes participantes e mostrar o comprimento total resultante antes de soltar. Uma parede perpendicular ligada à cadeia permanece independente.
+
+Compatibilidade exige mesmo pavimento, mesma linha da face de referência, mesma faixa ocupada pela espessura e mesma altura solicitada. Não considerar só o eixo visual: referências/lados que produzam faixas diferentes não se unem. O trecho novo de continuidade herda a altura da parede tocada; se tocar duas com alturas diferentes, não escolher uma altura silenciosamente. A prévia informa a incompatibilidade e que os elementos permanecerão separados; confirmar cria somente o trecho novo com suas propriedades visíveis, sem alterar as paredes incompatíveis. Sobreposição longitudinal de comprimento positivo não é tratada como continuidade neste recorte: mantém o tratamento de conflito geométrico existente, sem recurso genérico de apagar sobreposições.
+
+A união exige contato efetivo na malha, não mera proximidade. Não preencher distâncias que não foram desenhadas ou ocupadas pela parede movida. Aplicar à cadeia alcançada pelo gesto, incluindo paredes já contíguas aos seus extremos; não consolidar todo o projeto ao abrir, importar ou recalcular. Mover uma parede para uma ponta ou intervalo entre paredes colineares compatíveis também desencadeia união automática. A prévia realça toda a cadeia e mostra a geometria consolidada antes da soltura. Neste incremento, redimensionar pelas alças/campo continua sem união automática.
+
+Sem outra parede atingida, a extensão mantém o ID da parede existente. Na união de várias existentes, conservar o ID da participante cuja extremidade de menor coordenada estiver mais próxima do início geométrico da cadeia; empate por ID. A regra independe do sentido de arraste e da ordem de armazenamento. Remapear referências para esse ID, preservando IDs de vãos e ajustes. Vãos conservam posição mundial, dimensões e cotas; recalcular apenas sua distância à nova origem longitudinal. Supressões conservam os trechos originais conforme decisão D34-01. Grautes manuais conservam coordenadas mundiais e suas associações remapeadas; proposta automática é recalculada para a parede consolidada, podendo mudar sua distribuição.
+
+Uma união é uma operação de histórico: desfazer restaura todas as paredes originais, seus IDs, vãos e ajustes; refazer restaura a mesma consolidação. Intenções de encontros são reconciliadas com a nova topologia, sem fabricar solução para casos não suportados nem apagar ajustes incompatíveis silenciosamente.
+
+Extensão de uma única parede conserva suas supressões de parede inteira, que continuam abrangendo a extensão conforme M3.2. Converter para trechos herdados somente quando duas ou mais paredes existentes forem consolidadas. Se o novo desenho tocar diretamente paredes com alturas distintas, não unir parcialmente com apenas uma delas: manter o novo trecho independente com a altura padrão do pavimento explicitamente mostrada na prévia. Propagação pela cadeia para ao alcançar participante incompatível; não atravessá-la para unir outra parede. Depois da união, vãos antes pertencentes a paredes distintas podem apresentar conflito de separação: conservar todos, diagnosticar e permitir correção, sem apagar ou reposicionar.
+
+### Movimento de parede
+
+Em Planta e Selecionar, pressionar o corpo da parede e arrastar desloca somente essa parede. Um clique sem deslocamento seleciona; iniciar em vão ou alça conserva a edição própria desse elemento. Botão central e Espaço continuam exclusivos para navegação. Havendo alvos sobrepostos, resolver primeiro a parede pelo seletor contextual; não mover arbitrariamente um dos elementos.
+
+Movimento é translação horizontal/vertical combinada na malha, sem rotação ou alteração de comprimento, altura ou lado de espessura. Preservar o deslocamento entre ponto de pega e parede; mostrar a faixa proposta e seus vãos antes de soltar. A prévia não altera dados, não salva e não calcula o projeto inteiro. Escape, perda de foco ou soltura fora do canvas cancelam. Deslocamento modular zero não registra histórico. Durante processamento/somente leitura não permitir edição.
+
+Calcular o delta modular a partir do deslocamento desde o ponto de pega, sem encaixar novamente esse ponto à face da parede e provocar salto inicial. Alças da parede selecionada continuam prioritárias, inclusive com Parede ativa. Para desenhar a partir dessa ponta em vez de redimensionar, limpar a seleção primeiro. Em movimento, não reorientar a parede pelo deslocamento predominante do mouse.
+
+Vãos, inclusive pendentes, acompanham a mesma translação e mantêm IDs, posição relativa na parede, base e altura. Supressões acompanham a parede; suas cotas não mudam. Ajustes manuais exclusivos de graute acompanham o deslocamento com ID mantido. Ajustes compartilhados seguem D34-02. Não transportar peças geradas: encontros, canaletas e grautes automáticos são recalculados após confirmar. Paredes vizinhas e seus vãos não se movem; ajustes de encontro deixam de se aplicar se a associação perder validade e devem permanecer localizáveis para revisão/descarte, conforme RF-10.
+
+Conexões no novo local são determinadas pela geometria modular. Sobreposição ou encontro sem composição suportada preserva a nova intenção arquitetônica com diagnóstico, conforme a política existente; não empurrar vizinhas, girar, recortar ou deslocar novamente para corrigir o conflito. Uma operação de desfazer recupera a parede e todas as dependências, incluindo cópias de ajustes compartilhados.
+
+Ao encontrar continuidade compatível no destino, primeiro transladar a parede e seus dependentes; depois consolidar a cadeia pela mesma regra de identidade usada no desenho. Sem união, o ID da parede movida permanece; com união, prevalece o ID sobrevivente da cadeia e a seleção aponta para ele. Vãos da parede movida conservam a posição mundial atingida no destino, com offset recalculado na consolidada; vãos das demais paredes conservam a posição mundial anterior. Supressões da parede movida acompanham o delta antes de congelar o trecho herdado; supressões das vizinhas conservam seus trechos. Desdobrar graute compartilhado antes de remapear associações para a consolidada. Movimento e união confirmam em uma única operação, sem salvar ou gerar um estado intermediário. Desfazer restaura inclusive a posição anterior ao movimento e todas as paredes separadas.
+
+### Destaque do módulo de início
+
+Com Parede, Porta, Janela ou Vão ativos na Planta, mostrar preenchimento cinza discreto com contorno no quadrado de lado igual à largura-base que representa o encaixe inicial efetivo. Usar a mesma conversão tela/projeto e modulação do início do gesto, sem um segundo cálculo de snap. Não confundir com seleção ou prévia de comprimento. Para aberturas, projetar o ponto na parede hospedeira; apenas uma posição inicial elegível recebe destaque. Onde houver múltiplas hospedeiras, resolver o alvo contextual antes de indicar um início confirmado. Não afirmar que o tamanho final do vão será válido antes do arraste.
+
+O destaque acompanha zoom e câmera e permanece dentro da faixa hospedeira para aberturas. Em desenho de parede, indicar a célula junto ao ponto de face de referência; a prévia de arraste resolve orientação e lado da espessura. Não interceptar eventos. Ocultar fora do canvas, durante navegação, em outra ferramenta/modo, somente leitura ou processamento. Hover não grava, calcula nem cria histórico; cancelamento não deixa destaque preso.
+
+O ponto inicial é a âncora na malha e o quadrado representa a célula adjacente; não confundir a âncora com o centro do quadrado. Na extremidade final da parede, abertura pode iniciar arraste no sentido inverso: destacar a última célula interior com âncora na borda final. Havendo várias hospedeiras, clicar apresenta a escolha contextual e não inicia o arraste ambíguo; após escolher, novo arraste usa a hospedeira escolhida. O destaque é recalculado ao mudar ferramenta, câmera, alvo ou estado, mesmo sem novo movimento do mouse.
+
+### Decisões de preservação confirmadas
+
+- **D34-01 — Supressão ao unir:** preservar somente os trechos das paredes originais; não suprimir o novo intervalo de ligação nem ampliar para outra parede anteriormente não suprimida. Ajustes existentes mantêm IDs. Novas remoções pela Fiada continuam abrangendo a parede consolidada inteira. A interface deve distinguir supressão de trecho herdado da supressão da parede inteira e permitir restaurar cada ajuste identificado; não é edição de tijolo individual.
+- **D34-02 — Graute compartilhado ao mover:** preservar o ajuste nas associações das paredes que ficam e criar uma cópia com novo ID, coordenada transladada e associação à parede movida. Vale para inclusão e exclusão. Se o ajuste pertencer somente à parede movida, transladar o original sem cópia. Não mover o eixo da parede vizinha. Reconciliação de eixos coincidentes segue a precedência de exclusão de CT-10, sem perda dos registros de intenção.
+
+Se ajustes preservados coincidirem no mesmo eixo, qualquer exclusão aplicável prevalece sobre inclusões, independentemente da ordem dos registros. Adicionar/remover pelo furo define a ação explicitamente em todos os ajustes aplicáveis daquele eixo, conservando IDs e associações; não apagar ajustes pendentes na mesma coordenada. Descartar um ajuste continua agindo apenas pelo seu ID. Supressões de canaleta também são restauradas pelo ID escolhido; não restaurar todos os trechos da mesma parede/cota implicitamente.
+
+As regras geométricas e exemplos estão em CT-11/EX-36–48 do caderno; dados/migração na Arquitetura §16; tarefas, aceite e roteiro no Plano §8. Sem nova regra resistente, divisão/rotação de paredes, edição de tijolos, lajes, pavimentos ou quantitativos.

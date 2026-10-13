@@ -17,15 +17,13 @@ Consulte as seções pertinentes à alteração. Não duplique esses documentos 
 - Ao concluir, registre no plano o que foi implementado, verificações executadas, limitações e o que falta testar. Separe verificação do Codex de teste manual do solicitante; não declare este último concluído sem seu retorno.
 - Corrija falhas pertinentes antes de declarar a entrega pronta para teste. Mudanças de comportamento motivadas por feedback devem atualizar especificação e código juntos.
 
-## Restrições do projeto
+## Uso das especificações
 
-- Um aplicativo estático, um pacote, sem backend ou login. Siga a stack da arquitetura; não introduza bibliotecas, serviços ou abstrações sem necessidade concreta da entrega.
-- Domínio independente de React, Konva, Zustand e Dexie. Dados do projeto não são nós do canvas.
-- Face externa como referência, paredes ortogonais, espessura igual à largura do tijolo-base e coordenadas inteiras em décimos de milímetro.
-- Criar, excluir e redimensionar paredes por ambas as extremidades; sem mover/dividir paredes ou editar tijolos individuais.
-- Processamento sequencial, sem Worker, filas ou atualização incremental. A espera é aceitável; falhas devem liberar os controles e preservar o trabalho.
-- Interface em português brasileiro, centrada no canvas, com controles contextuais. Não exiba ferramentas ainda não implementadas.
-- Não invente regras construtivas, peças especiais, espaçamentos ou apoios. Consulte e registre a pesquisa no caderno técnico antes dos algoritmos correspondentes. Modelagem geométrica não é aprovação estrutural.
+- Use o PRD para comportamento e limites do produto, a arquitetura para decisões técnicas e contratos de dados, o caderno técnico para convenções geométricas/construtivas e o plano para escopo, andamento e aceite da entrega solicitada.
+- Não mantenha cópias dessas regras neste arquivo. Ao alterar comportamento ou decisão técnica, atualize o documento responsável junto com a implementação e registre a mudança no plano.
+- Distinga funcionalidade especificada de funcionalidade implementada e aprovada; não trate a existência de uma especificação como autorização para implementá-la.
+- Não introduza bibliotecas, serviços ou abstrações sem necessidade concreta da entrega e compatibilidade com a arquitetura.
+- Não invente regras construtivas, peças especiais, espaçamentos ou apoios. Consulte e registre a pesquisa no caderno técnico antes dos algoritmos correspondentes; não apresente convenções nominais como comprovação física ou aprovação estrutural.
 
 ## Validação
 

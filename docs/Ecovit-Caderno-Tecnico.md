@@ -1,7 +1,7 @@
 # Ecovit — Caderno técnico
 
-**Revisão:** 9 — M3.3 implementado com composição nominal-v6
-**Estado:** M2 e M3.1 aprovados em 12/10/2026; M3.2 aprovado em 13/10/2026. CT-10 implementado em M3.3, aguardando teste manual/aceite.\
+**Revisão:** 10 — Convenções de união e translação para M3.4
+**Estado:** M2 e M3.1 aprovados em 12/10/2026; M3.2 e M3.3 aprovados em 13/10/2026. CT-10 implementado; CT-11/EX-36–48 especificados para M3.4, ainda sem implementação ou verificação de código.\
 **Alcance implementado:** composição geométrica de paredes, vãos, canaletas e grautes em um pavimento, conforme [plano §7](Ecovit-Plano-Implementacao.md). O [PRD](Ecovit-PRD.md) continua sendo a referência de produto. CT-07/08/09 preservados; CT-10 e EX-22/32–34 exercitados por posições/intervalos independentes, categorias e ajustes. Evidências e limites por critério estão no plano.
 
 ## 1. Evidência, convenção e limite
@@ -324,3 +324,52 @@ Todos os valores abaixo são casos de teste geométricos, não dimensões recome
 - **EX-35 — Supressão coincidente:** uma faixa solicitada por nível global e por topo de vão é mostrada uma vez. Remover a faixa na fiada remove todas as origens em toda a parede selecionada, inclusive trechos separados e devolve tijolos comuns, mantendo grautes existentes. Regenerar ou reabrir não a restaura. Restaurar o ajuste explicitamente permite a automação novamente.
 
 Exemplo de aplicação dos padrões normativos do PRD §20: para h=7 e piso/início zero, janela com base 112/topo 217 (altura 105 cm) ocupa fiadas 17…31; canaleta inferior na 16 e superior na 32. Níveis globais com topo 112/224 coincidem com essas faixas e não duplicam peças. Os números deste exemplo são mantidos como resultado esperado independente, sem representar implementação nem teste do aplicativo.
+
+## 9. M3.4 — Convenções de edição geométrica — 13/10/2026
+
+Definições do produto, não pesquisa ou recomendação construtiva. Sem novo apoio, espaçamento resistente ou peça especial. CT-07–10 permanecem; CT-11 explicita exceções de transformação para operações de edição autorizadas no PRD §21. Exemplos abaixo são resultados esperados independentes, ainda não testes executados.
+
+### CT-11 — União e translação com preservação de intenção
+
+Normalizar intervalos longitudinais [a,b), a < b, pela face externa e faixa de espessura ocupada. Continuidade liga extremidades sem lacuna na posição confirmada; diferenças de sentido de desenho não alteram compatibilidade. A união de intervalos contíguos é [min(a),max(b)); não eliminar uma parede perpendicular no encontro. Altura/pavimento/faixa devem coincidir. Não usar união para resolver sobreposição longitudinal positiva.
+
+Vão em posição mundial u passa a offset u − a_novo ao unir; mantém u, largura, base e altura. Na translação (dx,dy), preservar offset e somar delta às coordenadas da parede. Eixo manual exclusivo soma o mesmo delta; compartilhado mantém original nas associações imóveis e copia intenção transladada para a parede movida. Inclusões e exclusões recebem o mesmo tratamento; eixos automáticos são recalculados por CT-10. Deslocamento deve ser múltiplo de m nos dois eixos; não arredondar centros fracionários de módulos ímpares, pois a identidade persiste na origem inteira da célula.
+
+Na união, alcance de supressão é a extensão original da parede à qual se aplicava, não o comprimento final. Intersectar intervalos herdados com células de alvenaria da parede consolidada; manter união das supressões sobrepostas e preservar suas identidades. Novas remoções continuam cobrindo a parede/fiada inteira. Desfazer deve recuperar alcance original e associações, além da geometria. Para translação, cotas verticais permanecem; alcances longitudinais herdados acompanham o delta e supressões de parede inteira acompanham sua entidade.
+
+Redimensionamento continua regido por CT-07: conserva posição mundial dos vãos e eixos; não confundir com movimento. União não garante fase idêntica à paginação independente das antigas paredes: recompor o percurso resultante preservando escolhas aplicáveis, nunca conservar peças antigas como entradas. Conflitos de encontros e alturas continuam diagnosticados; nenhuma edição implica aprovação estrutural.
+
+Movimento que cria continuidade compatível compõe translação e união atomicamente. Calcular os alcances herdados depois do delta, preservando trechos das paredes imóveis. Vãos movidos conservam a posição mundial de destino e vãos imóveis sua posição anterior; offsets são derivados da origem final consolidada. Desdobrar ajustes compartilhados antes de remapear associações; desfazer restaura o estado anterior a ambas as transformações. A prévia usa essa mesma composição de operações.
+
+### Exemplos de aceite de M3.4
+
+Base 25×12,5×7 cm, piso/início zero, altura 280 cm, parede horizontal ocupando y=0…12,5, salvo indicação contrária. Coordenadas em cm nesta tabela.
+
+| ID | Entrada | Resultado esperado |
+|---|---|---|
+| EX-36 | Parede A [0,100); desenhar [100,200) | Uma parede [0,200), ID de A, uma operação de histórico; desenhar em sentido inverso dá mesma geometria. |
+| EX-37 | A [0,100), B [200,300); desenhar ponte [100,200); janela de B em [225,250) | Uma parede [0,300), ID de A, janela com mesmo ID e offset 225; desfazer restaura A/B e offset 25 em B. Parede perpendicular na coordenada 100 permanece independente. |
+| EX-38 | Mesmo EX-37; A tem supressão no topo absoluto 112 e B não | Supressão herdada somente [0,100), mesma identidade; ponte/B conservam canaletas quando houver demanda. Nova remoção completa suprime [0,300); restaurar só esta última deixa supressão herdada. |
+| EX-39 | Parede [0,400), janela offset 100/largura 100/base 98/altura 112, eixo manual em origem (100,0); mover delta (25,50) | Parede [25,425), y=50; janela [125,225), cotas iguais; origem de graute (125,50), intervalos [0,98) e [210,280). Vizinha fica onde estava; IDs exclusivos preservados. |
+| EX-40 | L com ajuste manual compartilhado na origem (0,0); mover só parede horizontal por (25,50) | Original mantém ID, origem (0,0) e associação vertical; cópia em (25,50) com novo ID e associação horizontal. Mesma regra para exclusão. Desfazer recupera um único ajuste compartilhado. |
+| EX-41 | Ponte de EX-37 com B altura 273; depois variante B com faixa de espessura no lado oposto; tentativa de mover para sobreposição | Paredes incompatíveis não são unidas, motivo na prévia; movimento para conflito mantém intenção com diagnóstico, sem mover vizinha. Escape/soltura fora preservam todo documento. |
+| EX-42 | Hover nas quatro ferramentas, bases de m=12,5/15/14, vários zooms; abertura fora de parede; navegar com Espaço | Destaque representa mesmo encaixe do início confirmado, quadrado de lado m; abertura sem hospedeira não tem destaque elegível; navegar/hover não alteram documento, cálculo ou histórico. |
+| EX-43 | A [0,100), B [200,300), ambas y=0; C [0,100), y=50, com janela offset 25/largura 25 e supressão em 112; mover C por (100,−50) | Prévia e confirmação de uma parede [0,300), ID de A; janela de C em [125,150), mesmo ID, offset 125; supressão herdada só [100,200). Desfazer restaura A/B/C e janela em [25,50), y=50, offset 25; refazer recupera mesmos IDs. |
+
+### Complementos de CT-11 após revisão de integração
+
+Extensão de uma única entidade preserva supressão de parede inteira abrangendo o novo trecho. Congelar alcance somente na consolidação de duas ou mais entidades existentes. No desenho que toca diretamente alturas distintas, não escolher uma participante por ordem nem fazer união parcial: prévia mostra a altura padrão para o novo trecho independente. Na cadeia transitiva compatível, interromper a busca em fronteira incompatível. Extensão/união de zero comprimento e movimento de delta zero não são comandos para normalizar paredes antigas.
+
+Deslocamento é snap do delta desde o ponto de pega; não snap da posição inicial do mouse. A face/espessura conserva a referência durante todo o gesto. Alças selecionadas mantêm prioridade sobre criação, e o eixo da parede não muda quando o usuário arrasta diagonalmente.
+
+Exclusões de graute aplicáveis prevalecem sobre inclusões coincidentes pela geometria, não pela ordem dos registros. Clique explícito muda a ação de todos os registros elegíveis no eixo sem perder IDs; descarte age em uma intenção identificada. Alcances de canaleta compartilham parede/cota sem compartilhar identidade; restauração é por UUID. A união de duas entidades não deve apagar registros geométricos iguais que representam intenções distintas.
+
+Escolha de encontro só continua aplicada após troca de IDs/segmentação se ocupação, alturas e percurso canônico do componente inteiro permanecerem equivalentes. Se a geometria muda ou duas escolhas passam a disputar um componente, conservar escolhas pendentes com âncora e ID, sem escolher uma fase arbitrária. Não reancorar fase usando apenas ID sobrevivente. Regras de persistência/diagnóstico em Arquitetura §16.
+
+| ID | Entrada | Resultado esperado |
+|---|---|---|
+| EX-44 | A [0,100) com supressão wall em 112; B [250,300); prolongar A até 200; redimensionar início de B até 200, sem união; desenhar extensão [300,400) consolidando A/B | Extensão simples mantém wall abrangendo [0,200); posterior união converte para range [0,200), não [0,100), sem suprimir B nem a nova extensão [300,400). Mesmo ID do ajuste. |
+| EX-45 | Dois ajustes elegíveis no mesmo eixo, um include e outro exclude com IDs distintos; inverter ordem no arquivo; depois Adicionar pelo furo | Antes do clique, eixo ausente nas duas ordens; após adicionar, ambos viram include com seus IDs/associações preservados. Descartar um não apaga o outro; ajuste inelegível na mesma coordenada permanece pendente. |
+| EX-46 | Escolha B num L; mover um ramo para desconectar; depois desfazer; variante: componentes com escolhas distintas unidos pelo gesto | Primeira escolha preservada pending com ID/âncora localizável; desfazer recupera escolha aplicada. Na união de componentes, nenhuma fase prevalece pela ordem; intenções afetadas ficam pending até escolha explícita/descarte. |
+| EX-47 | A [0,100) com porta [75,100), B [100,200) com porta [100,125), ambas base 0/topo 105; desenhar extensão [200,300) que consolida a cadeia | Uma parede [0,300), duas portas com IDs/posições preservados; ausência de módulo entre elas gera diagnóstico de separação, sem recuar, reduzir ou excluir portas. Desfazer restaura hospedeiras originais. |
+| EX-48 | Parede [0,100); iniciar janela na extremidade 100 e arrastar até 75; depois usar múltiplas hospedeiras e mudar zoom sem mover mouse | Hover mostra célula interior [87,5;100) com âncora em 100; gesto propõe vão [75,100). Alvo ambíguo pede escolha antes do novo arraste; destaque acompanha câmera/ferramenta sem alteração do documento. |
