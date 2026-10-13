@@ -33,7 +33,7 @@ async function exported(page: Page) {
   return JSON.parse(await readFile((await file.path())!, "utf8"));
 }
 
-test("E1 criar, desenhar, editar ambas as pontas, histórico, salvar e transportar", async ({
+test("M1 criar, desenhar, editar ambas as pontas, histórico, salvar e transportar", async ({
   page,
   browser,
 }) => {
@@ -75,7 +75,7 @@ test("E1 criar, desenhar, editar ambas as pontas, histórico, salvar e transport
   await context.close();
 });
 
-test("E1 medidas incompatíveis, base personalizada, lado e gestos cancelados", async ({
+test("M1 medidas incompatíveis, base personalizada, lado e gestos cancelados", async ({
   page,
 }) => {
   await page.goto("/");
@@ -124,7 +124,7 @@ test("E1 medidas incompatíveis, base personalizada, lado e gestos cancelados", 
   );
 });
 
-test("E1 arquivo inválido preserva trabalho; falha de escrita permite download atual", async ({
+test("M1 arquivo inválido preserva trabalho; falha de escrita permite download atual", async ({
   page,
 }) => {
   await create(page);
@@ -156,7 +156,7 @@ test("E1 arquivo inválido preserva trabalho; falha de escrita permite download 
   expect(current.model).toEqual(original.model);
 });
 
-test("E1 segunda aba bloqueada e desbloqueada após encerrar a primeira", async ({
+test("M1 segunda aba bloqueada e desbloqueada após encerrar a primeira", async ({
   page,
   context,
 }) => {
@@ -189,7 +189,7 @@ test("E1 segunda aba bloqueada e desbloqueada após encerrar a primeira", async 
   ).toBeEnabled();
 });
 
-test("E1 encontro L/T, seleção, excluir e atalhos sem interferir em campos", async ({
+test("M1 encontro L/T, seleção, excluir e atalhos sem interferir em campos", async ({
   page,
 }) => {
   await create(page);
