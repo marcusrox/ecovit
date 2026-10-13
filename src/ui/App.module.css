@@ -818,6 +818,19 @@
   max-height: calc(100vh - 40px);
   overflow-y: auto;
 }
+.groutOptions {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0;
+}
+.groutOptions label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.groutOptions input {
+  width: auto;
+}
 @media (max-width: 1100px) {
   .header {
     gap: 12px;

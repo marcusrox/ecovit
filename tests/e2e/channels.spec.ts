@@ -338,8 +338,13 @@ test("M3.2 snapshot M3.1 validado antes da migração e adulterado recusado", as
   page,
 }) => {
   const d = fixture();
-  const { channelLevels: _levels, ...project } = d.project;
+  const {
+    channelLevels: _levels,
+    groutSettings: _grout,
+    ...project
+  } = d.project;
   void _levels;
+  void _grout;
   const g = generate(d, "nominal-v4"),
     old = {
       ...d,
@@ -350,9 +355,9 @@ test("M3.2 snapshot M3.1 validado antes da migração e adulterado recusado", as
     };
   await load(page, old);
   const before = await exported(page);
-  expect(before.schemaVersion).toBe(4);
+  expect(before.schemaVersion).toBe(5);
   expect(before.project.channelLevels).toEqual([]);
-  expect(before.generated!.convention).toBe("nominal-v5");
+  expect(before.generated!.convention).toBe("nominal-v6");
   expect(before.generated!.channels!.map((b) => b.course)).toEqual([14, 31]);
   const bad = structuredClone(old);
   bad.generated.courses[0].pieces[0].width += 1250;

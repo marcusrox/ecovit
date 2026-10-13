@@ -2,8 +2,8 @@
 
 **Data:** 10 de outubro de 2026  
 **Atualização documental:** 13 de outubro de 2026\
-**Base:** [PRD 0.12](Ecovit-PRD.md) e [Arquitetura 1.5](Ecovit-Arquitetura-Tecnica.md)\
-**Estado:** M1, M2, M3.1 e M3.2 aprovados; aceites globais de M2 e M3.1 em 12/10/2026, e de M3.2 em 13/10/2026. M3.3 planejado. Relatórios e roteiros na seção 7. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais.
+**Base:** [PRD 0.13](Ecovit-PRD.md) e [Arquitetura 1.6](Ecovit-Arquitetura-Tecnica.md)\
+**Estado:** M1, M2, M3.1 e M3.2 aprovados; M3.3 implementado e verificado pelo Codex, aguardando teste manual/aceite. Relatórios e roteiros na seção 7. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais.
 
 **Endereço local padrão:** `http://127.0.0.1:5173/`, conforme o README. Referências a `localhost` nos relatórios históricos preservam a origem usada naquela ocasião. Projetos salvos em `localhost` permanecem naquela origem; para transferi-los, baixar `.ecovit` na origem antiga e carregar na origem escolhida.
 
@@ -21,7 +21,7 @@ O plano organiza a implementação parcial do PRD; um requisito atendido parcial
 |---|---|---|---|---|
 | M1 — Planta editável e persistência | Criar projeto, desenhar/editar paredes, desfazer, salvar e transportar arquivo | RF-01/02/03/08/09/11/12, nos recortes abaixo | Nenhuma | Aprovada pelo solicitante em 10/10/2026 |
 | M2 — Composição e inspeção de fiadas | Catálogo nominal, retas, L, retângulo, T básico, transição simples de alturas, inspeção e persistência; cruz apenas reconhecida e diagnosticada | RF-01/03/04/05/09/10, persistência RF-11/12 | M1 e definições P1–P5 do caderno | Aprovada em 12/10/2026; relatório na seção 6 |
-| M3 — Vãos e elementos construtivos | Portas, janelas e vãos integrados à composição; canaletas e grauteamentos automáticos e ajustáveis | RF-04/06/07/09/10 | M2 e definições nominais CT-07–10 | M3.1 aprovado em 12/10/2026; M3.2 aprovado em 13/10/2026; M3.3 planejado |
+| M3 — Vãos e elementos construtivos | Portas, janelas e vãos integrados à composição; canaletas e grauteamentos automáticos e ajustáveis | RF-04/06/07/09/10 | M2 e definições nominais CT-07–10 | M3.1/M3.2 aprovados; M3.3 implementado, aguardando teste manual/aceite |
 | M4 — Lajes e múltiplos pavimentos | Lajes, limites verticais, até três pavimentos e verificação dos alinhamentos | RF-08/13 e propagação dos RF-04/05/07 | M3 e pesquisa de transições verticais | A detalhar |
 | M5 — Consulta e conclusão da primeira versão | Quantitativos, duplicação de projetos e fechamento dos cenários restantes do PRD | RF-10/11/12 e cenários de aceite | M4 | A detalhar |
 
@@ -133,7 +133,7 @@ M1 estará pronta para teste do solicitante quando seus critérios tiverem evid�
 | Implementação | M1 aprovada; M2 implementada (relatório na seção 6) |
 | Comandos e testes automatizados | Implementados; resultados no relatório abaixo |
 | Teste manual do solicitante | Aprovação global recebida em 10/10/2026; sem checklist individual informado |
-| Próxima ação | Implementar M3.3 quando solicitado, conforme PRD §20, CT-10 e Arquitetura §15; aceite de M3.2 não inicia programação do próximo incremento |
+| Próxima ação | Teste manual e aceite de M3.3 conforme roteiro da seção 7; não iniciar M4 sem solicitação própria |
 
 ## 4. Relatório da implementação de M1 — 10/10/2026
 
@@ -446,7 +446,7 @@ O solicitante declarou: **“O M2 está validado por mim.”** M2 aprovada, incl
 
 ## 7. M3 — Vãos, canaletas e grautes nominais
 
-**Revisão:** 13/10/2026. **Estado:** M3.1 e M3.2 aprovados pelo solicitante; M3.3 somente especificado. O usuário confirmou desenho nominal, configurações de projeto, automação como ponto de partida e ajustes persistentes. PRD §20, Arquitetura §15 e Caderno revisão 8 CT-07–10/EX-21–35 são as referências. Os antigos bloqueios por apoios dimensionados e passagem física deixam de se aplicar. Aceites globais e relatório de M3.2 ao final desta seção.
+**Revisão:** 13/10/2026. **Estado:** M3.1 e M3.2 aprovados pelo solicitante; M3.3 implementado, aguardando teste manual/aceite. O usuário confirmou desenho nominal, configurações de projeto, automação como ponto de partida e ajustes persistentes. PRD §20, Arquitetura §15 e Caderno revisão 9 CT-07–10/EX-21–35 são as referências. Os antigos bloqueios por apoios dimensionados e passagem física deixam de se aplicar. Aceites globais e relatórios ao final desta seção.
 
 ### Escopo e sequência
 
@@ -458,7 +458,7 @@ Desenhar portas, janelas e vãos; gerar canaletas por níveis e junto a todos os
 | M3.2 | Lista de níveis globais, canaletas automáticas superiores/inferiores, representação e remoção em Fiada | M3.1, CT-09, largura do vão + um módulo por lado e remoção da parede/fiada inteira confirmados; não depende de cálculo de apoio |
 | M3.3 | Categorias e distância de graute, geração por malha, clique +/− e preservação de ajustes | M3.1/M3.2, CT-10, quatro seletores inicialmente habilitados |
 
-Cada incremento entra no aplicativo real e recebe testes; não criar protótipo. M3.1/M3.2 estão aprovados. Grautes permanecem sem geração/controles; iniciar M3.3 somente mediante solicitação de implementação.
+Cada incremento entra no aplicativo real e recebe testes; não criar protótipo. M3.1/M3.2 estão aprovados. M3.3 autorizado e implementado em 13/10/2026. Não incluir lajes, múltiplos pavimentos ou quantitativos nesta entrega.
 
 ### Referências de implementação por incremento
 
@@ -716,3 +716,71 @@ O solicitante declarou: **“M3.2 validado.”** Registrado aceite global de M3.
 M3.3 é o próximo incremento. Suas dependências M3.1/M3.2 estão aprovadas, e as regras nominais de graute estão definidas no PRD §20, CT-10/EX-22/32–34 e Arquitetura §15. Configurações, distribuição por malha, intervalos interrompidos por vãos, clique por eixo e precedência dos ajustes têm critérios M3-A13/A14 e partes aplicáveis dos critérios compartilhados. Não identificada pendência de decisão de produto que impeça iniciar esse recorte. Representação concreta de configuração/ajustes, limites defensivos e evolução explícita de formato/convenção serão implementadas junto com a migração e seus testes, sem alterar regras aprovadas. Projetos legados devem iniciar com categorias de graute desligadas, conforme a arquitetura.
 
 Atualizados plano, PRD, caderno, arquitetura e README. Revisão documental de consistência e `git diff --check`; sem mudanças de código, commit ou repetição de testes do aplicativo. Este registro e a avaliação de prontidão não iniciam a implementação de M3.3.
+
+### Recorte de verificação de M3.3
+
+Verificar M3-A13/A14 integralmente no alcance nominal. Nos critérios compartilhados A07–10/A15/A16, verificar graute, sua integração com vãos/canaletas, configurações, edição, histórico, integridade/migração e falhas. Reexecutar regressões M1/M2/M3.1/M3.2. Resultados automatizados não substituem teste manual/aceite do solicitante; lajes/múltiplos pavimentos/quantitativos não fazem parte da verificação.
+
+### Relatório da implementação de M3.3 — 13/10/2026
+
+Antes da implementação, por solicitação expressa, commit **e25ed2d** reuniu M3.1/M3.2 e seus aceites/documentação; push para `origin/main` concluído. Alteração preexistente em `tests/e2e/editor.spec.ts` ficou fora desse commit e foi preservada. M3.3 foi implementado depois desse push; suas alterações permanecem locais para validação, sem segundo commit/push nesta entrega.
+
+Implementado no aplicativo existente, versão 0.5.0. Grupo Graute vertical nas Configurações: Encontros, Laterais dos vãos, Pontas livres e Intervalos em paredes longas, independentes; distância positiva, padrão 100 cm; Aplicar/Cancelar/Restaurar por grupo preservam ajustes e vãos. Novos projetos recebem quatro categorias habilitadas; projetos legados recebem quatro desligadas, com ativação explícita. Distância menor que o módulo, quando distribuição está habilitada, oferece o módulo como alternativa explícita. Nenhum arredondamento oculto; passo nominal por CT-10.
+
+O motor usa a alvenaria efetivamente composta após vãos/canaletas: centros das células nominais, candidatos por categoria, referências virtuais nas pontas e âncoras automáticas habilitadas para distribuir desde a menor coordenada. Coincidências se unem por coordenada com origens preservadas, inclusive encontros L/T, sem multiplicar grautes por parede. Graute ocupa todos os intervalos de alvenaria do eixo, descontando aberturas; permite trechos separados acima/abaixo, conforme EX-22/33. Explicitada essa leitura de CT-10 para eliminar a ambiguidade da frase anterior sobre alvenaria na altura inteira, preservando os exemplos e comportamento aprovado. Referências virtuais não criam graute sozinhas. Exclusões aplicam depois da distribuição, sem reposição compensatória; inclusões manuais não viram âncoras de redistribuição.
+
+Na Fiada, ferramenta Graute exibe marcadores e preenchimento escuro; hover +/− indica adicionar/remover, clique confirmado na soltura afeta todo o eixo. Canais de canaleta expõem marcadores nominais nesta ferramenta; grautes existentes continuam visíveis fora dela. Seletor de furos e botão contextual oferecem ação equivalente por teclado, consulta de coordenada e intervalos. Escape, soltura fora ou deslocamento de arraste cancelam; navegação central/Espaço e camada de referência não editam. Selecionar e Planta encerram Graute; ferramentas não aparecem simultaneamente selecionadas. Zoom reduzido sem marcador legível não recebe clique de graute; ampliar zoom ou usar o seletor. Fora de Graute, seleção de vãos/canaletas/encontros é preservada.
+
+Inclusões/exclusões persistem por UUID e coordenada mundial da célula, com paredes associadas. Adicionar novamente conserva ID e muda para inclusão explícita; descartar ajuste permite novamente a automação. Edição de vão recalcula intervalos; extensão/encurtamento preserva coordenada. Sem alvenaria/associação elegível, conservar ajuste não aplicado com diagnóstico, localização e descarte, sem transferir ao vizinho. Excluir parede remove sua associação e elimina ajuste sem parede remanescente na mesma operação desfazível. Supressão/restauração de canaleta preserva grautes. Restaurar configuração preserva ajustes.
+
+Arquivo versão 5/composição nominal-v6. `project.groutSettings`, `adjustments.grout` e `generated.grouts` seguem Arquitetura §15; coordenadas persistidas são inteiras na origem da célula, centro derivado, inclusive módulo 12,51 cm. Origem de encontro usa tipo/coordenada, evitando copiar a longa identidade de todo o componente em cada eixo. Dados do domínio independem de canvas/React; eixos/intervalos gerados não entram no histórico. Snapshots anteriores são conferidos com convenção original antes de migrar; versão 4 preserva níveis/supressões de M3.2, sem ativar grautes. Arquivo original intacto, IndexedDB na mesma tabela, importação como cópia, leitura bloqueada sem gravação nem recálculo. Rejeitados snapshots adulterados, órfãos, duplicatas e versões futuras. Limites adicionais: 10 mil ajustes, 20 mil eixos e 200 mil intervalos, além dos existentes; sem truncamento.
+
+#### Verificações pelo Codex
+
+| Verificação | Resultado real |
+|---|---|
+| `npm run typecheck` | Passou explicitamente durante implementação e no build final |
+| `npm run lint` | Passou, sem erros ou avisos na versão final |
+| `npm test` | 125 passaram: 21 de graute, 17 de estado/histórico/falhas, 5 de IndexedDB e 82 de regressões de domínio/composição/vãos/canaletas |
+| `npm run test:e2e` | Suíte completa: 72 passaram, 36 em Chrome e 36 em Edge, incluindo 16 de M3.3 e 56 de regressões. Após ajuste da identidade compacta de origens de encontro, 16 fluxos pertinentes de M3.3 passaram novamente; após explicitar os rótulos de entrada/geometria/limite, 2 fluxos de diagnóstico/correção passaram nos dois navegadores |
+| `npm run build` | Passou; JS final 845,44 kB / 263,96 kB gzip. Avisos conhecidos sobre comentários de otimização do Zod e bundle maior que 500 kB, não impeditivos |
+| Revisão visual | Configurações, canaleta com graute, eixo selecionado e carga em 1440×1000 inspecionados; botão/realce/intervalos legíveis. Corrigida indicação simultânea de Selecionar/Graute. Capturas `.tools/m33-*.png`, ignoradas pelo Git |
+| Git e documentação | Base aprovada enviada como e25ed2d; alteração preexistente de editor.spec.ts preservada com hash inicial; links locais e `git diff --check` conferidos no encerramento |
+| Servidor local | HTTP 200 confirmado em `http://127.0.0.1:5173/` |
+| Teste manual/aceite de M3.3 | Pendente do solicitante; nenhum passo declarado concluído |
+
+Rodada intermediária de navegador: 70/72 passaram; o cenário de carga inicial excedia o limite defensivo existente de 100 mil células/fiadas estimadas (100×32×40=128 mil), causando recusa de geração corretamente. Corrigida a preparação do cenário para 100 paredes de 20 módulos (80 mil estimadas), sem ampliar limite ou alterar comportamento para satisfazer o teste. Corrigidos dois imports/variáveis não usados encontrados pelo lint. Executadas verificações finais depois das correções; o ajuste final de identidade compacta também foi seguido por domínio/persistência, lint, build e e2e pertinentes. Testes em perfis isolados/cópias, sem alterar arquivos pessoais.
+
+Carga de M3.3 no aplicativo: 100 paredes de 250 cm/altura 280 cm, cada janela em 100–200 cm/base 98/topo 210; somente categoria Intervalos habilitada, d=100. Posições independentes 106,25 e 206,25 cm por parede: primeiro eixo com [0,98) e [210,280), segundo com [0,280). Total 200 eixos/300 intervalos, conferidos no arquivo baixado. Medição final: 2.995 ms em Chrome e 2.521 ms em Edge, incluindo abertura da página, importação, geração e salvamento. Algumas verificações concorreram na máquina. Não é tempo isolado do motor nem garantia de cinco segundos/100 mil peças/três pavimentos.
+
+#### Cobertura dos critérios no recorte M3.3
+
+| Critérios | Evidência e alcance |
+|---|---|
+| M3-A13 | Quatro categorias independentes, referências virtuais, distância 100, EX-32/34 por posições independentes, passos 90/98 cm e módulo ímpar; sem dimensionamento físico |
+| M3-A14 | Hover +/−, clique e botão por teclado afetam eixo inteiro; EX-33 acima/abaixo de janela, vazio sem alvo, camada de referência/navegação/cancelamentos sem edição; exclusão sem compensação |
+| M3-A07 (parte grautes) | Representação na Fiada, marcadores em canaletas, preenchimento escuro e câmera preservada; referência sem ação; Planta mantém arquitetura |
+| M3-A08 (parte grautes) | Distância incompatível como entrada, ajuste sem alvenaria como geometria, limite separado de falha do motor; intenção/cota/eixo localizáveis; descarte explícito; sem alerta estrutural |
+| M3-A09 (parte grautes) | Envelope 5/nominal-v6, transporte, reabertura, migração M3.2 por convenção original, IndexedDB sem sobrescrita na leitura; adulteração/órfãos/duplicatas/futuro recusados; bloqueio de edição preserva snapshot antigo |
+| M3-A10 (parte grautes) | Histórico mantém IDs/configurações, exclusão/desfazer de dependentes; duas gravações, motor, quota e recuperação com download íntegro; sem filas ou controles presos |
+| M3-A15 (parte grautes) | Chrome/Edge, bases 25/30/28 e módulo 12,51, altura 6 cm, lados/direções, piso/início diferentes, limites e determinismo; regressões M1/M2/M3.1/M3.2 passaram |
+| M3-A16 (parte grautes) | Defaults de novos projetos, legados com categorias desligadas, categorias/distância, Aplicar/Cancelar/Restaurar, alternativas explícitas, inclusões/exclusões preservadas e histórico |
+
+#### Roteiro manual específico de M3.3 — pendente do solicitante
+
+Executar `./Start-Ecovit.ps1` na raiz, manter o terminal aberto e acessar `http://127.0.0.1:5173/` em Chrome ou Edge. Usar projetos de teste com base 25×12,5×7 cm, parede 400×280 cm, piso/início zero. Ampliar o zoom para distinguir furos; o seletor também permite ação por teclado.
+
+| Passo | Ação | Esperado |
+|---|---|---|
+| 1 | Novo projeto; Configurações → Graute vertical; consultar quatro categorias/distância; alterar e Cancelar; repetir e Aplicar; Restaurar e desfazer | Defaults quatro habilitadas/100 cm; cancelar não modifica; aplicar/restaurar desfazíveis; vãos e ajustes existentes preservados |
+| 2 | Parede reta 400; deixar somente Intervalos habilitado, d=100; Fiada 1 | EX-32: eixos 106,25/206,25/306,25; pontas 6,25/393,75 não preenchidas; habilitar Pontas livres acrescenta ambas |
+| 3 | Ativar Graute; hover e remover 206,25; mudar fiada, recarregar/reabrir e recalcular; adicionar novamente | Eixo removido em toda altura e sem substituto compensatório; exclusão persiste; adicionar desfaz a exclusão com ID mantido |
+| 4 | Desligar todas as categorias; janela posição 100/largura 100/base 98/altura 112; fiada 10, incluir em x=106,25 | EX-33: intervalos [0,98) e [210,280), preenchidos escuros; fiada 20 é vazio sem clique; remover na 35 elimina ambos |
+| 5 | No projeto anterior, fiada 31, selecionar furo em canaleta e consultar intervalos; sair de Graute, remover/restaurar faixa de canaleta | Marcador nominal clicável no canal; canaleta retorna comum, graute preservado; Planta sem canal/graute; Selecionar encerra ferramenta |
+| 6 | Criar L/T com Encontros habilitado e testar Laterais/Pontas separadamente; no canto compartilhado incluir/remover | Um eixo compartilhado por coordenada; laterais nos centros imediatamente junto ao vão; sem pontas internas em retas conectadas |
+| 7 | Usar seletor de furos e botão Adicionar/Remover; Escape antes de soltar; soltar fora, navegar com central/Espaço e clicar referência adjacente | Ação equivalente por teclado; cancelamentos/navegação/referência sem mudanças; sem inclusão residual |
+| 8 | Incluir eixo e encurtar parede além dele; abrir Diagnósticos; desfazer; repetir e Descartar ajuste | Coordenada/ID preservados com pendência, sem transferência; desfazer reativa; descarte elimina somente o ajuste; excluir/desfazer parede restaura dependentes |
+| 9 | Baixar e importar em outro navegador; importar cópia M3.2 com canaletas suprimidas; ativar graute explicitamente | Arquivo versão 5, cópia independente e ajustes preservados; M3.2 inicia categorias desligadas, níveis/supressões intactos; ativação explícita |
+| 10 | Bases 30/28 com d=100; distância menor que um módulo e Aplicar; Restaurar padrões com exclusão existente | EX-34 passos 90/98 cm, sem 105/112; alternativa explícita para d<m; restaurar configuração não apaga exclusão |
+
+Limitações: representação nominal, sem dimensões físicas de furos/canais, resistência, aço, aprovação estrutural ou quantitativos. Lajes/múltiplos pavimentos permanecem em M4; cruz/transições sem suporte de M2 não foram ampliadas. Não houve auditoria completa de acessibilidade. M3.3 aguarda teste manual e aceite; M3.1/M3.2 continuam aprovados. Não iniciar M4 automaticamente.

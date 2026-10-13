@@ -1,8 +1,8 @@
 # Ecovit — Caderno técnico
 
-**Revisão:** 8 — M3.2 implementado com composição nominal-v5
-**Estado:** M2 e M3.1 aprovados pelo solicitante em 12/10/2026; CT-09 implementado em M3.2, aprovado em 13/10/2026. CT-10 planejado para M3.3.\
-**Alcance implementado:** composição geométrica de paredes, vãos e canaletas em um pavimento, conforme [plano §7](Ecovit-Plano-Implementacao.md). O [PRD](Ecovit-PRD.md) continua sendo a referência de produto. CT-07/08 preservados; CT-09 e EX-26/28/31/35 exercitados por posições/contagens, união de origens e supressões. Grautes permanecem futuros; evidências e limites por critério estão no plano.
+**Revisão:** 9 — M3.3 implementado com composição nominal-v6
+**Estado:** M2 e M3.1 aprovados em 12/10/2026; M3.2 aprovado em 13/10/2026. CT-10 implementado em M3.3, aguardando teste manual/aceite.\
+**Alcance implementado:** composição geométrica de paredes, vãos, canaletas e grautes em um pavimento, conforme [plano §7](Ecovit-Plano-Implementacao.md). O [PRD](Ecovit-PRD.md) continua sendo a referência de produto. CT-07/08/09 preservados; CT-10 e EX-22/32–34 exercitados por posições/intervalos independentes, categorias e ajustes. Evidências e limites por critério estão no plano.
 
 ## 1. Evidência, convenção e limite
 
@@ -221,7 +221,7 @@ O [plano de M2](Ecovit-Plano-Implementacao.md), seção 5, define aceite, testes
 
 ## 8. M3 nominal: pesquisa e definições — 12/10/2026
 
-**Situação:** alcance nominal e configurações confirmados pelo solicitante. CT-07/08 implementados em M3.1 e CT-09 em M3.2; CT-10 permanece futuro. Resultados e pendências manuais no plano §7. Fórmulas de ocupação são convenções nominais do Ecovit, não dimensionamento de apoios ou reforços.
+**Situação:** alcance nominal e configurações confirmados pelo solicitante. CT-07/08 implementados em M3.1, CT-09 em M3.2 e CT-10 em M3.3. Resultados e pendências manuais no plano §7. Fórmulas de ocupação são convenções nominais do Ecovit, não dimensionamento de apoios ou reforços.
 
 ### Evidências consultadas nesta revisão
 
@@ -280,7 +280,7 @@ Categorias habilitadas e distância máxima `d` positiva vêm da configuração 
 
 Convenção geométrica simples para implementação: encontros usam centros das células compartilhadas do encontro suportado (um eixo no canto L ou centro T); laterais usam o centro da célula imediatamente anterior/posterior ao vão, quando existente; ponta livre usa a célula terminal sem encontro. Duplicatas se unificam por coordenada, sem triplicar automaticamente os furos do canto. Essas escolhas são convenções de desenho do Ecovit, não regras construtivas das fontes. Cruz permanece fora da composição suportada.
 
-Para distribuição intermediária, trabalhar por parede em ordem de coordenadas, usando candidatos das categorias habilitadas como âncoras. Primeiro/último centros de células são referências virtuais quando ponta livre não estiver habilitada; não criam graute por si. Em cada intervalo entre âncoras, acrescentar eixos em passos máximos `q=floor(d/m)` células, desde a menor coordenada, até a distância restante ser `<=d`. Se `d<m`, explicar que não existe espaçamento entre eixos distintos nessa malha, oferecendo `m`, sem arredondamento silencioso. Espaçamento efetivo nunca excede d antes dos ajustes manuais, onde existirem eixos elegíveis. Não gerar candidatos num eixo sem alvenaria em toda a altura; não atravessar esse vazio fingindo respeitar d. Interrupção por abertura é condição de desenho, não insuficiência estrutural.
+Para distribuição intermediária, trabalhar por parede em ordem de coordenadas, usando candidatos das categorias habilitadas como âncoras. Primeiro/último centros de células são referências virtuais quando ponta livre não estiver habilitada; não criam graute por si. Em cada intervalo entre âncoras, acrescentar eixos em passos máximos `q=floor(d/m)` células, desde a menor coordenada, até a distância restante ser `<=d`. Se `d<m`, explicar que não existe espaçamento entre eixos distintos nessa malha, oferecendo `m`, sem arredondamento silencioso. Espaçamento efetivo nunca excede d antes dos ajustes manuais, onde existirem eixos elegíveis. Não gerar candidatos num eixo que não tenha nenhum intervalo de alvenaria. Onde houver abertura, descontar seu vazio dos intervalos de graute, conforme EX-22/33; não exigir alvenaria contínua na altura inteira para aceitar os trechos acima/abaixo. Interrupção por abertura é condição de desenho, não insuficiência estrutural.
 
 Graute representa a interseção do eixo com a alvenaria do pavimento: início/topo das paredes associadas, descontados todos os vãos. Intervalos separados não se conectam através do vazio. Eixos de células de canaletas continuam clicáveis como marcadores nominais, sem alegar geometria interna física. Não atravessar laje/outro pavimento.
 

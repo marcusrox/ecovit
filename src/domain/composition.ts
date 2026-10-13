@@ -1,6 +1,7 @@
 import { bounds, type Project, type Wall } from "./project";
 import { openingBox, openingIssue, MAX_OPENINGS } from "./openings";
 import { applyChannels, type ChannelBand } from "./channels";
+import { applyGrout, type GroutAxis } from "./grout";
 
 export type Diagnostic = {
   code: string;
@@ -44,8 +45,14 @@ export type Component = {
 };
 export type Composition = {
   convention:
-    "nominal-v1" | "nominal-v2" | "nominal-v3" | "nominal-v4" | "nominal-v5";
+    | "nominal-v1"
+    | "nominal-v2"
+    | "nominal-v3"
+    | "nominal-v4"
+    | "nominal-v5"
+    | "nominal-v6";
   channels?: ChannelBand[];
+  grouts?: GroutAxis[];
   courses: { number: number; bottom: number; top: number; pieces: Piece[] }[];
   components: Component[];
   diagnostics: Diagnostic[];
@@ -296,7 +303,8 @@ function tile(
     let p =
       convention === "nominal-v3" ||
       convention === "nominal-v4" ||
-      convention === "nominal-v5"
+      convention === "nominal-v5" ||
+      convention === "nominal-v6"
         ? continuousPattern(group, adjacent, phase)
         : pattern(group, adjacent, phase, convention === "nominal-v2");
     // A T branch is paginated from its contact, including reversed branches.
@@ -319,7 +327,7 @@ function tile(
 }
 export function generate(
   doc: Project,
-  convention: Composition["convention"] = "nominal-v5",
+  convention: Composition["convention"] = "nominal-v6",
 ): Composition {
   const { width: m, height: h } = doc.project.base,
     floor = doc.model.floors[0];
@@ -328,7 +336,10 @@ export function generate(
     courses: [],
     components: [],
     diagnostics: [],
-    ...(convention === "nominal-v5" ? { channels: [] } : {}),
+    ...(convention === "nominal-v5" || convention === "nominal-v6"
+      ? { channels: [] }
+      : {}),
+    ...(convention === "nominal-v6" ? { grouts: [] } : {}),
   };
   const error = (
     code: string,
@@ -519,7 +530,9 @@ export function generate(
       continue;
     }
     const openings =
-      convention === "nominal-v4" || convention === "nominal-v5"
+      convention === "nominal-v4" ||
+      convention === "nominal-v5" ||
+      convention === "nominal-v6"
         ? doc.model.openings
             .filter((o) => ids.includes(o.wallId))
             .sort((a, b) => a.id.localeCompare(b.id))
@@ -545,7 +558,11 @@ export function generate(
             }
           : null);
       if (issue) invalidOpening = true;
-      if (!issue && convention === "nominal-v5") continue;
+      if (
+        !issue &&
+        (convention === "nominal-v5" || convention === "nominal-v6")
+      )
+        continue;
       error(
         issue?.code ?? "opening-elements-pending",
         issue?.message ??
@@ -676,5 +693,7 @@ export function generate(
         "Encontro alterado: retorne ao automático para resolver a escolha pendente.",
         a.wallIds.filter((id) => doc.model.walls.some((w) => w.id === id)),
       );
-  return convention === "nominal-v5" ? applyChannels(doc, result) : result;
+  if (convention === "nominal-v5" || convention === "nominal-v6")
+    applyChannels(doc, result);
+  return convention === "nominal-v6" ? applyGrout(doc, result) : result;
 }

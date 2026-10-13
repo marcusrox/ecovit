@@ -1,5 +1,17 @@
 import { z } from "zod";
-import { LIMIT, bounds, validateBase, type Project } from "../domain/project";
+import {
+  LIMIT,
+  bounds,
+  validateBase,
+  defaultGroutSettings,
+  type Project,
+} from "../domain/project";
+import {
+  MAX_GROUT_ADJUSTMENTS,
+  MAX_GROUT_AXES,
+  MAX_GROUT_INTERVALS,
+  groutId,
+} from "../domain/grout";
 import { generate } from "../domain/composition";
 import { MAX_OPENINGS, openingBox } from "../domain/openings";
 import {
@@ -63,6 +75,7 @@ const composition = z
       "nominal-v3",
       "nominal-v4",
       "nominal-v5",
+      "nominal-v6",
     ]),
     courses: z
       .array(
@@ -78,6 +91,28 @@ const composition = z
       .max(1000),
     components: z.array(component).max(20000),
     diagnostics: z.array(diagnostic),
+    grouts: z
+      .array(
+        z
+          .object({
+            id: z.string(),
+            x: integer,
+            y: integer,
+            wallIds: z.array(id),
+            origins: z.array(z.string()),
+            intervals: z
+              .array(
+                z
+                  .object({ bottom: integer, top: integer })
+                  .strict()
+                  .refine((i) => i.top > i.bottom),
+              )
+              .max(MAX_GROUT_INTERVALS),
+          })
+          .strict(),
+      )
+      .max(MAX_GROUT_AXES)
+      .optional(),
     channels: z
       .array(
         z
@@ -107,7 +142,7 @@ const composition = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(4),
+    schemaVersion: z.literal(5),
     project: z
       .object({
         id,
@@ -121,6 +156,15 @@ const schema = z
         channelLevels: z
           .array(z.object({ id, top: integer }).strict())
           .max(MAX_CHANNEL_LEVELS),
+        groutSettings: z
+          .object({
+            junctions: z.boolean(),
+            openings: z.boolean(),
+            ends: z.boolean(),
+            intervals: z.boolean(),
+            distance: positive,
+          })
+          .strict(),
       })
       .strict(),
     model: z
@@ -184,7 +228,19 @@ const schema = z
               .strict(),
           )
           .max(10000),
-        grout: empty,
+        grout: z
+          .array(
+            z
+              .object({
+                id,
+                x: integer,
+                y: integer,
+                wallIds: z.array(id).min(1).max(10000),
+                action: z.enum(["include", "exclude"]),
+              })
+              .strict(),
+          )
+          .max(MAX_GROUT_ADJUSTMENTS),
         channels: z
           .array(z.object({ id, wallId: id, top: integer }).strict())
           .max(MAX_CHANNEL_SUPPRESSIONS),
@@ -207,26 +263,56 @@ const schema = z
   })
   .strict();
 export const MAX_FILE = 50 * 1024 * 1024;
-const oldComposition = composition.omit({ channels: true }).extend({
-  convention: z.enum(["nominal-v1", "nominal-v2", "nominal-v3", "nominal-v4"]),
-  courses: z
-    .array(
-      composition.shape.courses.element.extend({
-        pieces: z
-          .array(
-            piece
-              .omit({ origins: true })
-              .extend({ kind: z.enum(["whole", "half"]) }),
-          )
-          .max(100000),
-      }),
-    )
-    .max(1000),
+const m32Composition = composition
+  .omit({ grouts: true })
+  .extend({
+    convention: z.enum([
+      "nominal-v1",
+      "nominal-v2",
+      "nominal-v3",
+      "nominal-v4",
+      "nominal-v5",
+    ]),
+  });
+const m32Schema = schema.extend({
+  schemaVersion: z.literal(4),
+  project: schema.shape.project.omit({ groutSettings: true }),
+  adjustments: schema.shape.adjustments.extend({ grout: empty }),
+  generated: m32Composition.nullable(),
 });
+const oldComposition = composition
+  .omit({ channels: true, grouts: true })
+  .extend({
+    convention: z.enum([
+      "nominal-v1",
+      "nominal-v2",
+      "nominal-v3",
+      "nominal-v4",
+    ]),
+    courses: z
+      .array(
+        composition.shape.courses.element.extend({
+          pieces: z
+            .array(
+              piece
+                .omit({ origins: true })
+                .extend({ kind: z.enum(["whole", "half"]) }),
+            )
+            .max(100000),
+        }),
+      )
+      .max(1000),
+  });
 const m31Schema = schema.extend({
   schemaVersion: z.literal(3),
-  project: schema.shape.project.omit({ channelLevels: true }),
-  adjustments: schema.shape.adjustments.extend({ channels: empty }),
+  project: schema.shape.project.omit({
+    channelLevels: true,
+    groutSettings: true,
+  }),
+  adjustments: schema.shape.adjustments.extend({
+    channels: empty,
+    grout: empty,
+  }),
   generated: oldComposition.nullable(),
 });
 const legacySchema = schema.extend({
@@ -234,9 +320,13 @@ const legacySchema = schema.extend({
   project: schema.shape.project.omit({
     openingSettings: true,
     channelLevels: true,
+    groutSettings: true,
   }),
   model: schema.shape.model.extend({ openings: empty }),
-  adjustments: schema.shape.adjustments.extend({ channels: empty }),
+  adjustments: schema.shape.adjustments.extend({
+    channels: empty,
+    grout: empty,
+  }),
   generated: oldComposition
     .extend({ convention: z.enum(["nominal-v1", "nominal-v2", "nominal-v3"]) })
     .nullable(),
@@ -276,10 +366,15 @@ export function validateProject(
     typeof value === "object" &&
     "schemaVersion" in value &&
     value.schemaVersion === 3;
-  const isLegacy = isV2 || isV3;
-  const result = (isV2 ? legacySchema : isV3 ? m31Schema : schema).safeParse(
-    value,
-  );
+  const isV4 =
+    !!value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 4;
+  const isLegacy = isV2 || isV3 || isV4;
+  const result = (
+    isV2 ? legacySchema : isV3 ? m31Schema : isV4 ? m32Schema : schema
+  ).safeParse(value);
   if (!result.success)
     throw new Error(
       "Arquivo inválido ou conteúdo/versão ainda não suportados pelo Ecovit.",
@@ -343,7 +438,7 @@ export function validateProject(
     doc.project.openingSettings.top <= doc.project.openingSettings.base
   )
     throw new Error("O topo padrão deve ser maior que a base padrão.");
-  if (!isLegacy) {
+  if (!isV2 && !isV3) {
     const tops = new Set<number>();
     for (const l of doc.project.channelLevels) {
       if (ids.has(l.id) || tops.has(l.top))
@@ -368,6 +463,23 @@ export function validateProject(
       targets.add(target);
     }
   }
+  if (!isLegacy) {
+    const targets = new Set<string>();
+    for (const a of doc.adjustments.grout) {
+      const target = groutId(a);
+      if (
+        ids.has(a.id) ||
+        targets.has(target) ||
+        new Set(a.wallIds).size !== a.wallIds.length ||
+        a.wallIds.some((id) => !doc.model.walls.some((w) => w.id === id))
+      )
+        throw new Error(
+          "Ajuste de graute duplicado ou com referência inválida.",
+        );
+      ids.add(a.id);
+      targets.add(target);
+    }
+  }
   for (const a of doc.adjustments.junctions) {
     if (
       choices.has(a.componentId) ||
@@ -379,7 +491,8 @@ export function validateProject(
   if (doc.generationState.status === "current") {
     if (!doc.generated) throw new Error("Composição atual ausente.");
     if (
-      (!isLegacy && doc.generated.convention !== "nominal-v5") ||
+      (!isLegacy && doc.generated.convention !== "nominal-v6") ||
+      (isV4 && doc.generated.convention !== "nominal-v5") ||
       (isV3 && doc.generated.convention !== "nominal-v4")
     )
       throw new Error(
@@ -399,20 +512,21 @@ export function validateProject(
         throw new Error("Composição salva inconsistente com o modelo.");
       // Validate the old snapshot before requesting regeneration on open.
       // Never accept tampered legacy data merely because the engine evolved.
-      if (doc.generated.convention !== "nominal-v5") {
+      if (doc.generated.convention !== "nominal-v6") {
         doc.generationState = { status: "outdated", diagnostics: [] };
       }
     }
   }
   if (isLegacy) {
-    doc.schemaVersion = 4;
+    doc.schemaVersion = 5;
     doc.project = {
       ...doc.project,
       openingSettings: doc.project.openingSettings ?? {
         base: 11200,
         top: 21700,
       },
-      channelLevels: [],
+      channelLevels: doc.project.channelLevels ?? [],
+      groutSettings: defaultGroutSettings(false),
     };
     doc.generationState = { status: "outdated", diagnostics: [] };
   }

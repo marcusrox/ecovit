@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Circle, Text, Shape } from "react-konva";
 import {
   bounds,
@@ -24,6 +24,12 @@ import {
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
 import { isChannel } from "../domain/channels";
+import {
+  activeGrout,
+  courseCells,
+  groutId,
+  toggleGrout,
+} from "../domain/grout";
 type Camera = { x: number; y: number; scale: number };
 type Gesture =
   | { type: "draw"; start: Point }
@@ -31,7 +37,8 @@ type Gesture =
   | { type: "opening-draw"; wall: Wall; start: number; opening: Opening }
   | { type: "opening-move"; wall: Wall; start: number; opening: Opening }
   | { type: "opening-resize"; wall: Wall; end: "a" | "b"; opening: Opening }
-  | { type: "pan"; start: Point; camera: Camera; button: 0 | 1 };
+  | { type: "pan"; start: Point; camera: Camera; button: 0 | 1 }
+  | { type: "grout"; start: Point; cell: Point & { wallIds: string[] } };
 export function Canvas({
   tool,
   setTool,
@@ -67,8 +74,45 @@ export function Canvas({
     [openingChoices, setOpeningChoices] = useState<Opening[]>([]);
   const [channelChoices, setChannelChoices] = useState<string[]>([]);
   const selectedBand = useStore((s) => s.channelBand);
+  const groutMode = useStore((s) => s.groutMode);
+  const selectedGrout = useStore((s) => s.groutCell);
+  const [groutHover, setGroutHover] = useState<
+    (Point & { wallIds: string[] }) | null
+  >(null);
   const module = doc.project.base.width,
     walls = doc.model.walls;
+  const output = compositionPreview ?? doc.generated;
+  const markers = useMemo(
+    () => (output && mode === "course" ? courseCells(doc, output, course) : []),
+    [doc, output, mode, course],
+  );
+  const groutBlocked =
+    busy ||
+    readonly ||
+    !!compositionPreview ||
+    doc.generationState.status !== "current";
+  const groutHit = (p: Point) =>
+    module * camera.scale >= 9
+      ? markers.find(
+          (c) =>
+            Math.hypot(p.x - c.x - module / 2, p.y - c.y - module / 2) *
+              camera.scale <=
+            Math.min(9, module * camera.scale * 0.4),
+        )
+      : undefined;
+  const groutPresent = (p: Point) => {
+    const row = output?.courses[course - 1],
+      axis = output?.grouts?.find((a) => groutId(a) === groutId(p));
+    return (
+      !!row &&
+      !!axis &&
+      activeGrout(
+        axis,
+        doc.model.floors[0].level + row.bottom,
+        doc.model.floors[0].level + row.top,
+      )
+    );
+  };
   const active =
     mode === "plan" ? walls.find((w) => w.id === selected) : undefined;
   const activeOpening = doc.model.openings.find((o) => o.id === selected);
@@ -98,6 +142,7 @@ export function Canvas({
     setTarget(null);
     setPanning(false);
     setOpeningPreview(null);
+    setGroutHover(null);
   };
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
@@ -120,7 +165,9 @@ export function Canvas({
         cancel();
         setChoices([]);
         setOpeningChoices([]);
-        useStore.getState().inspect({ pendingOpening: null });
+        useStore
+          .getState()
+          .inspect({ pendingOpening: null, groutMode: false, groutCell: null });
         setTool("select");
       }
     };
@@ -190,6 +237,9 @@ export function Canvas({
   useEffect(() => {
     cancel();
   }, [tool]);
+  useEffect(() => {
+    cancel();
+  }, [course, groutMode]);
   const world = (p: Point) => ({
     x: (p.x - camera.x) / camera.scale,
     y: (p.y - camera.y) / camera.scale,
@@ -208,7 +258,11 @@ export function Canvas({
   const update = (screen: Point) => {
     const p = world(screen),
       g = gesture.current;
-    if (g?.type === "pan") return;
+    if (g?.type === "pan" || g?.type === "grout") return;
+    if (mode === "course" && groutMode) {
+      setGroutHover(groutBlocked ? null : (groutHit(p) ?? null));
+      return;
+    }
     if (g?.type.startsWith("opening-")) {
       const og = g as Extract<
         Gesture,
@@ -376,6 +430,18 @@ export function Canvas({
             return;
           }
           if (mode === "course") {
+            if (groutMode) {
+              if (!groutBlocked) {
+                const cell = groutHit(p);
+                if (cell) {
+                  gesture.current = { type: "grout", start: screen, cell };
+                  useStore
+                    .getState()
+                    .inspect({ groutCell: cell, channelBand: null });
+                }
+              }
+              return;
+            }
             const hits = openingHits(p, true);
             if (hits.length) {
               useStore.getState().choose(hits[0].id);
@@ -526,6 +592,25 @@ export function Canvas({
           const g = gesture.current;
           if (e.button !== (g?.type === "pan" ? g.button : 0)) return;
           if (g && g.type !== "pan" && !busy && !readonly) {
+            if (g.type === "grout") {
+              const screen = pointer(e.clientX, e.clientY);
+              if (
+                !groutBlocked &&
+                Math.hypot(screen.x - g.start.x, screen.y - g.start.y) <= 6 &&
+                groutHit(world(screen)) &&
+                groutId(groutHit(world(screen))!) === groutId(g.cell)
+              ) {
+                try {
+                  void useStore
+                    .getState()
+                    .commit(toggleGrout(doc, g.cell, groutPresent(g.cell)));
+                } catch (err) {
+                  useStore.getState().notify((err as Error).message);
+                }
+              }
+              cancel();
+              return;
+            }
             if (
               g.type === "opening-draw" ||
               g.type === "opening-move" ||
@@ -583,6 +668,7 @@ export function Canvas({
         }}
         onMouseLeave={() => {
           setHover(null);
+          setGroutHover(null);
           if (!gesture.current) setTarget(null);
         }}
       >
@@ -708,6 +794,9 @@ export function Canvas({
               <Shape
                 sceneFunc={(ctx) => {
                   const output = compositionPreview ?? doc.generated;
+                  const axes = new Map(
+                    output?.grouts?.map((a) => [groutId(a), a]) ?? [],
+                  );
                   const render = (index: number, reference: boolean) => {
                     for (const p of output?.courses[index]?.pieces ?? []) {
                       const x = p.x * camera.scale + camera.x,
@@ -771,14 +860,34 @@ export function Canvas({
                         }
                         ctx.stroke();
                       }
-                      if (
-                        !reference &&
-                        !isChannel(p) &&
-                        module * camera.scale >= 9
-                      ) {
+                      if (module * camera.scale >= 9) {
                         ctx.fillStyle = "#f7eadd";
                         for (let xx = 0; xx < p.width / module; xx++)
                           for (let yy = 0; yy < p.height / module; yy++) {
+                            const axis = axes.get(
+                                groutId({
+                                  x: p.x + xx * module,
+                                  y: p.y + yy * module,
+                                }),
+                              ),
+                              row = output!.courses[index];
+                            const present =
+                              !!axis &&
+                              activeGrout(
+                                axis,
+                                doc.model.floors[0].level + row.bottom,
+                                doc.model.floors[0].level + row.top,
+                              );
+                            if (
+                              (reference && !present) ||
+                              (isChannel(p) && !groutMode && !present)
+                            )
+                              continue;
+                            ctx.fillStyle = present
+                              ? reference
+                                ? "#4880a1"
+                                : "#302c28"
+                              : "#f7eadd";
                             ctx.beginPath();
                             ctx.arc(
                               x + (xx + 0.5) * module * camera.scale,
@@ -800,6 +909,34 @@ export function Canvas({
                   if (ghost === "next") render(course, true);
                 }}
               />
+              {groutMode &&
+                !groutBlocked &&
+                (groutHover ?? selectedGrout) &&
+                (() => {
+                  const c = groutHover ?? selectedGrout!;
+                  if (!markers.some((m) => groutId(m) === groutId(c)))
+                    return null;
+                  return (
+                    <>
+                      <Circle
+                        x={(c.x + module / 2) * camera.scale + camera.x}
+                        y={(c.y + module / 2) * camera.scale + camera.y}
+                        radius={Math.max(4, module * camera.scale * 0.25)}
+                        stroke="#235e49"
+                        strokeWidth={2}
+                      />
+                      {groutHover && (
+                        <Text
+                          x={(c.x + module / 2) * camera.scale + camera.x + 10}
+                          y={(c.y + module / 2) * camera.scale + camera.y - 14}
+                          text={groutPresent(c) ? "−" : "+"}
+                          fill="#174332"
+                          fontSize={22}
+                        />
+                      )}
+                    </>
+                  );
+                })()}
               {(compositionPreview ?? doc.generated)?.channels
                 ?.find((b) => b.id === selectedBand && b.course === course)
                 ?.cells.map((c) => (
@@ -1047,7 +1184,13 @@ export function Canvas({
           {readonly
             ? "Somente leitura"
             : mode === "course"
-              ? "Inspecione um conjunto"
+              ? groutMode
+                ? groutHover
+                  ? groutPresent(groutHover)
+                    ? "Remover graute · eixo completo"
+                    : "Adicionar graute · eixo completo"
+                  : "Clique num furo · Esc encerra Graute"
+                : "Inspecione um conjunto"
               : tool === "wall"
                 ? "Arraste para desenhar · Esc cancela"
                 : "Clique para selecionar · Arraste uma alça para editar"}

@@ -4,6 +4,7 @@ import {
   display,
   length,
   defaultChannelLevels,
+  defaultGroutSettings,
   type Opening,
   type Project,
 } from "../domain/project";
@@ -345,6 +346,8 @@ export function OpeningSettingsDialog({
   const [levels, setLevels] = useState(
     doc.project.channelLevels.map((l) => ({ id: l.id, value: display(l.top) })),
   );
+  const [grout, setGrout] = useState(doc.project.groutSettings);
+  const [distance, setDistance] = useState(display(grout.distance));
   const field = (key: string, value: string) =>
     setValues((v) => ({ ...v, [key]: value }));
   useEffect(() => {
@@ -385,6 +388,26 @@ export function OpeningSettingsDialog({
               const channelsChanged =
                 JSON.stringify(channelLevels) !==
                 JSON.stringify(doc.project.channelLevels);
+              const groutSettings = { ...grout, distance: cm(distance) };
+              const groutChanged =
+                JSON.stringify(groutSettings) !==
+                JSON.stringify(doc.project.groutSettings);
+              if (groutSettings.distance <= 0)
+                throw new Error("A distância de graute deve ser positiva.");
+              if (
+                groutChanged &&
+                groutSettings.intervals &&
+                groutSettings.distance < doc.project.base.width
+              ) {
+                setOptions([
+                  {
+                    field: "Distância máxima de graute",
+                    requested: groutSettings.distance,
+                    values: [doc.project.base.width],
+                  },
+                ]);
+                return;
+              }
               const opts = (
                 openingChanged
                   ? [
@@ -438,10 +461,12 @@ export function OpeningSettingsDialog({
                   ...doc.project,
                   openingSettings: { base, top },
                   channelLevels,
+                  groutSettings,
                 },
               };
               if (channelsChanged) validateChannelLevels(next);
-              if (openingChanged || channelsChanged) void s.commit(next);
+              if (openingChanged || channelsChanged || groutChanged)
+                void s.commit(next);
               close();
             } catch (err) {
               setError((err as Error).message);
@@ -489,6 +514,8 @@ export function OpeningSettingsDialog({
                       l.id === key.slice(6) ? { ...l, value: display(n) } : l,
                     ),
                   );
+                else if (key === "Distância máxima de graute")
+                  setDistance(display(n));
                 else field(key, display(n));
                 setOptions((v) => v.filter((s) => s.field !== key));
               }}
@@ -588,6 +615,53 @@ export function OpeningSettingsDialog({
           >
             Restaurar padrões de canaletas
           </button>
+          <h3>Graute vertical</h3>
+          <div className={styles.groutOptions}>
+            {(
+              [
+                ["junctions", "Encontros"],
+                ["openings", "Laterais dos vãos"],
+                ["ends", "Pontas livres"],
+                ["intervals", "Intervalos em paredes longas"],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key}>
+                <input
+                  type="checkbox"
+                  checked={grout[key]}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    setGrout((g) => ({ ...g, [key]: e.target.checked }))
+                  }
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+          <Field
+            label="Distância máxima de graute"
+            value={distance}
+            set={setDistance}
+            disabled={disabled}
+          />
+          <p>
+            As categorias geram uma proposta automática. Desabilitar preserva
+            inclusões manuais; remover graute não cria substitutos. Restaurar
+            padrões preserva os ajustes.
+          </p>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => {
+              const g = defaultGroutSettings();
+              setGrout(g);
+              setDistance(display(g.distance));
+              setOptions([]);
+              setError("");
+            }}
+          >
+            Restaurar padrões de graute
+          </button>
           <button type="submit" disabled={disabled}>
             Aplicar configurações
           </button>
@@ -625,8 +699,14 @@ export function Diagnostics({
       {doc.generationState.diagnostics.map((d, i) => (
         <section key={i} className={styles.note}>
           <strong>
-            {d.severity === "error" ? "Pendência geométrica" : "Informação"} ·
-            fiada {d.course}
+            {d.severity !== "error"
+              ? "Informação"
+              : d.category === "input"
+                ? "Entrada incompatível"
+                : d.category === "limit"
+                  ? "Limite de processamento"
+                  : "Pendência geométrica"}{" "}
+            · fiada {d.course}
             {d.lastCourse && d.lastCourse !== d.course
               ? `–${d.lastCourse}`
               : ""}
@@ -655,6 +735,18 @@ export function Diagnostics({
               )
             );
           })}
+          {d.adjustmentIds?.map((id) => {
+            const a = doc.adjustments.grout.find((a) => a.id === id);
+            return (
+              a && (
+                <p key={`grout-${id}`}>
+                  Eixo em x={display(a.x + doc.project.base.width / 2)}, y=
+                  {display(a.y + doc.project.base.width / 2)} cm. Use Descartar
+                  ajuste de graute na Fiada.
+                </p>
+              )
+            );
+          })}
           <small>
             {d.code} ·{" "}
             {d.wallIds
@@ -665,7 +757,7 @@ export function Diagnostics({
               .join(", ")}
           </small>
           <div>
-            {!!d.levelIds?.length && (
+            {(!!d.levelIds?.length || d.code === "grout-distance-off-grid") && (
               <button
                 disabled={s.busy}
                 onClick={() => {
@@ -673,7 +765,9 @@ export function Diagnostics({
                   settings();
                 }}
               >
-                Editar níveis de canaleta
+                {d.code === "grout-distance-off-grid"
+                  ? "Editar configurações de graute"
+                  : "Editar níveis de canaleta"}
               </button>
             )}
             <button

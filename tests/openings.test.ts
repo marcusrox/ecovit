@@ -317,10 +317,12 @@ describe("M3.1 geometria e arquivo", () => {
     const {
       openingSettings: _settings,
       channelLevels: _levels,
+      groutSettings: _grout,
       ...project
     } = d.project;
     void _settings;
     void _levels;
+    void _grout;
     const g = generate(d, "nominal-v3");
     const old = {
       ...d,
@@ -330,7 +332,7 @@ describe("M3.1 geometria e arquivo", () => {
       generationState: { status: "current", diagnostics: g.diagnostics },
     };
     const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(4);
+    expect(migrated.schemaVersion).toBe(5);
     expect(migrated.generationState.status).toBe("outdated");
     expect(generate(migrated).courses).toEqual(g.courses);
     const bad = structuredClone(old);

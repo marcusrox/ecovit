@@ -323,8 +323,13 @@ describe("M3.2 canaletas nominais", () => {
   it("migra snapshot M3.1 pela convenção original, sem níveis globais adicionados", () => {
     let d = fixture();
     d = putOpening(d, window(d));
-    const { channelLevels: _levels, ...project } = d.project;
+    const {
+      channelLevels: _levels,
+      groutSettings: _grout,
+      ...project
+    } = d.project;
     void _levels;
+    void _grout;
     const g = generate(d, "nominal-v4"),
       old = {
         ...d,
@@ -334,7 +339,7 @@ describe("M3.2 canaletas nominais", () => {
         generationState: { status: "current", diagnostics: g.diagnostics },
       };
     const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(4);
+    expect(migrated.schemaVersion).toBe(5);
     expect(migrated.project.channelLevels).toEqual([]);
     expect(migrated.model).toEqual(d.model);
     expect(migrated.generationState.status).toBe("outdated");

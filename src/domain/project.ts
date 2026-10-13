@@ -21,12 +21,31 @@ export type Opening = {
 export type OpeningSettings = { base: number; top: number };
 export type ChannelLevel = { id: string; top: number };
 export type ChannelSuppression = { id: string; wallId: string; top: number };
+export type GroutSettings = {
+  junctions: boolean;
+  openings: boolean;
+  ends: boolean;
+  intervals: boolean;
+  distance: number;
+};
+export type GroutAdjustment = Point & {
+  id: string;
+  wallIds: string[];
+  action: "include" | "exclude";
+};
+export const defaultGroutSettings = (enabled = true): GroutSettings => ({
+  junctions: enabled,
+  openings: enabled,
+  ends: enabled,
+  intervals: enabled,
+  distance: 10000,
+});
 export const defaultChannelLevels = (): ChannelLevel[] =>
   [11200, 22400].map((top) => ({ id: crypto.randomUUID(), top }));
 export type Tool = "select" | "wall" | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 4;
+  schemaVersion: 5;
   project: {
     id: string;
     name: string;
@@ -35,6 +54,7 @@ export type Project = {
     origin: Point;
     openingSettings: OpeningSettings;
     channelLevels: ChannelLevel[];
+    groutSettings: GroutSettings;
   };
   model: {
     floors: {
@@ -50,7 +70,7 @@ export type Project = {
   };
   adjustments: {
     junctions: JunctionChoice[];
-    grout: never[];
+    grout: GroutAdjustment[];
     channels: ChannelSuppression[];
   };
   generated: Composition | null;
@@ -98,7 +118,7 @@ export function createProject(name: string, base: Base): Project {
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 4,
+    schemaVersion: 5,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -107,6 +127,7 @@ export function createProject(name: string, base: Base): Project {
       origin: { x: 0, y: 0 },
       openingSettings: { base: 11200, top: 21700 },
       channelLevels: defaultChannelLevels(),
+      groutSettings: defaultGroutSettings(),
     },
     model: {
       floors: [
@@ -125,7 +146,7 @@ export function createProject(name: string, base: Base): Project {
     adjustments: { junctions: [], grout: [], channels: [] },
     generated: null,
     generationState: { status: "outdated", diagnostics: [] },
-    metadata: { createdAt: now, updatedAt: now, appVersion: "0.4.0" },
+    metadata: { createdAt: now, updatedAt: now, appVersion: "0.5.0" },
   };
 }
 export const snap = (n: number, module: number) =>

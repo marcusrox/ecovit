@@ -10,7 +10,114 @@ import { saveProject, acquireProject } from "../src/persistence/database";
 import { useStore } from "../src/state/store";
 import { putOpening, removeElement } from "../src/domain/openings";
 import { suppressBand, restoreBand } from "../src/domain/channels";
+import { toggleGrout } from "../src/domain/grout";
+import { defaultGroutSettings } from "../src/domain/project";
 const save = vi.mocked(saveProject);
+it("M3.3 inclusão/exclusão e histórico mantêm eixo, ID e configuração", async () => {
+  const d = await opened(),
+    cell = { x: 2500, y: 0, wallIds: [d.model.walls[0].id] };
+  await useStore.getState().commit(toggleGrout(d, cell, false));
+  const included = useStore.getState().doc!;
+  expect(included.generated!.grouts!.some((a) => a.x === 2500)).toBe(true);
+  expect(save.mock.calls.map((c) => c[0].generationState.status)).toEqual([
+    "outdated",
+    "current",
+  ]);
+  await useStore.getState().commit(toggleGrout(included, cell, true));
+  const excluded = useStore.getState().doc!;
+  expect(excluded.adjustments.grout[0].id).toBe(
+    included.adjustments.grout[0].id,
+  );
+  await useStore.getState().undo();
+  expect(useStore.getState().doc!.generated).toEqual(included.generated);
+  await useStore.getState().undo(true);
+  expect(useStore.getState().doc!.generated).toEqual(excluded.generated);
+  await useStore.getState().undo();
+  const current = useStore.getState().doc!;
+  await useStore
+    .getState()
+    .commit({
+      ...current,
+      project: {
+        ...current.project,
+        groutSettings: defaultGroutSettings(false),
+      },
+    });
+  expect(useStore.getState().doc!.generated!.grouts!.map((a) => a.x)).toEqual([
+    2500,
+  ]);
+});
+it("M3.3 falha de motor e duas gravações mantêm ajustes e permitem recuperar", async () => {
+  const d = await opened(),
+    cell = { x: 2500, y: 0, wallIds: [d.model.walls[0].id] };
+  vi.spyOn(engine, "generate").mockImplementationOnce(() => {
+    throw new Error("graute simulado");
+  });
+  await useStore.getState().commit(toggleGrout(d, cell, false));
+  expect(useStore.getState()).toMatchObject({ busy: false, saved: "saved" });
+  expect(useStore.getState().doc!.generationState.status).toBe("outdated");
+  expect(useStore.getState().doc!.adjustments.grout).toHaveLength(1);
+  save.mockRejectedValueOnce(new Error("primeira gravação"));
+  await useStore.getState().retry();
+  expect(useStore.getState()).toMatchObject({ busy: false, saved: "saved" });
+  expect(
+    useStore.getState().doc!.generated!.grouts!.some((a) => a.x === 2500),
+  ).toBe(true);
+  save
+    .mockResolvedValueOnce("ok")
+    .mockRejectedValueOnce(new Error("segunda gravação"));
+  await useStore
+    .getState()
+    .commit(toggleGrout(useStore.getState().doc!, cell, true));
+  expect(useStore.getState()).toMatchObject({ busy: false, saved: "error" });
+  expect(useStore.getState().doc!.adjustments.grout[0].action).toBe("exclude");
+  await useStore.getState().retry();
+  expect(useStore.getState().saved).toBe("saved");
+});
+it("M3.3 exclusão de parede remove dependente e desfazer restaura identidade", async () => {
+  const d = await opened();
+  await useStore
+    .getState()
+    .commit(
+      toggleGrout(d, { x: 2500, y: 0, wallIds: [d.model.walls[0].id] }, false),
+    );
+  const previous = useStore.getState().doc!;
+  await useStore
+    .getState()
+    .commit({ ...previous, model: { ...previous.model, walls: [] } });
+  expect(useStore.getState().doc!.adjustments.grout).toEqual([]);
+  await useStore.getState().undo();
+  expect(useStore.getState().doc!.adjustments.grout).toEqual(
+    previous.adjustments.grout,
+  );
+  expect(useStore.getState().doc!.generated).toEqual(previous.generated);
+});
+it("M3.3 bloqueio de edição mantém snapshot M3.2 em memória e não grava migração", async () => {
+  const d = await opened();
+  useStore.getState().close();
+  const { groutSettings: _settings, ...project } = d.project;
+  void _settings;
+  const g = engine.generate(d, "nominal-v5");
+  const old = {
+    ...d,
+    project,
+    schemaVersion: 4,
+    generated: g,
+    generationState: { status: "current", diagnostics: g.diagnostics },
+  };
+  vi.mocked(acquireProject).mockResolvedValueOnce(null);
+  save.mockClear();
+  // Opening/importing performs the same validation in the real state boundary.
+  const { parseFile } = await import("../src/persistence/files");
+  await useStore.getState().open(parseFile(JSON.stringify(old)), true);
+  expect(useStore.getState().readonly).toBe(true);
+  expect(save).not.toHaveBeenCalled();
+  expect(useStore.getState().doc!.project.groutSettings).toEqual(
+    defaultGroutSettings(false),
+  );
+  expect(useStore.getState().doc!.generated!.convention).toBe("nominal-v5");
+  expect(useStore.getState().doc!.generationState.status).toBe("outdated");
+});
 async function channelProject() {
   const d = await opened();
   await useStore.getState().commit({

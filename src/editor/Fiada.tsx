@@ -4,6 +4,7 @@ import { display } from "../domain/project";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
 import { restoreBand, suppressBand } from "../domain/channels";
+import { GroutPanel } from "./Grout";
 
 export function FiadaToolbar() {
   const s = useStore(),
@@ -33,7 +34,14 @@ export function FiadaToolbar() {
       <button
         disabled={s.busy}
         aria-pressed={s.mode === "plan"}
-        onClick={() => s.inspect({ mode: "plan", preview: null })}
+        onClick={() =>
+          s.inspect({
+            mode: "plan",
+            preview: null,
+            groutMode: false,
+            groutCell: null,
+          })
+        }
       >
         Planta
       </button>
@@ -109,6 +117,24 @@ export function FiadaToolbar() {
               </option>
             </select>
           </label>
+          <button
+            aria-pressed={s.groutMode}
+            disabled={
+              s.busy ||
+              s.readonly ||
+              !!s.preview ||
+              doc.generationState.status !== "current"
+            }
+            onClick={() =>
+              s.inspect({
+                groutMode: !s.groutMode,
+                groutCell: null,
+                channelBand: null,
+              })
+            }
+          >
+            Graute
+          </button>
         </>
       )}
       <span>
@@ -262,6 +288,7 @@ export function FiadaPanel() {
           </button>
         </section>
       ))}
+      <GroutPanel />
       <h3>Encontros</h3>
       {generated?.components
         .filter((c) => c.junctions.length)

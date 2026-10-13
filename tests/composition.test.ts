@@ -266,10 +266,12 @@ describe("M2 composição nominal", () => {
     const {
       openingSettings: _settings,
       channelLevels: _levels,
+      groutSettings: _grout,
       ...legacyProject
     } = d.project;
     void _settings;
     void _levels;
+    void _grout;
     const v1 = { ...d, project: legacyProject, schemaVersion: 1 };
     expect(parseFile(JSON.stringify(v1)).model).toEqual(d.model);
     const g = generate(d);

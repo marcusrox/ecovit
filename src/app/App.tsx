@@ -341,6 +341,7 @@ function Properties({ doc }: { doc: Project }) {
 }
 export default function App() {
   const mode = useStore((s) => s.mode);
+  const groutMode = useStore((s) => s.groutMode);
   const selected = useStore((s) => s.select),
     pendingOpening = useStore((s) => s.pendingOpening);
   const doc = useStore((s) => s.doc),
@@ -555,10 +556,17 @@ export default function App() {
             <div className={styles.toolbar}>
               <div className={styles.tools}>
                 <button
-                  className={tool === "select" ? styles.active : ""}
-                  aria-pressed={tool === "select"}
+                  className={
+                    tool === "select" && !groutMode ? styles.active : ""
+                  }
+                  aria-pressed={tool === "select" && !groutMode}
                   disabled={busy || readonly}
-                  onClick={() => setTool("select")}
+                  onClick={() => {
+                    setTool("select");
+                    useStore
+                      .getState()
+                      .inspect({ groutMode: false, groutCell: null });
+                  }}
                 >
                   ↖ Selecionar
                 </button>

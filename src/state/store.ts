@@ -22,6 +22,7 @@ const changedInputs = (previous: Project, next: Project) =>
     previous.project.base,
     previous.project.openingSettings,
     previous.project.channelLevels,
+    previous.project.groutSettings,
   ]) !==
   JSON.stringify([
     next.model,
@@ -29,6 +30,7 @@ const changedInputs = (previous: Project, next: Project) =>
     next.project.base,
     next.project.openingSettings,
     next.project.channelLevels,
+    next.project.groutSettings,
   ]);
 type Inspection = {
   mode: "plan" | "course";
@@ -39,6 +41,8 @@ type Inspection = {
   focus: { x: number; y: number } | null;
   pendingOpening: Opening | null;
   channelBand: string | null;
+  groutMode: boolean;
+  groutCell: { x: number; y: number; wallIds: string[] } | null;
 };
 const inspection: Inspection = {
   mode: "plan",
@@ -49,6 +53,8 @@ const inspection: Inspection = {
   focus: null,
   pendingOpening: null,
   channelBand: null,
+  groutMode: false,
+  groutCell: null,
 };
 type State = Inspection & {
   inspect: (change: Partial<Inspection>) => void;
@@ -69,7 +75,7 @@ type State = Inspection & {
 };
 export const useStore = create<State>((set, get) => {
   async function persist(doc: Project) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.4.0" } };
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.5.0" } };
     set({ doc });
     set({ busy: true, saved: "saving" });
     let saveFailed = false;
@@ -124,7 +130,13 @@ export const useStore = create<State>((set, get) => {
   }
   return {
     ...inspection,
-    inspect: (change) => set(change),
+    inspect: (change) =>
+      set({
+        ...change,
+        ...(change.mode === "plan"
+          ? { groutMode: false, groutCell: null }
+          : {}),
+      }),
     doc: null,
     history: { past: [], future: [] },
     busy: false,
@@ -185,6 +197,14 @@ export const useStore = create<State>((set, get) => {
             ...reconcileOpenings(s.doc, candidate),
             adjustments: {
               ...candidate.adjustments,
+              grout: candidate.adjustments.grout
+                .map((a) => ({
+                  ...a,
+                  wallIds: a.wallIds.filter((id) =>
+                    candidate.model.walls.some((w) => w.id === id),
+                  ),
+                }))
+                .filter((a) => a.wallIds.length),
               channels: candidate.adjustments.channels.filter((a) =>
                 candidate.model.walls.some((w) => w.id === a.wallId),
               ),
@@ -200,7 +220,7 @@ export const useStore = create<State>((set, get) => {
               : s.doc.generationState,
             metadata: {
               ...candidate.metadata,
-              appVersion: "0.4.0",
+              appVersion: "0.5.0",
               updatedAt: new Date().toISOString(),
             },
           },
