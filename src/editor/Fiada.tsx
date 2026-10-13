@@ -3,6 +3,7 @@ import { generate } from "../domain/composition";
 import { display } from "../domain/project";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
+import { restoreBand, suppressBand } from "../domain/channels";
 
 export function FiadaToolbar() {
   const s = useStore(),
@@ -18,15 +19,26 @@ export function FiadaToolbar() {
       s.inspect({ ghost: "none" });
   }, [s, total]);
   const active = doc.generated?.courses[s.course - 1];
+  useEffect(() => {
+    if (
+      s.channelBand &&
+      !doc.generated?.channels?.some(
+        (b) => b.id === s.channelBand && b.course === s.course,
+      )
+    )
+      s.inspect({ channelBand: null });
+  }, [s, doc]);
   return (
     <div className={styles.fiadaToolbar}>
       <button
+        disabled={s.busy}
         aria-pressed={s.mode === "plan"}
         onClick={() => s.inspect({ mode: "plan", preview: null })}
       >
         Planta
       </button>
       <button
+        disabled={s.busy}
         aria-pressed={s.mode === "course"}
         onClick={() => {
           s.choose(null);
@@ -39,7 +51,7 @@ export function FiadaToolbar() {
         <>
           <button
             aria-label="Fiada anterior"
-            disabled={s.course <= 1}
+            disabled={s.busy || s.course <= 1}
             onClick={() => s.inspect({ course: s.course - 1, preview: null })}
           >
             ‹
@@ -48,6 +60,7 @@ export function FiadaToolbar() {
             Fiada{" "}
             <input
               aria-label="Número da fiada"
+              disabled={s.busy}
               type="number"
               min={1}
               max={Math.max(1, total)}
@@ -66,7 +79,7 @@ export function FiadaToolbar() {
           </label>
           <button
             aria-label="Próxima fiada"
-            disabled={s.course >= total}
+            disabled={s.busy || s.course >= total}
             onClick={() => s.inspect({ course: s.course + 1, preview: null })}
           >
             ›
@@ -81,6 +94,7 @@ export function FiadaToolbar() {
             Referência{" "}
             <select
               aria-label="Fiada de referência"
+              disabled={s.busy}
               value={s.ghost}
               onChange={(e) =>
                 s.inspect({ ghost: e.target.value as typeof s.ghost })
@@ -121,7 +135,10 @@ export function FiadaPanel() {
   const s = useStore(),
     doc = s.doc!,
     generated = doc.generated;
+  const opening = doc.model.openings.find((o) => o.id === s.select);
   const component = generated?.components.find((c) => c.id === s.component);
+  const bands = generated?.channels?.filter((b) => b.course === s.course) ?? [];
+  const band = bands.find((b) => b.id === s.channelBand);
   const blocked =
     s.busy || s.readonly || doc.generationState.status !== "current";
   function candidate() {
@@ -182,10 +199,69 @@ export function FiadaPanel() {
           <br />
           <span style={{ color: "#865537" }}>■</span> Meio · um eixo
           <br />○ Eixo nominal, sem diâmetro físico
+          <br />▱ Canaleta / meia canaleta · canal longitudinal esquemático
           <br />
           Contorno azul tracejado: fiada de referência
         </p>
       </details>
+      <h3>Canaletas</h3>
+      {!!bands.length && (
+        <label className={styles.field}>
+          Selecionar faixa
+          <select
+            aria-label="Selecionar faixa de canaleta"
+            disabled={s.busy}
+            value={band?.id ?? ""}
+            onChange={(e) => s.inspect({ channelBand: e.target.value || null })}
+          >
+            <option value="">Selecione uma faixa…</option>
+            {bands.map((b) => (
+              <option key={b.id} value={b.id}>
+                Parede {doc.model.walls.findIndex((w) => w.id === b.wallId) + 1}{" "}
+                · topo {display(b.top - doc.model.floors[0].level)} cm
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {band && (
+        <section>
+          <p>
+            Alcance: toda a faixa da parede{" "}
+            {doc.model.walls.findIndex((w) => w.id === band.wallId) + 1} na
+            fiada {band.course}, incluindo trechos separados por aberturas.{" "}
+            {band.cells.length} células de canaleta realçadas.
+          </p>
+          <p>
+            {new Set(band.cells.flatMap((c) => c.origins)).size} origem(ns)
+            automática(s) coincidente(s).
+          </p>
+          <button
+            disabled={blocked || !!s.preview}
+            onClick={() =>
+              void s.commit(suppressBand(doc, band.wallId, band.top))
+            }
+          >
+            Remover faixa de canaleta
+          </button>
+        </section>
+      )}
+      {!bands.length && <p>Nenhuma canaleta nesta fiada.</p>}
+      {doc.adjustments.channels.map((a) => (
+        <section key={a.id}>
+          <p>
+            Canaleta suprimida · parede{" "}
+            {doc.model.walls.findIndex((w) => w.id === a.wallId) + 1} · cota
+            absoluta {display(a.top)} cm
+          </p>
+          <button
+            disabled={blocked || !!s.preview}
+            onClick={() => void s.commit(restoreBand(doc, a.wallId, a.top))}
+          >
+            Restaurar faixa suprimida
+          </button>
+        </section>
+      ))}
       <h3>Encontros</h3>
       {generated?.components
         .filter((c) => c.junctions.length)
@@ -266,6 +342,21 @@ export function FiadaPanel() {
         >
           Retornar encontros ao automático
         </button>
+      )}
+      {opening && (
+        <section>
+          <h3>Vão selecionado</h3>
+          <p>
+            Base {display(opening.base)} · topo{" "}
+            {display(opening.base + opening.height)} cm
+          </p>
+          <button
+            disabled={s.busy}
+            onClick={() => s.inspect({ mode: "plan", preview: null })}
+          >
+            Editar na Planta
+          </button>
+        </section>
       )}
       <h3>Diagnósticos</h3>
       {!doc.generationState.diagnostics.length && (

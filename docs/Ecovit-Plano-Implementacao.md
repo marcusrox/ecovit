@@ -1,9 +1,9 @@
 # Ecovit — Plano incremental de implementação
 
 **Data:** 10 de outubro de 2026  
-**Atualização documental:** 12 de outubro de 2026\
-**Base:** [PRD 0.10](Ecovit-PRD.md) e [Arquitetura 1.3](Ecovit-Arquitetura-Tecnica.md)\
-**Estado:** M1 e M2 aprovadas; aceite global de M2 em 12/10/2026. M3 nominal detalhada na seção 7, com padrões e alcances de canaletas/grautes confirmados e sem implementação. Os relatórios anteriores são históricos; o aceite atual substitui suas pendências globais de aprovação de M2.
+**Atualização documental:** 13 de outubro de 2026\
+**Base:** [PRD 0.12](Ecovit-PRD.md) e [Arquitetura 1.5](Ecovit-Arquitetura-Tecnica.md)\
+**Estado:** M1, M2, M3.1 e M3.2 aprovados; aceites globais de M2 e M3.1 em 12/10/2026, e de M3.2 em 13/10/2026. M3.3 planejado. Relatórios e roteiros na seção 7. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais.
 
 **Endereço local padrão:** `http://127.0.0.1:5173/`, conforme o README. Referências a `localhost` nos relatórios históricos preservam a origem usada naquela ocasião. Projetos salvos em `localhost` permanecem naquela origem; para transferi-los, baixar `.ecovit` na origem antiga e carregar na origem escolhida.
 
@@ -13,7 +13,7 @@ Cada marco acrescenta uma funcionalidade testável ao aplicativo definitivo. M1 
 
 Fluxo: especificar a entrega → implementar → verificar os critérios pertinentes → disponibilizar roteiro de teste → incorporar feedback. A pesquisa construtiva precede os algoritmos correspondentes e será registrada no caderno técnico, por assunto. Não haverá prova técnica ou aplicativo experimental separado.
 
-O plano organiza a implementação parcial do PRD; um requisito atendido parcialmente não será marcado como integralmente concluído. M1 foi aprovada pelo solicitante e M2 foi posteriormente autorizada e implementada; resultados na seção 6. Implementação de M3 não iniciada; definições documentais atuais na seção 7.
+O plano organiza a implementação parcial do PRD; um requisito atendido parcialmente não será marcado como integralmente concluído. M1 foi aprovada pelo solicitante e M2 foi posteriormente autorizada e implementada; resultados na seção 6. M3.1 foi autorizado e implementado; verificação e aceite manual são registrados separadamente na seção 7.
 
 ## 2. Sequência dos marcos
 
@@ -21,7 +21,7 @@ O plano organiza a implementação parcial do PRD; um requisito atendido parcial
 |---|---|---|---|---|
 | M1 — Planta editável e persistência | Criar projeto, desenhar/editar paredes, desfazer, salvar e transportar arquivo | RF-01/02/03/08/09/11/12, nos recortes abaixo | Nenhuma | Aprovada pelo solicitante em 10/10/2026 |
 | M2 — Composição e inspeção de fiadas | Catálogo nominal, retas, L, retângulo, T básico, transição simples de alturas, inspeção e persistência; cruz apenas reconhecida e diagnosticada | RF-01/03/04/05/09/10, persistência RF-11/12 | M1 e definições P1–P5 do caderno | Aprovada em 12/10/2026; relatório na seção 6 |
-| M3 — Vãos e elementos construtivos | Portas, janelas e vãos integrados à composição; canaletas e grauteamentos automáticos e ajustáveis | RF-04/06/07/09/10 | M2 e definições nominais CT-07–10 | Documentação na seção 7; sem código |
+| M3 — Vãos e elementos construtivos | Portas, janelas e vãos integrados à composição; canaletas e grauteamentos automáticos e ajustáveis | RF-04/06/07/09/10 | M2 e definições nominais CT-07–10 | M3.1 aprovado em 12/10/2026; M3.2 aprovado em 13/10/2026; M3.3 planejado |
 | M4 — Lajes e múltiplos pavimentos | Lajes, limites verticais, até três pavimentos e verificação dos alinhamentos | RF-08/13 e propagação dos RF-04/05/07 | M3 e pesquisa de transições verticais | A detalhar |
 | M5 — Consulta e conclusão da primeira versão | Quantitativos, duplicação de projetos e fechamento dos cenários restantes do PRD | RF-10/11/12 e cenários de aceite | M4 | A detalhar |
 
@@ -133,7 +133,7 @@ M1 estará pronta para teste do solicitante quando seus critérios tiverem evid�
 | Implementação | M1 aprovada; M2 implementada (relatório na seção 6) |
 | Comandos e testes automatizados | Implementados; resultados no relatório abaixo |
 | Teste manual do solicitante | Aprovação global recebida em 10/10/2026; sem checklist individual informado |
-| Próxima ação | Implementar M3.1 quando solicitado, conforme o recorte aprovado na seção 7 |
+| Próxima ação | Implementar M3.3 quando solicitado, conforme PRD §20, CT-10 e Arquitetura §15; aceite de M3.2 não inicia programação do próximo incremento |
 
 ## 4. Relatório da implementação de M1 — 10/10/2026
 
@@ -446,7 +446,7 @@ O solicitante declarou: **“O M2 está validado por mim.”** M2 aprovada, incl
 
 ## 7. M3 — Vãos, canaletas e grautes nominais
 
-**Revisão:** 12/10/2026, após retorno do solicitante. **Estado:** documentação atualizada, nenhuma implementação. O usuário confirmou desenho nominal, configurações de projeto, automação como ponto de partida e ajustes persistentes. PRD §20, Arquitetura §15 e Caderno revisão 6 CT-07–10/EX-21–35 são as referências. Os antigos bloqueios por apoios dimensionados e passagem física deixam de se aplicar.
+**Revisão:** 13/10/2026. **Estado:** M3.1 e M3.2 aprovados pelo solicitante; M3.3 somente especificado. O usuário confirmou desenho nominal, configurações de projeto, automação como ponto de partida e ajustes persistentes. PRD §20, Arquitetura §15 e Caderno revisão 8 CT-07–10/EX-21–35 são as referências. Os antigos bloqueios por apoios dimensionados e passagem física deixam de se aplicar. Aceites globais e relatório de M3.2 ao final desta seção.
 
 ### Escopo e sequência
 
@@ -454,11 +454,11 @@ Desenhar portas, janelas e vãos; gerar canaletas por níveis e junto a todos os
 
 | Incremento | Entrega | Dependências reais |
 |---|---|---|
-| M3.1 | Vãos, configuração do projeto para padrões de aberturas, composição nominal, diagnósticos e persistência | CT-07/08, padrões e recorte D3-02 confirmados; autorização de implementação ainda necessária |
+| M3.1 | Vãos, configuração do projeto para padrões de aberturas, composição nominal, diagnósticos e persistência | CT-07/08, padrões e recorte D3-02 confirmados; implementação autorizada em 12/10/2026 |
 | M3.2 | Lista de níveis globais, canaletas automáticas superiores/inferiores, representação e remoção em Fiada | M3.1, CT-09, largura do vão + um módulo por lado e remoção da parede/fiada inteira confirmados; não depende de cálculo de apoio |
 | M3.3 | Categorias e distância de graute, geração por malha, clique +/− e preservação de ajustes | M3.1/M3.2, CT-10, quatro seletores inicialmente habilitados |
 
-Cada incremento entra no aplicativo real e recebe testes; não criar protótipo. Enquanto somente M3.1 estiver implementado, informar discretamente que canaletas/grautes ainda não estão disponíveis, sem atribuir erro ao desenho. A sequência não autoriza código nesta solicitação.
+Cada incremento entra no aplicativo real e recebe testes; não criar protótipo. M3.1/M3.2 estão aprovados. Grautes permanecem sem geração/controles; iniciar M3.3 somente mediante solicitação de implementação.
 
 ### Referências de implementação por incremento
 
@@ -528,7 +528,7 @@ Nenhum passo foi executado nesta revisão documental; aceite manual de M3 perman
 
 | ID | Estado |
 |---|---|
-| D3-01 | Alcance nominal confirmado. Sequência M3.1/M3.2/M3.3 mantida como organização de trabalho; sem autorização de código. |
+| D3-01 | Alcance nominal confirmado. Sequência M3.1/M3.2/M3.3 mantida como organização de trabalho; M3.1 autorizado em 12/10/2026, sem antecipar os demais incrementos. |
 | D3-02 | Confirmado em 12/10/2026: proibir sobreposição de volumes; vãos lado a lado com alturas sobrepostas exigem um módulo horizontal; empilhados são permitidos com coincidência horizontal parcial/total e uma fiada completa intermediária, que pode compartilhar canaletas superior/inferior. Sem união automática ou validação estrutural. Substitui a proposta anterior que excluía empilhamento. |
 | D3-03 | Substituída proposta de preenchimento obrigatório inicial por configurações de padrões; valores confirmados na tabela normativa do PRD §20, verificados por M3-A16. |
 | D3-04 | Confirmado: não verificar dimensões físicas nem dimensionar estrutura. Bloqueios físicos L2/L6/L8 retirados de M3 nominal. |
@@ -574,3 +574,145 @@ Verificação pelo Codex: consistência das responsabilidades e referências, pr
 Registrados os três complementos aprovados pelo solicitante: exclusão individual de vão no PRD §20 e M3-A06; envelope versão 3/composição nominal-v4 desde M3.1 na Arquitetura §15, com geração de canaletas/grautes desativada até seus incrementos; recorte explícito dos critérios de verificação de M3.1 nesta seção. Preservadas as decisões de empilhamento, modulação e migração de legados. Dimensões de esquadrias/folgas permanecem fora de M3.1.
 
 Verificação pelo Codex: consistência dos complementos com CT-07/08, padrões e contratos existentes, links locais/âncoras e `git diff --check`. Alteração documental, sem testes do aplicativo ou implementação de M3.1. Teste manual permanece futuro. Commit documental reúne a consolidação de M3 e estas revisões; alteração preexistente de títulos em `tests/e2e/editor.spec.ts` fica fora deste commit.
+
+### Relatório da implementação de M3.1 — 12/10/2026
+
+Implementado no aplicativo existente (versão 0.3.0): ferramentas Porta/Janela/Vão por arraste, prévia modular, movimento na mesma parede, duas alças, campos de posição/largura/base/altura, Aplicar/Cancelar e exclusão individual. Seleção de empilhados identifica tipo/base/topo; seletor adicional permite seleção por teclado. Os símbolos são esquemáticos, sem folha/sentido de abertura. Painel de vão recolhível e Configurações expõe somente Vãos, com Aplicar/Cancelar/Restaurar, altura resultante e consulta de fiadas. Defaults só inicializam novas aberturas.
+
+CT-07/08 aplicados: subtrair células após a paginação original, conservar fase e converter par interrompido em meio nominal. Sobreposição de volumes e separações incompatíveis são recusadas em edição direta; empilhamento com coincidência parcial/total usa mínimo de uma fiada. Vão que invade encontro permanece como intenção com diagnóstico; componente afetado fica sem peças, preservando componentes independentes. Edição indireta mantém posição mundial, ID e medidas do vão, inclusive offset negativo pendente. Exclusão da parede remove seus vãos e escolhas dependentes na mesma operação desfazível.
+
+Arquivo versão 3, composição nominal-v4 e configurações em `project.openingSettings`. Vãos em `model.openings`; nenhum campo/resultado de canaleta ou graute foi antecipado. Arquivos v1/v2 e snapshots nominal-v1/v2/v3 são conferidos com sua convenção original antes da migração; resultado atual de v3 exige nominal-v4. Snapshots adulterados, órfãos, IDs duplicados, versões futuras e limites excedidos são recusados. Rascunhos geometricamente pendentes podem salvar/reabrir. Limite defensivo de mil vãos, além dos limites existentes de parede/fiada/células/50 MB. A tabela IndexedDB permanece a mesma.
+
+Diagnósticos contextualizados pelo indicador do rodapé: localização, faixa de fiadas, consequência e ações Localizar/Ver fiada/Editar na Planta. Seleção de abertura na Fiada também oferece Editar na Planta com câmera preservada. Informação de elementos sobre/sob vãos ainda não calculados é persistida, sem diagnóstico estrutural. Processamento salva modelo → calcula inteiro → salva resultado; falha da primeira gravação não impede cálculo em memória, falhas preservam trabalho e liberam controles. Nome/seleção/câmera não disparam geração; desfazer de nome também conserva o resultado.
+
+#### Verificações pelo Codex
+
+| Verificação | Resultado |
+|---|---|
+| `npm run typecheck` | Passou, sem erros |
+| `npm run lint` | Passou, sem erros ou avisos |
+| `npm test` | 77 testes passaram: 18 de vãos, 10 de estado/histórico/falhas e 49 de regressões de domínio, composição e IndexedDB |
+| `npm run test:e2e` | Suíte final completa: 40 fluxos passaram em Chrome/Edge (20 por navegador), incluindo 14 de M3.1; antes dela, 38 fluxos completos e verificações específicas também passaram |
+| `npm run build` | Passou; bundle 821,18 kB (256,51 kB gzip). Avisos conhecidos de comentários de otimização do Zod e bundle acima de 500 kB, não impeditivos |
+| Revisão visual | Planta, empilhados e configurações em 1440×1000 inspecionados; rótulos coincidentes foram separados e informação repetida no painel removida. Capturas em `.tools/m3-*.png`, ignoradas pelo Git |
+| Integridade documental | Links/âncoras locais e `git diff --check` conferidos no encerramento |
+| Teste manual do solicitante | Aceite global de M3.1 recebido em 12/10/2026: “M3.1 validado com sucesso.” Sem resultados individuais por passo informados |
+
+Rodadas intermediárias identificaram expectativas antigas de versão/fluxo e preparação mutável de fixture de estado, corrigidas para as convenções atuais e operações imutáveis. A primeira execução de Vitest encontrou EPERM do sandbox; testes executados posteriormente com autorização fora dessa restrição. A alteração preexistente em `tests/e2e/editor.spec.ts` foi preservada integralmente, sem edição adicional ou commit nesta implementação.
+
+#### Cobertura dos critérios no recorte M3.1
+
+| Critérios | Evidência e alcance |
+|---|---|
+| M3-A01/A02 | Fluxos em navegador: três tipos, corpo, ambas as alças, campos, cancelamento/Escape/perda de foco/saída, exclusão e histórico. IDs, posição e largura conferidos no documento baixado |
+| M3-A03/A04 | Casos pertinentes EX-21–24/29 por contagens/posições independentes; piso/início diferentes, passo de 6 cm, bases 25/30/28 e módulo 12,51 cm herdado de M2; alternativas explícitas e retomada da paginação |
+| M3-A05/A06 | EX-25–27: contato/sobreposição recusados, coincidência horizontal parcial/total com fiada intermediária, seleção de empilhados, encontro invadido, parede encurtada preservando pendência e exclusão/desfazer de dependentes |
+| M3-A07/A08 (parte M3.1) | Câmera Planta/Fiada, referência não interativa herdada, edição contextual, diagnósticos e informação de recursos futuros; sem verificação de canaleta/graute |
+| M3-A09/A10 (parte M3.1) | Migração original, reabertura/importação como cópia, adulteração, rascunho pendente, histórico, duas gravações, falhas do motor/armazenamento e bloqueio entre abas |
+| M3-A15 (parte M3.1) | Chrome/Edge, rotações/reflexões/sentido, bases padrão/personalizada, limites defensivos e regressões M2. Sem alegação de três pavimentos |
+| M3-A16 (parte M3.1) | Grupo Vãos: padrões, Aplicar/Cancelar/Restaurar, preservação de existentes, persistência e histórico. Grupos de canaleta/graute não verificados |
+| M3-A11–14 e partes futuras dos critérios compartilhados | Pendentes para M3.2/M3.3; não declarados concluídos |
+
+Observação de carga no aplicativo: 100 paredes de 20 módulos, cada uma com porta de 8 módulos a partir do módulo 5, base zero/topo 217 cm, altura de parede 280 cm e 40 fiadas. Resultado esperado independente: 31 fiadas × 7 peças + 5 fiadas × 11 + 4 × 10 = 312 peças por parede, total 31.200. Primeira medição desse fluxo: 5.118 ms em Chrome e 4.171 ms em Edge; rodada final: 2.359 ms em Chrome e 5.813 ms em Edge. Inclui abertura da página, importação, geração e salvamento; houve concorrência com outras verificações em parte das rodadas. Não é tempo isolado do motor nem garantia da referência de cinco segundos. Nenhuma medição de 100 mil peças/três pavimentos ou canaletas/grautes.
+
+#### Roteiro manual específico de M3.1
+
+Abrir `http://127.0.0.1:5173/` em Chrome ou Edge. Para iniciar, executar `./Start-Ecovit.ps1` na raiz e manter o terminal aberto. Preservar a origem de projetos existentes; transportar por `.ecovit` se necessário. Usar projetos de teste próprios com tijolo 25×12,5×7 cm e parede de 400 cm/altura 280 cm.
+
+| Passo | Ação | Esperado |
+|---|---|---|
+| 1 | Desenhar Porta, Janela e Vão em regiões separadas; selecionar, mover corpo, editar ambas as alças e campos | Símbolos distintos, prévia modular, parede mantida, uma operação por gesto; medidas incompatíveis oferecem escolha |
+| 2 | Configurações: alterar base, Cancelar; repetir e Aplicar; Restaurar e Aplicar; desfazer | Cancelar preserva; padrões só afetam novas inserções; persistência e histórico corretos |
+| 3 | Em projetos separados, porta posição 100/largura 100/base 0/altura 210; janela posição 100/largura 100/base 98/altura 112 | Porta abre fiadas 1–30; janela 15–30. Fiada 31 retoma sem reiniciar fase; conferir EX-21/22 |
+| 4 | Novo projeto: porta inferior posição 100/largura 100/base 0/altura 105; janela superior no mesmo intervalo, base 112/altura 98 | Seletor distingue ambas na Planta; fiada 16 completa, 15 e 17 com as respectivas aberturas. Canaletas ainda não aparecem |
+| 5 | Tentar base 105 no vão superior e contato lateral entre vãos com alturas coincidentes; cancelar | Entradas recusadas sem alterar projeto; empilhamento exige uma fiada e separação lateral exige um módulo |
+| 6 | Na Fiada atingida pelo vão, clicar na abertura e Editar na Planta; recolher/reabrir painel e selecionar por teclado | Seleção/localização e câmera preservadas; controles acessíveis |
+| 7 | Escape durante arraste, soltar fora e alternar janela; navegar por botão central/Espaço | Nenhuma abertura residual, próxima inserção funciona e navegação não altera entidades |
+| 8 | Com vão 100–200, encurtar parede para 150; usar Diagnósticos, localizar/editar; desfazer | Vão mantém posição/medidas como pendência; conjunto sem peças até corrigir; desfazer restaura |
+| 9 | Excluir vão, desfazer/refazer; excluir parede com vãos e desfazer | Parede preservada ao excluir só vão; dependentes restaurados ao desfazer parede |
+| 10 | Baixar, recarregar/reabrir e carregar em outro navegador; repetir com projeto antigo M2 | Geometria, escolhas, configurações e pendências preservadas; importação cria cópia; M2 sem novos elementos automáticos |
+| 11 | Base personalizada 28×14×6 cm, parede altura 240; desenhar janela com defaults originais | Nenhum arredondamento oculto; confirmar medidas realizáveis, por exemplo base 108/altura 108, antes de inserir |
+
+Limitações: canaletas/grautes seguem sem geração/controles; cruz e transições de altura fora do suporte M2 não foram ampliadas. Lajes, múltiplos pavimentos, quantitativos, esquadrias/folgas e validação estrutural ficam fora. Aceite manual global recebido, sem checklist individual de conforto/teclado; não houve auditoria completa de acessibilidade. Nenhum arquivo pessoal foi alterado pelos testes, que usam perfis isolados.
+
+### Aceite global de M3.1 — 12/10/2026
+
+O solicitante declarou: **“M3.1 validado com sucesso.”** M3.1 aprovado globalmente, substituindo a pendência de aceite nos registros de implementação. Não foram informados resultados individuais por passo do roteiro. Limitações de escopo permanecem: canaletas em M3.2, grautes em M3.3. O próximo incremento é M3.2; pedido de prompt não inicia sua implementação.
+
+Atualizados os estados vigentes de PRD, caderno, plano e README. Revisão documental de consistência e `git diff --check`; sem alteração de código, commit ou repetição de testes do aplicativo nesta atualização.
+
+### Recorte de verificação de M3.2
+
+Executar M3-A07 (canaletas em Fiada), M3-A11 e M3-A12. Nos critérios compartilhados A08/09/10/15/16, verificar somente a parte de canaletas: diagnósticos e localização, integridade/migração/transporte, processamento e recuperação de falhas, bases/direções/limites e configurações com histórico. Manter regressões M1/M2/M3.1. M3-A13/14 e partes de graute dos critérios compartilhados permanecem para M3.3.
+
+### Relatório da implementação de M3.2 — 12/10/2026
+
+Implementado no aplicativo existente, versão 0.4.0. Configurações inclui grupo Canaletas com lista de níveis, UUID estável, cotas de topo relativas ao piso e consulta de fiadas. Adicionar/remover, Aplicar/Cancelar/Restaurar; cotas incompatíveis oferecem alternativas explícitas, sem arredondar silenciosamente, e cotas duplicadas são recusadas. Restaurar padrões recupera 112/224 cm e preserva supressões. Configurar somente canaletas não exige corrigir padrões de vãos inalterados que estejam fora da malha de uma base personalizada.
+
+CT-09 implementado após a paginação/subtração M3.1: níveis globais abrangem alvenaria existente da parede; todos os tipos de vãos demandam fiadas imediatamente acima/abaixo, quando existentes, com largura do vão mais um módulo horizontal por lado. Demandas coincidentes se unem por célula, mantendo origens de nível e de vão superior/inferior; a fiada intermediária dos empilhados é compartilhada. Inteira/meia canaleta usam a fase já escolhida; par misto divide em meios comuns/canaleta sem ampliar alcance ou preencher vazio. Canal longitudinal esquemático e cores distintas somente na Fiada.
+
+Seleção por canvas ou lista realça o alcance completo na parede/fiada, inclusive trechos separados por aberturas. Célula compartilhada oferece escolha de parede. Remover faixa aplica supressão persistente por UUID/parede/cota absoluta, prevalecendo sobre todas as origens coincidentes, inclusive numa célula comum a paredes diferentes. Retorna tijolos comuns e preserva outras fiadas. Restaurar faixa suprimida, desfazer/refazer, reabrir e transportar mantêm identidade e resultado. Extensão da parede permanece abrangida; mudança do nível não desloca a supressão, que pode ficar dormente e voltar a valer. Exclusão de parede elimina seus ajustes dependentes na mesma operação desfazível.
+
+Níveis/supressões incompatíveis após edição indireta são preservados e não aplicados, com diagnóstico. Nível informa a cota e oferece Editar níveis de canaleta; supressão informa cota absoluta e restauração na Fiada. Ver fiada/Localizar continuam disponíveis. Sem demanda numa cota ainda válida, a supressão fica dormente sem erro. Nenhuma remoção voluntária gera alerta estrutural.
+
+Envelope versão 4/composição nominal-v5, sem alterar a tabela IndexedDB. Snapshots de arquivos anteriores são conferidos pela convenção original antes de migrar; adulterados/futuros/órfãos/duplicados são recusados. Legados recebem níveis globais vazios; as faixas locais junto aos vãos existentes passam a ser calculadas por CT-09. Novos projetos recebem os níveis normativos. Preservados IDs, geometria, escolhas e arquivo original; salvar somente com bloqueio de edição. Limites defensivos adicionais: 100 níveis e 10 mil supressões, sem truncamento; mantidos limites de células/fiadas/arquivo. Histórico guarda intenção, sem peças. Processamento sequencial salva modelo → calcula → salva resultado; falhas mantêm trabalho em memória e liberam controles.
+
+#### Verificações pelo Codex
+
+| Verificação | Resultado real |
+|---|---|
+| `npm run typecheck` | Passou, sem erros; repetido pelo build final |
+| `npm run lint` | Passou, sem erros ou avisos |
+| `npm test` | 99 passaram: 19 de canaletas, 13 de estado/histórico/falhas e 67 de regressões de domínio, composição, vãos e IndexedDB |
+| `npm run test:e2e` | Rodada final completa: 56 passaram, 28 em Chrome e 28 em Edge; 16 fluxos de M3.2 e 40 de regressões M1/M2/M3.1 |
+| `npm run build` | Passou; JS 833,16 kB / 260,16 kB gzip. Avisos conhecidos de comentários de otimização do Zod e bundle maior que 500 kB, não impeditivos |
+| Revisão visual | Capturas 1440×1000: configurações, canaletas/aberturas, faixa selecionada e carga. Canal longitudinal, meios, vazio do vão, realce e ações legíveis; corrigida posição do título Encontros. Capturas `.tools/m32-*.png`, ignoradas pelo Git |
+| Servidor local | HTTP 200 confirmado em `http://127.0.0.1:5173/` no encerramento |
+| Integridade documental/Git | Links locais sem arquivos ausentes; `git diff --check` sem erros. Alterações anteriores de M3.1 preservadas, sem revertê-las ou fazer commit; hash de `tests/e2e/editor.spec.ts` igual ao inicial |
+| Teste manual/aceite de M3.2 | Aceite global recebido em 13/10/2026: “M3.2 validado.” Sem resultados individuais por passo informados |
+
+Duas rodadas intermediárias de e2e passaram 50/52: corrigidos seletor de título ambíguo e expectativa de teste que atribuía origem local também às células fora do alcance do vão. A asserção final confere independentemente as dez posições 87,5–200 cm com duas origens, dentro da faixa global de 32 células. Não houve alteração do comportamento aprovado para satisfazer o teste. A suíte final foi executada após as correções, sem editar código durante sua execução. Testes usam perfis isolados e cópias; arquivos pessoais não foram alterados.
+
+Observação de carga no aplicativo: 100 paredes de 20 módulos, altura 280 cm/40 fiadas; cada janela ocupa módulos 5–12, base 112/topo 217 cm; globais 112/224 coincidem com faixas inferior/superior. Resultado independente por parede: fiadas 1–16 = 8×10 + 8×11 = 168 peças; fiadas 17–31 = 15×7 = 105; fiadas 32–40 = 4×10 + 5×11 = 95; total 368 peças/parede, 36.800 no projeto. Duas faixas por parede, 200 no total; fiada 16 com 900 inteiras e 200 meias canaletas. Fluxo abertura/importação/geração/salvamento: 4.065 ms em Chrome e 3.255 ms em Edge. Chrome executou durante verificações de build/lint. Não é medição isolada do motor nem garantia de cinco segundos; sem alegação de três pavimentos/100 mil peças.
+
+#### Cobertura dos critérios no recorte M3.2
+
+| Critérios | Evidência e alcance |
+|---|---|
+| M3-A07 (parte canaletas) | Inteira/meia canaleta distintas com canal longitudinal; seleção e alcance na Fiada; câmera preservada e referência sem ação; nenhuma canaleta na Planta |
+| M3-A11 | EX-26/28/31: alcance por célula, posições/contagens independentes, limites de altura/abertura, porta no início sem inferior, superior ausente no topo, coincidências locais/globais e fiada compartilhada entre empilhados |
+| M3-A12 | EX-35: remover toda parede/fiada, inclusive trechos descontínuos; retornam comuns sem tocar outras fiadas; precedência sobre origens vizinhas coincidentes; restauração e persistência |
+| M3-A08 (parte canaletas) | Nível fora da malha e supressão sem fiada válida preservados, IDs/cotas/localização e ação de correção; supressão dormente válida sem erro; sem alerta estrutural |
+| M3-A09 (parte canaletas) | Arquivo versão 4/nominal-v5, reabertura e cópia entre navegadores, convenções anteriores conferidas antes da migração; adulteração de células/origens/snapshots e referência órfã recusadas |
+| M3-A10 (parte canaletas) | Salvar/calcular/salvar, histórico de níveis/supressão/restauração/dependentes; falhas do motor e gravação, retry e download do resultado em memória; regressões do bloqueio entre abas |
+| M3-A15 (parte canaletas) | Chrome/Edge; bases 25/30/28, altura personalizada 6 cm, direções/lados, limites defensivos e determinismo por ordem; carga de 100 janelas com níveis coincidentes |
+| M3-A16 (parte canaletas) | Adicionar/remover níveis, alternativas modulares, duplicatas, Aplicar/Cancelar/Restaurar, defaults de novos projetos, legados sem globais, preservação de supressões e vãos, histórico |
+| Partes de graute dos critérios compartilhados e M3-A13/14 | Pendentes para M3.3; não declaradas verificadas |
+
+#### Roteiro manual específico de M3.2 — referência do aceite global
+
+Executar `./Start-Ecovit.ps1` na raiz e manter o terminal aberto; abrir `http://127.0.0.1:5173/` em Chrome ou Edge. Usar projetos de teste com base 25×12,5×7 cm, parede 400×280 cm, piso/início zero. Para isolar faixas locais, remover os níveis globais nas configurações. Não usar arquivos pessoais para os testes de adulteração/falha.
+
+| Passo | Ação | Esperado |
+|---|---|---|
+| 1 | Novo projeto; Configurações → Canaletas; consultar níveis, adicionar 119, cancelar; repetir e aplicar; remover/restaurar padrões e desfazer | Novos níveis 112/224 e fiadas 16/32; cancelar não muda documento; aplicar/remoção/restauração são desfazíveis; sem alteração de vãos existentes |
+| 2 | Adicionar topo 100 e Aplicar; escolher 98 ou 105 explicitamente; tentar duplicar uma cota | Alternativas compatíveis sem arredondamento oculto; duplicata recusada; número da fiada consultável |
+| 3 | Sem globais, janela posição 100/largura 100/base 98/altura 112 | EX-28: faixa 87,5–212,5 cm; fiada 14 com 5 inteiras, fiada 31 com 4 inteiras + 2 meias; restantes comuns |
+| 4 | Janela padrão base 112/topo 217; adicionar globais 112/224 | EX-31: fiadas 16/32; união das origens sem duplicar peças; outros níveis/fiadas mantidos |
+| 5 | Sem globais, porta posição 100/largura 100/base 0/topo 105 e janela superior no mesmo intervalo, base 112/topo 210 | EX-26: fiada 16 compartilhada por superior da porta/inferior da janela, uma ocupação; nenhuma canaleta abaixo da porta |
+| 6 | Janela EX-28 com global 112; fiada 16, clicar num trecho e conferir prévia; Remover faixa | EX-35: remover também o outro lado separado pelo vão e origens coincidentes; preencher com comuns; fiadas 14/31 inalteradas |
+| 7 | Desfazer/refazer, recarregar/reabrir, baixar e importar em outro navegador; Restaurar faixa suprimida | Supressão mantém identidade/cota, importação cria cópia; restauração retorna composição automática; nenhuma edição do arquivo original |
+| 8 | Com faixa global 112 suprimida, estender parede; mudar global para 119; depois voltar a 112 | Extensão abrangida pela supressão; 119 aparece; supressão permanece em 112 e volta a valer; Restaurar padrões não apaga ajuste |
+| 9 | Encontro L com nível global; clicar célula compartilhada, escolher parede e remover; usar referência adjacente | Escolha contextual define toda faixa da parede; célula compartilhada torna-se comum; referência não aceita remoção |
+| 10 | Alterar altura/início/base de modo a tornar uma cota/ajuste incompatível; usar Diagnósticos | Intenção preservada; cota e ação de correção visíveis; nenhuma faixa aplicada fora da malha; desfazer recupera |
+| 11 | Importar cópia de projeto M3.1 e reabrir; ativar globais por Restaurar padrões/Aplicar | Vãos/IDs/escolhas preservados, globais vazios inicialmente, faixas locais calculadas; ativação global explícita |
+
+Limitações: grautes, lajes, múltiplos pavimentos, quantitativos, armaduras e validação estrutural permanecem fora da entrega. Cruz/transições não suportadas de M2 não foram ampliadas. Canal é representação nominal, sem dimensões físicas. Não houve auditoria completa de acessibilidade. Aceite global de M3.2 recebido em 13/10/2026, sem checklist individual dos passos; M3.1 continua aprovado.
+
+### Aceite global de M3.2 — 13/10/2026
+
+O solicitante declarou: **“M3.2 validado.”** Registrado aceite global de M3.2, substituindo a pendência de aprovação; nenhum resultado individual por passo foi informado. Preservados os resultados automatizados e as limitações da entrega.
+
+M3.3 é o próximo incremento. Suas dependências M3.1/M3.2 estão aprovadas, e as regras nominais de graute estão definidas no PRD §20, CT-10/EX-22/32–34 e Arquitetura §15. Configurações, distribuição por malha, intervalos interrompidos por vãos, clique por eixo e precedência dos ajustes têm critérios M3-A13/A14 e partes aplicáveis dos critérios compartilhados. Não identificada pendência de decisão de produto que impeça iniciar esse recorte. Representação concreta de configuração/ajustes, limites defensivos e evolução explícita de formato/convenção serão implementadas junto com a migração e seus testes, sem alterar regras aprovadas. Projetos legados devem iniciar com categorias de graute desligadas, conforme a arquitetura.
+
+Atualizados plano, PRD, caderno, arquitetura e README. Revisão documental de consistência e `git diff --check`; sem mudanças de código, commit ou repetição de testes do aplicativo. Este registro e a avaliação de prontidão não iniciam a implementação de M3.3.

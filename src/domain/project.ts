@@ -9,15 +9,32 @@ export type Wall = {
   side: 1 | -1;
   height: number;
 };
+export type Opening = {
+  id: string;
+  wallId: string;
+  kind: "door" | "window" | "opening";
+  offset: number;
+  width: number;
+  base: number;
+  height: number;
+};
+export type OpeningSettings = { base: number; top: number };
+export type ChannelLevel = { id: string; top: number };
+export type ChannelSuppression = { id: string; wallId: string; top: number };
+export const defaultChannelLevels = (): ChannelLevel[] =>
+  [11200, 22400].map((top) => ({ id: crypto.randomUUID(), top }));
+export type Tool = "select" | "wall" | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 2;
+  schemaVersion: 4;
   project: {
     id: string;
     name: string;
     units: "0.1mm";
     base: Base;
     origin: Point;
+    openingSettings: OpeningSettings;
+    channelLevels: ChannelLevel[];
   };
   model: {
     floors: {
@@ -28,13 +45,13 @@ export type Project = {
       defaultHeight: number;
     }[];
     walls: Wall[];
-    openings: never[];
+    openings: Opening[];
     slabs: never[];
   };
   adjustments: {
     junctions: JunctionChoice[];
     grout: never[];
-    channels: never[];
+    channels: ChannelSuppression[];
   };
   generated: Composition | null;
   generationState: {
@@ -81,13 +98,15 @@ export function createProject(name: string, base: Base): Project {
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 2,
+    schemaVersion: 4,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
       units: "0.1mm",
       base,
       origin: { x: 0, y: 0 },
+      openingSettings: { base: 11200, top: 21700 },
+      channelLevels: defaultChannelLevels(),
     },
     model: {
       floors: [
@@ -106,7 +125,7 @@ export function createProject(name: string, base: Base): Project {
     adjustments: { junctions: [], grout: [], channels: [] },
     generated: null,
     generationState: { status: "outdated", diagnostics: [] },
-    metadata: { createdAt: now, updatedAt: now, appVersion: "0.2.0" },
+    metadata: { createdAt: now, updatedAt: now, appVersion: "0.4.0" },
   };
 }
 export const snap = (n: number, module: number) =>

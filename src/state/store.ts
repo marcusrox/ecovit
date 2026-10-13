@@ -5,6 +5,7 @@ import {
   travel,
   type History,
   type Project,
+  type Opening,
 } from "../domain/project";
 import {
   acquireProject,
@@ -12,7 +13,23 @@ import {
   saveProject,
 } from "../persistence/database";
 import { validateProject } from "../persistence/files";
+import { reconcileOpenings } from "../domain/openings";
 let release: (() => void) | null = null;
+const changedInputs = (previous: Project, next: Project) =>
+  JSON.stringify([
+    previous.model,
+    previous.adjustments,
+    previous.project.base,
+    previous.project.openingSettings,
+    previous.project.channelLevels,
+  ]) !==
+  JSON.stringify([
+    next.model,
+    next.adjustments,
+    next.project.base,
+    next.project.openingSettings,
+    next.project.channelLevels,
+  ]);
 type Inspection = {
   mode: "plan" | "course";
   course: number;
@@ -20,6 +37,8 @@ type Inspection = {
   component: string | null;
   preview: Composition | null;
   focus: { x: number; y: number } | null;
+  pendingOpening: Opening | null;
+  channelBand: string | null;
 };
 const inspection: Inspection = {
   mode: "plan",
@@ -28,6 +47,8 @@ const inspection: Inspection = {
   component: null,
   preview: null,
   focus: null,
+  pendingOpening: null,
+  channelBand: null,
 };
 type State = Inspection & {
   inspect: (change: Partial<Inspection>) => void;
@@ -48,17 +69,28 @@ type State = Inspection & {
 };
 export const useStore = create<State>((set, get) => {
   async function persist(doc: Project) {
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.4.0" } };
+    set({ doc });
     set({ busy: true, saved: "saving" });
+    let saveFailed = false;
     try {
-      await saveProject(doc);
+      try {
+        await saveProject(doc);
+      } catch {
+        saveFailed = true;
+      }
       if (doc.generationState.status === "outdated") {
+        if (typeof requestAnimationFrame === "function")
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => setTimeout(resolve, 0)),
+          );
         let generated;
         try {
           generated = generate(doc);
         } catch (e) {
           set({
-            saved: "saved",
-            message: `Cálculo não concluído: ${e instanceof Error ? e.message : String(e)}. O modelo foi salvo; tente recalcular.`,
+            saved: saveFailed ? "error" : "saved",
+            message: `Cálculo não concluído: ${e instanceof Error ? e.message : String(e)}. ${saveFailed ? "O trabalho está em memória; baixe uma cópia." : "O modelo foi salvo; tente recalcular."}`,
           });
           return;
         }
@@ -72,8 +104,14 @@ export const useStore = create<State>((set, get) => {
         };
         set({ doc: current });
         await saveProject(current);
+        saveFailed = false;
       }
-      set({ saved: "saved", message: "" });
+      set({
+        saved: saveFailed ? "error" : "saved",
+        message: saveFailed
+          ? "A primeira gravação falhou. O trabalho e o cálculo foram preservados; baixe uma cópia ou tente salvar."
+          : "",
+      });
     } catch {
       set({
         saved: "error",
@@ -144,9 +182,12 @@ export const useStore = create<State>((set, get) => {
       try {
         const doc = validateProject(
           {
-            ...candidate,
+            ...reconcileOpenings(s.doc, candidate),
             adjustments: {
               ...candidate.adjustments,
+              channels: candidate.adjustments.channels.filter((a) =>
+                candidate.model.walls.some((w) => w.id === a.wallId),
+              ),
               junctions: candidate.adjustments.junctions.filter((a) =>
                 a.wallIds.every((id) =>
                   candidate.model.walls.some((w) => w.id === id),
@@ -154,10 +195,12 @@ export const useStore = create<State>((set, get) => {
               ),
             },
             generated: s.doc.generated,
-            generationState: { status: "outdated", diagnostics: [] },
+            generationState: changedInputs(s.doc, candidate)
+              ? { status: "outdated", diagnostics: [] }
+              : s.doc.generationState,
             metadata: {
               ...candidate.metadata,
-              appVersion: "0.2.0",
+              appVersion: "0.4.0",
               updatedAt: new Date().toISOString(),
             },
           },
@@ -165,6 +208,7 @@ export const useStore = create<State>((set, get) => {
         );
         set({
           preview: null,
+          pendingOpening: null,
           doc,
           history: remember(s.history, s.doc),
           message: "",
@@ -182,12 +226,21 @@ export const useStore = create<State>((set, get) => {
         const doc = {
           ...next.doc,
           generated: s.doc.generated,
+          generationState: changedInputs(s.doc, next.doc)
+            ? next.doc.generationState
+            : s.doc.generationState,
           metadata: {
             ...next.doc.metadata,
             updatedAt: new Date().toISOString(),
           },
         };
-        set({ preview: null, doc, history: next.history, select: null });
+        set({
+          preview: null,
+          pendingOpening: null,
+          doc,
+          history: next.history,
+          select: null,
+        });
         await persist(doc);
       }
     },

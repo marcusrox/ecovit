@@ -1,8 +1,8 @@
 # Ecovit — Caderno técnico
 
-**Revisão:** 6 — M3 nominal configurável após definição do solicitante; código permanece nominal-v3
-**Estado:** M2 aprovado pelo solicitante em 12/10/2026. Seção 8: decisões nominais de M3 confirmadas, inclusive padrões e alcances de canaletas/grautes, sem implementação.\
-**Alcance implementado:** composição geométrica de paredes sem vãos, em um pavimento, para M2 do [plano](Ecovit-Plano-Implementacao.md). O [PRD](Ecovit-PRD.md) continua sendo a referência de produto. CT-07 registra o recorte de vãos confirmado em 12/10/2026; CT-08 especifica sua paginação; CT-09/10 registram as definições nominais confirmadas de canaletas/grautes. EX-21–35 são especificações, não resultados executados no aplicativo atual.
+**Revisão:** 8 — M3.2 implementado com composição nominal-v5
+**Estado:** M2 e M3.1 aprovados pelo solicitante em 12/10/2026; CT-09 implementado em M3.2, aprovado em 13/10/2026. CT-10 planejado para M3.3.\
+**Alcance implementado:** composição geométrica de paredes, vãos e canaletas em um pavimento, conforme [plano §7](Ecovit-Plano-Implementacao.md). O [PRD](Ecovit-PRD.md) continua sendo a referência de produto. CT-07/08 preservados; CT-09 e EX-26/28/31/35 exercitados por posições/contagens, união de origens e supressões. Grautes permanecem futuros; evidências e limites por critério estão no plano.
 
 ## 1. Evidência, convenção e limite
 
@@ -195,6 +195,8 @@ As decisões P1–P5 estão definidas para o recorte nominal aprovado e foram im
 
 ## 6. Contrato de implementação
 
+Contrato original de M2, preservado para compatibilidade. A evolução de documento/composição e persistência de M3.1 está na Arquitetura §15; o relatório vigente de execução fica no Plano §7.
+
 - Domínio puro: entradas são modelo, ajustes e convenções; saída é composição e diagnósticos. Sem dependência de canvas ou banco.
 - Regeneração integral e sequencial após alteração confirmada. Salvar modelo desatualizado, calcular, salvar resultado. Sem Worker, filas, debounce ou recálculo por região. Liberar controles em sucesso e falha.
 - Falha na primeira gravação: manter edição em memória, informar falha e permitir download; não indicar “Salvo”. Evitar iniciar outra operação persistente enquanto a atual termina.
@@ -219,7 +221,7 @@ O [plano de M2](Ecovit-Plano-Implementacao.md), seção 5, define aceite, testes
 
 ## 8. M3 nominal: pesquisa e definições — 12/10/2026
 
-**Situação:** atualização documental após confirmação do alcance nominal e das configurações pelo solicitante; padrões e alcances horizontais específicos foram confirmados e registrados no plano. Nenhuma regra desta seção foi implementada. Fórmulas de ocupação são convenções nominais do Ecovit, não dimensionamento de apoios ou reforços.
+**Situação:** alcance nominal e configurações confirmados pelo solicitante. CT-07/08 implementados em M3.1 e CT-09 em M3.2; CT-10 permanece futuro. Resultados e pendências manuais no plano §7. Fórmulas de ocupação são convenções nominais do Ecovit, não dimensionamento de apoios ou reforços.
 
 ### Evidências consultadas nesta revisão
 
@@ -250,7 +252,7 @@ Usar `m = largura-base`, `h = altura-base`, `F = cota do piso`, `S = início abs
 - Vão que invade células compartilhadas de um encontro fica salvo como intenção arquitetônica com conflito localizado, sem apagar a outra parede. Vão próximo, sem invadir encontro, é aceito geometricamente; não avaliar apoios resistentes no M3. Sem afastamento estrutural arbitrário.
 - Redimensionamento da parede mantém coordenadas mundiais do vão e recalcula `s` (pode ficar negativo como pendência). Mudança de piso mantém `b`; mudança de início/altura mantém o vão e diagnostica incompatibilidades. Não deslocar, reduzir ou excluir vãos automaticamente. Exclusão da parede remove seus vãos e ajustes dependentes na mesma operação de histórico.
 
-### CT-08 — Paginação junto aos vãos (proposta)
+### CT-08 — Paginação junto aos vãos
 
 Conservar o percurso e a fase de M2 para cada fiada antes da abertura. Subtrair da ocupação as células dos vãos válidos, sem reancorar a fase em cada trecho restante: par com duas células restantes conserva inteiro; par sem células desaparece; par com uma célula restante gera meio nominal nessa extremidade do vão. Meio anterior permanece se sua célula não for removida. Isso é escolha do catálogo, não instrução para cortar fisicamente um inteiro.
 

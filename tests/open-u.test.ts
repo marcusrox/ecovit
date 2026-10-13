@@ -181,7 +181,8 @@ describe("U aberto nominal", () => {
     const old = legacy(),
       d = validateProject(old);
     expect(d.model).toEqual(old.model);
-    expect(d.project).toEqual(old.project);
+    expect(d.project).toMatchObject(old.project);
+    expect(d.project.openingSettings).toEqual({ base: 11200, top: 21700 });
     expect(d.adjustments).toEqual(old.adjustments);
     expect(d.generationState.status).toBe("outdated");
     const g = verifyCoverage(d);

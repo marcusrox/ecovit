@@ -805,6 +805,19 @@
   font-size: 12px;
   text-align: left;
 }
+.editorApp .tools select {
+  max-width: 170px;
+  padding: 4px;
+  font-size: 11px;
+}
+.editorApp .footer button {
+  padding: 2px 6px;
+  font-size: 10px;
+}
+.editorApp .modal {
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
 @media (max-width: 1100px) {
   .header {
     gap: 12px;

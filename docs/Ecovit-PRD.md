@@ -1,8 +1,8 @@
 # Ecovit — Documento de requisitos do produto (PRD)
 
-**Versão:** 0.10 — M3 nominal com configurações de canaletas e grautes\
+**Versão:** 0.12 — M3.2 implementado; grautes planejados\
 **Data:** 12 de outubro de 2026\
-**Status:** M1/M2 aprovados; decisões de simplificação de M3 registradas na seção 20 e no plano. Atualização documental, sem implementação.\
+**Status:** M1/M2, M3.1 e M3.2 aprovados pelo solicitante; aceite global de M3.2 em 13/10/2026. M3.3 planejado.\
 **Plataforma:** aplicação web, inicialmente com interface e documentação em português brasileiro.
 
 ## 1. Visão do produto
@@ -508,7 +508,7 @@ Face externa como referência fixa de paredes, espessura igual à largura do tij
 
 ## 20. Definições de M3 após retorno do solicitante — 12/10/2026
 
-**Decisões confirmadas:** alcance exclusivamente nominal; configurações de projeto para canaletas e grautes; canaletas globais por níveis e automáticas acima/abaixo de todos os tipos de vãos; grautes opcionais por categoria, intervalo máximo padrão 100 cm; inclusão/remoção por clique +/−; supressões preservadas. A presente solicitação é somente documental. A futura tela ainda não foi implementada.
+**Decisões confirmadas:** alcance exclusivamente nominal; configurações de projeto para canaletas e grautes; canaletas globais por níveis e automáticas acima/abaixo de todos os tipos de vãos; grautes opcionais por categoria, intervalo máximo padrão 100 cm; inclusão/remoção por clique +/−; supressões preservadas. M3.1 implementa vãos e seus padrões; M3.2 implementa canaletas, níveis globais e supressões/restauração. Grautes e seus controles aguardam M3.3. Evidências e aceite manual no plano.
 
 Tela “Configurações do projeto”, acessível no editor, compacta e inspirada no print fornecido: grupos Vãos, Canaletas e Graute vertical. Não copiar abas ou controles sem função solicitada, como armaduras, grampos e idioma. Aplicar confirma uma única operação de histórico e recálculo; Cancelar não modifica nada. Restaurar padrões atua no grupo e só efetiva ao aplicar; não apaga ajustes manuais existentes.
 
@@ -555,6 +555,6 @@ Canaletas são visíveis apenas em Fiada, desenhadas com canal longitudinal e di
 
 Ajustes autorizados neste recorte: incluir/remover grautes e remover/restaurar canaletas; configurar níveis globais. Movimento livre de elementos, apoios, aço, grampos, dimensionamento e verificações físicas ficam fora. Retirar um elemento não representa erro estrutural nem demanda reposição compulsória. Diagnósticos cobrem somente integridade, modulação, ocupação e ajustes sem alvo geométrico. Desenhos são o objetivo atual; quantitativos permanecem previstos para evolução futura, sem volumes de graute inferidos de furos sem dimensões.
 
-O [plano, seção 7](Ecovit-Plano-Implementacao.md) organiza a implementação ainda não iniciada. CT-09/10 e exemplos do [caderno, seção 8](Ecovit-Caderno-Tecnico.md) substituem os antigos bloqueios físicos de M3; fontes anteriores continuam como contexto, não parâmetros estruturais do aplicativo.
+O [plano, seção 7](Ecovit-Plano-Implementacao.md) organiza a implementação por incremento e registra os resultados de M3.1/M3.2. CT-09/10 e exemplos do [caderno, seção 8](Ecovit-Caderno-Tecnico.md) substituem os antigos bloqueios físicos de M3; fontes anteriores continuam como contexto, não parâmetros estruturais do aplicativo. Na migração para M3.2, níveis globais iniciam vazios e sua ativação exige configuração explícita; as faixas locais de vãos existentes seguem CT-09 automaticamente. Canaletas aparecem somente na Fiada. Grautes permanecem futuros.
 
 As fórmulas, limites geométricos, paginação e exemplos são definidos em CT-07–10 do caderno; representação persistente, identidade dos ajustes e processamento estão na Arquitetura §15. Os critérios e evidências de cada incremento ficam no plano.

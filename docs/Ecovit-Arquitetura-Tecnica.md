@@ -1,8 +1,8 @@
 # Ecovit — Arquitetura Técnica
 
-**Versão:** 1.3 — M3 nominal configurável, sem alteração de código\
+**Versão:** 1.5 — M3.2, arquivo versão 4 e composição nominal-v5\
 **Data:** 12 de outubro de 2026\
-**Base funcional:** PRD Ecovit 0.10; padrões e alcances de canaletas/grautes confirmados\
+**Base funcional:** PRD Ecovit 0.12; M3.1/M3.2 implementados e aprovados pelo solicitante (M3.2 em 13/10/2026), M3.3 planejado\
 **Objetivo:** implementar o editor e o motor construtivo com uma stack acessível, sem infraestrutura desnecessária.
 
 ## 1. Decisões de arquitetura
@@ -150,7 +150,7 @@ Não adicionar event sourcing ou persistência de cada movimento do mouse.
 
 ## 9. Persistência e arquivo .ecovit
 
-Contrato vigente de M2: envelope de arquivo versão 2 e composição `nominal-v3`. Snapshots `nominal-v1`/`nominal-v2` são conferidos integralmente por recomputação com sua convenção original antes de serem marcados desatualizados para recálculo pelo fluxo normal. Preservar modelo, IDs e escolhas; snapshots adulterados são recusados. Em leitura bloqueada por outra aba, conservar resultado antigo identificado como desatualizado, sem salvar. A geometria vigente está em CT-05 do caderno; a evolução e as evidências das migrações permanecem no [relatório de M2, Plano §6](Ecovit-Plano-Implementacao.md#6-relatório-de-implementação-de-m2--11102026).
+Contrato original de M2: envelope de arquivo versão 2 e composição `nominal-v3`; contrato vigente de M3.2 na seção 15. Snapshots anteriores são conferidos integralmente por recomputação com sua convenção original antes de serem marcados desatualizados para recálculo pelo fluxo normal. Preservar modelo, IDs e escolhas; snapshots adulterados são recusados. Em leitura bloqueada por outra aba, conservar resultado antigo identificado como desatualizado, sem salvar. A geometria de M2 está em CT-05 do caderno; a evolução e as evidências das migrações permanecem no [relatório de M2, Plano §6](Ecovit-Plano-Implementacao.md#6-relatório-de-implementação-de-m2--11102026).
 
 IndexedDB, via Dexie, armazenará registros de projetos com id, nome, datas e documento. Usar localStorage somente para pequenas preferências de interface, se necessário. [Dexie e IndexedDB](https://dexie.org/docs).
 
@@ -163,7 +163,7 @@ Falhas de quota ou indisponibilidade manterão o documento em memória e oferece
 JSON UTF-8 com extensão .ecovit:
 
 - format: identificador ecovit.
-- schemaVersion: versão do formato; M1 usa 1, M2 vigente usa 2; evolução de M3 planejada na seção 15.
+- schemaVersion: versão do formato; M1 usa 1, M2 usa 2, M3.1 usa 3 e M3.2 vigente usa 4; contratos na seção 15.
 - project: identificadores, nome, unidades e dimensões-base.
 - model: pavimentos, paredes, vãos, lajes e referências verticais.
 - adjustments: escolhas de encontros e ajustes de graute/canaletas.
@@ -248,7 +248,7 @@ Documentação oficial consultada em 10 de outubro de 2026. Não foram executado
 
 ## 15. Contratos de M3 nominal — 12/10/2026
 
-Somente documentação: configurações do projeto e representação nominal confirmadas pelo solicitante. Stack e fluxo sequencial mantidos. PRD §20, Plano §7 e CT-07–10 são referências; nenhuma exigência de física de cavidades, dimensionamento de apoio/armadura ou cadastro de fabricante.
+M3.1 implementa vãos e seus padrões; M3.2 acrescenta canaletas e supressões, arquivo versão 4 e composição nominal-v5. Contratos de graute permanecem planejados para M3.3. Stack e fluxo sequencial mantidos. PRD §20, Plano §7 e CT-07–10 são referências; nenhuma exigência de física de cavidades, dimensionamento de apoio/armadura ou cadastro de fabricante.
 
 ### Dados persistentes
 
@@ -283,14 +283,14 @@ Hit testing de vãos na Planta pode retornar múltiplos IDs para o seletor conte
 
 Código estável, categoria, IDs, posição/faixa de fiadas, efeito e parâmetros de mensagem; interface deriva ações. Exemplos: opening-outside-wall, opening-off-grid, opening-overlap, opening-at-junction, channel-level-off-grid, adjustment-target-missing. Não emitir channel-support-unresolved ou grout-passage-unverified: essas verificações físicas foram excluídas. Remoção voluntária e ultrapassagem de d decorrente dela não são falhas. Conflitos geométricos continuam localizáveis conforme M2, sem apagar intenção arquitetônica.
 
-Planejar envelope versão 3, convenção interna nominal-v4 (somente ao implementar). Persistir configuração e ajustes, com resultado/diagnósticos. Validar versões 1/2 e snapshots antigos pela convenção original antes da migração; preservar IDs/geometria/escolhas. Para projetos legados, inicializar faixas globais vazias e flags de graute desligadas, informando que automação pode ser ativada nas configurações; manter a distância padrão do PRD §20 como valor disponível. Assim a reabertura não acrescenta elementos não solicitados ao desenho M2. Novos projetos recebem os padrões normativos do PRD §20. Restaurar padrões é opção explícita.
+M3.2 introduz envelope versão 4 e convenção nominal-v5, mantendo configurações de aberturas em `project.openingSettings` e vãos em `model.openings`. Níveis globais em `project.channelLevels: { id, top }[]`, com UUID estável e topo relativo ao piso. Supressões em `adjustments.channels: { id, wallId, top }[]`, com UUID e topo absoluto. Resultado `generated.channels` contém faixas `{ id, wallId, top, course, cells }`: identidade derivada de parede/cota, células mundiais com origens semânticas ordenadas. Peças adicionam tipos `channel`/`half-channel` e origens; estas são derivadas, não comandos persistentes de edição.
 
-M3.1 introduz o envelope versão 3 e a convenção de composição `nominal-v4`, incluindo os dados de vãos e seus padrões de configuração. Seu processamento compreende a composição de paredes de M2, a validação dos vãos, a subtração das aberturas e a emissão dos diagnósticos correspondentes. Geração de canaletas e grautes permanece desativada até M3.2 e M3.3, respectivamente.
+Validar versões 1/2/3 e snapshots nominal-v1–v4 pela convenção original antes de migrar em memória. Em M3.2, projetos legados recebem níveis globais vazios: sua ativação exige adicionar níveis ou Restaurar padrões e Aplicar. As faixas locais imediatamente junto aos vãos existentes são automáticas por CT-09; a política de não acrescentar níveis globais não desativa essa composição local. Novos projetos recebem 112/224 cm, conforme PRD §20. Graute permanece desativado, sem configuração/controle novo; sua futura migração inicializará flags desligadas.
 
-Campos de configuração das etapas futuras poderão ser persistidos com os padrões definidos no PRD, respeitando a inicialização de legados descrita acima, mas não terão controles nem efeito sobre a composição em M3.1. Os resultados gerados dessas funcionalidades permanecerão vazios. Ao habilitar cada etapa, evoluir explicitamente a convenção de composição quando necessário, preservando a validação dos snapshots anteriores pela convenção original.
+Processamento parcial vigente: paginação M2 → validação/subtração M3.1 → demandas CT-09 → união por célula → supressão por parede/cota → tipagem de peças. Par misto divide em meios sem ampliar o alcance. Origem do nível usa UUID; origens locais usam UUID do vão e posição superior/inferior. Célula compartilhada suprimida prevalece sobre demandas de qualquer parede/origem. Mudanças indiretas fora da malha preservam níveis/ajustes com diagnóstico e sem aplicação; supressão sem demanda mas em cota válida fica dormente, sem erro. Exclusão de parede elimina ajustes dependentes na mesma operação desfazível.
 
-A migração de arquivos de M1/M2 preserva geometria, IDs e escolhas. Sem vãos, a composição de M3.1 deve reproduzir a geometria de `nominal-v3`. Aplicam-se as regras já definidas de migração em memória, bloqueio de edição e preservação do arquivo original.
+A migração preserva geometria, IDs e escolhas. Sem vãos e com níveis globais vazios, a composição reproduz a geometria de nominal-v3. Aplicam-se as regras já definidas de bloqueio de edição e preservação do arquivo original. Representação na Fiada usa canal longitudinal esquemático; Planta mantém arquitetura. Seleção com múltiplas paredes oferece escolha contextual; referência adjacente permanece sem ação.
 
 Migrar em memória e salvar somente com bloqueio de edição; nunca modificar arquivo original. Arquivo atualizado exige conferência de resultado pela própria convenção; adulterado/futuro é recusado antes de substituir aberto. Rascunho com pendência geométrica íntegra pode salvar/reabrir. Importação segue como cópia; limite 50 MB mantido. Revisar limites de vãos/faixas/eixos antes de alocar, sem truncamento.
 
-A evolução de quantitativos permanece futura. Contagem nominal por tipo de peça/eixo poderá usar resultado gerado, mas não deduzir volume de graute ou consumo de aço de símbolos sem dimensões. Nenhum código, schema ou banco foi alterado nesta revisão.
+A evolução de quantitativos permanece futura. Não deduzir volume de graute ou consumo de aço de símbolos sem dimensões. M3.2 preserva a tabela IndexedDB existente; migra em memória antes do salvamento com bloqueio e registra versão do aplicativo 0.4.0 quando grava. Resultado atual de versão 4 exige nominal-v5; resultado atual de versão 3 exige nominal-v4 antes da migração. Snapshots antigos são permitidos somente como resultado desatualizado depois da conferência. Limites defensivos: mil vãos, 100 níveis, 10 mil supressões, além de paredes/células/fiadas e arquivo 50 MB; sem truncamento.

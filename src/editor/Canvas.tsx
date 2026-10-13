@@ -11,13 +11,26 @@ import {
   snapPoint,
   type Point,
   type Wall,
+  type Opening,
+  type Tool,
 } from "../domain/project";
+import {
+  openingBox,
+  openingIssue,
+  openingLabel,
+  openingOffset,
+  putOpening,
+} from "../domain/openings";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
+import { isChannel } from "../domain/channels";
 type Camera = { x: number; y: number; scale: number };
 type Gesture =
   | { type: "draw"; start: Point }
   | { type: "resize"; wall: Wall; end: "a" | "b" }
+  | { type: "opening-draw"; wall: Wall; start: number; opening: Opening }
+  | { type: "opening-move"; wall: Wall; start: number; opening: Opening }
+  | { type: "opening-resize"; wall: Wall; end: "a" | "b"; opening: Opening }
   | { type: "pan"; start: Point; camera: Camera; button: 0 | 1 };
 export function Canvas({
   tool,
@@ -25,8 +38,8 @@ export function Canvas({
   side,
   setSide,
 }: {
-  tool: "select" | "wall";
-  setTool: (t: "select" | "wall") => void;
+  tool: Tool;
+  setTool: (t: Tool) => void;
   side: 1 | -1;
   setSide: (s: 1 | -1) => void;
 }) {
@@ -50,15 +63,41 @@ export function Canvas({
     [hover, setHover] = useState<string | null>(null),
     [choices, setChoices] = useState<Wall[]>([]),
     [panning, setPanning] = useState(false);
+  const [openingPreview, setOpeningPreview] = useState<Opening | null>(null),
+    [openingChoices, setOpeningChoices] = useState<Opening[]>([]);
+  const [channelChoices, setChannelChoices] = useState<string[]>([]);
+  const selectedBand = useStore((s) => s.channelBand);
   const module = doc.project.base.width,
     walls = doc.model.walls;
   const active =
     mode === "plan" ? walls.find((w) => w.id === selected) : undefined;
+  const activeOpening = doc.model.openings.find((o) => o.id === selected);
+  const openingHits = (p: Point, onlyCourse = false) =>
+    doc.model.openings
+      .filter((o) => {
+        const w = walls.find((w) => w.id === o.wallId);
+        if (!w) return false;
+        const b = openingBox(o, w, module),
+          t = 3 / camera.scale,
+          f = doc.model.floors[0],
+          h = doc.project.base.height;
+        return (
+          p.x >= b.x - t &&
+          p.x <= b.x + b.width + t &&
+          p.y >= b.y - t &&
+          p.y <= b.y + b.height + t &&
+          (!onlyCourse ||
+            (f.start + (course - 1) * h < f.level + o.base + o.height &&
+              f.start + course * h > f.level + o.base))
+        );
+      })
+      .reverse();
   const cancel = () => {
     gesture.current = null;
     setPreview(null);
     setTarget(null);
     setPanning(false);
+    setOpeningPreview(null);
   };
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
@@ -80,6 +119,8 @@ export function Canvas({
       if (e.key === "Escape") {
         cancel();
         setChoices([]);
+        setOpeningChoices([]);
+        useStore.getState().inspect({ pendingOpening: null });
         setTool("select");
       }
     };
@@ -142,7 +183,13 @@ export function Canvas({
   useEffect(() => {
     cancel();
     setChoices([]);
+    setOpeningChoices([]);
+    setChannelChoices([]);
+    useStore.getState().inspect({ pendingOpening: null });
   }, [mode]);
+  useEffect(() => {
+    cancel();
+  }, [tool]);
   const world = (p: Point) => ({
     x: (p.x - camera.x) / camera.scale,
     y: (p.y - camera.y) / camera.scale,
@@ -162,6 +209,26 @@ export function Canvas({
     const p = world(screen),
       g = gesture.current;
     if (g?.type === "pan") return;
+    if (g?.type.startsWith("opening-")) {
+      const og = g as Extract<
+        Gesture,
+        { type: "opening-draw" | "opening-move" | "opening-resize" }
+      >;
+      const position = Math.round(openingOffset(og.wall, p) / module) * module;
+      const next = { ...og.opening };
+      if (og.type === "opening-draw") {
+        next.offset = Math.min(og.start, position);
+        next.width = Math.abs(position - og.start);
+      } else if (og.type === "opening-move")
+        next.offset = og.opening.offset + position - og.start;
+      else if (og.end === "a") {
+        next.offset = position;
+        next.width = og.opening.offset + og.opening.width - position;
+      } else next.width = position - og.opening.offset;
+      setOpeningPreview(next);
+      setTarget(null);
+      return;
+    }
     const connected = endpoint(p, g?.type === "resize" ? g.wall.id : undefined);
     setTarget(connected);
     if (g?.type === "draw") {
@@ -279,7 +346,7 @@ export function Canvas({
         style={{
           cursor: panning
             ? "grabbing"
-            : tool === "wall"
+            : tool !== "select"
               ? "crosshair"
               : "default",
         }}
@@ -295,6 +362,8 @@ export function Canvas({
           const screen = pointer(e.clientX, e.clientY),
             p = world(screen);
           setChoices([]);
+          setOpeningChoices([]);
+          setChannelChoices([]);
           if (e.button === 1 || space.current) {
             e.preventDefault();
             gesture.current = {
@@ -307,23 +376,105 @@ export function Canvas({
             return;
           }
           if (mode === "course") {
+            const hits = openingHits(p, true);
+            if (hits.length) {
+              useStore.getState().choose(hits[0].id);
+              if (hits.length > 1) setOpeningChoices(hits);
+              return;
+            }
+            useStore.getState().choose(null);
             const output = compositionPreview ?? doc.generated;
             const piece = output?.courses[course - 1]?.pieces.find(
               (b) =>
                 p.x >= b.x &&
-                p.x <= b.x + b.width &&
+                p.x < b.x + b.width &&
                 p.y >= b.y &&
-                p.y <= b.y + b.height,
+                p.y < b.y + b.height,
             );
             const comp = output?.components.find((c) =>
               piece?.wallIds.some((id) => c.wallIds.includes(id)),
             );
-            useStore
-              .getState()
-              .inspect({ component: comp?.id ?? null, preview: null });
+            const bands =
+              piece && isChannel(piece)
+                ? (output?.channels?.filter(
+                    (b) =>
+                      b.course === course &&
+                      b.cells.some(
+                        (c) =>
+                          p.x >= c.x &&
+                          p.x < c.x + module &&
+                          p.y >= c.y &&
+                          p.y < c.y + module,
+                      ),
+                  ) ?? [])
+                : [];
+            if (bands.length > 1) setChannelChoices(bands.map((b) => b.id));
+            useStore.getState().inspect({
+              component: comp?.id ?? null,
+              channelBand: bands[0]?.id ?? null,
+              preview: null,
+            });
             return;
           }
           if (readonly) return;
+          useStore.getState().inspect({ pendingOpening: null });
+          if (activeOpening && tool === "select") {
+            const w = walls.find((w) => w.id === activeOpening.wallId)!,
+              b = openingBox(activeOpening, w, module);
+            const points =
+              w.a.y === w.b.y
+                ? [
+                    { x: b.x, y: b.y + module / 2 },
+                    { x: b.x + b.width, y: b.y + module / 2 },
+                  ]
+                : [
+                    { x: b.x + module / 2, y: b.y },
+                    { x: b.x + module / 2, y: b.y + b.height },
+                  ];
+            for (let i = 0; i < 2; i++)
+              if (
+                Math.hypot(points[i].x - p.x, points[i].y - p.y) *
+                  camera.scale <
+                9
+              ) {
+                gesture.current = {
+                  type: "opening-resize",
+                  wall: w,
+                  end: i === 0 ? "a" : "b",
+                  opening: activeOpening,
+                };
+                setOpeningPreview(activeOpening);
+                return;
+              }
+          }
+          if (tool !== "wall" && tool !== "select") {
+            const w = hitWalls(walls, p, module, 3 / camera.scale)[0];
+            if (!w) {
+              useStore
+                .getState()
+                .notify("Arraste sobre uma parede para inserir o vão.");
+              return;
+            }
+            const offset = Math.round(openingOffset(w, p) / module) * module,
+              base = tool === "door" ? 0 : doc.project.openingSettings.base;
+            const opening: Opening = {
+              id: crypto.randomUUID(),
+              wallId: w.id,
+              kind: tool,
+              offset,
+              width: 0,
+              base,
+              height: doc.project.openingSettings.top - base,
+            };
+            gesture.current = {
+              type: "opening-draw",
+              wall: w,
+              start: offset,
+              opening,
+            };
+            setOpeningPreview(opening);
+            return;
+          }
           if (active)
             for (const end of ["a", "b"] as const) {
               if (
@@ -344,6 +495,23 @@ export function Canvas({
             return;
           }
           const hits = hitWalls(walls, p, module, 3 / camera.scale);
+          const openings = openingHits(p);
+          if (openings.length) {
+            useStore.getState().choose(openings[0].id);
+            if (openings.length > 1) setOpeningChoices(openings);
+            else {
+              const o = openings[0],
+                w = walls.find((w) => w.id === o.wallId)!;
+              gesture.current = {
+                type: "opening-move",
+                wall: w,
+                start: Math.round(openingOffset(w, p) / module) * module,
+                opening: o,
+              };
+              setOpeningPreview(o);
+            }
+            return;
+          }
           useStore.getState().choose(hits[0]?.id ?? null);
           if (hits.length > 1) setChoices(hits);
         }}
@@ -358,6 +526,43 @@ export function Canvas({
           const g = gesture.current;
           if (e.button !== (g?.type === "pan" ? g.button : 0)) return;
           if (g && g.type !== "pan" && !busy && !readonly) {
+            if (
+              g.type === "opening-draw" ||
+              g.type === "opening-move" ||
+              g.type === "opening-resize"
+            ) {
+              if (openingPreview && openingPreview.width >= module) {
+                try {
+                  const next = putOpening(doc, openingPreview);
+                  if (
+                    g.type === "opening-draw" ||
+                    JSON.stringify(openingPreview) !== JSON.stringify(g.opening)
+                  )
+                    void useStore.getState().commit(next);
+                  useStore.getState().choose(openingPreview.id);
+                } catch (err) {
+                  const issue = openingIssue(doc, openingPreview);
+                  if (
+                    g.type === "opening-draw" &&
+                    (issue?.code === "opening-off-grid" ||
+                      issue?.code === "opening-outside-wall")
+                  ) {
+                    useStore
+                      .getState()
+                      .inspect({ pendingOpening: openingPreview });
+                    useStore.getState().choose(openingPreview.id);
+                  }
+                  useStore.getState().notify((err as Error).message);
+                }
+              } else
+                useStore
+                  .getState()
+                  .notify(
+                    "O vão precisa manter ao menos um módulo, sem cruzar a ponta fixa.",
+                  );
+              cancel();
+              return;
+            }
             if (preview) {
               const newWalls =
                 g.type === "draw"
@@ -386,7 +591,7 @@ export function Canvas({
           height={size.height}
           onWheel={(e) => {
             e.evt.preventDefault();
-            if (!gesture.current)
+            if (!busy && !gesture.current)
               zoom(
                 e.evt.deltaY < 0 ? 1.12 : 1 / 1.12,
                 pointer(e.evt.clientX, e.evt.clientY),
@@ -526,12 +731,51 @@ export function Canvas({
                       ctx.lineWidth = reference ? 2 : 1;
                       ctx.setLineDash(reference ? [4, 3] : []);
                       if (!reference) {
-                        ctx.fillStyle =
-                          p.kind === "whole" ? "#ba906e" : "#895b3f";
+                        ctx.fillStyle = isChannel(p)
+                          ? p.kind === "channel"
+                            ? "#d5b565"
+                            : "#b38a37"
+                          : p.kind === "whole"
+                            ? "#ba906e"
+                            : "#895b3f";
                         ctx.fillRect(x, y, w, h);
                       }
                       ctx.strokeRect(x, y, w, h);
-                      if (!reference && module * camera.scale >= 9) {
+                      if (isChannel(p)) {
+                        ctx.strokeStyle = reference ? "#4880a1" : "#fff0b9";
+                        ctx.lineWidth = Math.max(
+                          2,
+                          module * camera.scale * 0.24,
+                        );
+                        ctx.beginPath();
+                        if (p.width > p.height) {
+                          ctx.moveTo(x + 2, y + h / 2);
+                          ctx.lineTo(x + w - 2, y + h / 2);
+                        } else if (p.height > p.width) {
+                          ctx.moveTo(x + w / 2, y + 2);
+                          ctx.lineTo(x + w / 2, y + h - 2);
+                        } else {
+                          const ws = doc.model.walls.filter(
+                            (w) =>
+                              p.wallIds.includes(w.id) &&
+                              w.height >= course * doc.project.base.height,
+                          );
+                          if (ws.some((w) => w.a.y === w.b.y)) {
+                            ctx.moveTo(x + 2, y + h / 2);
+                            ctx.lineTo(x + w - 2, y + h / 2);
+                          }
+                          if (ws.some((w) => w.a.x === w.b.x)) {
+                            ctx.moveTo(x + w / 2, y + 2);
+                            ctx.lineTo(x + w / 2, y + h - 2);
+                          }
+                        }
+                        ctx.stroke();
+                      }
+                      if (
+                        !reference &&
+                        !isChannel(p) &&
+                        module * camera.scale >= 9
+                      ) {
                         ctx.fillStyle = "#f7eadd";
                         for (let xx = 0; xx < p.width / module; xx++)
                           for (let yy = 0; yy < p.height / module; yy++) {
@@ -556,6 +800,19 @@ export function Canvas({
                   if (ghost === "next") render(course, true);
                 }}
               />
+              {(compositionPreview ?? doc.generated)?.channels
+                ?.find((b) => b.id === selectedBand && b.course === course)
+                ?.cells.map((c) => (
+                  <Rect
+                    key={`channel-${c.x}-${c.y}`}
+                    x={c.x * camera.scale + camera.x}
+                    y={c.y * camera.scale + camera.y}
+                    width={module * camera.scale}
+                    height={module * camera.scale}
+                    stroke="#1d6959"
+                    strokeWidth={2}
+                  />
+                ))}
               {(compositionPreview ?? doc.generated)?.components
                 .filter((c) => c.id === selectedComponent)
                 .flatMap((c) =>
@@ -585,6 +842,120 @@ export function Canvas({
                 ))}
             </Layer>
           )}
+          <Layer listening={false}>
+            <Shape
+              sceneFunc={(ctx) => {
+                const visible = doc.model.openings.map((o) =>
+                  openingPreview?.id === o.id ? openingPreview : o,
+                );
+                if (openingPreview && gesture.current?.type === "opening-draw")
+                  visible.push(openingPreview);
+                visible.sort(
+                  (a, b) =>
+                    Number(a.id === selected) - Number(b.id === selected),
+                );
+                const labels: { x: number; y: number; width: number }[] = [];
+                for (const o of visible) {
+                  const w = walls.find((w) => w.id === o.wallId);
+                  if (!w || o.width <= 0) continue;
+                  const f = doc.model.floors[0],
+                    h = doc.project.base.height;
+                  if (
+                    mode === "course" &&
+                    !(
+                      f.start + (course - 1) * h <
+                        f.level + o.base + o.height &&
+                      f.start + course * h > f.level + o.base
+                    )
+                  )
+                    continue;
+                  const b = openingBox(o, w, module),
+                    x = b.x * camera.scale + camera.x,
+                    y = b.y * camera.scale + camera.y,
+                    width = b.width * camera.scale,
+                    height = b.height * camera.scale;
+                  ctx.save();
+                  ctx.strokeStyle = openingIssue(doc, o)
+                    ? "#a0392c"
+                    : selected === o.id
+                      ? "#215f4b"
+                      : "#4b6072";
+                  ctx.lineWidth = selected === o.id ? 2 : 1;
+                  ctx.fillStyle = "#f6f8f3";
+                  ctx.fillRect(x, y, width, height);
+                  ctx.setLineDash(o.kind === "opening" ? [4, 3] : []);
+                  ctx.strokeRect(x, y, width, height);
+                  if (o.kind === "window") {
+                    ctx.beginPath();
+                    if (w.a.y === w.b.y) {
+                      ctx.moveTo(x, y + height / 3);
+                      ctx.lineTo(x + width, y + height / 3);
+                      ctx.moveTo(x, y + (2 * height) / 3);
+                      ctx.lineTo(x + width, y + (2 * height) / 3);
+                    } else {
+                      ctx.moveTo(x + width / 3, y);
+                      ctx.lineTo(x + width / 3, y + height);
+                      ctx.moveTo(x + (2 * width) / 3, y);
+                      ctx.lineTo(x + (2 * width) / 3, y + height);
+                    }
+                    ctx.stroke();
+                  } else if (o.kind === "door") {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + width, y + height);
+                    ctx.stroke();
+                  }
+                  ctx.setLineDash([]);
+                  ctx.fillStyle = "#234b40";
+                  ctx.font = "11px sans-serif";
+                  const label = `${openingLabel[o.kind]} · ${display(o.base)}–${display(o.base + o.height)} cm`,
+                    textWidth = ctx.measureText(label).width;
+                  let labelY = y - 5;
+                  while (
+                    labelY >= 14 &&
+                    labels.some(
+                      (l) =>
+                        x < l.x + l.width &&
+                        x + textWidth > l.x &&
+                        Math.abs(labelY - l.y) < 14,
+                    )
+                  )
+                    labelY -= 14;
+                  if (labelY >= 0) {
+                    labels.push({ x, y: labelY, width: textWidth });
+                    ctx.fillText(label, x, labelY);
+                  }
+                  if (mode === "plan" && selected === o.id && !readonly) {
+                    for (const [xx, yy] of w.a.y === w.b.y
+                      ? [
+                          [x, y + height / 2],
+                          [x + width, y + height / 2],
+                        ]
+                      : [
+                          [x + width / 2, y],
+                          [x + width / 2, y + height],
+                        ]) {
+                      ctx.beginPath();
+                      ctx.arc(xx, yy, 5, 0, Math.PI * 2);
+                      ctx.fillStyle = "#fff";
+                      ctx.fill();
+                      ctx.stroke();
+                    }
+                  }
+                  ctx.restore();
+                }
+              }}
+            />
+            {openingPreview && (
+              <Text
+                x={16}
+                y={16}
+                fontSize={13}
+                fill="#174332"
+                text={`${openingLabel[openingPreview.kind]} · posição ${display(openingPreview.offset)} · largura ${display(openingPreview.width)} cm · base ${display(openingPreview.base)} · topo ${display(openingPreview.base + openingPreview.height)} cm${openingIssue(doc, openingPreview) ? " · medida pendente" : ""}`}
+              />
+            )}
+          </Layer>
         </Stage>
       </div>
       {!walls.length && !preview && (
@@ -632,6 +1003,45 @@ export function Canvas({
           ))}
         </div>
       )}
+      {openingChoices.length > 1 && (
+        <div className={styles.overlap}>
+          <span>Selecionar vão</span>
+          {openingChoices.map((o) => (
+            <button
+              key={o.id}
+              onClick={() => {
+                useStore.getState().choose(o.id);
+                setOpeningChoices([]);
+              }}
+            >
+              {openingLabel[o.kind]} · base {display(o.base)} · topo{" "}
+              {display(o.base + o.height)} cm
+            </button>
+          ))}
+        </div>
+      )}
+      {channelChoices.length > 1 && (
+        <div className={styles.overlap}>
+          <span>Selecionar parede da faixa</span>
+          {channelChoices.map((id) => {
+            const b = doc.generated?.channels?.find((b) => b.id === id);
+            return (
+              b && (
+                <button
+                  key={id}
+                  onClick={() => {
+                    useStore.getState().inspect({ channelBand: id });
+                    setChannelChoices([]);
+                  }}
+                >
+                  Parede {walls.findIndex((w) => w.id === b.wallId) + 1} ·
+                  canaleta na fiada {b.course}
+                </button>
+              )
+            );
+          })}
+        </div>
+      )}
       <div className={styles.canvasBottom}>
         <span title="Navegar: botão do meio + arraste ou Espaço + arraste. Roda: zoom.">
           {readonly
@@ -645,6 +1055,7 @@ export function Canvas({
         </span>
         <div className={styles.zoom}>
           <button
+            disabled={busy}
             title="Reduzir zoom"
             aria-label="Reduzir zoom"
             onClick={() => zoom(1 / 1.2)}
@@ -653,13 +1064,16 @@ export function Canvas({
           </button>
           <span>{Math.round((camera.scale / 0.012) * 100)}%</span>
           <button
+            disabled={busy}
             title="Ampliar zoom"
             aria-label="Ampliar zoom"
             onClick={() => zoom(1.2)}
           >
             +
           </button>
-          <button onClick={fit}>Enquadrar</button>
+          <button disabled={busy} onClick={fit}>
+            Enquadrar
+          </button>
         </div>
       </div>
     </div>

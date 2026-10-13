@@ -263,7 +263,14 @@ describe("M2 composição nominal", () => {
   });
   it("migração v1, arquivo v2, adulteração e histórico sem composição", () => {
     const d = l();
-    const v1 = { ...d, schemaVersion: 1 };
+    const {
+      openingSettings: _settings,
+      channelLevels: _levels,
+      ...legacyProject
+    } = d.project;
+    void _settings;
+    void _levels;
+    const v1 = { ...d, project: legacyProject, schemaVersion: 1 };
     expect(parseFile(JSON.stringify(v1)).model).toEqual(d.model);
     const g = generate(d);
     d.generated = g;

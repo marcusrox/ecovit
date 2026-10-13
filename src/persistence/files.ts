@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { LIMIT, bounds, validateBase, type Project } from "../domain/project";
 import { generate } from "../domain/composition";
+import { MAX_OPENINGS, openingBox } from "../domain/openings";
+import {
+  MAX_CHANNEL_LEVELS,
+  MAX_CHANNEL_SUPPRESSIONS,
+} from "../domain/channels";
 const integer = z.number().int().min(-LIMIT).max(LIMIT);
 const positive = integer.refine((n) => n > 0);
 const point = z.object({ x: integer, y: integer }).strict();
@@ -15,6 +20,11 @@ const diagnostic = z
     course: positive,
     x: integer,
     y: integer,
+    openingIds: z.array(id).optional(),
+    lastCourse: positive.optional(),
+    category: z.enum(["input", "geometry", "limit"]).optional(),
+    levelIds: z.array(id).optional(),
+    adjustmentIds: z.array(id).optional(),
   })
   .strict();
 const piece = z
@@ -24,7 +34,8 @@ const piece = z
     y: integer,
     width: positive,
     height: positive,
-    kind: z.enum(["whole", "half"]),
+    kind: z.enum(["whole", "half", "channel", "half-channel"]),
+    origins: z.array(z.string()).optional(),
     wallIds: z.array(id),
   })
   .strict();
@@ -46,7 +57,13 @@ const component = z
   .strict();
 const composition = z
   .object({
-    convention: z.enum(["nominal-v1", "nominal-v2", "nominal-v3"]),
+    convention: z.enum([
+      "nominal-v1",
+      "nominal-v2",
+      "nominal-v3",
+      "nominal-v4",
+      "nominal-v5",
+    ]),
     courses: z
       .array(
         z
@@ -61,12 +78,36 @@ const composition = z
       .max(1000),
     components: z.array(component).max(20000),
     diagnostics: z.array(diagnostic),
+    channels: z
+      .array(
+        z
+          .object({
+            id: z.string(),
+            wallId: id,
+            top: integer,
+            course: positive,
+            cells: z
+              .array(
+                z
+                  .object({
+                    x: integer,
+                    y: integer,
+                    origins: z.array(z.string()),
+                  })
+                  .strict(),
+              )
+              .max(20000),
+          })
+          .strict(),
+      )
+      .max(100000)
+      .optional(),
   })
   .strict();
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(2),
+    schemaVersion: z.literal(4),
     project: z
       .object({
         id,
@@ -76,6 +117,10 @@ const schema = z
           .object({ length: positive, width: positive, height: positive })
           .strict(),
         origin: z.object({ x: z.literal(0), y: z.literal(0) }).strict(),
+        openingSettings: z.object({ base: integer, top: integer }).strict(),
+        channelLevels: z
+          .array(z.object({ id, top: integer }).strict())
+          .max(MAX_CHANNEL_LEVELS),
       })
       .strict(),
     model: z
@@ -107,7 +152,21 @@ const schema = z
               .strict(),
           )
           .max(10000),
-        openings: empty,
+        openings: z
+          .array(
+            z
+              .object({
+                id,
+                wallId: id,
+                kind: z.enum(["door", "window", "opening"]),
+                offset: integer,
+                width: positive,
+                base: integer,
+                height: positive,
+              })
+              .strict(),
+          )
+          .max(MAX_OPENINGS),
         slabs: empty,
       })
       .strict(),
@@ -126,7 +185,9 @@ const schema = z
           )
           .max(10000),
         grout: empty,
-        channels: empty,
+        channels: z
+          .array(z.object({ id, wallId: id, top: integer }).strict())
+          .max(MAX_CHANNEL_SUPPRESSIONS),
       })
       .strict(),
     generated: composition.nullable(),
@@ -146,6 +207,40 @@ const schema = z
   })
   .strict();
 export const MAX_FILE = 50 * 1024 * 1024;
+const oldComposition = composition.omit({ channels: true }).extend({
+  convention: z.enum(["nominal-v1", "nominal-v2", "nominal-v3", "nominal-v4"]),
+  courses: z
+    .array(
+      composition.shape.courses.element.extend({
+        pieces: z
+          .array(
+            piece
+              .omit({ origins: true })
+              .extend({ kind: z.enum(["whole", "half"]) }),
+          )
+          .max(100000),
+      }),
+    )
+    .max(1000),
+});
+const m31Schema = schema.extend({
+  schemaVersion: z.literal(3),
+  project: schema.shape.project.omit({ channelLevels: true }),
+  adjustments: schema.shape.adjustments.extend({ channels: empty }),
+  generated: oldComposition.nullable(),
+});
+const legacySchema = schema.extend({
+  schemaVersion: z.literal(2),
+  project: schema.shape.project.omit({
+    openingSettings: true,
+    channelLevels: true,
+  }),
+  model: schema.shape.model.extend({ openings: empty }),
+  adjustments: schema.shape.adjustments.extend({ channels: empty }),
+  generated: oldComposition
+    .extend({ convention: z.enum(["nominal-v1", "nominal-v2", "nominal-v3"]) })
+    .nullable(),
+});
 export function validateProject(
   value: unknown,
   checkGenerated = true,
@@ -156,7 +251,7 @@ export function validateProject(
     "schemaVersion" in value &&
     value.schemaVersion === 1
   ) {
-    const legacy = schema
+    const legacy = legacySchema
       .extend({
         schemaVersion: z.literal(1),
         adjustments: z
@@ -171,7 +266,20 @@ export function validateProject(
     if (!legacy.success) throw new Error("Arquivo versão 1 inválido.");
     value = { ...legacy.data, schemaVersion: 2 };
   }
-  const result = schema.safeParse(value);
+  const isV2 =
+    !!value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 2;
+  const isV3 =
+    !!value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 3;
+  const isLegacy = isV2 || isV3;
+  const result = (isV2 ? legacySchema : isV3 ? m31Schema : schema).safeParse(
+    value,
+  );
   if (!result.success)
     throw new Error(
       "Arquivo inválido ou conteúdo/versão ainda não suportados pelo Ecovit.",
@@ -208,6 +316,58 @@ export function validateProject(
       );
   }
   const choices = new Set<string>();
+  for (const o of doc.model.openings) {
+    if (ids.has(o.id) || !doc.model.walls.some((w) => w.id === o.wallId))
+      throw new Error("Vão com ID duplicado ou referência de parede inválida.");
+    ids.add(o.id);
+    const box = openingBox(
+      o,
+      doc.model.walls.find((w) => w.id === o.wallId)!,
+      module,
+    );
+    if (
+      [
+        o.offset + o.width,
+        o.base + o.height,
+        doc.model.floors[0].level + o.base + o.height,
+        box.x,
+        box.y,
+        box.x + box.width,
+        box.y + box.height,
+      ].some((n) => !Number.isSafeInteger(n) || Math.abs(n) > LIMIT)
+    )
+      throw new Error("Medidas do vão excedem o limite do editor.");
+  }
+  if (
+    !isV2 &&
+    doc.project.openingSettings.top <= doc.project.openingSettings.base
+  )
+    throw new Error("O topo padrão deve ser maior que a base padrão.");
+  if (!isLegacy) {
+    const tops = new Set<number>();
+    for (const l of doc.project.channelLevels) {
+      if (ids.has(l.id) || tops.has(l.top))
+        throw new Error("Níveis de canaleta duplicados.");
+      ids.add(l.id);
+      tops.add(l.top);
+      if (Math.abs(doc.model.floors[0].level + l.top) > LIMIT)
+        throw new Error("Cota de canaleta excede o limite.");
+    }
+    const targets = new Set<string>();
+    for (const a of doc.adjustments.channels) {
+      const target = `${a.wallId}:${a.top}`;
+      if (
+        ids.has(a.id) ||
+        targets.has(target) ||
+        !doc.model.walls.some((w) => w.id === a.wallId)
+      )
+        throw new Error(
+          "Supressão de canaleta duplicada ou com referência inválida.",
+        );
+      ids.add(a.id);
+      targets.add(target);
+    }
+  }
   for (const a of doc.adjustments.junctions) {
     if (
       choices.has(a.componentId) ||
@@ -218,6 +378,13 @@ export function validateProject(
   }
   if (doc.generationState.status === "current") {
     if (!doc.generated) throw new Error("Composição atual ausente.");
+    if (
+      (!isLegacy && doc.generated.convention !== "nominal-v5") ||
+      (isV3 && doc.generated.convention !== "nominal-v4")
+    )
+      throw new Error(
+        "Convenção de composição incompatível com a versão do arquivo.",
+      );
     if (checkGenerated) {
       // Normalize both snapshots through the same schema before comparing JSON:
       // object property insertion order is not a change in project contents.
@@ -232,10 +399,22 @@ export function validateProject(
         throw new Error("Composição salva inconsistente com o modelo.");
       // Validate the old snapshot before requesting regeneration on open.
       // Never accept tampered legacy data merely because the engine evolved.
-      if (doc.generated.convention !== "nominal-v3") {
+      if (doc.generated.convention !== "nominal-v5") {
         doc.generationState = { status: "outdated", diagnostics: [] };
       }
     }
+  }
+  if (isLegacy) {
+    doc.schemaVersion = 4;
+    doc.project = {
+      ...doc.project,
+      openingSettings: doc.project.openingSettings ?? {
+        base: 11200,
+        top: 21700,
+      },
+      channelLevels: [],
+    };
+    doc.generationState = { status: "outdated", diagnostics: [] };
   }
   return doc;
 }

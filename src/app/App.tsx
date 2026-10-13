@@ -2,12 +2,19 @@ import { FiadaPanel, FiadaToolbar } from "../editor/Fiada";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "../editor/Canvas";
 import {
+  OpeningProperties,
+  OpeningSettingsDialog,
+  Diagnostics,
+} from "../editor/Openings";
+import { removeElement, openingLabel } from "../domain/openings";
+import {
   cm,
   createProject,
   display,
   length,
   resizeLength,
   type Project,
+  type Tool,
 } from "../domain/project";
 import { download, importedCopy, readFile } from "../persistence/files";
 import { listProjects, loadProject } from "../persistence/database";
@@ -263,6 +270,13 @@ function Properties({ doc }: { doc: Project }) {
           >
             Excluir parede
           </button>
+          {doc.model.openings.some((o) => o.wallId === wall.id) && (
+            <p className={styles.note}>
+              Excluir esta parede também remove seus{" "}
+              {doc.model.openings.filter((o) => o.wallId === wall.id).length}{" "}
+              vãos. Desfazer restaura os dependentes.
+            </p>
+          )}
         </>
       ) : (
         <>
@@ -327,13 +341,17 @@ function Properties({ doc }: { doc: Project }) {
 }
 export default function App() {
   const mode = useStore((s) => s.mode);
+  const selected = useStore((s) => s.select),
+    pendingOpening = useStore((s) => s.pendingOpening);
   const doc = useStore((s) => s.doc),
     busy = useStore((s) => s.busy),
     readonly = useStore((s) => s.readonly),
     saved = useStore((s) => s.saved),
     message = useStore((s) => s.message),
     history = useStore((s) => s.history);
-  const [tool, setTool] = useState<"select" | "wall">("select"),
+  const [tool, setTool] = useState<Tool>("select"),
+    [settings, setSettings] = useState(false),
+    [diagnostics, setDiagnostics] = useState(false),
     [side, setSide] = useState<1 | -1>(1),
     [creating, setCreating] = useState(false),
     [projects, setProjects] = useState<
@@ -346,7 +364,7 @@ export default function App() {
     [importing, setImporting] = useState(false),
     [editorName, setEditorName] = useState("");
   const input = useRef<HTMLInputElement>(null);
-  const changeTool = useCallback((t: "select" | "wall") => setTool(t), []);
+  const changeTool = useCallback((t: Tool) => setTool(t), []);
   useEffect(() => {
     if (!doc) {
       void listProjects()
@@ -383,13 +401,8 @@ export default function App() {
         s.select
       ) {
         e.preventDefault();
-        void s.commit({
-          ...s.doc,
-          model: {
-            ...s.doc.model,
-            walls: s.doc.model.walls.filter((w) => w.id !== s.select),
-          },
-        });
+        if (s.pendingOpening) s.inspect({ pendingOpening: null });
+        else void s.commit(removeElement(s.doc, s.select));
         s.choose(null);
       }
     };
@@ -563,6 +576,52 @@ export default function App() {
                   ▰ Parede
                 </button>
                 <span className={styles.divider} />
+                {mode === "plan" &&
+                  (["door", "window", "opening"] as const).map((kind) => (
+                    <button
+                      key={kind}
+                      aria-pressed={tool === kind}
+                      className={tool === kind ? styles.active : ""}
+                      disabled={busy || readonly}
+                      onClick={() => {
+                        useStore.getState().inspect({ pendingOpening: null });
+                        setTool(kind);
+                      }}
+                    >
+                      {openingLabel[kind]}
+                    </button>
+                  ))}
+                <button
+                  disabled={busy || readonly}
+                  onClick={() => setSettings(true)}
+                >
+                  Configurações
+                </button>
+                {mode === "plan" &&
+                  tool === "select" &&
+                  doc.model.openings.length > 0 && (
+                    <select
+                      aria-label="Selecionar vão por teclado"
+                      disabled={busy}
+                      value={
+                        doc.model.openings.some((o) => o.id === selected)
+                          ? selected!
+                          : ""
+                      }
+                      onChange={(e) =>
+                        useStore.getState().choose(e.target.value || null)
+                      }
+                    >
+                      <option value="">Selecionar vão…</option>
+                      {doc.model.openings.map((o, i) => (
+                        <option key={o.id} value={o.id}>
+                          {i + 1} · {openingLabel[o.kind]} · base{" "}
+                          {display(o.base)} / topo {display(o.base + o.height)}{" "}
+                          cm
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 <button
                   aria-label="Desfazer"
                   title="Desfazer (Ctrl+Z)"
@@ -591,9 +650,26 @@ export default function App() {
               side={side}
               setSide={setSide}
             />
-            {mode === "plan" ? <Properties doc={doc} /> : <FiadaPanel />}
+            {diagnostics ? (
+              <Diagnostics
+                close={() => setDiagnostics(false)}
+                settings={() => setSettings(true)}
+              />
+            ) : mode === "plan" ? (
+              pendingOpening ||
+              doc.model.openings.some((o) => o.id === selected) ? (
+                <OpeningProperties doc={doc} />
+              ) : (
+                <Properties doc={doc} />
+              )
+            ) : (
+              <FiadaPanel />
+            )}
           </main>
           <footer className={styles.footer}>
+            <button disabled={busy} onClick={() => setDiagnostics((v) => !v)}>
+              Diagnósticos ({doc.generationState.diagnostics.length})
+            </button>
             <span className={styles.moduleLabel}>
               Térreo · Módulo <b>{display(doc.project.base.width)} cm</b> · Face
               externa
@@ -817,6 +893,9 @@ export default function App() {
             </form>
           </section>
         </div>
+      )}
+      {settings && doc && (
+        <OpeningSettingsDialog doc={doc} close={() => setSettings(false)} />
       )}
     </div>
   );

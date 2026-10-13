@@ -1,4 +1,6 @@
 import { bounds, type Project, type Wall } from "./project";
+import { openingBox, openingIssue, MAX_OPENINGS } from "./openings";
+import { applyChannels, type ChannelBand } from "./channels";
 
 export type Diagnostic = {
   code: string;
@@ -8,6 +10,11 @@ export type Diagnostic = {
   course: number;
   x: number;
   y: number;
+  openingIds?: string[];
+  lastCourse?: number;
+  category?: "input" | "geometry" | "limit";
+  levelIds?: string[];
+  adjustmentIds?: string[];
 };
 export type JunctionChoice = {
   componentId: string;
@@ -21,7 +28,8 @@ export type Piece = {
   y: number;
   width: number;
   height: number;
-  kind: "whole" | "half";
+  kind: "whole" | "half" | "channel" | "half-channel";
+  origins?: string[];
   wallIds: string[];
 };
 export type Component = {
@@ -35,7 +43,9 @@ export type Component = {
   phase: 0 | 1;
 };
 export type Composition = {
-  convention: "nominal-v1" | "nominal-v2" | "nominal-v3";
+  convention:
+    "nominal-v1" | "nominal-v2" | "nominal-v3" | "nominal-v4" | "nominal-v5";
+  channels?: ChannelBand[];
   courses: { number: number; bottom: number; top: number; pieces: Piece[] }[];
   components: Component[];
   diagnostics: Diagnostic[];
@@ -284,7 +294,9 @@ function tile(
   const result: Cell[][] = [];
   for (const group of groups(map, adjacent)) {
     let p =
-      convention === "nominal-v3"
+      convention === "nominal-v3" ||
+      convention === "nominal-v4" ||
+      convention === "nominal-v5"
         ? continuousPattern(group, adjacent, phase)
         : pattern(group, adjacent, phase, convention === "nominal-v2");
     // A T branch is paginated from its contact, including reversed branches.
@@ -307,7 +319,7 @@ function tile(
 }
 export function generate(
   doc: Project,
-  convention: Composition["convention"] = "nominal-v3",
+  convention: Composition["convention"] = "nominal-v5",
 ): Composition {
   const { width: m, height: h } = doc.project.base,
     floor = doc.model.floors[0];
@@ -316,6 +328,7 @@ export function generate(
     courses: [],
     components: [],
     diagnostics: [],
+    ...(convention === "nominal-v5" ? { channels: [] } : {}),
   };
   const error = (
     code: string,
@@ -347,6 +360,7 @@ export function generate(
   );
   if (
     estimated > MAX_CELLS ||
+    doc.model.openings.length > MAX_OPENINGS ||
     total > MAX_COURSES ||
     estimated * total > MAX_PIECES
   ) {
@@ -504,6 +518,54 @@ export function generate(
       );
       continue;
     }
+    const openings =
+      convention === "nominal-v4" || convention === "nominal-v5"
+        ? doc.model.openings
+            .filter((o) => ids.includes(o.wallId))
+            .sort((a, b) => a.id.localeCompare(b.id))
+        : [];
+    let invalidOpening = false;
+    for (const o of openings) {
+      const wall = walls.find((w) => w.id === o.wallId)!;
+      const box = openingBox(o, wall, m);
+      const issue =
+        openingIssue(doc, o) ??
+        (cells.some(
+          (c) =>
+            c.walls.length > 1 &&
+            c.x * m >= box.x &&
+            c.x * m < box.x + box.width &&
+            c.y * m >= box.y &&
+            c.y * m < box.y + box.height,
+        )
+          ? {
+              code: "opening-at-junction",
+              message:
+                "Vão invade células compartilhadas de um encontro. O conjunto fica sem peças até corrigir o vão.",
+            }
+          : null);
+      if (issue) invalidOpening = true;
+      if (!issue && convention === "nominal-v5") continue;
+      error(
+        issue?.code ?? "opening-elements-pending",
+        issue?.message ??
+          "Elementos sobre e sob vãos ainda não calculados nesta entrega.",
+        [wall.id],
+        box.x,
+        box.y,
+        Math.max(1, Math.floor((floor.level + o.base - floor.start) / h) + 1),
+        issue ? "error" : "info",
+      );
+      Object.assign(result.diagnostics.at(-1)!, {
+        openingIds: [o.id],
+        lastCourse: Math.max(
+          1,
+          Math.ceil((floor.level + o.base + o.height - floor.start) / h),
+        ),
+        category: issue ? "geometry" : "limit",
+      });
+    }
+    if (invalidOpening) continue;
     const courses: Piece[][] = [];
     let failed = false;
     for (let n = 1; n <= total; n++) {
@@ -530,17 +592,35 @@ export function generate(
         failed = true;
         break;
       }
+      const removed = new Set<string>();
+      for (const o of openings) {
+        const bottom = floor.start + (n - 1) * h,
+          B = floor.level + o.base;
+        if (bottom >= B + o.height || bottom + h <= B) continue;
+        const b = openingBox(
+          o,
+          walls.find((w) => w.id === o.wallId)!,
+          m,
+        );
+        for (let y = b.y / m; y < (b.y + b.height) / m; y++)
+          for (let x = b.x / m; x < (b.x + b.width) / m; x++)
+            removed.add(key(x, y));
+      }
+      const isRemoved = (c: Cell) => removed.has(key(c.x, c.y));
+      const remaining = pieces
+        .map((cs) => cs.filter((c) => !isRemoved(c)))
+        .filter((cs) => cs.length);
       const covered = new Set<string>();
-      for (const piece of pieces)
+      for (const piece of remaining)
         for (const c of piece) {
           const k = key(c.x, c.y);
           if (covered.has(k)) throw new Error("Colisão interna na composição.");
           covered.add(k);
         }
-      if (covered.size !== active.length)
+      if (covered.size !== active.filter((c) => !isRemoved(c)).length)
         throw new Error("Lacuna interna na composição.");
       courses.push(
-        pieces.map((cs) => {
+        remaining.map((cs) => {
           const x = Math.min(...cs.map((c) => c.x)) * m,
             y = Math.min(...cs.map((c) => c.y)) * m,
             width = Math.max(...cs.map((c) => c.x)) * m - x + m,
@@ -596,5 +676,5 @@ export function generate(
         "Encontro alterado: retorne ao automático para resolver a escolha pendente.",
         a.wallIds.filter((id) => doc.model.walls.some((w) => w.id === id)),
       );
-  return result;
+  return convention === "nominal-v5" ? applyChannels(doc, result) : result;
 }

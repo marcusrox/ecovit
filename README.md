@@ -1,6 +1,6 @@
 # Ecovit
 
-Editor local de plantas com paredes ortogonais e malha de meio tijolo. M1 e M2 incluem desenho/edição de paredes, histórico, composição nominal de fiadas, inspeção, salvamento no navegador e arquivo `.ecovit`. Vãos, graute, canaletas, lajes e quantitativos permanecem fora desta entrega.
+Editor local de plantas com paredes ortogonais e malha de meio tijolo. M1/M2 incluem desenho/edição de paredes, histórico, composição nominal de fiadas, inspeção e persistência. M3.1 acrescenta portas, janelas e vãos, inclusive empilhados, seus padrões e diagnósticos; aprovado pelo solicitante. M3.2 acrescenta canaletas globais e junto aos vãos, seleção de faixas, supressão e restauração; aprovado pelo solicitante em 13/10/2026. Grautes, lajes e quantitativos permanecem futuros.
 
 ## Abrir nesta máquina
 
@@ -38,7 +38,19 @@ As propriedades verticais começam com piso e início da alvenaria em 0 cm, e al
 
 Pontas livres e contornos abertos são permitidos. Retas conectadas, L, U e ciclos sem ramificações após o tratamento dos T usam paginação contínua: inteiros pareiam células consecutivas, cantos seguem a paridade do percurso e meios ficam nas extremidades quando necessários. Não há obrigação de orientar todos os cantos igualmente nem mínimo de quatro módulos para a ponte de um U. Cruz, sobreposições e transições de altura ainda não suportadas continuam diagnosticadas.
 
-Arquivos versão 1 são migrados sem alterar paredes. Arquivos versão 2 preservam modelo e ajustes. Snapshots antigos `nominal-v1` e `nominal-v2` são conferidos com suas regras originais antes de serem marcados desatualizados e recalculados/salvos como `nominal-v3`. Snapshots v3 consistentes são preservados. Atualize o aplicativo e reabra o projeto na mesma origem do navegador para aplicar a nova paginação.
+M3.2 evolui o arquivo para versão 4 e composição `nominal-v5`. Snapshots anteriores são validados pela convenção original antes da migração e marcados desatualizados para recálculo; documentos atuais nominal-v5 são preservados. Modelo, IDs e escolhas de encontros permanecem. Projetos legados iniciam sem níveis globais de canaleta; as faixas junto aos vãos existentes são calculadas conforme CT-09. A versão do documento é diferente da convenção de composição.
+
+## Testar canaletas de M3.2
+
+Em Configurações, grupo Canaletas, adicionar/remover níveis e consultar topo/fiada. Aplicar confirma uma operação; Cancelar preserva o projeto; Restaurar padrões recupera 112/224 cm sem apagar supressões. Novos projetos recebem esses níveis; projetos migrados permitem ativá-los explicitamente.
+
+Na Fiada, clicar numa canaleta ou usar Selecionar faixa. A prévia verde mostra todos os trechos da parede naquela fiada. Remover faixa de canaleta devolve tijolos comuns; Restaurar faixa suprimida recupera a composição automática. Desfazer/refazer, reabrir e transportar por `.ecovit` preservam os ajustes. Canais são esquemáticos. Roteiro detalhado e resultados reais no plano §7.
+
+## Testar vãos de M3.1
+
+Em Planta, escolha Porta, Janela ou Vão e arraste sobre uma parede. Selecionar permite mover o corpo, redimensionar pelas duas alças ou editar posição/largura/base/altura e usar Aplicar vão. Medidas incompatíveis oferecem alternativas explícitas; Cancelar edição preserva o documento. Delete ou Excluir vão remove a abertura e pode ser desfeito. A seleção de empilhados identifica tipo/base/topo; há também um seletor acessível por teclado. Configurações expõe apenas padrões de vãos, com Aplicar/Cancelar/Restaurar; alterações não modificam aberturas existentes.
+
+Na Fiada, abertura aparece somente na altura atingida; clicar oferece Editar na Planta. Diagnósticos no rodapé permite localizar, ver fiada e editar o elemento. Encurtar parede mantém a posição do vão, sinalizando os que não couberem. Uma fiada de alvenaria entre empilhados é exigida e pode compartilhar as canaletas dos dois vãos. Grautes permanecem futuros. O roteiro completo e as evidências estão no plano §7.
 
 ## Verificações
 
