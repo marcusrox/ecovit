@@ -3,7 +3,7 @@ import { generate } from "../domain/composition";
 import { display } from "../domain/project";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
-import { restoreBand, suppressBand } from "../domain/channels";
+import { restoreSuppression, suppressBand } from "../domain/channels";
 import { GroutPanel } from "./Grout";
 
 export function FiadaToolbar() {
@@ -175,9 +175,14 @@ export function FiadaPanel() {
         ...doc.adjustments,
         junctions: [
           ...doc.adjustments.junctions.filter(
-            (a) => a.componentId !== component.id,
+            (a) =>
+              a.componentId !== component.id &&
+              !a.wallIds.some((id) => component.wallIds.includes(id)),
           ),
           {
+            id: crypto.randomUUID(),
+            anchor: { x: component.x, y: component.y },
+            binding: "active" as const,
             componentId: component.id,
             signature: component.signature,
             wallIds: component.wallIds,
@@ -279,10 +284,13 @@ export function FiadaPanel() {
             Canaleta suprimida · parede{" "}
             {doc.model.walls.findIndex((w) => w.id === a.wallId) + 1} · cota
             absoluta {display(a.top)} cm
+            {a.scope?.kind === "range"
+              ? ` · trecho herdado ${display(a.scope.from)}–${display(a.scope.to)} cm`
+              : " · parede inteira"}
           </p>
           <button
             disabled={blocked || !!s.preview}
-            onClick={() => void s.commit(restoreBand(doc, a.wallId, a.top))}
+            onClick={() => void s.commit(restoreSuppression(doc, a.id))}
           >
             Restaurar faixa suprimida
           </button>
@@ -357,6 +365,31 @@ export function FiadaPanel() {
           )}
         </section>
       )}
+      {doc.adjustments.junctions.map((a) => (
+        <section key={a.id}>
+          <p>
+            Escolha de encontro ·{" "}
+            {a.binding === "pending" ? "pendente" : "aplicada"} · x=
+            {display(a.anchor?.x ?? 0)}, y={display(a.anchor?.y ?? 0)} cm
+          </p>
+          <button
+            disabled={blocked || s.course !== 1}
+            onClick={() =>
+              void s.commit({
+                ...doc,
+                adjustments: {
+                  ...doc.adjustments,
+                  junctions: doc.adjustments.junctions.filter(
+                    (b) => b.id !== a.id,
+                  ),
+                },
+              })
+            }
+          >
+            Descartar escolha de encontro
+          </button>
+        </section>
+      ))}
       {doc.adjustments.junctions.length > 0 && (
         <button
           disabled={blocked || s.course !== 1}

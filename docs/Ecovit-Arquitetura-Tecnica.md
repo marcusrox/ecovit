@@ -2,7 +2,7 @@
 
 **Versão:** 1.7 — Contratos da evolução de edição em M3.4\
 **Data:** 13 de outubro de 2026\
-**Base funcional:** PRD Ecovit 0.14; M3.1/M3.2/M3.3 aprovados; M3.4 especificado, sem implementação. O aplicativo vigente usa arquivo versão 5 e composição nominal-v6.\
+**Base funcional:** PRD Ecovit 0.14; M3.1/M3.2/M3.3 aprovados; M3.4 implementado, aguardando aceite manual. O aplicativo 0.6.0 usa arquivo versão 6 e composição nominal-v7.\
 **Objetivo:** implementar o editor e o motor construtivo com uma stack acessível, sem infraestrutura desnecessária.
 
 ## 1. Decisões de arquitetura
@@ -303,7 +303,7 @@ A evolução de quantitativos permanece futura. Não deduzir volume de graute ou
 
 ## 16. Contratos de M3.4 — Evolução da edição — 13/10/2026
 
-Contrato planejado, ainda não implementado. PRD §21 define os comportamentos; CT-11 define transformações e exemplos; Plano §8 define a entrega. §15 permanece como contrato histórico de M3.1–3.3, com as exceções de união/movimento e supressões herdadas abaixo.
+Contrato implementado em M3.4; resultados e limitações no Plano §8. PRD §21 define os comportamentos; CT-11 define transformações e exemplos; Plano §8 define a entrega. §15 permanece como contrato histórico de M3.1–3.3, com as exceções de união/movimento e supressões herdadas abaixo.
 
 ### Comandos e dependências
 
@@ -315,7 +315,7 @@ Na translação, atualizar extremidades e coordenadas dos ajustes exclusivos de 
 
 ### Supressões e evolução de arquivo
 
-M3.4 planeja envelope versão 6 e composição nominal-v7, necessários para representar alcance herdado de supressão sem mudar retroativamente nominal-v6. A tabela IndexedDB permanece. Manter ajustes de canaleta com id/wallId/top e acrescentar escopo discriminado: `scope: { kind: "wall" }` ou `scope: { kind: "range", from, to }`. from/to são coordenadas longitudinais mundiais inteiras na face de referência, intervalo semiaberto alinhado à malha, com from < to. A orientação vem da parede; não adicionar edição de célula individual.
+M3.4 usa envelope versão 6 e composição nominal-v7, necessários para representar alcance herdado de supressão sem mudar retroativamente nominal-v6. A tabela IndexedDB permanece. Manter ajustes de canaleta com id/wallId/top e acrescentar escopo discriminado: `scope: { kind: "wall" }` ou `scope: { kind: "range", from, to }`. from/to são coordenadas longitudinais mundiais inteiras na face de referência, intervalo semiaberto alinhado à malha, com from < to. A orientação vem da parede; não adicionar edição de célula individual.
 
 Supressão wall mantém o comportamento vigente: extensão/redimensionamento da mesma parede acompanha todo seu alcance. Na união, converter cada supressão wall das participantes em range correspondente à extensão da parede antes do gesto; range existente conserva seu alcance. Preservar IDs, cotas e todas as intenções, inclusive ajustes dormentes. A união não suprime o trecho novo. Ao mover parede, wall acompanha pela associação; range desloca from/to pelo componente longitudinal do delta. Interseção com alvenaria determina aplicação; alcance fora da parede fica preservado para diagnóstico, sem truncar a intenção persistida. Range não amplia ao estender a parede consolidada.
 
@@ -325,13 +325,13 @@ Migrar versões 1–5 após validação integral pela estrutura/convenção orig
 
 ### Interface e fluxo
 
-Acrescentar gesto de translação de parede à união de estados existente, com parede inicial, ponto de pega e delta modular; distinguir de movimento de vão, alças, criação e navegação. Prévia inclui dependentes e geometria da união; é descartável. Célula de hover usa o mesmo alvo modular do gesto e camada sem eventos. Tratar Escape, blur, mouseup fora e bloqueios.
+Acrescentar gesto de translação de parede à união de estados existente, com parede inicial, ponto de pega e delta modular; distinguir de movimento de vão, alças, criação e navegação. Prévia inclui dependentes e geometria da união; é descartável. Célula de hover usa o centro ativo do cursor e a mesma identificação de célula do gesto, em camada sem eventos. Tratar Escape, blur, mouseup fora e bloqueios.
 
 Ao confirmar, registrar modelo/ajustes uma vez no histórico sem resultados gerados; executar salvar → calcular projeto inteiro → salvar, com tratamento de falhas existente. Não ampliar reconcileOpenings de modo a confundir translação explícita com redimensionamento: neste último preservar posição mundial dos vãos; na translação preservar offset e, se houver união, recalculá-lo para manter a posição mundial atingida. Cancelamento/hover não alteram metadados, histórico ou salvamento. Seleção após união aponta para sobrevivente; após movimento sem união mantém ID. Câmera permanece e controles não são exibidos como disponíveis antes da implementação.
 
 ### Pontos de integração obrigatórios após revisão de prontidão
 
-Revisão de 13/10/2026 contra o código vigente; estes contratos fazem parte de M3.4, ainda não implementados.
+Revisão de 13/10/2026 contra o código vigente; estes contratos fazem parte de M3.4 e foram implementados depois desta revisão.
 
 - **Vãos e commit:** `reconcileOpenings` hoje corrige offsets em todo commit. Comando geométrico deve informar explicitamente seu tipo (`resize`, `move`, `create/merge`) e entregar dependentes já transformados quando move/merge. Nesse caso, commit valida o candidato e não executa a reconciliação antiga novamente. Redimensionamento mantém o caminho de preservação mundial existente; comandos de configuração/edição de vão não transladam dependentes. Não inferir o tipo por mudança de ID, comprimento ou dois endpoints. Remapear ajustes antes dos filtros de exclusão de paredes em store; esses filtros devem distinguir exclusão real de absorção por união, sem apagar dependentes remapeados.
 - **Planejamento da prévia:** usar geometria/associações temporárias sem UUID persistente para desenho, cópia de graute ou migração. Materializar novos UUIDs apenas na confirmação ou migração definitiva. Prever efeito e contar cópias sem calcular todas as fiadas; usar a mesma regra na confirmação. Retornar ID selecionável sobrevivente com o resultado do comando, evitando escolher `preview.id` já absorvido. Limpar seleção de faixa/furo/componente inválida e prévias antigas; conservar câmera e fiada válida.
@@ -348,6 +348,20 @@ Migração de escolha antiga: primeiro validar snapshot/convenção original; at
 
 ### Convenções e compatibilidade do motor
 
-Nominal-v7 inclui todos os estágios de nominal-v6 mais escopos de canaleta, intenções coincidentes de graute e vínculo explícito de encontros. Revisar todas as condições por convention em composition/channels/grout e validação, não apenas o enum ou o retorno final: continuousPattern, subtração de vãos, canaletas e grautes devem executar em v7. Congelar os comportamentos de v1–v6, incluindo sua identidade/ordem e esquema de saída, para conferir snapshots antigos antes de migrar. Gerar dados v7 com convenção velha não é forma válida de validar arquivo legado. v6 do envelope é distinta de nominal-v6 da composição; aplicativo novo grava documento v6/nominal-v7, aplicativo vigente continua v5/nominal-v6 até implementação.
+Nominal-v7 inclui todos os estágios de nominal-v6 mais escopos de canaleta, intenções coincidentes de graute e vínculo explícito de encontros. Revisar todas as condições por convention em composition/channels/grout e validação, não apenas o enum ou o retorno final: continuousPattern, subtração de vãos, canaletas e grautes devem executar em v7. Congelar os comportamentos de v1–v6, incluindo sua identidade/ordem e esquema de saída, para conferir snapshots antigos antes de migrar. Gerar dados v7 com convenção velha não é forma válida de validar arquivo legado. v6 do envelope é distinta de nominal-v6 da composição; aplicativo novo grava documento v6/nominal-v7, aplicativo anterior (0.5.0) usa v5/nominal-v6.
 
 Transformações indiretas preservam vãos mesmo quando a união causar separação/volume incompatível; usar validação estrutural do documento e diagnóstico geométrico, não `putOpening` de edição direta para bloquear ou apagar esses vãos. Checar soma de coordenadas, bounds, offset+width, alcances e quantidade de novos ajustes antes de alocar/confirmar; não salvar candidato parcialmente transformado. Arquivo íntegro com pendência geométrica é aceito; alcance não inteiro/modular, UUID duplicado ou referência órfã é recusado.
+
+
+### Correção de seleção inicial por célula — 13/10/2026
+
+Criação usa funções de dados de drawing.ts: cursorCell identifica floor(x/m), floor(y/m), inclusive coordenadas negativas; openingCell limita a projeção à hospedeira e admite a última célula no limite final. O centro ativo do crosshair fornece clientX/clientY; não deslocar o hotspot nem manter um snap por proximidade que destaque outra célula. As fronteiras de células usam intervalos semiabertos, exceto a borda final da hospedeira, associada à última célula interior.
+
+Gesto conserva célula escolhida e posição bruta de pressão. Depois de deslocamento de 3 px para distinguir clique de desenho, direção define início na borda inferior longitudinal para positivo e superior para negativo, cobrindo a célula inicial. Final segue encaixe modular por proximidade, com comprimento mínimo de um módulo. Em aberturas, direção vem do delta longitudinal desde a pressão, não da metade da célula onde está o mouse; deslocamento apenas perpendicular não cria abertura. Em paredes, orientação vem do delta predominante e a referência transversal considera side para que a espessura contenha a célula selecionada.
+
+Alvos de conexão durante o arraste só são efetivados se respeitarem a faixa inicial e o ponto final modular; não deslocar o início para outro módulo ou alterar a espessura para satisfazer um alvo. Mostrar indicador de conexão somente quando coincidir com o fim efetivo. Para prolongar, escolher célula livre contígua à ponta. Movimento de parede/vão e redimensionamento continuam usando seus contratos anteriores; motor e convenção de arquivo não mudam por essa correção de interação.
+
+
+### Orientação dos rótulos de aberturas — 13/10/2026
+
+No renderer do canvas, identificar orientação pela parede hospedeira. Rótulo vertical usa rotação de −90° em coordenadas de tela e origem junto à extremidade inferior do openingBox, à esquerda, com folga de 5 px entre texto e elemento. Horizontal continua acima. Usar métricas do texto para retângulos de colisão nas duas orientações; afastar em passos de 14 px para esquerda/cima preservando âncora longitudinal e evitando atravessar a borda correspondente do canvas. Aplicar igualmente a prévias e elementos confirmados. Painel transitório de medidas permanece horizontal. Nenhuma alteração em modelo, arquivo ou composição.

@@ -204,6 +204,9 @@ describe("U aberto nominal", () => {
     const c = g.components[0];
     d.adjustments.junctions = [
       {
+        id: crypto.randomUUID(),
+        anchor: { x: c.x, y: c.y },
+        binding: "active",
         componentId: c.id,
         signature: c.signature,
         wallIds: c.wallIds,

@@ -6,7 +6,6 @@ import {
   display,
   hitWalls,
   length,
-  makeWall,
   resizeWall,
   snapPoint,
   type Point,
@@ -21,6 +20,17 @@ import {
   openingOffset,
   putOpening,
 } from "../domain/openings";
+import {
+  createContinuation,
+  moveWall,
+  type WallEdit,
+} from "../domain/wall-editing";
+import {
+  cursorCell,
+  openingCell,
+  openingDrawRange,
+  wallDraw,
+} from "../domain/drawing";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
 import { isChannel } from "../domain/channels";
@@ -32,9 +42,16 @@ import {
 } from "../domain/grout";
 type Camera = { x: number; y: number; scale: number };
 type Gesture =
-  | { type: "draw"; start: Point }
+  | { type: "draw"; start: Point; cell: Point }
+  | { type: "wall-move"; wall: Wall; start: Point; delta: Point }
   | { type: "resize"; wall: Wall; end: "a" | "b" }
-  | { type: "opening-draw"; wall: Wall; start: number; opening: Opening }
+  | {
+      type: "opening-draw";
+      wall: Wall;
+      start: number;
+      press: number;
+      opening: Opening;
+    }
   | { type: "opening-move"; wall: Wall; start: number; opening: Opening }
   | { type: "opening-resize"; wall: Wall; end: "a" | "b"; opening: Opening }
   | { type: "pan"; start: Point; camera: Camera; button: 0 | 1 }
@@ -70,6 +87,10 @@ export function Canvas({
     [hover, setHover] = useState<string | null>(null),
     [choices, setChoices] = useState<Wall[]>([]),
     [panning, setPanning] = useState(false);
+  const [wallEdit, setWallEdit] = useState<WallEdit | null>(null);
+  const [mouseScreen, setMouseScreen] = useState<Point | null>(null);
+  const [hostWallId, setHostWallId] = useState<string | null>(null);
+  const [spaceHeld, setSpaceHeld] = useState(false);
   const [openingPreview, setOpeningPreview] = useState<Opening | null>(null),
     [openingChoices, setOpeningChoices] = useState<Opening[]>([]);
   const [channelChoices, setChannelChoices] = useState<string[]>([]);
@@ -139,6 +160,7 @@ export function Canvas({
   const cancel = () => {
     gesture.current = null;
     setPreview(null);
+    setWallEdit(null);
     setTarget(null);
     setPanning(false);
     setOpeningPreview(null);
@@ -152,6 +174,8 @@ export function Canvas({
     if (host.current) observer.observe(host.current);
     const blur = () => {
       space.current = false;
+      setSpaceHeld(false);
+      setMouseScreen(null);
       cancel();
     };
     const down = (e: KeyboardEvent) => {
@@ -160,6 +184,7 @@ export function Canvas({
       if (e.code === "Space") {
         e.preventDefault();
         space.current = true;
+        setSpaceHeld(true);
       }
       if (e.key === "Escape") {
         cancel();
@@ -174,6 +199,7 @@ export function Canvas({
     const up = (e: KeyboardEvent) => {
       if (e.code === "Space") {
         space.current = false;
+        setSpaceHeld(false);
         if (gesture.current?.type === "pan" && gesture.current.button === 0)
           cancel();
       }
@@ -236,6 +262,7 @@ export function Canvas({
   }, [mode]);
   useEffect(() => {
     cancel();
+    setHostWallId(null);
   }, [tool]);
   useEffect(() => {
     cancel();
@@ -263,6 +290,27 @@ export function Canvas({
       setGroutHover(groutBlocked ? null : (groutHit(p) ?? null));
       return;
     }
+    if (g?.type === "wall-move") {
+      const delta = snapPoint(
+        { x: p.x - g.start.x, y: p.y - g.start.y },
+        module,
+      );
+      g.delta = delta;
+      try {
+        const planned = moveWall(doc, g.wall.id, delta, false);
+        setWallEdit(planned);
+        setPreview(
+          planned.doc.model.walls.find((w) => w.id === planned.selectedId) ??
+            null,
+        );
+      } catch (err) {
+        setWallEdit(null);
+        setPreview(null);
+        useStore.getState().notify((err as Error).message);
+      }
+      setTarget(null);
+      return;
+    }
     if (g?.type.startsWith("opening-")) {
       const og = g as Extract<
         Gesture,
@@ -271,8 +319,14 @@ export function Canvas({
       const position = Math.round(openingOffset(og.wall, p) / module) * module;
       const next = { ...og.opening };
       if (og.type === "opening-draw") {
-        next.offset = Math.min(og.start, position);
-        next.width = Math.abs(position - og.start);
+        const rawPosition = openingOffset(og.wall, p),
+          delta = rawPosition - og.press;
+        if (Math.abs(delta) * camera.scale < 3) next.width = 0;
+        else
+          Object.assign(
+            next,
+            openingDrawRange(og.start, rawPosition, module, delta > 0),
+          );
       } else if (og.type === "opening-move")
         next.offset = og.opening.offset + position - og.start;
       else if (og.end === "a") {
@@ -284,17 +338,33 @@ export function Canvas({
       return;
     }
     const connected = endpoint(p, g?.type === "resize" ? g.wall.id : undefined);
-    setTarget(connected);
+    setTarget(g ? connected : null);
     if (g?.type === "draw") {
-      const next = makeWall(
-        g.start,
-        connected ?? p,
-        module,
-        doc.model.floors[0].id,
-        doc.model.floors[0].defaultHeight,
-        side,
-      );
-      setPreview(next);
+      const next =
+        Math.hypot(p.x - g.start.x, p.y - g.start.y) * camera.scale < 3
+          ? null
+          : wallDraw(
+              g.cell,
+              g.start,
+              p,
+              module,
+              doc.model.floors[0].id,
+              doc.model.floors[0].defaultHeight,
+              side,
+              connected,
+            );
+      try {
+        const planned = next ? createContinuation(doc, next, false) : null;
+        setWallEdit(planned);
+        setPreview(
+          planned?.doc.model.walls.find((w) => w.id === planned.selectedId) ??
+            null,
+        );
+      } catch (err) {
+        setWallEdit(null);
+        setPreview(null);
+        useStore.getState().notify((err as Error).message);
+      }
       if (
         connected &&
         (!next || next.b.x !== connected.x || next.b.y !== connected.y)
@@ -387,8 +457,36 @@ export function Canvas({
         listening={false}
       />,
     );
-  const rendered = walls.map((w) => (preview?.id === w.id ? preview : w));
-  if (preview && gesture.current?.type === "draw") rendered.push(preview);
+  const renderDoc = wallEdit?.doc ?? doc;
+  const rendered = renderDoc.model.walls.map((w) =>
+    preview?.id === w.id ? preview : w,
+  );
+  const showModule =
+    mode === "plan" &&
+    tool !== "select" &&
+    !busy &&
+    !readonly &&
+    !panning &&
+    !spaceHeld &&
+    !gesture.current &&
+    mouseScreen;
+  let moduleHover: (Point & { anchor: Point }) | null = null;
+  if (showModule) {
+    const p = world(mouseScreen);
+    if (tool === "wall") {
+      const cell = cursorCell(p, module);
+      moduleHover = { ...cell, anchor: cell };
+    } else {
+      const hits = hitWalls(walls, p, module, 3 / camera.scale);
+      const w =
+        hits.find((w) => w.id === hostWallId) ??
+        (hits.length === 1 ? hits[0] : undefined);
+      if (w) {
+        const selected = openingCell(w, p, module);
+        if (selected) moduleHover = { ...selected.cell, anchor: selected.cell };
+      }
+    }
+  }
   return (
     <div className={styles.canvasWrap}>
       <div
@@ -397,6 +495,16 @@ export function Canvas({
         data-testid="drawing"
         data-camera={JSON.stringify(camera)}
         data-module={module}
+        data-module-hover={moduleHover ? JSON.stringify(moduleHover) : ""}
+        data-wall-preview={
+          wallEdit
+            ? JSON.stringify({
+                id: wallEdit.selectedId,
+                participants: wallEdit.participants,
+                message: wallEdit.message,
+              })
+            : ""
+        }
         style={{
           cursor: panning
             ? "grabbing"
@@ -514,14 +622,23 @@ export function Canvas({
               }
           }
           if (tool !== "wall" && tool !== "select") {
-            const w = hitWalls(walls, p, module, 3 / camera.scale)[0];
+            const hits = hitWalls(walls, p, module, 3 / camera.scale);
+            const w =
+              hits.find((w) => w.id === hostWallId) ??
+              (hits.length === 1 ? hits[0] : undefined);
+            if (hits.length > 1 && !w) {
+              setChoices(hits);
+              return;
+            }
             if (!w) {
               useStore
                 .getState()
                 .notify("Arraste sobre uma parede para inserir o vão.");
               return;
             }
-            const offset = Math.round(openingOffset(w, p) / module) * module,
+            const selectedCell = openingCell(w, p, module);
+            if (!selectedCell) return;
+            const offset = selectedCell.offset,
               base = tool === "door" ? 0 : doc.project.openingSettings.base;
             const opening: Opening = {
               id: crypto.randomUUID(),
@@ -536,6 +653,7 @@ export function Canvas({
               type: "opening-draw",
               wall: w,
               start: offset,
+              press: openingOffset(w, p),
               opening,
             };
             setOpeningPreview(opening);
@@ -556,7 +674,8 @@ export function Canvas({
           if (tool === "wall") {
             gesture.current = {
               type: "draw",
-              start: endpoint(p) ?? snapPoint(p, module),
+              start: p,
+              cell: cursorCell(p, module),
             };
             return;
           }
@@ -578,13 +697,24 @@ export function Canvas({
             }
             return;
           }
-          useStore.getState().choose(hits[0]?.id ?? null);
-          if (hits.length > 1) setChoices(hits);
+          const chosen = hits.find((w) => w.id === hostWallId);
+          useStore.getState().choose(chosen?.id ?? hits[0]?.id ?? null);
+          if (hits.length > 1 && !chosen) setChoices(hits);
+          else if (chosen ?? hits[0]) {
+            const wall = chosen ?? hits[0];
+            gesture.current = {
+              type: "wall-move",
+              wall,
+              start: p,
+              delta: { x: 0, y: 0 },
+            };
+          }
         }}
         onAuxClick={(e) => {
           if (e.button === 1) e.preventDefault();
         }}
         onMouseMove={(e) => {
+          setMouseScreen(pointer(e.clientX, e.clientY));
           if (gesture.current?.type !== "pan")
             update(pointer(e.clientX, e.clientY));
         }}
@@ -648,11 +778,57 @@ export function Canvas({
               cancel();
               return;
             }
+            if (g.type === "wall-move" || g.type === "draw") {
+              try {
+                const next =
+                  g.type === "wall-move"
+                    ? g.delta.x || g.delta.y
+                      ? moveWall(doc, g.wall.id, g.delta)
+                      : null
+                    : wallEdit && preview
+                      ? createContinuation(
+                          doc,
+                          wallDraw(
+                            g.cell,
+                            g.start,
+                            world(pointer(e.clientX, e.clientY)),
+                            module,
+                            doc.model.floors[0].id,
+                            doc.model.floors[0].defaultHeight,
+                            side,
+                            endpoint(world(pointer(e.clientX, e.clientY))),
+                          )!,
+                        )
+                      : null;
+                if (next) {
+                  void useStore
+                    .getState()
+                    .commit(
+                      next.doc,
+                      g.type === "draw" ? "create/merge" : "move",
+                    )
+                    .then(() => {
+                      if (
+                        useStore
+                          .getState()
+                          .doc?.model.walls.some(
+                            (w) => w.id === next.selectedId,
+                          )
+                      )
+                        useStore.getState().choose(next.selectedId);
+                    });
+                  if (next.message) useStore.getState().notify(next.message);
+                }
+              } catch (err) {
+                useStore.getState().notify((err as Error).message);
+              }
+              cancel();
+              return;
+            }
             if (preview) {
-              const newWalls =
-                g.type === "draw"
-                  ? [...walls, preview]
-                  : walls.map((w) => (w.id === preview.id ? preview : w));
+              const newWalls = walls.map((w) =>
+                w.id === preview.id ? preview : w,
+              );
               void useStore
                 .getState()
                 .commit({ ...doc, model: { ...doc.model, walls: newWalls } });
@@ -668,6 +844,7 @@ export function Canvas({
         }}
         onMouseLeave={() => {
           setHover(null);
+          setMouseScreen(null);
           setGroutHover(null);
           if (!gesture.current) setTarget(null);
         }}
@@ -783,7 +960,7 @@ export function Canvas({
                   camera.y -
                   26
                 }
-                text={`${display(length(preview))} cm · face externa`}
+                text={`${display(length(preview))} cm · face externa${wallEdit?.participants.length ? " · continuidade" : ""}${wallEdit?.message ? ` · ${wallEdit.message}` : ""}`}
                 fontSize={13}
                 fill="#174332"
               />
@@ -982,7 +1159,7 @@ export function Canvas({
           <Layer listening={false}>
             <Shape
               sceneFunc={(ctx) => {
-                const visible = doc.model.openings.map((o) =>
+                const visible = renderDoc.model.openings.map((o) =>
                   openingPreview?.id === o.id ? openingPreview : o,
                 );
                 if (openingPreview && gesture.current?.type === "opening-draw")
@@ -991,9 +1168,14 @@ export function Canvas({
                   (a, b) =>
                     Number(a.id === selected) - Number(b.id === selected),
                 );
-                const labels: { x: number; y: number; width: number }[] = [];
+                const labels: {
+                  x: number;
+                  y: number;
+                  width: number;
+                  height: number;
+                }[] = [];
                 for (const o of visible) {
-                  const w = walls.find((w) => w.id === o.wallId);
+                  const w = rendered.find((w) => w.id === o.wallId);
                   if (!w || o.width <= 0) continue;
                   const f = doc.model.floors[0],
                     h = doc.project.base.height;
@@ -1012,7 +1194,7 @@ export function Canvas({
                     width = b.width * camera.scale,
                     height = b.height * camera.scale;
                   ctx.save();
-                  ctx.strokeStyle = openingIssue(doc, o)
+                  ctx.strokeStyle = openingIssue(renderDoc, o)
                     ? "#a0392c"
                     : selected === o.id
                       ? "#215f4b"
@@ -1046,21 +1228,40 @@ export function Canvas({
                   ctx.fillStyle = "#234b40";
                   ctx.font = "11px sans-serif";
                   const label = `${openingLabel[o.kind]} · ${display(o.base)}–${display(o.base + o.height)} cm`,
-                    textWidth = ctx.measureText(label).width;
-                  let labelY = y - 5;
+                    metrics = ctx.measureText(label),
+                    ascent = metrics.actualBoundingBoxAscent,
+                    descent = metrics.actualBoundingBoxDescent,
+                    vertical = w.a.x === w.b.x;
+                  let labelX = vertical ? x - 5 - ascent : x,
+                    labelY = vertical ? y + height : y - 5;
+                  const labelBounds = () => ({
+                    x: vertical ? labelX - descent : labelX,
+                    y: vertical ? labelY - metrics.width : labelY - ascent,
+                    width: vertical ? ascent + descent : metrics.width,
+                    height: vertical ? metrics.width : ascent + descent,
+                  });
+                  let bounds = labelBounds();
                   while (
-                    labelY >= 14 &&
+                    (vertical ? bounds.x >= 0 : bounds.y >= 0) &&
                     labels.some(
                       (l) =>
-                        x < l.x + l.width &&
-                        x + textWidth > l.x &&
-                        Math.abs(labelY - l.y) < 14,
+                        bounds.x < l.x + l.width + 3 &&
+                        bounds.x + bounds.width + 3 > l.x &&
+                        bounds.y < l.y + l.height + 3 &&
+                        bounds.y + bounds.height + 3 > l.y,
                     )
-                  )
-                    labelY -= 14;
-                  if (labelY >= 0) {
-                    labels.push({ x, y: labelY, width: textWidth });
-                    ctx.fillText(label, x, labelY);
+                  ) {
+                    if (vertical) labelX -= 14;
+                    else labelY -= 14;
+                    bounds = labelBounds();
+                  }
+                  if (vertical ? bounds.x >= 0 : bounds.y >= 0) {
+                    labels.push(bounds);
+                    ctx.save();
+                    ctx.translate(labelX, labelY);
+                    if (vertical) ctx.rotate(-Math.PI / 2);
+                    ctx.fillText(label, 0, 0);
+                    ctx.restore();
                   }
                   if (mode === "plan" && selected === o.id && !readonly) {
                     for (const [xx, yy] of w.a.y === w.b.y
@@ -1093,6 +1294,19 @@ export function Canvas({
               />
             )}
           </Layer>
+          {moduleHover && (
+            <Layer listening={false}>
+              <Rect
+                x={moduleHover.x * camera.scale + camera.x}
+                y={moduleHover.y * camera.scale + camera.y}
+                width={module * camera.scale}
+                height={module * camera.scale}
+                fill="rgba(110,120,115,0.35)"
+                stroke="#78827b"
+                strokeWidth={1}
+              />
+            </Layer>
+          )}
         </Stage>
       </div>
       {!walls.length && !preview && (
@@ -1132,6 +1346,7 @@ export function Canvas({
               key={w.id}
               onClick={() => {
                 useStore.getState().choose(w.id);
+                setHostWallId(w.id);
                 setChoices([]);
               }}
             >
@@ -1193,7 +1408,7 @@ export function Canvas({
                 : "Inspecione um conjunto"
               : tool === "wall"
                 ? "Arraste para desenhar · Esc cancela"
-                : "Clique para selecionar · Arraste uma alça para editar"}
+                : "Clique para selecionar · Arraste o corpo para mover ou uma alça para editar"}
           {" · Botão do meio + arraste para navegar"}
         </span>
         <div className={styles.zoom}>

@@ -2,7 +2,7 @@
 
 **Versão:** 0.14 — Evolução da edição no canvas em M3.4\
 **Data:** 13 de outubro de 2026\
-**Status:** M1/M2 e M3.1/M3.2/M3.3 aprovados pelo solicitante; M3.4 especificado documentalmente, sem implementação.\
+**Status:** M1/M2 e M3.1/M3.2/M3.3 aprovados pelo solicitante; M3.4 implementado na versão 0.6.0, aguardando teste manual e aceite.\
 **Plataforma:** aplicação web, inicialmente com interface e documentação em português brasileiro.
 
 ## 1. Visão do produto
@@ -132,7 +132,7 @@ O editor terá um único canvas e dois modos principais: **Planta** e **Fiada**.
 
 No modo Planta, o usuário cria e altera a arquitetura: paredes, portas, janelas, vãos e lajes. Paredes aparecem como faixas contínuas com contorno e espessura, sobre o grid de meio tijolo. A modulação das peças é calculada ao concluir cada desenho, mas a visualização padrão da Planta não mostra furos nem a divisão de cada tijolo; essa distribuição será inspecionada no modo Fiada.
 
-Cada parede reta terá identificador próprio e poderá ser criada, selecionada, excluída, redimensionada a partir de qualquer uma das duas extremidades e movida com seus dependentes. Criar ou mover uma parede para continuidade colinear poderá unir paredes compatíveis, conforme §21. Não haverá ferramenta de dividir paredes. A seleção mostrará realce, comprimento modular e propriedades compactas. Movimento e união são evolução especificada para M3.4, ainda não disponível no aplicativo.
+Cada parede reta terá identificador próprio e poderá ser criada, selecionada, excluída, redimensionada a partir de qualquer uma das duas extremidades e movida com seus dependentes. Criar ou mover uma parede para continuidade colinear poderá unir paredes compatíveis, conforme §21. Não haverá ferramenta de dividir paredes. A seleção mostrará realce, comprimento modular e propriedades compactas. Movimento e união estão implementados em M3.4, aguardando aceite manual.
 
 A referência de desenho e encaixe será sempre a **face externa**, com espessura igual à largura do tijolo-base. A prévia mostrará a face de referência e o lado ocupado pela espessura, permitindo inverter esse lado antes de confirmar. Em paredes internas, “face externa” identifica a face adotada como referência, sem exigir detecção de recintos. Essa face permanecerá estável ao editar a parede. Encontros em L alinharão as faces externas no canto; o motor resolverá a região compartilhada sem duplicar peças. Cotas externas serão a referência principal; cotas internas poderão ser consultadas sem alterar o encaixe.
 
@@ -565,7 +565,7 @@ As fórmulas, limites geométricos, paginação e exemplos são definidos em CT-
 
 ## 21. M3.4 — Evolução da edição no canvas — 13/10/2026
 
-Esta revisão evolui RF-02/03/06/07/09/10/11/12. M1/M2/M3.1–3.3 mantêm os relatos e aceites da versão entregue; M3.4 terá verificação e aceite próprios. A documentação autoriza especificação, não implementação. As regras abaixo substituem a antiga proibição de mover paredes e complementam as regras de identidade e supressão de §20, apenas nas operações novas.
+Esta revisão evolui RF-02/03/06/07/09/10/11/12. M1/M2/M3.1–3.3 mantêm os relatos e aceites da versão entregue; M3.4 terá verificação e aceite próprios. Implementação de M3.4 foi solicitada após a revisão documental; resultados e aceite separado no Plano §8. As regras abaixo substituem a antiga proibição de mover paredes e complementam as regras de identidade e supressão de §20, apenas nas operações novas.
 
 ### Continuidade e união ao desenhar ou mover
 
@@ -597,11 +597,15 @@ Ao encontrar continuidade compatível no destino, primeiro transladar a parede e
 
 ### Destaque do módulo de início
 
-Com Parede, Porta, Janela ou Vão ativos na Planta, mostrar preenchimento cinza discreto com contorno no quadrado de lado igual à largura-base que representa o encaixe inicial efetivo. Usar a mesma conversão tela/projeto e modulação do início do gesto, sem um segundo cálculo de snap. Não confundir com seleção ou prévia de comprimento. Para aberturas, projetar o ponto na parede hospedeira; apenas uma posição inicial elegível recebe destaque. Onde houver múltiplas hospedeiras, resolver o alvo contextual antes de indicar um início confirmado. Não afirmar que o tamanho final do vão será válido antes do arraste.
+Com Parede, Porta, Janela ou Vão ativos na Planta, o ponto ativo do cursor (centro da cruz) seleciona a célula que o contém. Mostrar preenchimento cinza discreto com contorno nesse quadrado de lado igual à largura-base, sem arredondar a posição para o vértice mais próximo. Seleção e início usam a mesma conversão tela/projeto e identificação de célula. Não confundir com seleção ou prévia de comprimento. Para aberturas, projetar o ponto na parede hospedeira; apenas uma posição inicial elegível recebe destaque. Onde houver múltiplas hospedeiras, resolver o alvo contextual antes de indicar um início confirmado. Não afirmar que o tamanho final do vão será válido antes do arraste.
 
-O destaque acompanha zoom e câmera e permanece dentro da faixa hospedeira para aberturas. Em desenho de parede, indicar a célula junto ao ponto de face de referência; a prévia de arraste resolve orientação e lado da espessura. Não interceptar eventos. Ocultar fora do canvas, durante navegação, em outra ferramenta/modo, somente leitura ou processamento. Hover não grava, calcula nem cria histórico; cancelamento não deixa destaque preso.
+O destaque acompanha zoom e câmera e permanece dentro da faixa hospedeira para aberturas. Em desenho de parede, destacar a célula sob a cruz; a prévia de arraste resolve orientação, borda inicial e face de referência conforme o lado da espessura. Não interceptar eventos. Ocultar fora do canvas, durante navegação, em outra ferramenta/modo, somente leitura ou processamento. Hover não grava, calcula nem cria histórico; cancelamento não deixa destaque preso.
 
-O ponto inicial é a âncora na malha e o quadrado representa a célula adjacente; não confundir a âncora com o centro do quadrado. Na extremidade final da parede, abertura pode iniciar arraste no sentido inverso: destacar a última célula interior com âncora na borda final. Havendo várias hospedeiras, clicar apresenta a escolha contextual e não inicia o arraste ambíguo; após escolher, novo arraste usa a hospedeira escolhida. O destaque é recalculado ao mudar ferramenta, câmera, alvo ou estado, mesmo sem novo movimento do mouse.
+A célula inicial inteira deve pertencer ao elemento criado, independentemente do sentido do arraste. A direção determina qual borda longitudinal da célula é usada como início; o fim continua modular. Para paredes, o lado da espessura determina a face que mantém a faixa dentro da célula escolhida. Na extremidade final da parede, abertura pode iniciar arraste no sentido inverso: destacar a última célula interior. Havendo várias hospedeiras, clicar apresenta a escolha contextual e não inicia o arraste ambíguo; após escolher, novo arraste usa a hospedeira escolhida. O destaque é recalculado ao mudar ferramenta, câmera, alvo ou estado, mesmo sem novo movimento do mouse.
+
+### Orientação dos rótulos de aberturas
+
+Portas, janelas e vãos verticais exibem o rótulo à esquerda, com leitura de baixo para cima, ancorado na extremidade inferior visual do elemento, independentemente do sentido do desenho. Elementos horizontais mantêm o rótulo acima. O rótulo informa tipo, base e topo em cm e acompanha prévia, movimento e redimensionamento, com afastamento visual constante. Em conflito entre rótulos, afastar o vertical para a esquerda e o horizontal para cima, mantendo a âncora longitudinal.
 
 ### Decisões de preservação confirmadas
 

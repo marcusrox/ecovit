@@ -12,7 +12,7 @@ import {
   MAX_GROUT_INTERVALS,
   groutId,
 } from "../domain/grout";
-import { generate } from "../domain/composition";
+import { generate, signature } from "../domain/composition";
 import { MAX_OPENINGS, openingBox } from "../domain/openings";
 import {
   MAX_CHANNEL_LEVELS,
@@ -76,6 +76,7 @@ const composition = z
       "nominal-v4",
       "nominal-v5",
       "nominal-v6",
+      "nominal-v7",
     ]),
     courses: z
       .array(
@@ -262,18 +263,56 @@ const schema = z
       .strict(),
   })
   .strict();
+
+const scope = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("wall") }).strict(),
+  z
+    .object({ kind: z.literal("range"), from: integer, to: integer })
+    .strict()
+    .refine((a) => a.from < a.to),
+]);
+const currentSchema = schema.extend({
+  schemaVersion: z.literal(6),
+  adjustments: schema.shape.adjustments.extend({
+    channels: z
+      .array(z.object({ id, wallId: id, top: integer, scope }).strict())
+      .max(MAX_CHANNEL_SUPPRESSIONS),
+    junctions: z
+      .array(
+        schema.shape.adjustments.shape.junctions.element.extend({
+          id,
+          anchor: point,
+          binding: z.enum(["active", "pending"]),
+        }),
+      )
+      .max(10000),
+  }),
+});
+const m33Schema = schema.extend({
+  generated: composition
+    .extend({
+      convention: z.enum([
+        "nominal-v1",
+        "nominal-v2",
+        "nominal-v3",
+        "nominal-v4",
+        "nominal-v5",
+        "nominal-v6",
+      ]),
+    })
+    .nullable(),
+});
+
 export const MAX_FILE = 50 * 1024 * 1024;
-const m32Composition = composition
-  .omit({ grouts: true })
-  .extend({
-    convention: z.enum([
-      "nominal-v1",
-      "nominal-v2",
-      "nominal-v3",
-      "nominal-v4",
-      "nominal-v5",
-    ]),
-  });
+const m32Composition = composition.omit({ grouts: true }).extend({
+  convention: z.enum([
+    "nominal-v1",
+    "nominal-v2",
+    "nominal-v3",
+    "nominal-v4",
+    "nominal-v5",
+  ]),
+});
 const m32Schema = schema.extend({
   schemaVersion: z.literal(4),
   project: schema.shape.project.omit({ groutSettings: true }),
@@ -371,9 +410,23 @@ export function validateProject(
     typeof value === "object" &&
     "schemaVersion" in value &&
     value.schemaVersion === 4;
+  const isV5 =
+    !!value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 5;
   const isLegacy = isV2 || isV3 || isV4;
+  const isOld = isLegacy || isV5;
   const result = (
-    isV2 ? legacySchema : isV3 ? m31Schema : isV4 ? m32Schema : schema
+    isV2
+      ? legacySchema
+      : isV3
+        ? m31Schema
+        : isV4
+          ? m32Schema
+          : isV5
+            ? m33Schema
+            : currentSchema
   ).safeParse(value);
   if (!result.success)
     throw new Error(
@@ -453,7 +506,7 @@ export function validateProject(
       const target = `${a.wallId}:${a.top}`;
       if (
         ids.has(a.id) ||
-        targets.has(target) ||
+        (isOld && targets.has(target)) ||
         !doc.model.walls.some((w) => w.id === a.wallId)
       )
         throw new Error(
@@ -461,6 +514,12 @@ export function validateProject(
         );
       ids.add(a.id);
       targets.add(target);
+      if (
+        !isOld &&
+        a.scope?.kind === "range" &&
+        (a.scope.from % module || a.scope.to % module)
+      )
+        throw new Error("Alcance de canaleta fora da malha.");
     }
   }
   if (!isLegacy) {
@@ -469,7 +528,7 @@ export function validateProject(
       const target = groutId(a);
       if (
         ids.has(a.id) ||
-        targets.has(target) ||
+        (isOld && targets.has(target)) ||
         new Set(a.wallIds).size !== a.wallIds.length ||
         a.wallIds.some((id) => !doc.model.walls.some((w) => w.id === id))
       )
@@ -482,16 +541,19 @@ export function validateProject(
   }
   for (const a of doc.adjustments.junctions) {
     if (
-      choices.has(a.componentId) ||
+      (isOld ? choices.has(a.componentId) : !a.id || ids.has(a.id)) ||
+      (!isOld && new Set(a.wallIds).size !== a.wallIds.length) ||
       a.wallIds.some((id) => !doc.model.walls.some((w) => w.id === id))
     )
       throw new Error("Escolhas de encontros inválidas.");
     choices.add(a.componentId);
+    if (!isOld && a.id) ids.add(a.id);
   }
   if (doc.generationState.status === "current") {
     if (!doc.generated) throw new Error("Composição atual ausente.");
     if (
-      (!isLegacy && doc.generated.convention !== "nominal-v6") ||
+      (!isOld && doc.generated.convention !== "nominal-v7") ||
+      (isV5 && doc.generated.convention !== "nominal-v6") ||
       (isV4 && doc.generated.convention !== "nominal-v5") ||
       (isV3 && doc.generated.convention !== "nominal-v4")
     )
@@ -512,7 +574,7 @@ export function validateProject(
         throw new Error("Composição salva inconsistente com o modelo.");
       // Validate the old snapshot before requesting regeneration on open.
       // Never accept tampered legacy data merely because the engine evolved.
-      if (doc.generated.convention !== "nominal-v6") {
+      if (doc.generated.convention !== "nominal-v7") {
         doc.generationState = { status: "outdated", diagnostics: [] };
       }
     }
@@ -528,6 +590,35 @@ export function validateProject(
       channelLevels: doc.project.channelLevels ?? [],
       groutSettings: defaultGroutSettings(false),
     };
+    doc.generationState = { status: "outdated", diagnostics: [] };
+  }
+  if (isOld) {
+    doc.schemaVersion = 6;
+    doc.adjustments.channels = doc.adjustments.channels.map((a) => ({
+      ...a,
+      scope: { kind: "wall" },
+    }));
+    doc.adjustments.junctions = doc.adjustments.junctions.map((a) => {
+      const component = doc.generated?.components.find(
+        (c) => c.id === a.componentId,
+      );
+      const walls = doc.model.walls.filter((w) => a.wallIds.includes(w.id));
+      const boxes = walls.map((w) => bounds(w, module));
+      return {
+        ...a,
+        id: crypto.randomUUID(),
+        anchor: component
+          ? { x: component.x, y: component.y }
+          : {
+              x: boxes.length ? Math.min(...boxes.map((b) => b.x)) : 0,
+              y: boxes.length ? Math.min(...boxes.map((b) => b.y)) : 0,
+            },
+        binding:
+          component?.alternative && signature(walls) === a.signature
+            ? "active"
+            : "pending",
+      };
+    });
     doc.generationState = { status: "outdated", diagnostics: [] };
   }
   return doc;

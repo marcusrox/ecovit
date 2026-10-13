@@ -1,8 +1,8 @@
 # Ecovit — Caderno técnico
 
 **Revisão:** 10 — Convenções de união e translação para M3.4
-**Estado:** M2 e M3.1 aprovados em 12/10/2026; M3.2 e M3.3 aprovados em 13/10/2026. CT-10 implementado; CT-11/EX-36–48 especificados para M3.4, ainda sem implementação ou verificação de código.\
-**Alcance implementado:** composição geométrica de paredes, vãos, canaletas e grautes em um pavimento, conforme [plano §7](Ecovit-Plano-Implementacao.md). O [PRD](Ecovit-PRD.md) continua sendo a referência de produto. CT-07/08/09 preservados; CT-10 e EX-22/32–34 exercitados por posições/intervalos independentes, categorias e ajustes. Evidências e limites por critério estão no plano.
+**Estado:** M2 e M3.1 aprovados em 12/10/2026; M3.2 e M3.3 aprovados em 13/10/2026. CT-10 implementado; CT-11 implementado em M3.4 e casos EX-36–48 exercitados em verificações de domínio/navegador; aceite manual pendente.\
+**Alcance implementado:** composição geométrica de paredes, vãos, canaletas e grautes em um pavimento, conforme [plano §7/8](Ecovit-Plano-Implementacao.md). O [PRD](Ecovit-PRD.md) continua sendo a referência de produto. CT-07/08/09 preservados; CT-10 e EX-22/32–34 exercitados por posições/intervalos independentes, categorias e ajustes. Evidências e limites por critério estão no plano.
 
 ## 1. Evidência, convenção e limite
 
@@ -327,7 +327,7 @@ Exemplo de aplicação dos padrões normativos do PRD §20: para h=7 e piso/iní
 
 ## 9. M3.4 — Convenções de edição geométrica — 13/10/2026
 
-Definições do produto, não pesquisa ou recomendação construtiva. Sem novo apoio, espaçamento resistente ou peça especial. CT-07–10 permanecem; CT-11 explicita exceções de transformação para operações de edição autorizadas no PRD §21. Exemplos abaixo são resultados esperados independentes, ainda não testes executados.
+Definições do produto, não pesquisa ou recomendação construtiva. Sem novo apoio, espaçamento resistente ou peça especial. CT-07–10 permanecem; CT-11 explicita exceções de transformação para operações de edição autorizadas no PRD §21. Exemplos abaixo são resultados esperados independentes; sua verificação na implementação está registrada no Plano §8.
 
 ### CT-11 — União e translação com preservação de intenção
 
@@ -372,4 +372,12 @@ Escolha de encontro só continua aplicada após troca de IDs/segmentação se oc
 | EX-45 | Dois ajustes elegíveis no mesmo eixo, um include e outro exclude com IDs distintos; inverter ordem no arquivo; depois Adicionar pelo furo | Antes do clique, eixo ausente nas duas ordens; após adicionar, ambos viram include com seus IDs/associações preservados. Descartar um não apaga o outro; ajuste inelegível na mesma coordenada permanece pendente. |
 | EX-46 | Escolha B num L; mover um ramo para desconectar; depois desfazer; variante: componentes com escolhas distintas unidos pelo gesto | Primeira escolha preservada pending com ID/âncora localizável; desfazer recupera escolha aplicada. Na união de componentes, nenhuma fase prevalece pela ordem; intenções afetadas ficam pending até escolha explícita/descarte. |
 | EX-47 | A [0,100) com porta [75,100), B [100,200) com porta [100,125), ambas base 0/topo 105; desenhar extensão [200,300) que consolida a cadeia | Uma parede [0,300), duas portas com IDs/posições preservados; ausência de módulo entre elas gera diagnóstico de separação, sem recuar, reduzir ou excluir portas. Desfazer restaura hospedeiras originais. |
-| EX-48 | Parede [0,100); iniciar janela na extremidade 100 e arrastar até 75; depois usar múltiplas hospedeiras e mudar zoom sem mover mouse | Hover mostra célula interior [87,5;100) com âncora em 100; gesto propõe vão [75,100). Alvo ambíguo pede escolha antes do novo arraste; destaque acompanha câmera/ferramenta sem alteração do documento. |
+| EX-48 | Parede [0,100); iniciar janela na extremidade 100 e arrastar até 75; depois usar múltiplas hospedeiras e mudar zoom sem mover mouse | Hover mostra célula interior [87,5;100); direção negativa usa borda inicial 100 e gesto propõe vão [75,100). Alvo ambíguo pede escolha antes do novo arraste; destaque acompanha câmera/ferramenta sem alteração do documento. |
+
+
+### Complemento de CT-11 — Célula inicial da criação, 13/10/2026
+
+A posição ativa da cruz seleciona a célula que contém o ponto, sem aproximação ao vértice mais próximo. Para coordenadas negativas, usar floor, não truncamento para zero. Direção do arraste determina a borda longitudinal inicial, garantindo inclusão da célula inteira tanto em positivo quanto em negativo. O ponto final continua modular; sua interpretação é distinta da seleção da célula inicial. Esta regra modifica apenas gestos novos; não desloca elementos salvos nem muda o motor/arquivo.
+
+- **EX-49:** m=12,5; cursor em (52,5;52,5), (58,75;52,5), (52,5;58,75) ou (58,75;58,75) cm destaca a mesma célula [50,62,5)×[50,62,5). Em (-41,25;-41,25), destaca [-50,-37,5) em ambos os eixos.
+- **EX-50:** célula inicial longitudinal [50,62,5), cursor de pressão 58,75; arrastar até 25 em sentido negativo gera [25,62,5), comprimento 37,5; até 100 em positivo gera [50,100), comprimento 50. Vale para abertura na hospedeira e para parede com faixa transversal contendo a célula, nas duas orientações/lados. Não excluir a célula inicial por usar sua borda inferior como âncora fixa.

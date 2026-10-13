@@ -78,7 +78,7 @@ test("M2 migra M1, navega, mantém câmera, transporta resultado e recusa adulte
   wall(d, [0, 0], [8, 0]);
   await load(page, d);
   const current = await exported(page);
-  expect(current.schemaVersion).toBe(5);
+  expect(current.schemaVersion).toBe(6);
   expect(current.model).toEqual(d.model);
   expect(current.generated!.courses[1].pieces).toHaveLength(5);
   const camera = await page.getByTestId("drawing").getAttribute("data-camera");
@@ -245,7 +245,7 @@ for (const snapshot of ["legacy", "v2"])
     ).toBeVisible();
     let d = await exported(page);
     expect(d.model).toEqual(old.model);
-    expect(d.generated!.convention).toBe("nominal-v6");
+    expect(d.generated!.convention).toBe("nominal-v7");
     expect(
       d
         .generated!.courses[0].pieces.filter((p) => p.kind === "half")

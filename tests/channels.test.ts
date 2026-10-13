@@ -314,7 +314,12 @@ describe("M3.2 canaletas nominais", () => {
       adjustments: {
         ...d.adjustments,
         channels: [
-          { id: crypto.randomUUID(), wallId: crypto.randomUUID(), top: 9800 },
+          {
+            id: crypto.randomUUID(),
+            wallId: crypto.randomUUID(),
+            top: 9800,
+            scope: { kind: "wall" },
+          },
         ],
       },
     };
@@ -339,7 +344,7 @@ describe("M3.2 canaletas nominais", () => {
         generationState: { status: "current", diagnostics: g.diagnostics },
       };
     const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(5);
+    expect(migrated.schemaVersion).toBe(6);
     expect(migrated.project.channelLevels).toEqual([]);
     expect(migrated.model).toEqual(d.model);
     expect(migrated.generationState.status).toBe("outdated");

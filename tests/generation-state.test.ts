@@ -12,6 +12,7 @@ import { putOpening, removeElement } from "../src/domain/openings";
 import { suppressBand, restoreBand } from "../src/domain/channels";
 import { toggleGrout } from "../src/domain/grout";
 import { defaultGroutSettings } from "../src/domain/project";
+import { moveWall, createContinuation } from "../src/domain/wall-editing";
 const save = vi.mocked(saveProject);
 it("M3.3 inclusão/exclusão e histórico mantêm eixo, ID e configuração", async () => {
   const d = await opened(),
@@ -34,15 +35,13 @@ it("M3.3 inclusão/exclusão e histórico mantêm eixo, ID e configuração", as
   expect(useStore.getState().doc!.generated).toEqual(excluded.generated);
   await useStore.getState().undo();
   const current = useStore.getState().doc!;
-  await useStore
-    .getState()
-    .commit({
-      ...current,
-      project: {
-        ...current.project,
-        groutSettings: defaultGroutSettings(false),
-      },
-    });
+  await useStore.getState().commit({
+    ...current,
+    project: {
+      ...current.project,
+      groutSettings: defaultGroutSettings(false),
+    },
+  });
   expect(useStore.getState().doc!.generated!.grouts!.map((a) => a.x)).toEqual([
     2500,
   ]);
@@ -334,6 +333,9 @@ it("excluir parede remove ajuste na mesma operação; desfazer recupera escolha"
       ...current.adjustments,
       junctions: [
         {
+          id: crypto.randomUUID(),
+          anchor: { x: c.x, y: c.y },
+          binding: "active",
           componentId: c.id,
           signature: c.signature,
           wallIds: c.wallIds,
@@ -347,7 +349,9 @@ it("excluir parede remove ajuste na mesma operação; desfazer recupera escolha"
     ...chosen,
     model: { ...chosen.model, walls: chosen.model.walls.slice(0, 1) },
   });
-  expect(useStore.getState().doc!.adjustments.junctions).toEqual([]);
+  expect(useStore.getState().doc!.adjustments.junctions[0].binding).toBe(
+    "pending",
+  );
   await useStore.getState().undo();
   expect(useStore.getState().doc!.adjustments.junctions[0].phase).toBe(1);
 });
@@ -433,4 +437,103 @@ it("M3.1 segunda gravação preserva abertura e recuperação da primeira regist
   await useStore.getState().commit(putOpening(current, { ...o, width: 3750 }));
   expect(useStore.getState().saved).toBe("saved");
   expect(useStore.getState().doc!.model.openings[0].width).toBe(3750);
+});
+
+it("M3.4 commit explícito evita dupla reconciliação e histórico restaura movimento", async () => {
+  const d = await opened(),
+    w = d.model.walls[0];
+  const opening = {
+    id: crypto.randomUUID(),
+    wallId: w.id,
+    kind: "window" as const,
+    offset: 2500,
+    width: 2500,
+    base: 0,
+    height: 700,
+  };
+  await useStore.getState().commit(putOpening(d, opening));
+  const before = useStore.getState().doc!,
+    next = moveWall(before, w.id, { x: 2500, y: 5000 });
+  save.mockClear();
+  await useStore.getState().commit(next.doc, "move");
+  expect(save.mock.calls.map((c) => c[0].generationState.status)).toEqual([
+    "outdated",
+    "current",
+  ]);
+  const moved = useStore.getState().doc!;
+  expect(moved.model.openings[0].offset).toBe(2500);
+  expect(moved.model.walls[0].a).toEqual({ x: 2500, y: 5000 });
+  expect(useStore.getState().history.past.at(-1)!.generated).toBeNull();
+  await useStore.getState().undo();
+  expect(useStore.getState().doc!.model).toEqual(before.model);
+  await useStore.getState().undo(true);
+  expect(useStore.getState().doc!.model).toEqual(moved.model);
+});
+it("M3.4 união atômica preserva parede absorvida e UUID de dependentes no undo/redo", async () => {
+  const d = await opened(),
+    a = d.model.walls[0],
+    b = makeWall(
+      { x: 20000, y: 0 },
+      { x: 30000, y: 0 },
+      1250,
+      a.floorId,
+      a.height,
+      1,
+    )!;
+  const seeded = {
+    ...d,
+    model: { ...d.model, walls: [{ ...a, b: { x: 10000, y: 0 } }, b] },
+  };
+  await useStore.getState().commit(seeded);
+  const current = useStore.getState().doc!;
+  const withOpening = putOpening(current, {
+    id: crypto.randomUUID(),
+    wallId: b.id,
+    kind: "window",
+    offset: 2500,
+    width: 2500,
+    base: 0,
+    height: 700,
+  });
+  await useStore.getState().commit(withOpening);
+  const before = useStore.getState().doc!;
+  const bridge = makeWall(
+    { x: 10000, y: 0 },
+    { x: 20000, y: 0 },
+    1250,
+    a.floorId,
+    a.height,
+    1,
+  )!;
+  const next = createContinuation(before, bridge);
+  await useStore.getState().commit(next.doc, "create/merge");
+  const merged = useStore.getState().doc!;
+  expect(merged.model.walls).toHaveLength(1);
+  expect(merged.model.openings[0]).toMatchObject({
+    id: before.model.openings[0].id,
+    wallId: a.id,
+    offset: 22500,
+  });
+  await useStore.getState().undo();
+  expect(useStore.getState().doc!.model).toEqual(before.model);
+  await useStore.getState().undo(true);
+  expect(useStore.getState().doc!.model).toEqual(merged.model);
+});
+it("M3.4 falha de cálculo após mover libera controles e preserva modelo recuperável", async () => {
+  const d = await opened(),
+    w = d.model.walls[0];
+  vi.spyOn(engine, "generate").mockImplementationOnce(() => {
+    throw new Error("M3.4 motor");
+  });
+  await useStore
+    .getState()
+    .commit(moveWall(d, w.id, { x: 2500, y: 5000 }).doc, "move");
+  expect(useStore.getState()).toMatchObject({ busy: false, saved: "saved" });
+  expect(useStore.getState().doc!.model.walls[0].a).toEqual({
+    x: 2500,
+    y: 5000,
+  });
+  expect(useStore.getState().doc!.generationState.status).toBe("outdated");
+  await useStore.getState().retry();
+  expect(useStore.getState().doc!.generationState.status).toBe("current");
 });

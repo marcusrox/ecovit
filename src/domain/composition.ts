@@ -18,6 +18,9 @@ export type Diagnostic = {
   adjustmentIds?: string[];
 };
 export type JunctionChoice = {
+  id?: string;
+  anchor?: { x: number; y: number };
+  binding?: "active" | "pending";
   componentId: string;
   signature: string;
   wallIds: string[];
@@ -50,7 +53,8 @@ export type Composition = {
     | "nominal-v3"
     | "nominal-v4"
     | "nominal-v5"
-    | "nominal-v6";
+    | "nominal-v6"
+    | "nominal-v7";
   channels?: ChannelBand[];
   grouts?: GroutAxis[];
   courses: { number: number; bottom: number; top: number; pieces: Piece[] }[];
@@ -73,7 +77,7 @@ export const MAX_CELLS = 20000;
 export const MAX_COURSES = 1000;
 export const MAX_PIECES = 100000;
 export const componentId = (ids: string[]) => [...ids].sort().join("|");
-const signature = (walls: Wall[]) =>
+export const signature = (walls: Wall[]) =>
   JSON.stringify(
     [...walls]
       .sort((a, b) => a.id.localeCompare(b.id))
@@ -304,7 +308,8 @@ function tile(
       convention === "nominal-v3" ||
       convention === "nominal-v4" ||
       convention === "nominal-v5" ||
-      convention === "nominal-v6"
+      convention === "nominal-v6" ||
+      convention === "nominal-v7"
         ? continuousPattern(group, adjacent, phase)
         : pattern(group, adjacent, phase, convention === "nominal-v2");
     // A T branch is paginated from its contact, including reversed branches.
@@ -327,7 +332,7 @@ function tile(
 }
 export function generate(
   doc: Project,
-  convention: Composition["convention"] = "nominal-v6",
+  convention: Composition["convention"] = "nominal-v7",
 ): Composition {
   const { width: m, height: h } = doc.project.base,
     floor = doc.model.floors[0];
@@ -336,10 +341,14 @@ export function generate(
     courses: [],
     components: [],
     diagnostics: [],
-    ...(convention === "nominal-v5" || convention === "nominal-v6"
+    ...(convention === "nominal-v5" ||
+    convention === "nominal-v6" ||
+    convention === "nominal-v7"
       ? { channels: [] }
       : {}),
-    ...(convention === "nominal-v6" ? { grouts: [] } : {}),
+    ...(convention === "nominal-v6" || convention === "nominal-v7"
+      ? { grouts: [] }
+      : {}),
   };
   const error = (
     code: string,
@@ -474,9 +483,30 @@ export function generate(
       );
       continue;
     }
+    const related = doc.adjustments.junctions.filter((a) =>
+      a.wallIds.some((w) => ids.includes(w)),
+    );
+    if (
+      convention === "nominal-v7" &&
+      (related.some((a) => a.binding === "pending") ||
+        related.filter((a) => a.componentId === id).length > 1)
+    ) {
+      for (const a of related) {
+        usedChoices.add(a.id!);
+        error(
+          "adjustment",
+          "Escolha de encontro pendente. Descarte o ajuste ou escolha novamente na primeira fiada.",
+          ids,
+          a.anchor?.x ?? comp.x,
+          a.anchor?.y ?? comp.y,
+        );
+        result.diagnostics.at(-1)!.adjustmentIds = [a.id!];
+      }
+      continue;
+    }
     const choice = doc.adjustments.junctions.find((a) => a.componentId === id);
     if (choice) {
-      usedChoices.add(id);
+      usedChoices.add(convention === "nominal-v7" ? choice.id! : id);
       comp.phase = choice.phase;
     }
     if (walls.some((w) => w.height % h)) {
@@ -532,7 +562,8 @@ export function generate(
     const openings =
       convention === "nominal-v4" ||
       convention === "nominal-v5" ||
-      convention === "nominal-v6"
+      convention === "nominal-v6" ||
+      convention === "nominal-v7"
         ? doc.model.openings
             .filter((o) => ids.includes(o.wallId))
             .sort((a, b) => a.id.localeCompare(b.id))
@@ -560,7 +591,9 @@ export function generate(
       if (issue) invalidOpening = true;
       if (
         !issue &&
-        (convention === "nominal-v5" || convention === "nominal-v6")
+        (convention === "nominal-v5" ||
+          convention === "nominal-v6" ||
+          convention === "nominal-v7")
       )
         continue;
       error(
@@ -687,13 +720,24 @@ export function generate(
       );
   }
   for (const a of doc.adjustments.junctions)
-    if (!usedChoices.has(a.componentId))
+    if (!usedChoices.has(convention === "nominal-v7" ? a.id! : a.componentId)) {
       error(
         "adjustment",
         "Encontro alterado: retorne ao automático para resolver a escolha pendente.",
         a.wallIds.filter((id) => doc.model.walls.some((w) => w.id === id)),
+        a.anchor?.x ?? 0,
+        a.anchor?.y ?? 0,
       );
-  if (convention === "nominal-v5" || convention === "nominal-v6")
+      if (convention === "nominal-v7")
+        result.diagnostics.at(-1)!.adjustmentIds = [a.id!];
+    }
+  if (
+    convention === "nominal-v5" ||
+    convention === "nominal-v6" ||
+    convention === "nominal-v7"
+  )
     applyChannels(doc, result);
-  return convention === "nominal-v6" ? applyGrout(doc, result) : result;
+  return convention === "nominal-v6" || convention === "nominal-v7"
+    ? applyGrout(doc, result)
+    : result;
 }

@@ -2,7 +2,7 @@
 
 Editor local de plantas com paredes ortogonais e malha de meio tijolo. M1/M2 incluem desenho/edição de paredes, histórico, composição nominal de fiadas, inspeção e persistência. M3.1 acrescenta portas, janelas e vãos, inclusive empilhados; M3.2 acrescenta canaletas, supressão e restauração; M3.3 implementa grautes nominais automáticos e manuais. M1, M2 e os três incrementos de M3 estão aprovados pelo solicitante; aceite global de M3.3 recebido em 13/10/2026. Lajes, múltiplos pavimentos e quantitativos permanecem futuros.
 
-M3.4 — Evolução da edição no canvas está especificado: continuidade/união de paredes ao desenhar ou mover, movimento com dependentes e destaque do módulo de início. Essas funções ainda não estão implementadas; escopo e verificações no [plano §8](docs/Ecovit-Plano-Implementacao.md#8-m34--evolução-da-edição-no-canvas). M1/M2/M3.1–3.3 mantêm seus aceites.
+M3.4 — Evolução da edição no canvas está implementado na versão 0.6.0, aguardando teste manual/aceite: continuidade/união de paredes ao desenhar ou mover, movimento com dependentes e destaque do módulo de início. Escopo e verificações no [plano §8](docs/Ecovit-Plano-Implementacao.md#8-m34--evolução-da-edição-no-canvas). M1/M2/M3.1–3.3 mantêm seus aceites.
 
 ## Abrir nesta máquina
 
@@ -30,17 +30,26 @@ O endereço padrão das instruções atuais é **http://127.0.0.1:5173/**. Proje
 ## Uso
 
 1. Crie um projeto e escolha o tamanho-base.
-2. Na ferramenta Parede, arraste para criar uma parede. A prévia mostra o comprimento modular; “Inverter lado” muda o lado da espessura antes do próximo desenho.
+2. Na ferramenta Parede, arraste para criar uma parede. Continuidade colinear compatível prolonga/une as paredes, inclusive ao preencher um intervalo entre duas existentes. A prévia mostra o comprimento total; “Inverter lado” muda o lado da espessura antes do próximo desenho. O quadrado cinza marca o módulo que contém o centro da cruz, também nas ferramentas de vãos. Ao arrastar em qualquer direção, esse módulo integra o elemento criado; para prolongar, selecione o módulo livre contíguo à ponta.
 3. Selecione uma parede e arraste as alças A/B, ou altere seu comprimento no painel escolhendo a extremidade. As alças têm prioridade, inclusive com Parede ativa. Para começar outra parede exatamente sobre uma alça, limpe a seleção primeiro usando Selecionar e clicando em área vazia.
-4. Use roda do mouse para zoom, botão do meio + arraste para navegar (ou Espaço + botão esquerdo + arraste), Escape para cancelar, Delete para excluir e Ctrl+Z / Ctrl+Y (ou Ctrl+Shift+Z) para desfazer/refazer.
-5. Alterne para Fiada para navegar, consultar o intervalo de altura e sobrepor uma fiada adjacente. Selecione um conjunto em L, na primeira fiada, para visualizar e confirmar outra fase; a prévia destaca os cantos afetados. Diagnósticos podem ser clicados para localizar o problema.
-6. Aguarde a indicação “Salvo no navegador”. Baixe uma cópia regularmente: dados locais podem ser apagados pelo navegador. Carregar arquivo cria uma cópia de projeto, sem substituir o original salvo.
+4. Em Selecionar, arraste o corpo da parede para mover com seus vãos e ajustes; no destino, continuidade compatível também une as paredes. Alças/vãos mantêm prioridade. Escape ou soltar fora cancela; um desfazer recupera movimento e união.
+5. Use roda do mouse para zoom, botão do meio + arraste para navegar (ou Espaço + botão esquerdo + arraste), Escape para cancelar, Delete para excluir e Ctrl+Z / Ctrl+Y (ou Ctrl+Shift+Z) para desfazer/refazer.
+6. Alterne para Fiada para navegar, consultar o intervalo de altura e sobrepor uma fiada adjacente. Selecione um conjunto em L, na primeira fiada, para visualizar e confirmar outra fase; a prévia destaca os cantos afetados. Diagnósticos podem ser clicados para localizar o problema.
+7. Aguarde a indicação “Salvo no navegador”. Baixe uma cópia regularmente: dados locais podem ser apagados pelo navegador. Carregar arquivo cria uma cópia de projeto, sem substituir o original salvo.
 
 As propriedades verticais começam com piso e início da alvenaria em 0 cm, e altura de novas paredes em 280 cm. O passo nominal adotado é a altura-base (7 cm resulta em 40 fiadas para 280 cm); não representa junta ou encaixe físico de um fabricante. Furos representam somente eixos. O T usa principal contínua e ramal encostado, com aviso de ligação complementar. A cruz e combinações sem padrão recebem diagnóstico: o conjunto afetado fica sem peças em Fiada, com a Planta preservada.
 
 Pontas livres e contornos abertos são permitidos. Retas conectadas, L, U e ciclos sem ramificações após o tratamento dos T usam paginação contínua: inteiros pareiam células consecutivas, cantos seguem a paridade do percurso e meios ficam nas extremidades quando necessários. Não há obrigação de orientar todos os cantos igualmente nem mínimo de quatro módulos para a ponte de um U. Cruz, sobreposições e transições de altura ainda não suportadas continuam diagnosticadas.
 
-M3.3 evolui o arquivo para versão 5 e composição `nominal-v6`. Snapshots anteriores são validados pela convenção original antes da migração e marcados desatualizados para recálculo; documentos atuais nominal-v6 são preservados. Modelo, IDs, escolhas de encontros e supressões permanecem. Projetos legados iniciam com categorias automáticas de graute desligadas; para ativar, marcar categorias ou Restaurar padrões de graute e Aplicar. Níveis globais de canaleta existentes em M3.2 são preservados; legados anteriores iniciam sem globais, com faixas locais conforme CT-09. A versão do documento é diferente da convenção de composição.
+M3.4 evolui o arquivo para versão 6 e composição `nominal-v7`. Snapshots anteriores são validados pela convenção original antes da migração e marcados desatualizados para recálculo; documentos atuais nominal-v7 são preservados. Modelo, IDs, escolhas de encontros e supressões permanecem. Projetos legados iniciam com categorias automáticas de graute desligadas; para ativar, marcar categorias ou Restaurar padrões de graute e Aplicar. Níveis globais de canaleta existentes em M3.2 são preservados; legados anteriores iniciam sem globais, com faixas locais conforme CT-09. A versão do documento é diferente da convenção de composição.
+
+## Testar edição de M3.4
+
+Desenhe duas paredes compatíveis separadas e preencha o intervalo: a prévia e o resultado devem ser uma parede. Em Selecionar, mova uma parede até a continuidade de outra e confira a união; teste Desfazer/Refazer. Vãos acompanham a parede movida e ficam na posição mundial atingida após unir. Alturas/lados incompatíveis não se unem; sobreposição positiva permanece diagnosticada. Redimensionar pelas alças não dispara união.
+
+Supressões de canaleta herdadas de uma união mostram limites do trecho e são restauradas individualmente; remover uma nova faixa continua abrangendo a parede inteira. Graute manual compartilhado conserva a intenção na parede que fica e cria uma cópia na movida. Escolhas de encontros invalidadas ficam pendentes na Fiada, com ação Descartar escolha de encontro. Confirme esses casos pelo roteiro do plano §8.
+
+Arquivos antigos são validados antes da migração, sem unir suas paredes automaticamente. Baixe backup antes de testar: arquivos v6 são rejeitados por versões anteriores do aplicativo. O arquivo original importado não é modificado. Categorias de graute/configurações já existentes são preservadas.
 
 ## Testar grautes de M3.3
 

@@ -36,30 +36,26 @@ it("M3.3 IndexedDB migra M3.2 só em memória e confere snapshot original", asyn
       generated: g,
       generationState: { status: "current", diagnostics: g.diagnostics },
     };
-  await db
-    .table("projects")
-    .put({
-      id: d.project.id,
-      name: d.project.name,
-      updatedAt: d.metadata.updatedAt,
-      doc: old,
-    });
+  await db.table("projects").put({
+    id: d.project.id,
+    name: d.project.name,
+    updatedAt: d.metadata.updatedAt,
+    doc: old,
+  });
   try {
     const loaded = await loadProject(d.project.id);
-    expect(loaded.schemaVersion).toBe(5);
+    expect(loaded.schemaVersion).toBe(6);
     expect(loaded.project.groutSettings).toEqual(defaultGroutSettings(false));
     expect((await db.table("projects").get(d.project.id)).doc).toEqual(old);
     expect(loaded.generated).toEqual(g);
     const bad = structuredClone(old);
     bad.generated.courses[0].pieces[0].kind = "half-channel";
-    await db
-      .table("projects")
-      .put({
-        id: d.project.id,
-        name: d.project.name,
-        updatedAt: d.metadata.updatedAt,
-        doc: bad,
-      });
+    await db.table("projects").put({
+      id: d.project.id,
+      name: d.project.name,
+      updatedAt: d.metadata.updatedAt,
+      doc: bad,
+    });
     await expect(loadProject(d.project.id)).rejects.toThrow("inconsistente");
   } finally {
     await db.table("projects").delete(d.project.id);

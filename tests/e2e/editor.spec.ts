@@ -210,7 +210,8 @@ test("E1 encontro L/T, seleção, excluir e atalhos sem interferir em campos", a
   await expect(
     page.getByText("Selecionar parede", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Parede 3 · 100 cm" }).click();
+  // The upward drag now includes the initial 100–112.5 cm cell.
+  await page.getByRole("button", { name: "Parede 3 · 112,5 cm" }).click();
   await page
     .getByRole("button", { name: "Excluir parede", exact: true })
     .click();
