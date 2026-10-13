@@ -1,31 +1,33 @@
 # Ecovit — Plano incremental de implementação
 
 **Data:** 10 de outubro de 2026  
-**Atualização de implementação:** 11 de outubro de 2026  
-**Base:** [PRD 0.8](Ecovit-PRD.md) e [Arquitetura 1.1](Ecovit-Arquitetura-Tecnica.md)  
-**Estado:** M1/E1 aprovada. M2/E2 implementada em 11/10/2026, verificada e disponível para teste local; aguarda aceite manual. M3/E3 não iniciada.
+**Atualização documental:** 12 de outubro de 2026\
+**Base:** [PRD 0.10](Ecovit-PRD.md) e [Arquitetura 1.3](Ecovit-Arquitetura-Tecnica.md)\
+**Estado:** M1 e M2 aprovadas; aceite global de M2 em 12/10/2026. M3 nominal detalhada na seção 7, com padrões e alcances de canaletas/grautes confirmados e sem implementação. Os relatórios anteriores são históricos; o aceite atual substitui suas pendências globais de aprovação de M2.
+
+**Endereço local padrão:** `http://127.0.0.1:5173/`, conforme o README. Referências a `localhost` nos relatórios históricos preservam a origem usada naquela ocasião. Projetos salvos em `localhost` permanecem naquela origem; para transferi-los, baixar `.ecovit` na origem antiga e carregar na origem escolhida.
 
 ## 1. Como usar este plano
 
-Cada entrega acrescenta uma funcionalidade testável ao aplicativo definitivo. E1 mantém sua especificação e relatório; E2 está detalhada na seção 5. As demais indicam apenas direção e dependências. M1/M2 são os nomes usados pelo solicitante para E1/E2; os IDs originais são preservados.
+Cada marco acrescenta uma funcionalidade testável ao aplicativo definitivo. M1 mantém sua especificação e relatório; M2 está detalhado na seção 5 e M3 na seção 7. M significa Marco e é a única sigla usada para essas etapas. Subdivisões usam ponto: M3.1 (Vãos), M3.2 (Canaletas) e M3.3 (Grauteamentos). Tarefas usam M3-T01 e critérios de aceite M3-A01; RF, CT e EX continuam identificando requisitos, convenções técnicas e exemplos. A padronização altera apenas os nomes, preservando o vínculo pelo número de marco e item, sem mudar escopo ou aprovação.
 
 Fluxo: especificar a entrega → implementar → verificar os critérios pertinentes → disponibilizar roteiro de teste → incorporar feedback. A pesquisa construtiva precede os algoritmos correspondentes e será registrada no caderno técnico, por assunto. Não haverá prova técnica ou aplicativo experimental separado.
 
-O plano organiza a implementação parcial do PRD; um requisito atendido parcialmente não será marcado como integralmente concluído. E1 foi aprovada pelo solicitante e E2 foi posteriormente autorizada e implementada; resultados na seção 6. E3 não foi iniciada.
+O plano organiza a implementação parcial do PRD; um requisito atendido parcialmente não será marcado como integralmente concluído. M1 foi aprovada pelo solicitante e M2 foi posteriormente autorizada e implementada; resultados na seção 6. Implementação de M3 não iniciada; definições documentais atuais na seção 7.
 
-## 2. Sequência das entregas
+## 2. Sequência dos marcos
 
-| Entrega | Resultado disponível no aplicativo | Referências principais | Dependência | Estado |
+| Marco | Resultado disponível no aplicativo | Referências principais | Dependência | Estado |
 |---|---|---|---|---|
-| E1 — Planta editável e persistência | Criar projeto, desenhar/editar paredes, desfazer, salvar e transportar arquivo | RF-01/02/03/08/09/11/12, nos recortes abaixo | Nenhuma | Aprovada pelo solicitante em 10/10/2026 |
-| E2 — Composição e inspeção de fiadas | Catálogo nominal, retas, L, retângulo, T básico, transição simples de alturas, inspeção e persistência; cruz apenas reconhecida e diagnosticada | RF-01/03/04/05/09/10, persistência RF-11/12 | E1 e definições P1–P5 do caderno | Implementada; relatório na seção 6; aceite manual pendente |
-| E3 — Vãos e elementos construtivos | Portas, janelas e vãos integrados à composição; canaletas e grauteamentos automáticos e ajustáveis | RF-04/06/07/09/10 | E2 e pesquisa dos elementos correspondentes | A detalhar |
-| E4 — Lajes e múltiplos pavimentos | Lajes, limites verticais, até três pavimentos e verificação dos alinhamentos | RF-08/13 e propagação dos RF-04/05/07 | E3 e pesquisa de transições verticais | A detalhar |
-| E5 — Consulta e conclusão da primeira versão | Quantitativos, duplicação de projetos e fechamento dos cenários restantes do PRD | RF-10/11/12 e cenários de aceite | E4 | A detalhar |
+| M1 — Planta editável e persistência | Criar projeto, desenhar/editar paredes, desfazer, salvar e transportar arquivo | RF-01/02/03/08/09/11/12, nos recortes abaixo | Nenhuma | Aprovada pelo solicitante em 10/10/2026 |
+| M2 — Composição e inspeção de fiadas | Catálogo nominal, retas, L, retângulo, T básico, transição simples de alturas, inspeção e persistência; cruz apenas reconhecida e diagnosticada | RF-01/03/04/05/09/10, persistência RF-11/12 | M1 e definições P1–P5 do caderno | Aprovada em 12/10/2026; relatório na seção 6 |
+| M3 — Vãos e elementos construtivos | Portas, janelas e vãos integrados à composição; canaletas e grauteamentos automáticos e ajustáveis | RF-04/06/07/09/10 | M2 e definições nominais CT-07–10 | Documentação na seção 7; sem código |
+| M4 — Lajes e múltiplos pavimentos | Lajes, limites verticais, até três pavimentos e verificação dos alinhamentos | RF-08/13 e propagação dos RF-04/05/07 | M3 e pesquisa de transições verticais | A detalhar |
+| M5 — Consulta e conclusão da primeira versão | Quantitativos, duplicação de projetos e fechamento dos cenários restantes do PRD | RF-10/11/12 e cenários de aceite | M4 | A detalhar |
 
-Persistência, integridade e verificações evoluem junto com cada entrega. E5 não adia correções ou testes das entregas anteriores. A ordem poderá ser ajustada por feedback, com registro neste plano.
+Persistência, integridade e verificações evoluem junto com cada entrega. M5 não adia correções ou testes das entregas anteriores. A ordem poderá ser ajustada por feedback, com registro neste plano.
 
-## 3. E1 — Planta editável e persistência
+## 3. M1 — Planta editável e persistência
 
 ### Objetivo observável
 
@@ -35,7 +37,7 @@ O aplicativo desta entrega é um editor de geometria de paredes. Ainda não gera
 
 ### Requisitos associados e alcance
 
-| Referência | Incluído em E1 | Parte que permanece para depois |
+| Referência | Incluído em M1 | Parte que permanece para depois |
 |---|---|---|
 | RF-01 | Dois tamanhos-base, dimensões personalizadas positivas 2:1, precisão de 0,1 mm, base única e imutável após criar o projeto | Catálogo de peças, furos e procedimentos de preparação |
 | RF-02 | Desenho, seleção, exclusão, duas alças, comprimento numérico, prévia e encaixe pela face externa | Geração das peças nos encontros |
@@ -48,47 +50,47 @@ O aplicativo desta entrega é um editor de geometria de paredes. Ainda não gera
 
 ### Comportamento e limites
 
-- Tela simples para criar, nomear, listar e abrir projetos locais. Duplicação de projeto fica para E5.
+- Tela simples para criar, nomear, listar e abrir projetos locais. Duplicação de projeto fica para M5.
 - A criação pede nome e tamanho-base; abre diretamente o térreo. Propriedades verticais começam visíveis e editáveis, com valores iniciais apresentados como conveniência de desenho, sem parâmetro estrutural ou promessa de compatibilidade de fiadas. Registrar os valores adotados na implementação; não inferir junta nula.
 - Planta usa Selecionar e Parede, zoom, deslocamento do canvas e enquadramento. Recursos futuros não aparecem como botões desabilitados.
 - Paredes têm ID estável, duas extremidades da face externa na malha, lado da espessura e altura. A espessura equivale à largura-base. A prévia permite inverter o lado; redimensionar não troca a face de referência.
 - Soltar um arraste confirma uma parede de no mínimo um módulo; Escape cancela. Perda de foco cancela o gesto, sem alteração parcial. Soltar fora do canvas encerra o gesto sem deixá-lo preso; a implementação deve adotar cancelamento nesse caso.
-- Alvos de conexão alinham faces externas no canto em L e permitem encostar uma extremidade no meio de outra parede em T. São conexões geométricas: preservar IDs e deixar a composição de tijolos para E2. A seleção de faixas coincidentes deve permitir escolher a parede desejada.
+- Alvos de conexão alinham faces externas no canto em L e permitem encostar uma extremidade no meio de outra parede em T. São conexões geométricas: preservar IDs e deixar a composição de tijolos para M2. A seleção de faixas coincidentes deve permitir escolher a parede desejada.
 - Redimensionar mantém orientação, face e extremidade oposta. Não permitir cruzar a extremidade fixa ou criar comprimento menor que um módulo. O campo de comprimento indica qual extremidade muda e oferece alternativas modulares antes da confirmação.
 - Cada alteração confirmada é uma operação no histórico, inicialmente limitado a 50. Zoom, seleção e prévia não entram no histórico. Desfazer/refazer também salva o modelo resultante. Reabrir não restaura o histórico anterior.
-- Salvar após cada alteração persistente confirmada, uma operação por vez. E1 ainda não executa motor: manter `generated` ausente/nulo e resultado desatualizado, sem simular cálculo ou fazer uma segunda gravação desnecessária. O fluxo completo de salvar/calcular/salvar começa em E2.
-- Arquivo segue o envelope da arquitetura, com `format`, `schemaVersion`, `project`, `model`, `adjustments`, `generated`, `generationState` e `metadata`. Coleções ainda não implementadas ficam vazias. O esquema deve evoluir explicitamente, com migração quando necessária, para preservar arquivos produzidos em E1.
+- Salvar após cada alteração persistente confirmada, uma operação por vez. M1 ainda não executa motor: manter `generated` ausente/nulo e resultado desatualizado, sem simular cálculo ou fazer uma segunda gravação desnecessária. O fluxo completo de salvar/calcular/salvar começa em M2.
+- Arquivo segue o envelope da arquitetura, com `format`, `schemaVersion`, `project`, `model`, `adjustments`, `generated`, `generationState` e `metadata`. Coleções ainda não implementadas ficam vazias. O esquema deve evoluir explicitamente, com migração quando necessária, para preservar arquivos produzidos em M1.
 - Validar arquivo, tamanho máximo de 50 MB, relações e medidas antes de substituir o documento aberto. Rejeitar versões ou conteúdo ainda não suportados; não descartar entidades desconhecidas silenciosamente.
-- Para E1, importar um arquivo cria uma cópia local com novo ID de projeto, preservando IDs dos elementos e suas relações internas. Assim, reimportar um backup não sobrescreve o projeto local existente. Esta é uma decisão operacional desta entrega.
+- Para M1, importar um arquivo cria uma cópia local com novo ID de projeto, preservando IDs dos elementos e suas relações internas. Assim, reimportar um backup não sobrescreve o projeto local existente. Esta é uma decisão operacional desta entrega.
 - Bloqueio por projeto impede edição em duas abas. Se o armazenamento falhar, preservar a memória, informar o problema e permitir download do documento atual. Sem sincronização entre abas.
 
-### Tarefas de implementação de E1
+### Tarefas de implementação de M1
 
-Tarefas executadas em E1; não são entregas separadas nem autorizam antecipar E2.
+Tarefas executadas em M1; não são entregas separadas nem autorizam antecipar M2.
 
-- [x] E1-T1: criar a base React/TypeScript/Vite com as dependências necessárias, scripts de validação e README para execução local; criar módulos somente quando usados.
-- [x] E1-T2: definir os dados mínimos do projeto, térreo e paredes, conversões de unidades, validação modular e operações de edição independentes da interface.
-- [x] E1-T3: implementar criação/abertura de projeto, canvas, malha, prévias, alvos de conexão, seleção e edição das paredes.
-- [x] E1-T4: integrar histórico, atalhos, navegação e tratamento de cancelamento/perda de foco.
-- [x] E1-T5: implementar salvamento local, bloqueio de segunda aba, formato nativo, validação de importação e download após falha de armazenamento.
-- [x] E1-T6: executar verificações pertinentes, corrigir falhas e disponibilizar o aplicativo com instruções e roteiro abaixo; atualizar o andamento com evidências reais.
+- [x] M1-T01: criar a base React/TypeScript/Vite com as dependências necessárias, scripts de validação e README para execução local; criar módulos somente quando usados.
+- [x] M1-T02: definir os dados mínimos do projeto, térreo e paredes, conversões de unidades, validação modular e operações de edição independentes da interface.
+- [x] M1-T03: implementar criação/abertura de projeto, canvas, malha, prévias, alvos de conexão, seleção e edição das paredes.
+- [x] M1-T04: integrar histórico, atalhos, navegação e tratamento de cancelamento/perda de foco.
+- [x] M1-T05: implementar salvamento local, bloqueio de segunda aba, formato nativo, validação de importação e download após falha de armazenamento.
+- [x] M1-T06: executar verificações pertinentes, corrigir falhas e disponibilizar o aplicativo com instruções e roteiro abaixo; atualizar o andamento com evidências reais.
 
 ### Critérios de aceite
 
 | ID | Resultado verificável |
 |---|---|
-| E1-A01 | Os dois tamanhos iniciais criam malhas de 12,5 cm e 15 cm. Um tamanho personalizado 28 × 14 × 7 cm cria módulo de 14 cm. Medidas não positivas, proporção inválida ou precisão não representável são recusadas com explicação. |
-| E1-A02 | Criar um projeto abre o térreo, preserva nome e base e permite consultar/editar suas propriedades sem cadastrar outros pavimentos. |
-| E1-A03 | Arrastes criam apenas paredes horizontais/verticais, com referência externa modular e espessura correta. Inverter o lado na prévia altera apenas o lado ocupado pela faixa. |
-| E1-A04 | Um L alinha as faces no canto; um T encaixa no alvo indicado. Selecionar uma parede mantém seu ID e permite distinguir paredes na área compartilhada. Não há indicação de composição construtiva validada. |
-| E1-A05 | Ambas as alças redimensionam mantendo a outra ponta e a face fixas. Comprimento numérico incompatível oferece alternativas sem alteração silenciosa. Cruzar a ponta fixa ou reduzir abaixo de um módulo não gera parede inválida. |
-| E1-A06 | Excluir, desfazer e refazer restauram geometria e IDs. Cada arraste é uma única ação. Navegação não altera o documento; Delete e atalhos do canvas não interferem na digitação. |
-| E1-A07 | Escape, perda de foco e soltura fora do canvas cancelam sem resíduos; o próximo desenho funciona normalmente. |
-| E1-A08 | Após indicação de salvamento concluído, recarregar e reabrir preserva nome, base, pavimento, coordenadas, lados e alturas das paredes. |
-| E1-A09 | Baixar e carregar em outro navegador preserva os dados de desenho e cria uma cópia local. O arquivo não contém nós Konva, histórico ou estado de mouse. |
-| E1-A10 | Arquivo inválido, versão não suportada ou limite excedido é rejeitado sem substituir o trabalho aberto. Falha de armazenamento preserva a edição em memória e permite baixá-la. |
-| E1-A11 | A segunda aba não pode editar o mesmo projeto enquanto a primeira mantém o bloqueio. Após fechar a primeira e reabrir na segunda, a edição pode continuar. |
-| E1-A12 | Canvas ocupa a maior parte da tela; propriedades são contextuais, controles têm rótulos acessíveis e a edição funciona em Chrome e Edge desktop. Não há ferramentas futuras ou quantitativos inventados. |
+| M1-A01 | Os dois tamanhos iniciais criam malhas de 12,5 cm e 15 cm. Um tamanho personalizado 28 × 14 × 7 cm cria módulo de 14 cm. Medidas não positivas, proporção inválida ou precisão não representável são recusadas com explicação. |
+| M1-A02 | Criar um projeto abre o térreo, preserva nome e base e permite consultar/editar suas propriedades sem cadastrar outros pavimentos. |
+| M1-A03 | Arrastes criam apenas paredes horizontais/verticais, com referência externa modular e espessura correta. Inverter o lado na prévia altera apenas o lado ocupado pela faixa. |
+| M1-A04 | Um L alinha as faces no canto; um T encaixa no alvo indicado. Selecionar uma parede mantém seu ID e permite distinguir paredes na área compartilhada. Não há indicação de composição construtiva validada. |
+| M1-A05 | Ambas as alças redimensionam mantendo a outra ponta e a face fixas. Comprimento numérico incompatível oferece alternativas sem alteração silenciosa. Cruzar a ponta fixa ou reduzir abaixo de um módulo não gera parede inválida. |
+| M1-A06 | Excluir, desfazer e refazer restauram geometria e IDs. Cada arraste é uma única ação. Navegação não altera o documento; Delete e atalhos do canvas não interferem na digitação. |
+| M1-A07 | Escape, perda de foco e soltura fora do canvas cancelam sem resíduos; o próximo desenho funciona normalmente. |
+| M1-A08 | Após indicação de salvamento concluído, recarregar e reabrir preserva nome, base, pavimento, coordenadas, lados e alturas das paredes. |
+| M1-A09 | Baixar e carregar em outro navegador preserva os dados de desenho e cria uma cópia local. O arquivo não contém nós Konva, histórico ou estado de mouse. |
+| M1-A10 | Arquivo inválido, versão não suportada ou limite excedido é rejeitado sem substituir o trabalho aberto. Falha de armazenamento preserva a edição em memória e permite baixá-la. |
+| M1-A11 | A segunda aba não pode editar o mesmo projeto enquanto a primeira mantém o bloqueio. Após fechar a primeira e reabrir na segunda, a edição pode continuar. |
+| M1-A12 | Canvas ocupa a maior parte da tela; propriedades são contextuais, controles têm rótulos acessíveis e a edição funciona em Chrome e Edge desktop. Não há ferramentas futuras ou quantitativos inventados. |
 
 ### Verificações pelo Codex
 
@@ -105,7 +107,7 @@ Pré-condição: implementação disponível, dependências instaladas e endere�
 
 | Passo | Ação | Resultado esperado / aceite |
 |---|---|---|
-| 1 | Criar “Teste E1” com tijolo 25 × 12,5 × 7 cm. Consultar propriedades do térreo. | Térreo imediato, módulo de 12,5 cm, nome/base e propriedades visíveis — A01/A02. |
+| 1 | Criar “Teste M1” com tijolo 25 × 12,5 × 7 cm. Consultar propriedades do térreo. | Térreo imediato, módulo de 12,5 cm, nome/base e propriedades visíveis — A01/A02. |
 | 2 | Desenhar quatro paredes formando um retângulo de dimensões externas 400 × 300 cm, com espessura para dentro. | Comprimentos modulares e referências externas alinhadas; espessura 12,5 cm — A03/A04. |
 | 3 | Criar uma parede que termine no meio de outra e selecionar cada uma na conexão. | Prévia de conexão em T; seleção permite distinguir as paredes — A04. |
 | 4 | Em uma parede isolada de 200 cm, estender uma extremidade em 25 cm; depois a outra em 25 cm. | Comprimentos de 225 e 250 cm; a extremidade oposta fica fixa a cada operação — A05. |
@@ -113,7 +115,7 @@ Pré-condição: implementação disponível, dependências instaladas e endere�
 | 6 | Excluir a parede isolada; desfazer e refazer. Desfazer um redimensionamento completo. | Restauração correta; um gesto corresponde a uma ação — A06. |
 | 7 | Iniciar um desenho e pressionar Escape. Repetir soltando fora do canvas e alternando de janela durante o gesto. Desenhar novamente. | Nenhuma parede residual ou ferramenta presa — A07. |
 | 8 | Usar zoom e Espaço + arraste; digitar no nome do projeto e usar Delete no campo. | Geometria intacta; digitação não exclui paredes — A06/A12. |
-| 9 | Aguardar “Salvo”, recarregar e abrir “Teste E1”. | Desenho, lado da espessura, medidas e propriedades preservados — A08. |
+| 9 | Aguardar “Salvo”, recarregar e abrir “Teste M1”. | Desenho, lado da espessura, medidas e propriedades preservados — A08. |
 | 10 | Baixar `.ecovit`, abrir o outro navegador e carregar o arquivo. Reimportá-lo também no navegador original. | Mesmo desenho; importação como cópia, sem sobrescrever o original — A09. |
 | 11 | Tentar carregar um arquivo de texto que não seja um projeto válido enquanto o desenho estiver aberto. | Erro compreensível e projeto atual intacto — A10. |
 | 12 | Abrir o mesmo projeto local em duas abas. Fechar a primeira e reabrir na segunda. | Segunda aba inicialmente impedida de editar; edição liberada após encerrar a primeira — A11. |
@@ -123,23 +125,23 @@ Falha de armazenamento, arquivo maior que o limite e versão futura serão cober
 
 ### Conclusão e andamento
 
-E1 estará pronta para teste do solicitante quando seus critérios tiverem evidências de verificação, o aplicativo abrir localmente e as instruções de execução estiverem disponíveis. A conclusão após teste manual será registrada somente com o retorno do solicitante. Uma pendência não deve ser escondida por marcar toda a entrega como concluída.
+M1 estará pronta para teste do solicitante quando seus critérios tiverem evidências de verificação, o aplicativo abrir localmente e as instruções de execução estiverem disponíveis. A conclusão após teste manual será registrada somente com o retorno do solicitante. Uma pendência não deve ser escondida por marcar toda a entrega como concluída.
 
 | Item | Estado atual |
 |---|---|
-| Especificação de E1 | Preparada nesta revisão |
-| Implementação | E1 aprovada; E2 implementada (relatório na seção 6) |
+| Especificação de M1 | Preparada nesta revisão |
+| Implementação | M1 aprovada; M2 implementada (relatório na seção 6) |
 | Comandos e testes automatizados | Implementados; resultados no relatório abaixo |
 | Teste manual do solicitante | Aprovação global recebida em 10/10/2026; sem checklist individual informado |
-| Próxima ação | Testar M2 conforme seção 5; consultar resultados na seção 6 |
+| Próxima ação | Implementar M3.1 quando solicitado, conforme o recorte aprovado na seção 7 |
 
-## 4. Relatório da implementação de E1 — 10/10/2026
+## 4. Relatório da implementação de M1 — 10/10/2026
 
 ### Resultado entregue
 
 Aplicativo React/TypeScript com canvas Konva, geometria independente da interface, estado Zustand, IndexedDB via Dexie e arquivo validado com Zod. Inclui criação/listagem/abertura de projetos, dois tamanhos-base e dimensões personalizadas, térreo editável, paredes pela face externa, alças A/B, comprimento numérico com alternativas, exclusão, desfazer/refazer, salvamento automático e transporte por `.ecovit`.
 
-O arquivo não contém composição gerada. O aplicativo identifica essa limitação e não oferece Fiada, vãos, lajes, grauteamentos ou quantitativos. Não houve implementação de E2.
+O arquivo não contém composição gerada. O aplicativo identifica essa limitação e não oferece Fiada, vãos, lajes, grauteamentos ou quantitativos. Não houve implementação de M2.
 
 ### Evidências e verificações
 
@@ -173,15 +175,15 @@ Corrigidos durante a verificação: restauração de campos numéricos após val
 
 O build informa um bundle JavaScript de aproximadamente 778 kB (242 kB gzip) e avisos sobre comentários de otimização da dependência Zod. A compilação funciona; não foi acrescentada divisão de bundles sem evidência de necessidade. A instalação também informou depreciação da versão 9 do ESLint, dependência de desenvolvimento; a ferramenta instalada executou sem erros. As versões exatas estão no lockfile.
 
-A navegação não persiste zoom/posição entre sessões. Para iniciar uma nova parede exatamente sobre a alça de uma parede selecionada, limpe a seleção primeiro; alças têm prioridade conforme o PRD. O conforto desse gesto deve ser avaliado no seu teste. Ainda não foi medida a carga de 100 mil peças, pois E1 não gera peças.
+A navegação não persiste zoom/posição entre sessões. Para iniciar uma nova parede exatamente sobre a alça de uma parede selecionada, limpe a seleção primeiro; alças têm prioridade conforme o PRD. O conforto desse gesto deve ser avaliado no seu teste. Ainda não foi medida a carga de 100 mil peças, pois M1 não gera peças.
 
 ### Como testar agora
 
 Abra **http://127.0.0.1:5173/**. Se precisar reiniciar o servidor, execute `./Start-Ecovit.ps1` na raiz do projeto e mantenha o terminal aberto. O [README](../README.md) contém instalação, comandos e atalhos. O servidor é apenas local; não houve publicação externa.
 
-**Estado de entrega: M1/E1 aprovada pelo solicitante em 10/10/2026.** Evidência: “Estou satisfeito com o M1”. A aprovação registra sua aceitação global do aplicativo; não equivale a afirmar que todos os passos manuais foram executados individualmente. As evidências automatizadas acima pertencem à implementação de E1 e não foram reexecutadas nesta revisão documental. Essa aprovação não autoriza implementar E2 automaticamente.
+**Estado de entrega: M1 aprovada pelo solicitante em 10/10/2026.** Evidência: “Estou satisfeito com o M1”. A aprovação registra sua aceitação global do aplicativo; não equivale a afirmar que todos os passos manuais foram executados individualmente. As evidências automatizadas acima pertencem à implementação de M1 e não foram reexecutadas nesta revisão documental. Essa aprovação não autoriza implementar M2 automaticamente.
 
-## 5. E2 — Composição e inspeção de fiadas (M2)
+## 5. M2 — Composição e inspeção de fiadas
 
 ### Objetivo e referência técnica
 
@@ -195,19 +197,19 @@ As onze direções iniciais foram aprovadas pelo solicitante: “Acato tudo prop
 
 ### Requisitos associados
 
-| Requisito | Incluído em E2 | Permanece fora deste recorte |
+| Requisito | Incluído em M2 | Permanece fora deste recorte |
 |---|---|---|
 | RF-01 | Inteiro/meio nominais, bases iniciais e personalizada 2:1, eixos de furos | Geometria física de furos/encaixes, canaletas e peças preparadas |
 | RF-03 | Passo nominal explícito `p = h`, alturas compatíveis e alternativas | Passo de obra universal; transições com lajes |
 | RF-04 | Fiada atual/total, anterior/próxima/direta, referência adjacente, legenda compacta, intervalos relativos ao piso | Graute, canaletas e aberturas |
 | RF-05 | L, T nominal com aviso de ligação complementar, transição simples de alturas e alternativas compatíveis na fiada 1 | Composição automática da cruz e combinações fora dos padrões documentados |
 | RF-09 | Regeneração automática após confirmação; desfazer/refazer modelo e ajustes | Edição de tijolos individuais continua fora do produto |
-| RF-10 | Modulação, colisão, lacuna, encontro sem solução, alinhamento nominal e conflito de ajuste | Diagnósticos de elementos de E3/E4 |
-| RF-11/12 | Composição e pendências no `.ecovit` e banco local; migração de E1 | Tela de quantitativos, duplicação e demais itens de E5 |
+| RF-10 | Modulação, colisão, lacuna, encontro sem solução, alinhamento nominal e conflito de ajuste | Diagnósticos de elementos de M3/M4 |
+| RF-11/12 | Composição e pendências no `.ecovit` e banco local; migração de M1 | Tela de quantitativos, duplicação e demais itens de M5 |
 
 ### Fluxo simples de uso
 
-1. Criar/abrir projeto como em E1. Não acrescentar cadastro de fabricante, furos ou regras.
+1. Criar/abrir projeto como em M1. Não acrescentar cadastro de fabricante, furos ou regras.
 2. Confirmar edição: salvar modelo como desatualizado → gerar integralmente → salvar composição. Uma operação de cada vez; indicador de processamento e recuperação em falha.
 3. Planta mantém faixas contínuas. Fiada mostra inteiro/meio, orientação e eixos nominais. Troca de modo conserva enquadramento; lembrar a última fiada durante a sessão, ajustando-a se o total diminuir.
 4. Navegar sem recalcular. Referência sobreposta é opcional, anterior **ou** próxima, sem seleção e indisponível nos limites correspondentes.
@@ -218,12 +220,12 @@ Não acrescentar Worker, fila, backend, solver genérico ou cálculo incremental
 
 ### Tarefas para implementação posterior
 
-- [x] **E2-T0 — Definições técnicas:** propostas P1–P5 aprovadas e incorporadas, fontes F6/F7 e exemplos EX-13–18 acrescentados; cruz excluída explicitamente. Conclusão documental, sem implementação ou testes do aplicativo.
-- [x] **E2-T1 — Contratos e dados:** catálogo nominal, convenções, resultado/diagnósticos e migração versão 1 → 2; fixtures derivados dos EX, sem alterar medidas antigas.
-- [x] **E2-T2 — Motor mínimo:** retas, padrões documentados de L/anel/T básico, transição simples de alturas, reconhecimento e diagnóstico da cruz, classificação dos demais encontros e validação integral da cobertura. Determinismo por coordenadas; sem dependência da ordem de criação das paredes.
-- [x] **E2-T3 — Ciclo de edição e persistência:** salvar/calcular/salvar, recuperação de falhas, ajustes e histórico, download/importação e reabertura fiel.
-- [x] **E2-T4 — Inspeção no aplicativo:** Planta/Fiada, navegação, intervalos, referência adjacente, legenda, seleção e prévia dos encontros, localização dos diagnósticos.
-- [x] **E2-T5 — Verificação e relatório:** executar verificações abaixo, corrigir problemas, disponibilizar teste local e registrar resultados reais, limitações e alcance efetivo do RF-05.
+- [x] **M2-T00 — Definições técnicas:** propostas P1–P5 aprovadas e incorporadas, fontes F6/F7 e exemplos EX-13–18 acrescentados; cruz excluída explicitamente. Conclusão documental, sem implementação ou testes do aplicativo.
+- [x] **M2-T01 — Contratos e dados:** catálogo nominal, convenções, resultado/diagnósticos e migração versão 1 → 2; fixtures derivados dos EX, sem alterar medidas antigas.
+- [x] **M2-T02 — Motor mínimo:** retas, padrões documentados de L/anel/T básico, transição simples de alturas, reconhecimento e diagnóstico da cruz, classificação dos demais encontros e validação integral da cobertura. Determinismo por coordenadas; sem dependência da ordem de criação das paredes.
+- [x] **M2-T03 — Ciclo de edição e persistência:** salvar/calcular/salvar, recuperação de falhas, ajustes e histórico, download/importação e reabertura fiel.
+- [x] **M2-T04 — Inspeção no aplicativo:** Planta/Fiada, navegação, intervalos, referência adjacente, legenda, seleção e prévia dos encontros, localização dos diagnósticos.
+- [x] **M2-T05 — Verificação e relatório:** executar verificações abaixo, corrigir problemas, disponibilizar teste local e registrar resultados reais, limitações e alcance efetivo do RF-05.
 
 O T básico segue CT-05 e EX-10/13: uma solução geométrica basta, com aviso persistido de ligação complementar. EX-11 verifica exclusão da cruz. EX-14–18 cobrem paridade, transição de alturas e compatibilidade; não inventar alternativas nem dimensionamentos construtivos.
 
@@ -231,23 +233,23 @@ O T básico segue CT-05 e EX-10/13: uma solução geométrica basta, com aviso p
 
 | ID | Resultado verificável | Referência |
 |---|---|---|
-| E2-A01 | Três bases dos exemplos produzem inteiro/meio com envelopes e eixos nominais corretos; interface informa a convenção sem pedir configuração inicial | CT-01/02; EX-01/05/06 |
-| E2-A02 | Retas alternam os padrões e reproduzem contagens/posições esperadas; desenho invertido e ordem de criação não mudam a composição | CT-04; EX-01/02 |
-| E2-A03 | L simples e anel fecham todas as fiadas sem duplicar cantos, sobreposição, sobra ou lacuna; alternativa apresentada também passa nessas verificações | CT-03/05/06; EX-03/04 |
-| E2-A04 | Casos fora do suporte e sobreposição colinear são localizados; Planta completa; componente conectado afetado sem peças em Fiada, sem validade fictícia; componentes independentes continuam inspecionáveis | EX-12; decisão 10; P1–P4 |
-| E2-A05 | Alturas e intervalos seguem a convenção; paredes curtas terminam corretamente; valores incompatíveis oferecem alternativas sem mudança silenciosa, inclusive após migração | EX-07/08/09; L5 |
-| E2-A06 | Navegação percorre fiadas reais, respeita extremos, preserva câmera e última fiada da sessão; referência adjacente não pode ser editada; navegar não dispara motor | RF-04 |
-| E2-A07 | Encontro só é alterável na primeira fiada; prévia mostra alcance, confirmação propaga, desfazer/refazer restaura; ajuste incompatível gera conflito explícito | CT-05; RF-05/09 |
-| E2-A08 | Cada edição confirmada executa sequência única; modelo é preservado em falha de cálculo/gravação; controles são liberados e estado de salvamento é verdadeiro | Caderno §6 |
-| E2-A09 | Reabrir e transportar arquivo versão 2 preserva peças, escolhas e diagnósticos; versão 1 migra sem alterar o modelo; arquivo inconsistente é recusado sem substituir o aberto | RF-11/12 |
-| E2-A10 | Atualização e pendências são distinguidas; erros impedem validade geométrica; eixos coincidentes não são apresentados como passagem física comprovada | CT-06; L1/L2 |
-| E2-A11 | Chrome e Edge funcionam nos fluxos principais; limites de geração impedem alocação descontrolada e não truncam peças silenciosamente | Arquitetura; Caderno §6 |
-| E2-A12 | T básico reproduz EX-10/13 nas fases A/B sem colisão/lacuna; principal contínua; aviso de ligação complementar visível e salvo, sem reforços fictícios | P2; CT-05; EX-10/13 |
-| E2-A13 | L com alturas diferentes muda para reta, mantendo fase e escolha inicial; términos após A e B conferem com EX-15/16 | P5; EX-15/16 |
-| E2-A14 | L pares/ímpares respeitam mínimo de dois módulos por ramo; encontros próximos só oferecem alternativas compatíveis em todas as fases, com prévia do alcance | P1/P4; EX-14/17/18 |
-| E2-A15 | Cruz é reconhecida e diagnosticada, com componente sem composição; não é resolvida implicitamente como dois T nem considerada geometricamente válida | P3; EX-11 |
+| M2-A01 | Três bases dos exemplos produzem inteiro/meio com envelopes e eixos nominais corretos; interface informa a convenção sem pedir configuração inicial | CT-01/02; EX-01/05/06 |
+| M2-A02 | Retas alternam os padrões e reproduzem contagens/posições esperadas; desenho invertido e ordem de criação não mudam a composição | CT-04; EX-01/02 |
+| M2-A03 | L simples e anel fecham todas as fiadas sem duplicar cantos, sobreposição, sobra ou lacuna; alternativa apresentada também passa nessas verificações | CT-03/05/06; EX-03/04 |
+| M2-A04 | Casos fora do suporte e sobreposição colinear são localizados; Planta completa; componente conectado afetado sem peças em Fiada, sem validade fictícia; componentes independentes continuam inspecionáveis | EX-12; decisão 10; P1–P4 |
+| M2-A05 | Alturas e intervalos seguem a convenção; paredes curtas terminam corretamente; valores incompatíveis oferecem alternativas sem mudança silenciosa, inclusive após migração | EX-07/08/09; L5 |
+| M2-A06 | Navegação percorre fiadas reais, respeita extremos, preserva câmera e última fiada da sessão; referência adjacente não pode ser editada; navegar não dispara motor | RF-04 |
+| M2-A07 | Encontro só é alterável na primeira fiada; prévia mostra alcance, confirmação propaga, desfazer/refazer restaura; ajuste incompatível gera conflito explícito | CT-05; RF-05/09 |
+| M2-A08 | Cada edição confirmada executa sequência única; modelo é preservado em falha de cálculo/gravação; controles são liberados e estado de salvamento é verdadeiro | Caderno §6 |
+| M2-A09 | Reabrir e transportar arquivo versão 2 preserva peças, escolhas e diagnósticos; versão 1 migra sem alterar o modelo; arquivo inconsistente é recusado sem substituir o aberto | RF-11/12 |
+| M2-A10 | Atualização e pendências são distinguidas; erros impedem validade geométrica; eixos coincidentes não são apresentados como passagem física comprovada | CT-06; L1/L2 |
+| M2-A11 | Chrome e Edge funcionam nos fluxos principais; limites de geração impedem alocação descontrolada e não truncam peças silenciosamente | Arquitetura; Caderno §6 |
+| M2-A12 | T básico reproduz EX-10/13 nas fases A/B sem colisão/lacuna; principal contínua; aviso de ligação complementar visível e salvo, sem reforços fictícios | P2; CT-05; EX-10/13 |
+| M2-A13 | L com alturas diferentes muda para reta, mantendo fase e escolha inicial; términos após A e B conferem com EX-15/16 | P5; EX-15/16 |
+| M2-A14 | L pares/ímpares respeitam mínimo de dois módulos por ramo; encontros próximos só oferecem alternativas compatíveis em todas as fases, com prévia do alcance | P1/P4; EX-14/17/18 |
+| M2-A15 | Cruz é reconhecida e diagnosticada, com componente sem composição; não é resolvida implicitamente como dois T nem considerada geometricamente válida | P3; EX-11 |
 
-E2-A04 verifica casos não suportados e não substitui A12/A13. As definições e exemplos de A12–A15 estão no caderno revisão 3. As evidências executadas constam na seção 6. O aceite manual do solicitante continua pendente; a aprovação da especificação não equivale a esse aceite.
+M2-A04 verifica casos não suportados e não substitui A12/A13. As definições e exemplos de A12–A15 partiram do caderno revisão 3 e receberam as revisões de paginação registradas na seção 6. M2 aprovada globalmente pelo solicitante em 12/10/2026; evidências e histórico na seção 6. O aceite global não atribui resultados individuais a passos de teste manual.
 
 ### Verificações pelo Codex na implementação
 
@@ -273,10 +275,10 @@ Usar Chrome ou Edge desktop. O relatório da implementação informará endereç
 | 7 | Base 25 × 12,5 × 7; criar T de EX-13: principal de 100 cm, ramal livre de 50 cm, altura 21 cm; criar sobreposição colinear em componente independente | T com 6 inteiros em A, 4 inteiros + 4 meios em B, aviso de ligação complementar; componente inválido sem peças e Planta completa — A04/A10/A12 |
 | 8 | Em duas paredes isoladas, definir alturas 21 e 14 cm; tentar 20 cm. Depois usar piso 10 e início 12 cm | Parede curta ausente na terceira; opções 14/21 sem alteração antecipada; intervalos de EX-09 — A05 |
 | 9 | Aguardar salvamento, recarregar, baixar `.ecovit` e importar no outro navegador | Composição, escolha do L e diagnósticos preservados; importação continua como cópia — A08/A09 |
-| 10 | Abrir backup real de E1; conferir paredes, IDs por teste automatizado e dimensões pela interface | Modelo preservado; composição gerada nominalmente; altura incompatível permanece pendente — A05/A09 |
+| 10 | Abrir backup real de M1; conferir paredes, IDs por teste automatizado e dimensões pela interface | Modelo preservado; composição gerada nominalmente; altura incompatível permanece pendente — A05/A09 |
 | 11 | Repetir parede de 8 módulos com bases 30 × 15 × 7 (120 cm) e 28 × 14 × 7 (112 cm) | Mesma distribuição do passo 1; malhas de 15 e 14 cm — A01/A02 |
 | 12 | Usar L de EX-03; horizontal 21 cm e vertical 14 cm; depois reduzir vertical para 7 cm | Primeiro caso: terceira fiada reta A; segundo: segunda reta B e terceira A; um inteiro + um meio nas fiadas retas, posições de EX-15/16 — A13 |
-| 13 | Trocar a fase do anel EX-17; criar U de EX-18 com três células na base e três em cada ramo incluindo cantos | Anel: prévia dos quatro cantos e composição fechada; combinação do U que disputa célula central não é oferecida; sem padrão completo alternativo, diagnóstico do componente — A14 |
+| 13 | Trocar a fase do anel EX-17; criar U de EX-18 com três células na base e três em cada ramo incluindo cantos | Anel: prévia dos quatro cantos e composição fechada; U de sete células composto com três inteiros e um meio na ponta livre em ambas as fases, conforme nominal-v3 — A14 |
 | 14 | Criar a cruz de EX-11 em componente independente do T | Cruz diagnosticada e componente sem peças; T continua visível e composto — A15 |
 
 Falhas injetadas, arquivos adulterados, limites de memória e comparação completa de dados ficam nas verificações automatizadas. Registrar feedback manual por passo, observado e esperado; não presumir aprovação.
@@ -285,18 +287,18 @@ Falhas injetadas, arquivos adulterados, limites de memória e comparação compl
 
 | Item | Estado em 10/10/2026 |
 |---|---|
-| Aprovação M1/E1 | Registrada, com manifestação explícita do solicitante |
+| Aprovação M1 | Registrada, com manifestação explícita do solicitante |
 | Caderno técnico | Revisão 3: propostas P1–P5 aprovadas após pesquisa; regras, fontes e exemplos incorporados |
-| Plano de M2/E2 | Detalhado somente para esta entrega |
-| Implementação e testes de E2 | Não iniciados; nenhum resultado de execução alegado |
+| Plano de M2 | Detalhado somente para esta entrega |
+| Implementação e testes de M2 | Não iniciados; nenhum resultado de execução alegado |
 | Verificação documental | Links locais conferidos; cobertura dos dois padrões de L e dos 54 pares de cada fase do anel conferida por cálculo independente; testes do aplicativo não executados nesta revisão |
 | Limites técnicos restantes | Ligação física do T não dimensionada; cruz excluída; casos fora do catálogo recebem diagnóstico; limitações L1–L5 preservadas |
-| Próxima ação | Implementar M2 somente após solicitação; seguir as definições aprovadas e executar verificações, sem avançar para E3 |
+| Próxima ação | Implementar M2 somente após solicitação; seguir as definições aprovadas e executar verificações, sem avançar para M3 |
 
-Ao implementar, acrescentar relatório com funcionalidades efetivas, comandos/resultados, limitações, endereço local e pendências manuais. Não avançar para E3 sem solicitação.
+Ao implementar, acrescentar relatório com funcionalidades efetivas, comandos/resultados, limitações, endereço local e pendências manuais. Não avançar para M3 sem solicitação.
 
 
-## 6. Relatório de implementação de M2/E2 — 11/10/2026
+## 6. Relatório de implementação de M2 — 11/10/2026
 
 ### Entrega disponível
 
@@ -347,7 +349,7 @@ Limite defensivo anterior à geração: 20 mil módulos somados nas paredes, mil
 - Transições de altura em T ou conjuntos com vários encontros são diagnosticadas; o suporte desta entrega cobre L simples → reta.
 - Escolha incompatível após editar geometria é sinalizada; o painel permite retornar encontros ao automático. Exclusão de parede remove ajuste associado e desfazer o restaura.
 - A abertura/importação valida o snapshot salvo contra uma recomputação determinística, sem substituí-lo silenciosamente. Isso pode acrescentar espera em documentos maiores.
-- Sem vãos, lajes, graute, canaletas ou quantitativos. **M3/E3 não iniciada.**
+- Sem vãos, lajes, graute, canaletas ou quantitativos. **M3 não iniciada.**
 
 Para testar, abrir **http://127.0.0.1:5173/** e seguir o roteiro da seção 5. Se o servidor precisar ser reiniciado, executar `./Start-Ecovit.ps1` na raiz do projeto. O [README](../README.md) foi atualizado com o uso de Fiada e as limitações.
 
@@ -437,3 +439,138 @@ Verificações: lint e build com tipos passaram, com os avisos conhecidos de Zod
 Pendente do solicitante: atualizar a página e testar com seu mouse, incluindo arrastar além da borda do canvas e soltar. Teste físico/manual e aceite não presumidos. Nenhuma função futura foi adicionada.
 
 Conclusão registrada em 12/10/2026: **26 testes de navegador passaram em Chrome e Edge**, incluindo o novo gesto com botão central, alternativa Espaço, saída do canvas, liberação de botões, perda de foco, zoom e preservação integral do projeto. Lint e build com tipos passaram. Aceite manual do solicitante permanece pendente.
+
+### Aceite global de M2 — 12/10/2026
+
+O solicitante declarou: **“O M2 está validado por mim.”** M2 aprovada, incluindo refinamentos até o commit `4ca4b82`. Substitui a pendência de aceite global nos registros históricos, sem atribuir resultados individuais a testes manuais. Limitações do motor permanecem documentadas. A solicitação de M3 autoriza neste momento apenas documentação.
+
+## 7. M3 — Vãos, canaletas e grautes nominais
+
+**Revisão:** 12/10/2026, após retorno do solicitante. **Estado:** documentação atualizada, nenhuma implementação. O usuário confirmou desenho nominal, configurações de projeto, automação como ponto de partida e ajustes persistentes. PRD §20, Arquitetura §15 e Caderno revisão 6 CT-07–10/EX-21–35 são as referências. Os antigos bloqueios por apoios dimensionados e passagem física deixam de se aplicar.
+
+### Escopo e sequência
+
+Desenhar portas, janelas e vãos; gerar canaletas por níveis e junto a todos os tipos de aberturas; gerar graute pelas categorias escolhidas e intervalo configurado; permitir inclusão/remoção nominal preservada. M3 não calcula estrutura, cargas, armaduras, grampos, apoios resistentes ou dimensões internas de furos/canais. Desenhos são o objetivo atual; quantitativos evoluem posteriormente. Lajes/múltiplos pavimentos seguem em M4; quantitativos em M5. Cruz e transições de altura ainda não suportadas não entram automaticamente em M3.
+
+| Incremento | Entrega | Dependências reais |
+|---|---|---|
+| M3.1 | Vãos, configuração do projeto para padrões de aberturas, composição nominal, diagnósticos e persistência | CT-07/08, padrões e recorte D3-02 confirmados; autorização de implementação ainda necessária |
+| M3.2 | Lista de níveis globais, canaletas automáticas superiores/inferiores, representação e remoção em Fiada | M3.1, CT-09, largura do vão + um módulo por lado e remoção da parede/fiada inteira confirmados; não depende de cálculo de apoio |
+| M3.3 | Categorias e distância de graute, geração por malha, clique +/− e preservação de ajustes | M3.1/M3.2, CT-10, quatro seletores inicialmente habilitados |
+
+Cada incremento entra no aplicativo real e recebe testes; não criar protótipo. Enquanto somente M3.1 estiver implementado, informar discretamente que canaletas/grautes ainda não estão disponíveis, sem atribuir erro ao desenho. A sequência não autoriza código nesta solicitação.
+
+### Referências de implementação por incremento
+
+O [PRD §20](Ecovit-PRD.md#20-definições-de-m3-após-retorno-do-solicitante--12102026) define configurações, valores iniciais, interação e alcance dos ajustes. As fórmulas, limites geométricos e exemplos estão no [Caderno §8](Ecovit-Caderno-Tecnico.md#8-m3-nominal-pesquisa-e-definições--12102026); os contratos de dados, identidade dos ajustes e migração estão na [Arquitetura §15](Ecovit-Arquitetura-Tecnica.md#15-contratos-de-m3-nominal--12102026).
+
+- **M3.1 — Vãos:** implementar os controles de aberturas e seu grupo de configurações, incluindo seleção de empilhados na Planta; aplicar CT-07/08 e D3-02. A separação vertical já é validada, embora canaletas/grautes ainda não estejam disponíveis. Verificar M3-A01–06 e os critérios transversais pertinentes.
+- **M3.2 — Canaletas:** disponibilizar níveis e faixas automáticas, representação na Fiada e supressão/restauração conforme PRD §20 e CT-09. Verificar M3-A07/11/12, incluindo fiada compartilhada entre vãos empilhados.
+- **M3.3 — Grautes:** disponibilizar categorias, distância, geração e clique +/− conforme PRD §20 e CT-10. Verificar M3-A13/14, preservação dos ajustes e integração com vãos/canaletas.
+- **Todos os incrementos:** expor somente controles implementados; aplicar os contratos sequenciais e de persistência da arquitetura, preservando cancelamentos, histórico, memória e download após falhas. Verificar M3-A08–10/15/16 conforme o alcance disponível.
+
+Diagnósticos devem cumprir RF-10 e os contratos da Arquitetura §15; verificar que a interface diferencia resultado desatualizado/falhou de pendência geométrica, oferece localização e não acrescenta verificações físicas excluídas do recorte.
+
+
+### Critérios de aceite
+
+| ID | Resultado verificável |
+|---|---|
+| M3-A01 | Inserir três tipos por arraste, valores iniciais visíveis e símbolos distintos; cancelamentos não deixam alterações. |
+| M3-A02 | Mover/alças/campos mantêm malha, IDs e parede; um gesto é uma operação. |
+| M3-A03 | Base/topo respeitam piso/início/h; defaults incompatíveis oferecem alternativas sem arredondamento silencioso — EX-24/29/31. |
+| M3-A04 | Fiadas e contagens seguem EX-21–23; fase preservada, peças não invadem abertura. |
+| M3-A05 | Sobreposição de volumes e contato lateral sem módulo recusados; empilhamento com coincidência horizontal parcial/total aceito com uma fiada intermediária, contato vertical recusado; seleção na Planta distingue tipo/base/topo; encontro invadido localizado; sem apoio mínimo inventado — EX-26/27. |
+| M3-A06 | Redimensionar parede preserva posição do vão pendente — EX-25. Excluir um vão preserva a parede e as demais aberturas; desfazer restaura o mesmo ID e suas propriedades. Excluir uma parede remove seus dependentes na mesma operação, também desfazível, restaurando dependências e ajustes. |
+| M3-A07 | Planta/Fiada preservam câmera; canaleta só aparece em Fiada e tem canal representativo; referência não recebe cliques. |
+| M3-A08 | Lista diferencia entrada, conflito geométrico, limite e falha; não gera pendência estrutural ou por supressão voluntária. |
+| M3-A09 | Migrar/reabrir/transportar conserva configuração, geometria, ajustes e pendências; snapshot adulterado recusado — EX-30. |
+| M3-A10 | Aplicar configuração/edição salva modelo → calcula inteiro → salva resultado; falhas preservam trabalho e liberam controles. |
+| M3-A11 | Faixas locais cobrem largura do vão + um módulo de cada lado; níveis/fiadas corretos, primeira fiada sem inferior, coincidências sem duplicação; fiada entre vãos empilhados compartilha canaletas superior/inferior e conserva ambas as origens; contagens de EX-26/28/31 conferem. |
+| M3-A12 | Remover canaleta realça toda a parede na fiada, incluindo trechos separados; devolve tijolos comuns, preserva outras fiadas e persiste apesar de múltiplas origens — EX-35. |
+| M3-A13 | Quatro categorias independentes; padrão 100 cm; passos 90/98 cm para m=15/14; sem validação física — EX-32/34. |
+| M3-A14 | Hover +/− e clique afetam eixo completo; cor escura, vazios sem alvo; remoção não é compensada pelo motor — EX-22/32/33. |
+| M3-A15 | Chrome/Edge, bases padrão/personalizada, rotações, referências e limites defensivos; regressões M2 preservadas onde novos elementos estejam desativados. |
+| M3-A16 | Novos projetos recebem os valores da tabela normativa do PRD §20; Aplicar/Cancelar/restaurar, persistência e histórico corretos; defaults não alteram vãos existentes; recálculo preserva ajustes. |
+
+### Recorte de verificação de M3.1
+
+Executar integralmente M3-A01–06. Nos critérios compartilhados, verificar:
+
+- **M3-A07:** preservação da câmera entre Planta/Fiada e referência sem interação.
+- **M3-A08:** diagnósticos de vãos, distinção entre pendência geométrica e falha de processamento, sem alertas estruturais.
+- **M3-A09:** migração, reabertura e transporte de vãos, configurações de aberturas, escolhas de encontros e pendências; rejeição de snapshots adulterados.
+- **M3-A10:** fluxo salvar/calcular/salvar e preservação do trabalho após falhas.
+- **M3-A15:** Chrome/Edge, bases padrão e personalizada, rotações, limites defensivos e regressões de M2.
+- **M3-A16:** padrões de aberturas, Aplicar/Cancelar/Restaurar, persistência e histórico; alteração dos padrões não modifica vãos existentes.
+
+M3-A11–14 e as partes de A07–10/15/16 relacionadas a canaletas e grautes permanecem para os incrementos correspondentes. Registrar o resultado por parte verificada, sem declarar critérios compartilhados integralmente concluídos antes de sua cobertura completa. M3.1 não inclui dimensões de esquadrias ou folgas de instalação; os campos representam o vão bruto.
+
+### Verificações e roteiro manual futuros
+
+Executar tipos, lint, domínio/persistência, e2e pertinentes e build durante implementação. Domínio verifica CT-07–10 e EX-21–35 por posições/contagens independentes, união de células, níveis, intervalos e determinismo por ordem/sentido/IDs. Não criar testes de dimensão física ou carga. Ensaiar migração, arquivo adulterado, rascunho inválido geometricamente mas íntegro, falhas em ambas as gravações/motor e segunda aba. Medir cenário com vãos/canaletas/grautes no aplicativo, sem alegar desempenho de três pavimentos.
+
+| Passo | Ação manual futura | Esperado |
+|---|---|---|
+| 1 | Configurar padrões, cancelar; repetir e aplicar; reabrir | Cancelar preserva; aplicar persiste; uma operação desfazível — A03/09/10/16. |
+| 2 | Parede 400×280 com base 25; porta EX-21 e janela EX-22 em projetos separados | Conferir fiadas 1/14/15/30/31/40 e paginação — A01–04. |
+| 3 | Mover/alças/campos, cancelar, encurtar parede, localizar conflito e desfazer | Nenhum deslocamento/exclusão silencioso — A02/05/06/08. |
+| 3a | Inserir vãos empilhados de EX-26; selecionar ambos na Planta, inspecionar fiadas 15/16/17; tentar contato vertical e sobreposição | Seleção identifica tipo/base/topo; fiada 16 preservada e canaletas compartilhadas em M3.2 sem duplicação; entradas incompatíveis recusadas — A04/05/11. |
+| 4 | Configurar faixas; inspecionar 16/32 para os padrões confirmados; inserir porta elevada | Faixas corretas, porta na base sem inferior, elevada com inferior, sem duplicar — A07/11. |
+| 5 | Remover faixa coincidente de EX-35; recalcular; reabrir; restaurar | Tijolos comuns, supressão preservada e restauração explícita — A12. |
+| 6 | Habilitar categorias de graute separadamente; conferir EX-32 e outras bases | Seletores independentes; máximo respeitado pela proposta inicial — A13/16. |
+| 7 | Clicar + na fiada 10 do eixo EX-33; inspecionar fiada 20; clicar − na 35 | Dois intervalos criados; vazio não clicável; ambos removidos — A14. |
+| 8 | Remover graute intermediário; mudar configuração e vão; desfazer/reabrir/exportar/importar | Sem reposição compensatória; ajustes/configuração preservados — A09/14/16. |
+
+Nenhum passo foi executado nesta revisão documental; aceite manual de M3 permanece futuro.
+
+### Decisões confirmadas
+
+| ID | Estado |
+|---|---|
+| D3-01 | Alcance nominal confirmado. Sequência M3.1/M3.2/M3.3 mantida como organização de trabalho; sem autorização de código. |
+| D3-02 | Confirmado em 12/10/2026: proibir sobreposição de volumes; vãos lado a lado com alturas sobrepostas exigem um módulo horizontal; empilhados são permitidos com coincidência horizontal parcial/total e uma fiada completa intermediária, que pode compartilhar canaletas superior/inferior. Sem união automática ou validação estrutural. Substitui a proposta anterior que excluía empilhamento. |
+| D3-03 | Substituída proposta de preenchimento obrigatório inicial por configurações de padrões; valores confirmados na tabela normativa do PRD §20, verificados por M3-A16. |
+| D3-04 | Confirmado: não verificar dimensões físicas nem dimensionar estrutura. Bloqueios físicos L2/L6/L8 retirados de M3 nominal. |
+| D3-05 | Confirmadas configurações e interação de graute do PRD §20, com distribuição por CT-10; padrões verificados por M3-A13/A16 e gesto por M3-A14. |
+| D3-06 | Confirmadas faixas globais e automáticas acima/abaixo de todos os vãos. Confirmado pelo solicitante: faixas locais com largura do vão + meio tijolo de cada lado; remoção de toda a faixa da parede na fiada. |
+
+As três perguntas sobre alcance horizontal, remoção e padrões receberam resposta explícita e foram incorporadas em 12/10/2026. D3-02 foi posteriormente confirmado com permissão de empilhamento e fiada compartilhada. Essas confirmações e o pedido de registro são documentais, sem autorização de programação. A extensão de meio tijolo por lado é uma regra nominal de desenho escolhida pelo solicitante.
+
+### Relatório documental
+
+Atualizados os quatro documentos, sem código, dependências ou testes do aplicativo. Removidas exigências físicas incompatíveis com o novo alcance; incluídos configuração, convenção de distribuição nominal, visualização/click +/−, supressões, exemplos e critérios A11–A16 revisados. Verificação documental concluída: links locais válidos; EX-31 conferido (fiadas 16/32), EX-34 conferido (passos 90/98 cm para módulos 15/14); git diff --check sem erros. Nenhum teste do aplicativo executado, pois não houve alteração de código. Implementação e testes manuais de M3 ainda não iniciados; dados pessoais do solicitante preservados.
+
+Registro das confirmações: PRD, arquitetura, CT-09/10, EX-28/31/35 e aceites A11/A12/A16 sincronizados. EX-28: extensão 87,5…212,5 cm para vão 100…200; fiada 14 com 5 canaletas inteiras, fiada 31 com 4 inteiras + 2 meias, sem outra faixa coincidente. Permanecem configurações adaptáveis à altura-base e referências verticais, sem arredondamento silencioso. Revisão apenas documental; testes do aplicativo não executados.
+
+### Padronização da nomenclatura — 12/10/2026
+
+Por solicitação do usuário, M passa a significar Marco em toda a documentação. Marcos M1–M5, subdivisões M3.1/M3.2/M3.3, tarefas M1-T01 (incluindo T00 onde já existia tarefa inicial) e critérios M3-A01 mantêm sua numeração e vínculos. RF, CT, EX e IDs de decisões permanecem inalterados. Referências históricas foram normalizadas, sem mudar resultados, escopo ou aceite. Os cinco títulos de testes de navegador do primeiro marco também foram renomeados para M1, sem alterar seus passos ou verificações.
+
+Verificação desta alteração: busca sem referências à nomenclatura antiga nos documentos, código e títulos de testes; links locais conferidos; git diff --check sem erros. Testes do aplicativo não reexecutados, pois somente documentação e rótulos de testes foram alterados; nenhuma mudança de comportamento ou implementação de M3.
+
+### Registro do recorte de vãos — 12/10/2026
+
+Por confirmação do solicitante, D3-02 permite vãos empilhados com uma fiada completa intermediária, compartilhável pelas canaletas superior/inferior; proíbe sobreposição de volumes e mantém separação horizontal de um módulo para vãos lado a lado com intervalos verticais sobrepostos. Atualizados PRD §20, Arquitetura §15, CT-07, EX-26, critérios M3-A05/A11 e roteiro manual. A seleção contextual na Planta identifica tipo/base/topo. Mantidas supressões voluntárias e alcance nominal, sem exigir duas fiadas de canaleta ou dimensionamento estrutural.
+
+Verificação pelo Codex: revisão de consistência entre os quatro documentos, conferência do exemplo EX-26 e de links locais; `git diff --check`. Sem código ou testes do aplicativo nesta alteração. Implementação de M3 e testes manuais do solicitante permanecem futuros.
+
+### Correções de consistência documental — 12/10/2026
+
+Aplicados os itens 1–6 aprovados pelo solicitante: cenário de graute por inclusão/remoção, distinção entre conflito de encontro e interrupção de graute por vão, linguagem de composição nominal, atualização do estado vigente de M2 e próxima ação M3.1, precedência de PRD §20 para M3 e endereço operacional padrão `http://127.0.0.1:5173/`. PRD, plano e README atualizados. Preservados os relatos históricos e suas origens de navegador, com orientação para transporte por `.ecovit`. As reorganizações e reduções de redundância dos itens 7–9 não foram aplicadas.
+
+Verificação pelo Codex: revisão dos trechos corrigidos contra as definições de M3, busca das formulações substituídas, links locais e `git diff --check`. Alteração somente documental; testes do aplicativo não executados. Implementação e teste manual de M3 permanecem futuros; aceite global de M2 preservado sem atribuir resultados individuais ao solicitante.
+
+### Consolidação das referências documentais — 12/10/2026
+
+Aplicados os itens 7–9 aprovados pelo solicitante. PRD §20 concentra a tabela normativa dos padrões e o comportamento do usuário; CT-07–10 mantém fórmulas, limites e exemplos; Arquitetura §15 mantém representação, identidade dos ajustes, processamento e migração; Plano §7 concentra sequência, critérios, verificações e decisões com referências. Descrições repetidas de M3 foram reduzidas, preservando RF/CT/EX/M3-A/D3, os números dos exemplos e os relatos históricos. Comportamentos antes presentes apenas no plano foram incorporados ao PRD.
+
+Arquitetura §9 descreve somente o contrato vigente de arquivo/composição e a validação de snapshots antigos, remetendo a evolução de paginação e suas evidências ao relatório de M2 na seção 6 deste plano. Nenhuma regra de produto, código, schema ou dado de projeto foi alterado.
+
+Verificação pelo Codex: consistência das responsabilidades e referências, preservação dos IDs e exemplos, links locais/âncoras adicionadas e `git diff --check`. Sem testes do aplicativo por se tratar de documentação. Implementação e testes manuais de M3 permanecem futuros.
+
+### Explicitação da entrega M3.1 — 12/10/2026
+
+Registrados os três complementos aprovados pelo solicitante: exclusão individual de vão no PRD §20 e M3-A06; envelope versão 3/composição nominal-v4 desde M3.1 na Arquitetura §15, com geração de canaletas/grautes desativada até seus incrementos; recorte explícito dos critérios de verificação de M3.1 nesta seção. Preservadas as decisões de empilhamento, modulação e migração de legados. Dimensões de esquadrias/folgas permanecem fora de M3.1.
+
+Verificação pelo Codex: consistência dos complementos com CT-07/08, padrões e contratos existentes, links locais/âncoras e `git diff --check`. Alteração documental, sem testes do aplicativo ou implementação de M3.1. Teste manual permanece futuro. Commit documental reúne a consolidação de M3 e estas revisões; alteração preexistente de títulos em `tests/e2e/editor.spec.ts` fica fora deste commit.

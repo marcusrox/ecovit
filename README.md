@@ -23,6 +23,8 @@ npm run dev
 
 Use Chrome ou Edge desktop. O aplicativo exige localhost ou HTTPS para o bloqueio de edição entre abas. Use sempre a mesma origem: mudar entre `localhost` e `127.0.0.1`, ou trocar a porta, muda o armazenamento local. O arquivo `.ecovit` permite transportar projetos entre origens e navegadores.
 
+O endereço padrão das instruções atuais é **http://127.0.0.1:5173/**. Projetos anteriormente salvos em `localhost` permanecem naquela origem. Para transferi-los, baixar o arquivo `.ecovit` na origem antiga e carregá-lo na origem escolhida. Endereços diferentes citados nos relatórios históricos registram a origem usada naquela ocasião.
+
 ## Uso
 
 1. Crie um projeto e escolha o tamanho-base.

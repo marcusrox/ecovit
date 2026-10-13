@@ -1,8 +1,8 @@
 # Ecovit — Arquitetura Técnica
 
-**Versão:** 1.1 — processamento sequencial e edição simplificada  
-**Data:** 10 de outubro de 2026  
-**Base funcional:** PRD Ecovit 0.8  
+**Versão:** 1.3 — M3 nominal configurável, sem alteração de código\
+**Data:** 12 de outubro de 2026\
+**Base funcional:** PRD Ecovit 0.10; padrões e alcances de canaletas/grautes confirmados\
 **Objetivo:** implementar o editor e o motor construtivo com uma stack acessível, sem infraestrutura desnecessária.
 
 ## 1. Decisões de arquitetura
@@ -150,9 +150,7 @@ Não adicionar event sourcing ou persistência de cada movimento do mouse.
 
 ## 9. Persistência e arquivo .ecovit
 
-Revisão posterior ao feedback de paginação: `nominal-v3` substitui a reserva de cantos do U por pareamento contínuo de percursos/ciclos sem ramificações após separar os T. Um único algoritmo atende os cantos, sem busca combinatória. Os caminhos `nominal-v1` e `nominal-v2` são mantidos somente para conferir snapshots antigos; ambos são marcados desatualizados após validação e recalculados no fluxo existente. Envelope permanece versão 2. Esta revisão substitui a convenção vigente descrita no parágrafo histórico abaixo.
-
-Revisão de 11/10/2026: composição `nominal-v2` acrescenta o padrão explícito de U aberto (CT-05, EX-19/20), mantendo o envelope de arquivo versão 2. Ao abrir snapshot `nominal-v1` atual, primeiro validar integralmente peças e diagnósticos por recomputação com a convenção antiga; somente após aprovação marcá-lo desatualizado para o fluxo sequencial normal gerar e salvar `nominal-v2`. Preservar modelo, IDs e ajustes; snapshots adulterados continuam recusados. Em leitura bloqueada por outra aba, conservar resultado antigo identificado como desatualizado, sem salvar. Esta migração explícita substitui a preservação do snapshot apenas quando sua convenção é antiga.
+Contrato vigente de M2: envelope de arquivo versão 2 e composição `nominal-v3`. Snapshots `nominal-v1`/`nominal-v2` são conferidos integralmente por recomputação com sua convenção original antes de serem marcados desatualizados para recálculo pelo fluxo normal. Preservar modelo, IDs e escolhas; snapshots adulterados são recusados. Em leitura bloqueada por outra aba, conservar resultado antigo identificado como desatualizado, sem salvar. A geometria vigente está em CT-05 do caderno; a evolução e as evidências das migrações permanecem no [relatório de M2, Plano §6](Ecovit-Plano-Implementacao.md#6-relatório-de-implementação-de-m2--11102026).
 
 IndexedDB, via Dexie, armazenará registros de projetos com id, nome, datas e documento. Usar localStorage somente para pequenas preferências de interface, se necessário. [Dexie e IndexedDB](https://dexie.org/docs).
 
@@ -165,7 +163,7 @@ Falhas de quota ou indisponibilidade manterão o documento em memória e oferece
 JSON UTF-8 com extensão .ecovit:
 
 - format: identificador ecovit.
-- schemaVersion: versão do formato, inicialmente 1.
+- schemaVersion: versão do formato; M1 usa 1, M2 vigente usa 2; evolução de M3 planejada na seção 15.
 - project: identificadores, nome, unidades e dimensões-base.
 - model: pavimentos, paredes, vãos, lajes e referências verticais.
 - adjustments: escolhas de encontros e ajustes de graute/canaletas.
@@ -247,3 +245,52 @@ Esta proposta escolhe a stack e define como implementar o PRD sem infraestrutura
 Esta revisão não cria marcos ou tarefas. A pesquisa construtiva continua prevista antes dos algoritmos correspondentes; as funcionalidades serão verificadas no próprio aplicativo após cada implementação.
 
 Documentação oficial consultada em 10 de outubro de 2026. Não foram executados testes de implementação nem de desempenho nesta etapa.
+
+## 15. Contratos de M3 nominal — 12/10/2026
+
+Somente documentação: configurações do projeto e representação nominal confirmadas pelo solicitante. Stack e fluxo sequencial mantidos. PRD §20, Plano §7 e CT-07–10 são referências; nenhuma exigência de física de cavidades, dimensionamento de apoio/armadura ou cadastro de fabricante.
+
+### Dados persistentes
+
+- Configuração de projeto: padrões de base/topo de vãos; lista de níveis globais de canaleta (cotas de topo relativas ao piso); quatro flags de graute e distância máxima. Identidade estável por nível, sem usar índice do array. Valores iniciais e efeitos são normativos no [PRD §20](Ecovit-PRD.md#padrões-normativos-de-m3).
+- Vão: ID, wallId, tipo, distância desde menor coordenada, largura, base relativa ao piso e altura; orientação herdada, topo derivado. Redimensionar parede mantém posição mundial. Admitir offset negativo como rascunho pendente após edição indireta, sem aceitar referência órfã ou número inválido.
+- Validação entre vãos: aplicar CT-07 e o recorte D3-02 desde M3.1; edição indireta incompatível preserva intenção com diagnóstico. Em M3.2, a fiada compartilhada de canaletas mantém múltiplas origens sem duplicar entidades geradas.
+- Canaleta automática: origens semânticas (nível global, vão superior/inferior), parede/faixa de fiada e conjunto nominal de células, derivadas por CT-09. Unificar múltiplas origens numa ocupação. Peças geradas não são entidades editáveis individualmente.
+- Graute: eixo de célula nominal com associações a paredes/origens; intervalos derivados da alvenaria menos vãos. Unificar mesma coordenada compartilhada sem multiplicar graute por parede. Canais/furos são símbolos, sem campos obrigatórios de diâmetro, aço ou apoio.
+- Ajustes: inclusões/exclusões de eixos de graute e supressões de faixas de canaletas. Referências por coordenada/origem/parede/cota estáveis, nunca peça gerada/índice de array. Supressão cobre toda a parede na fiada selecionada, inclusive trechos descontínuos e origens coincidentes; não armazenar exclusão de tijolo individual.
+
+Identificar supressão de faixa pela parede e cota absoluta escolhidas no momento da remoção, cobrindo toda sua faixa na fiada e todas as origens coincidentes. Usar a parede como alvo estável, sem congelar apenas o trecho clicado; extensão posterior da mesma parede continua abrangida pela supressão naquela cota. Mudar nível global remove a faixa antiga e gera uma faixa em outro lugar; a exclusão da cota antiga permanece, podendo voltar a valer se houver demanda lá novamente. Não deslocar exclusão silenciosamente. Para graute, guardar eixo em coordenadas mundiais e paredes relacionadas; estender/encurtar parede recalcula intervalos, sem mover o eixo. Reassociação ambígua após edição mantém ajuste não aplicado e localizável. Excluir origem arquitetônica remove dependências na mesma operação de histórico.
+
+### Fluxo determinístico
+
+Gerar ocupação de paredes → percurso/fase M2 → subtrair vãos → gerar demandas nominais de canaletas → unificar regiões e aplicar supressões → compor inteiro/meio/canaleta/meia conforme CT-08/09 → gerar candidatos de graute por configuração → derivar intervalos → aplicar inclusões/exclusões → validar geometria e emitir diagnósticos. Referenciar CT-10 para distribuição por malha; não completar lacuna deixada por supressão para tentar cumprir novamente a distância máxima.
+
+Recomposição tipada e efeito geométrico das supressões seguem CT-09, sem um motor de preparação física. Configuração Aplicar e suas consequências são uma operação de histórico; salvar modelo/configuração/ajustes desatualizados → calcular inteiro → salvar resultado. Cancelar não grava. Restaurar padrões do grupo preserva ajustes, conforme PRD §20.
+
+Disparos de cálculo por configuração seguem os efeitos definidos no PRD §20. Sem operação sobreposta, fila ou Worker. Nome/seleção/câmera/hover não calculam. Falha libera controles, preserva memória/modelo e identifica resultado antigo; download representa documento atual após término.
+
+### Editor
+
+Os controles e comportamentos visíveis seguem RF-04/06/07 e PRD §20; sua disponibilização por incremento segue Plano §7. O editor projeta o modelo e usa IDs estáveis para comandos, sem armazenar nós gráficos no documento.
+
+Em ferramenta Graute na Fiada, hit testing por centro de célula/furo nominal da camada ativa, com tolerância em pixels ajustada ao zoom. Hover +/− é transitório; clique confirma uma alteração em todo eixo. Cor escura identifica presença. Canaletas também expõem seus eixos nominais para o mesmo gesto, sem pretensão de cavidade física. Bloquear ação durante processamento/somente leitura; distinguir navegação por botão central; fiada de referência não recebe ação. Oferecer rótulos e acionamento por teclado.
+
+Renderizar canaletas e intervalos de graute a partir do resultado gerado da fiada ativa; seleção de faixa resolve parede/cota, sem transformar peça gerada em entidade editável. A ação “Editar na Planta” transporta seleção por ID e preserva câmera.
+
+Hit testing de vãos na Planta pode retornar múltiplos IDs para o seletor contextual definido no PRD §20. Na Fiada, filtrar aberturas pela interseção vertical com a fiada ativa, conforme CT-07.
+
+### Diagnósticos e integridade
+
+Código estável, categoria, IDs, posição/faixa de fiadas, efeito e parâmetros de mensagem; interface deriva ações. Exemplos: opening-outside-wall, opening-off-grid, opening-overlap, opening-at-junction, channel-level-off-grid, adjustment-target-missing. Não emitir channel-support-unresolved ou grout-passage-unverified: essas verificações físicas foram excluídas. Remoção voluntária e ultrapassagem de d decorrente dela não são falhas. Conflitos geométricos continuam localizáveis conforme M2, sem apagar intenção arquitetônica.
+
+Planejar envelope versão 3, convenção interna nominal-v4 (somente ao implementar). Persistir configuração e ajustes, com resultado/diagnósticos. Validar versões 1/2 e snapshots antigos pela convenção original antes da migração; preservar IDs/geometria/escolhas. Para projetos legados, inicializar faixas globais vazias e flags de graute desligadas, informando que automação pode ser ativada nas configurações; manter a distância padrão do PRD §20 como valor disponível. Assim a reabertura não acrescenta elementos não solicitados ao desenho M2. Novos projetos recebem os padrões normativos do PRD §20. Restaurar padrões é opção explícita.
+
+M3.1 introduz o envelope versão 3 e a convenção de composição `nominal-v4`, incluindo os dados de vãos e seus padrões de configuração. Seu processamento compreende a composição de paredes de M2, a validação dos vãos, a subtração das aberturas e a emissão dos diagnósticos correspondentes. Geração de canaletas e grautes permanece desativada até M3.2 e M3.3, respectivamente.
+
+Campos de configuração das etapas futuras poderão ser persistidos com os padrões definidos no PRD, respeitando a inicialização de legados descrita acima, mas não terão controles nem efeito sobre a composição em M3.1. Os resultados gerados dessas funcionalidades permanecerão vazios. Ao habilitar cada etapa, evoluir explicitamente a convenção de composição quando necessário, preservando a validação dos snapshots anteriores pela convenção original.
+
+A migração de arquivos de M1/M2 preserva geometria, IDs e escolhas. Sem vãos, a composição de M3.1 deve reproduzir a geometria de `nominal-v3`. Aplicam-se as regras já definidas de migração em memória, bloqueio de edição e preservação do arquivo original.
+
+Migrar em memória e salvar somente com bloqueio de edição; nunca modificar arquivo original. Arquivo atualizado exige conferência de resultado pela própria convenção; adulterado/futuro é recusado antes de substituir aberto. Rascunho com pendência geométrica íntegra pode salvar/reabrir. Importação segue como cópia; limite 50 MB mantido. Revisar limites de vãos/faixas/eixos antes de alocar, sem truncamento.
+
+A evolução de quantitativos permanece futura. Contagem nominal por tipo de peça/eixo poderá usar resultado gerado, mas não deduzir volume de graute ou consumo de aço de símbolos sem dimensões. Nenhum código, schema ou banco foi alterado nesta revisão.

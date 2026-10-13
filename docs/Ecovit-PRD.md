@@ -1,8 +1,8 @@
 # Ecovit — Documento de requisitos do produto (PRD)
 
-**Versão:** 0.8 — edição, processamento e salvamento simplificados  
-**Data:** 10 de outubro de 2026  
-**Status:** decisões de escopo confirmadas; documento atualizado para revisão final antes dos marcos e tarefas  
+**Versão:** 0.10 — M3 nominal com configurações de canaletas e grautes\
+**Data:** 12 de outubro de 2026\
+**Status:** M1/M2 aprovados; decisões de simplificação de M3 registradas na seção 20 e no plano. Atualização documental, sem implementação.\
 **Plataforma:** aplicação web, inicialmente com interface e documentação em português brasileiro.
 
 ## 1. Visão do produto
@@ -11,7 +11,7 @@ O Ecovit será uma aplicação web para projetar plantas baixas de construções
 
 A primeira versão será inteiramente 2D, mas representará a construção em três coordenadas e por fiadas, permitindo projetar toda a altura das paredes e até três pavimentos. Não haverá visualização 3D inicial. O modelo de dados deverá permitir adicioná-la futuramente sem reconstruir os projetos existentes.
 
-O produto apoiará o planejamento e a documentação construtiva. Compatibilidade modular, geração de fiadas e ausência de colisões não significam comprovação da capacidade estrutural da construção.
+O produto produz desenhos e, em evolução futura, quantitativos. O M3 representa geometria nominal de vãos, canaletas e grautes, sem verificar dimensões físicas internas de furos/canais, dimensionar apoios, cargas ou armaduras. Compatibilidade modular e ausência de colisões não significam comprovação da capacidade estrutural da construção.
 
 ## 2. Requisitos e decisões confirmados
 
@@ -79,7 +79,7 @@ O Ecovit deverá:
 - Geração e inspeção de todas as fiadas, inclusive fiadas especiais.
 - Encontros em L, T e cruz definidos automaticamente e ajustáveis pelo usuário, com propagação da amarração nas fiadas acima até o limite superior da alvenaria definido no RF-13.
 - Canaletas, cintas, vergas e contravergas como elementos posicionados automaticamente e que podem ser ajustados pelo usuário.
-- Grauteamentos e vigas de canaletas propostos automaticamente conforme as boas práticas internas do Ecovit.
+- Grauteamentos e vigas de canaletas propostos automaticamente conforme as convenções nominais documentadas no caderno técnico.
 - Lajes de piso ou cobertura com contorno e espessura definidos pelo usuário.
 - Reservas verticais para reforços/graute e verificação do alinhamento dos furos.
 - Ajustes contextuais de encontros, grauteamentos e canaletas, sem edição ou bloqueio de tijolos individuais.
@@ -172,7 +172,7 @@ Será possível sobrepor a fiada anterior ou seguinte com transparência, apenas
 
 O modo Fiada permitirá ajustar grauteamentos e encontros, e selecionar elementos em canaletas para ajustes previstos no RF-07. Criar ou alterar a geometria arquitetônica de paredes e vãos será feito em Planta; em Fiada, a seleção poderá oferecer ação compacta “Editar na Planta”, preservando a localização.
 
-**Grauteamento:** uma ferramenta contextual permitirá selecionar posições de furos, adicionar ou remover graute e mover um graute existente para posição compatível. Cada ajuste afetará todo o trecho vertical do pavimento, desde a referência de início da alvenaria até seu limite superior definido no RF-13, independentemente da fiada usada para iniciar a edição. A prévia mostrará o destino, os limites verticais e as interrupções antes de confirmar. Portas, janelas e demais vãos serão respeitados: não haverá graute no espaço vazio de uma abertura. O motor dividirá o trecho em intervalos de alvenaria aplicáveis e atualizará todas as fiadas correspondentes. Uma retomada acima de um vão será representada como intervalo separado, sem indicar continuidade física através da abertura. Posições sem passagem compatível na alvenaria serão sinalizadas, sem criação de continuidade fictícia. O ajuste não atravessará automaticamente a laje para outro pavimento.
+**Grauteamento:** uma ferramenta contextual permitirá selecionar posições de furos, adicionar ou remover graute por clique no furo nominal correspondente. Cada ajuste afetará todo o trecho vertical do pavimento, desde a referência de início da alvenaria até seu limite superior definido no RF-13, independentemente da fiada usada para iniciar a edição. A prévia mostrará o destino, os limites verticais e as interrupções antes de confirmar. Portas, janelas e demais vãos serão respeitados: não haverá graute no espaço vazio de uma abertura. O motor dividirá o trecho em intervalos de alvenaria aplicáveis e atualizará todas as fiadas correspondentes. Uma retomada acima de um vão será representada como intervalo separado, sem indicar continuidade física através da abertura. No M3, verificar apenas existência de alvenaria e alinhamento dos eixos nominais; não verificar passagem física nem gerar pendência por dimensão interna desconhecida. O ajuste não atravessará automaticamente a laje para outro pavimento.
 
 **Encontros:** selecionar o encontro realça sua região e oferece alternativas gráficas. A edição estará disponível somente na primeira fiada, conforme RF-05. Em outra fiada, mostrar “Altere o encontro na primeira fiada” com ação para navegar até ela. A alternativa terá prévia antes de confirmar; a confirmação propagará a amarração até o limite superior da alvenaria e atualizará as peças e elementos relacionados.
 
@@ -182,9 +182,9 @@ O resultado deverá distinguir sugestão automática de ajuste manual por indica
 
 ### RF-05 — Encontros automáticos e editáveis
 
-**Recorte aprovado para M2:** L alternado e T com parede principal contínua e ramal encostado, conforme [caderno técnico](Ecovit-Caderno-Tecnico.md). O T indica necessidade de ligação complementar, sem dimensioná-la. A cruz será reconhecida e diagnosticada, mas sua composição automática fica fora do primeiro M2. O objetivo completo abaixo permanece para evolução; essa exclusão não implica implementação automática em E3.
+**Recorte aprovado para M2:** L alternado e T com parede principal contínua e ramal encostado, conforme [caderno técnico](Ecovit-Caderno-Tecnico.md). O T indica necessidade de ligação complementar, sem dimensioná-la. A cruz será reconhecida e diagnosticada, mas sua composição automática fica fora do primeiro M2. O objetivo completo abaixo permanece para evolução; essa exclusão não implica implementação automática em M3.
 
-O Ecovit reconhecerá encontros em L, T e cruz e definirá automaticamente a melhor composição com base em um conjunto único e interno de boas práticas. Considerará amarração, fechamento das paredes, continuidade de furos/canaletas e peças especiais preparadas na obra.
+O Ecovit reconhecerá encontros em L, T e cruz e definirá automaticamente uma composição compatível com os padrões suportados, conforme as convenções nominais documentadas no caderno técnico. Considerará alternância das peças, fechamento geométrico das paredes, alinhamento dos eixos nominais e representação de canaletas. Peças especiais e sua preparação só serão incorporadas quando houver procedimentos documentados; a composição nominal não comprova amarração resistente ou passagem física.
 
 O usuário poderá selecionar cada encontro, visualizar alternativas e alterar sua forma de composição. Não haverá seleção de conjuntos de regras, identificação de regras por encontro ou controle de versões de regras.
 
@@ -208,21 +208,21 @@ Os campos principais serão largura e altura do vão bruto de alvenaria e sua ba
 
 As propriedades serão apresentadas de forma compacta e contextual ao selecionar o elemento. Explicações sobre base, altura e modulação estarão disponíveis por ícone informativo, sem ocupar permanentemente o canvas.
 
-**Aceite:** arrastar mostra a prévia modular; soltar insere um indicador gráfico distinto para cada tipo; mover e redimensionar respeita o módulo horizontal; editar base ou altura valida os limites das fiadas e atualiza os tijolos e elementos associados. Um vão que invade um encontro ou reforço apresenta o conflito localizado.
+**Aceite:** arrastar mostra a prévia modular; soltar insere um indicador gráfico distinto para cada tipo; mover e redimensionar respeita o módulo horizontal; editar base ou altura valida os limites das fiadas e atualiza os tijolos e elementos associados. Um vão que invade células compartilhadas de um encontro apresenta conflito localizado. Quando intercepta um eixo de graute, seus intervalos são recalculados para excluir a abertura, sem gerar conflito apenas por essa interseção. Ajustes que perderem seu alvo geométrico permanecem registrados como pendentes e localizáveis.
 
-### RF-07 — Grauteamento e elementos em canaletas automáticos
+### RF-07 — Canaletas e grauteamentos nominais configuráveis
 
-O Ecovit posicionará automaticamente grauteamentos, vigas de canaletas, canaletas, cintas, vergas e contravergas, com possibilidade de ajuste pelo usuário.
+O Ecovit gera um desenho nominal automático, configurável e editável. Não verifica passagem física em furos/canais nem dimensiona a solução. O tamanho-base determina a malha e o envelope das peças, não resistência ou armadura.
 
-A proposta se baseará nas boas práticas internas de construção estrutural com T.E., considerando encontros, extremidades, vãos, alturas, níveis de lajes e continuidade entre pavimentos. Os critérios concretos de espaçamento, apoios e níveis serão definidos na especificação técnica do motor. Não será necessário ao usuário cadastrar, selecionar ou validar regras.
+Configurações do projeto: lista de níveis de canaletas com valores iniciais, adicionar/remover nível e restaurar padrões; quatro opções independentes de graute automático (encontros, laterais dos vãos, pontas livres e intervalos em paredes longas); distância máxima entre grautes, inicialmente 100 cm. Campos de vãos e níveis seguem a referência vertical definida na seção 20. A lista de níveis é uma preferência de desenho, não um conjunto de regras estruturais.
 
-Grauteamentos terão posição e intervalo vertical. Vigas e demais elementos em canaletas terão trajetos, fiadas e apoios. O motor verificará continuidade dos canais e passagens verticais e gerará as peças modificadas necessárias ao sistema.
+As faixas de canaletas percorrem a parede no nível escolhido, respeitando aberturas. Além delas, gerar automaticamente uma fiada de canaletas imediatamente acima e abaixo de cada vão, independentemente de ser porta, janela ou abertura. Sem canaleta inferior quando o vão começa na primeira fiada; sem acrescentar parede acima do seu topo. Ocupações coincidentes se unificam, sem peças duplicadas. Cada faixa associada a vão cobre sua largura mais um meio tijolo de cada lado, conforme seção 20.
 
-O usuário poderá mover, adicionar, remover e ajustar posições, extensões e níveis. Mudanças na planta atualizarão a proposta automática, preservando ajustes compatíveis e mostrando conflitos antes de substituí-los. Para grauteamentos, adicionar, remover ou mover afetará todos os intervalos aplicáveis no trecho vertical do pavimento, respeitando portas, janelas e vãos. Alterar um vão recalculará esses intervalos e sua representação nas fiadas, preservando a escolha horizontal quando compatível.
+Graute automático obedece às opções habilitadas e ao intervalo máximo configurado. Em Fiada, um furo com graute é preenchido em cor escura; no hover, furo vazio mostra + e furo grauteado mostra −. Clique adiciona/remove o eixo vertical em toda a extensão de alvenaria correspondente no pavimento, descontando aberturas. Esses sinais também têm identificação textual acessível. Não criar graute apenas na fiada clicada.
 
-A automação inicial abrange composição e posicionamento. O tamanho-base sozinho não determina cargas, resistência do material, diâmetros de armaduras ou dimensionamento resistente.
+Permitir remover canaletas somente na Fiada onde aparecem; renderizar canaletas com canal longitudinal distinto de tijolos comuns, não apenas outra cor. Não mostrar suas peças na Planta. Preservar remoções e adições após qualquer recálculo, inclusive alteração das configurações. A automação é ponto de partida: supressões manuais prevalecem sobre a reposição automática, sem diagnóstico estrutural de ausência.
 
-**Aceite:** uma planta com encontros e vãos recebe os elementos aplicáveis automaticamente; ajustes são respeitados; interrupções de grauteamentos ou canaletas são localizadas.
+**Aceite:** configurações persistidas; faixas e grautes automáticos gerados pelas regras nominais documentadas; clique +/− afeta todo eixo respeitando vãos; remoção de canaleta afeta somente o alcance indicado na prévia; nenhuma escolha reaparece silenciosamente; desenho distinto por tipo de peça.
 
 ### RF-13 — Lajes de piso e cobertura
 
@@ -256,7 +256,7 @@ Após cada alteração geométrica ou construtiva confirmada, marcar o resultado
 
 ### RF-10 — Diagnóstico e estado do projeto
 
-Exibir problemas por gravidade, pavimento, fiada e elemento, com acesso à localização e explicação simples do problema. Categorias mínimas: modulação, colisão, lacuna, encontro sem solução, vão incompatível, canaleta descontínua, furo desalinhado e conflito com ajuste construtivo.
+Exibir problemas por gravidade, pavimento, fiada e elemento, com acesso à localização e explicação simples do problema. Categorias mínimas: modulação, colisão, lacuna, encontro sem solução, vão incompatível, canaleta descontínua, furo desalinhado e conflito com ajuste construtivo. Lista contextual acionada pelo indicador mostra causa, IDs/localização, faixa de fiadas, consequência e ações Localizar/Ver fiada/Editar na Planta conforme o alvo.
 
 Mostrar de forma simples se o resultado está atualizado e se há pendências geométricas. Não haverá fluxo obrigatório de aprovação técnica ou regras na interface.
 
@@ -367,7 +367,9 @@ Observar confusão entre modos, ações acidentais, compreensão da modulação,
 
 ## 9. Pesquisa e especificação técnica do motor único
 
-O Ecovit terá um conjunto único e interno de boas práticas, sem seleção pelo usuário, regras versionadas ou fluxo complexo de aprovação. Como não há referência construtiva fornecida pelo solicitante, a pesquisa será uma atividade explícita anterior à implementação dos algoritmos de amarração e posicionamento automático. Poderá ocorrer durante a implementação do canvas e da persistência no próprio aplicativo.
+Atualização de M3: o alcance nominal confirmado na seção 20 dispensa pesquisa de dimensões internas, apoios e armaduras como pré-condição do desenho. As fontes físicas permanecem contexto, não parâmetros automáticos. Novos procedimentos físicos exigirão evidência apenas se futuramente incorporados ao produto.
+
+O Ecovit terá um conjunto único de convenções nominais documentadas no caderno técnico, sem seleção de conjuntos de regras pelo usuário, regras versionadas na interface ou fluxo complexo de aprovação. A pesquisa construtiva fundamentará os algoritmos correspondentes, distinguindo evidências físicas de convenções do modelo e respeitando o alcance nominal de M3 definido na seção 20. Poderá ocorrer durante a implementação do canvas e da persistência no próprio aplicativo.
 
 ### Entrega: Caderno técnico do motor Ecovit
 
@@ -391,7 +393,7 @@ Haverá desenhos e casos de teste para os dois tamanhos iniciais e pelo menos um
 
 A revisão técnica ocorrerá como parte do desenvolvimento, sem exigir que usuários cadastrem ou aprovem regras. O caderno orientará implementação e testes, mantendo o cálculo de cargas, resistência e armaduras fora do produto inicial.
 
-Esta seção define a pesquisa futura; a consulta pública inicial registrada na seção 13 ainda não constitui o caderno técnico.
+O caderno técnico foi posteriormente produzido para M2 e ampliado com a proposta de M3. A seção 13 preserva a consulta inicial; o caderno registra as evidências e lacunas atuais por entrega.
 
 ## 10. Cenários mínimos de aceite do produto
 
@@ -417,10 +419,10 @@ Esta seção define a pesquisa futura; a consulta pública inicial registrada na
 | Porta e janela na mesma parede | Interrupções, base e elementos especiais nas fiadas corretas |
 | Interface centrada no canvas | Controles compactos, propriedades contextuais e explicações por ícone |
 | Canaleta atravessando encontro | Continuidade resolvida por regra ou conflito localizado |
-| Reserva vertical de reforço | Passagens compatíveis nos intervalos de alvenaria aplicáveis |
+| Reserva vertical de reforço | Eixos nominais alinhados nos intervalos de alvenaria aplicáveis, sem comprovação de passagem física |
 | Ajustar graute em qualquer fiada | Todas as fiadas do trecho vertical são atualizadas, respeitando vãos |
 | Graute na posição de uma janela | Intervalos abaixo/acima separados, sem graute no vazio |
-| Mover ou remover graute | Operação aplicada a todo o trecho do pavimento, sem atravessar a laje |
+| Incluir ou remover graute | Clique no eixo nominal afeta todos os seus intervalos de alvenaria no pavimento, respeitando aberturas e sem atravessar a laje; movimentação por arraste fora de M3 |
 | Três pavimentos | Origem comum, fiadas independentes e comparação entre níveis |
 | Mudança após ajuste construtivo | Ajustes compatíveis preservados; incompatíveis pendentes com opção de corrigir ou descartar |
 | Salvar, reabrir e regenerar | Composição e ajustes preservados |
@@ -465,7 +467,7 @@ O conjunto de testes deverá incluir casos que precisam falhar, além de exemplo
 
 As perguntas de escopo desta seção foram respondidas pelo solicitante. A pesquisa do motor é trabalho técnico definido para a próxima fase, não uma decisão de produto sem resposta.
 
-O documento está atualizado para revisão final. Não foram criados marcos ou tarefas de implementação nesta revisão; eles serão derivados do PRD após sua validação.
+Registro histórico da definição inicial: os marcos foram posteriormente criados no plano incremental. M1 e M2 estão aprovados; o estado de M3 está na seção 20.
 
 ## 13. Referências e limites da pesquisa
 
@@ -479,7 +481,7 @@ As especificações funcionais deste PRD são propostas para o Ecovit. A pesquis
 
 ## 14. Alterações da versão 0.3
 
-As seções 14 a 18 registram decisões históricas; os requisitos atuais e a seção 19 prevalecem onde houve simplificação posterior.
+As seções 14 a 19 registram a evolução das decisões. Os requisitos funcionais devem refletir as definições atuais; para M3, prevalecem as decisões confirmadas na seção 20 sobre formulações anteriores.
 
 Catálogo derivado somente do tamanho-base; módulo mínimo obrigatório de meio tijolo; conjunto interno único sem versionamento de regras; encontros automáticos editáveis com propagação vertical; grauteamentos e elementos em canaletas automáticos; lajes com espessura configurável; editor com paredes identificáveis e desenho/redimensionamento por arraste.
 
@@ -503,3 +505,56 @@ Confirmado o alcance dos ajustes de grauteamento: todo o trecho vertical entre l
 ## 19. Alterações da versão 0.8
 
 Face externa como referência fixa de paredes, espessura igual à largura do tijolo-base e redimensionamento por ambas as extremidades. RF-09 simplificado, sem edição ou bloqueio de tijolos individuais. Recálculo automático do projeto inteiro, uma operação por vez, com espera aceita e sem filas ou Worker. Salvamento do modelo antes do cálculo e do resultado após sucesso; download do documento atual em memória. Lajes ortogonais simples, espessura armazenada somente na laje e limite superior da alvenaria definido por altura e laje de fechamento, sem editor de telhados. Catálogo restrito aos procedimentos documentados, com diagnóstico para composições sem solução automática. Início direto no térreo e testes no aplicativo após cada implementação, sem prova técnica separada. Nenhum marco ou tarefa criado.
+
+## 20. Definições de M3 após retorno do solicitante — 12/10/2026
+
+**Decisões confirmadas:** alcance exclusivamente nominal; configurações de projeto para canaletas e grautes; canaletas globais por níveis e automáticas acima/abaixo de todos os tipos de vãos; grautes opcionais por categoria, intervalo máximo padrão 100 cm; inclusão/remoção por clique +/−; supressões preservadas. A presente solicitação é somente documental. A futura tela ainda não foi implementada.
+
+Tela “Configurações do projeto”, acessível no editor, compacta e inspirada no print fornecido: grupos Vãos, Canaletas e Graute vertical. Não copiar abas ou controles sem função solicitada, como armaduras, grampos e idioma. Aplicar confirma uma única operação de histórico e recálculo; Cancelar não modifica nada. Restaurar padrões atua no grupo e só efetiva ao aplicar; não apaga ajustes manuais existentes.
+
+Restaurar padrões de configuração é diferente de restaurar ajustes automáticos: a primeira ação preserva inclusões/exclusões e supressões; a segunda remove explicitamente o ajuste escolhido para permitir novamente a automação.
+
+| Grupo | Campos e comportamento |
+|---|---|
+| Vãos | Base padrão de janela/vão elevado e topo padrão dos vãos, em relação ao piso; porta inicia na base zero. Altura é topo menos base, sempre visível. Os valores inicializam novas inserções, não redimensionam vãos existentes. |
+| Canaletas | Lista de alturas em cm referidas ao piso, interpretadas como topo da fiada de canaleta; mostrar número da fiada. Adicionar/remover nível e restaurar padrões. Alterar níveis regenera as faixas globais existentes. |
+| Graute vertical | Quatro opções independentes: encontros, laterais dos vãos, pontas livres e intervalos em paredes longas. Distância máxima positiva utilizada na distribuição por intervalos. Desabilitar uma categoria remove seus automáticos, preservando inclusões manuais. |
+
+### Padrões normativos de M3
+
+Esta tabela é a referência dos valores iniciais para novos projetos. Os efeitos de Aplicar, Cancelar e Restaurar e os campos configuráveis estão definidos acima; a inicialização de projetos legados está na [Arquitetura §15](Ecovit-Arquitetura-Tecnica.md#15-contratos-de-m3-nominal--12102026).
+
+| Parâmetro | Valor inicial | Efeito |
+|---|---|---|
+| Base de porta | 0 cm | Inicializa novas portas, sujeita à modulação e ao início da alvenaria |
+| Base de janela/vão elevado | 112 cm | Inicializa novas janelas e vãos elevados |
+| Topo de aberturas | 217 cm | Inicializa novas aberturas; com as bases padrão, alturas de porta 217 cm e janela/vão elevado 105 cm |
+| Topos dos níveis globais de canaleta | 112 e 224 cm | Solicita faixas nas cotas referidas ao piso, respeitando parede e vãos |
+| Categorias de graute | Quatro habilitadas | Ativa encontros, laterais dos vãos, pontas livres e intervalos em paredes longas |
+| Distância máxima de graute | 100 cm | Orienta a distribuição automática por malha antes dos ajustes manuais |
+
+São padrões configuráveis de desenho. Outra altura-base ou início de alvenaria exige alternativas explícitas para valores incompatíveis, sem arredondamento oculto. Configurações de vãos não alteram aberturas existentes; níveis/categorias/distância recalculam a proposta existente, preservando ajustes. Não incorporar armaduras ou grampos. A correspondência numérica com fiadas está em EX-31 e nos exemplos adicionais do caderno.
+
+Vãos mantêm posição/largura modulares e limites verticais em fiadas; editar parede conserva sua posição mundial e sinaliza o que não couber. Preservar paginação do M2 e gerar meio nominal apenas na nova borda quando um par for interrompido. Sem recorte parcial de altura ou preparação física de peça.
+
+**Recorte de vãos confirmado em 12/10/2026 (D3-02):** proibir sobreposição de volumes de aberturas. Na mesma parede, vãos lado a lado cujos intervalos verticais se sobrepõem exigem separação horizontal mínima de um módulo (largura-base); contato sem essa separação não é permitido e aberturas não são unidas automaticamente. Permitir vãos empilhados, com projeções horizontais parcial ou totalmente coincidentes, desde que haja pelo menos uma fiada completa de alvenaria entre eles. Essa fiada pode atender simultaneamente à canaleta superior do vão inferior e à inferior do vão superior; unificar as regiões coincidentes, sem duplicar peças nem exigir duas fiadas distintas. São limites de desenho nominal, sem validação estrutural. A separação vertical é validada desde M3.1, com canaletas geradas em M3.2; ajustes voluntários de canaleta continuam permitidos e não alteram a regra de separação dos vãos.
+
+Na Planta, permitir escolher entre vãos empilhados na mesma posição por seletor contextual, identificando tipo, base e topo; na Fiada, mostrar somente as aberturas que atingem a altura ativa.
+
+Em Planta, arrastar sobre parede fixa define início/fim modular do vão. Prévia mostra posição, largura e base/topo dos padrões do projeto. Selecionar permite editar campos, arrastar corpo na mesma parede ou ambas as alças com ponta oposta fixa. Não reatribuir vão a outra parede implicitamente. Escape, perda de foco e soltura fora cancelam; navegação central/Espaço não altera elementos. Porta/janela/vão têm símbolos distintos, além da cor; folha/sentido de abertura não são inferidos. Excluir parede informa o alcance e remove seus dependentes na mesma operação desfazível.
+
+Um vão selecionado na Planta poderá ser excluído por ação contextual ou pela tecla Delete, quando o foco não estiver em um campo de edição. A exclusão remove somente o vão e suas dependências, preservando a parede e as demais aberturas. O aplicativo recalcula a alvenaria. Excluir, desfazer e refazer constituem operações de histórico; desfazer restaura o mesmo ID, posição, dimensões e relações do vão.
+
+Canaleta imediatamente acima do vão tem sua base no topo da abertura; canaleta inferior tem seu topo na base da abertura. A regra vale para porta elevada também. Se não houver alvenaria inferior/superior, não criar peça fora da parede. Faixas globais atravessam toda parede, excluindo células dos vãos; uma faixa coincidente com outra automática produz uma única ocupação. Não exigir colunas de apoio nem pesquisa de cotas físicas para gerar esse desenho nominal.
+
+**Alcances confirmados pelo solicitante:** canaleta associada a vão ocupa sua largura mais meio tijolo de cada lado, ou seja, um módulo horizontal por lado. Remover canaleta afeta toda a faixa da parede selecionada naquela fiada, incluindo trechos separados por aberturas e todas as origens automáticas coincidentes. Outras fiadas são preservadas. Não é exclusão de tijolo individual. A extensão lateral é uma convenção nominal de desenho escolhida pelo usuário, não apoio dimensionado.
+
+Grautes ocupam eixos nominais e todos os intervalos de alvenaria correspondentes no pavimento, sem atravessar o vazio. Só furos da fiada ativa recebem clique/hover; camada de referência não é editável. Furo vazio: + e “Adicionar graute”; preenchido escuro: − e “Remover graute”. Fora da ferramenta contextual de graute, clique mantém seleção normal. Remover um automático grava exclusão persistente; adicionar novamente desfaz essa exclusão. Não recalcular preenchimento intermediário para contornar a intenção do usuário.
+
+Canaletas são visíveis apenas em Fiada, desenhadas com canal longitudinal e distinção de inteiro/meio nominal; não se infere corte executado ou dimensão física de cavidades. Selecionar faixa na fiada oferece Remover e realça o alcance inteiro antes da ação. A célula volta a tijolo comum da mesma paginação; remover canaleta não abre buraco na alvenaria. Supressão vale também quando várias origens automáticas exigem a mesma faixa.
+
+Ajustes autorizados neste recorte: incluir/remover grautes e remover/restaurar canaletas; configurar níveis globais. Movimento livre de elementos, apoios, aço, grampos, dimensionamento e verificações físicas ficam fora. Retirar um elemento não representa erro estrutural nem demanda reposição compulsória. Diagnósticos cobrem somente integridade, modulação, ocupação e ajustes sem alvo geométrico. Desenhos são o objetivo atual; quantitativos permanecem previstos para evolução futura, sem volumes de graute inferidos de furos sem dimensões.
+
+O [plano, seção 7](Ecovit-Plano-Implementacao.md) organiza a implementação ainda não iniciada. CT-09/10 e exemplos do [caderno, seção 8](Ecovit-Caderno-Tecnico.md) substituem os antigos bloqueios físicos de M3; fontes anteriores continuam como contexto, não parâmetros estruturais do aplicativo.
+
+As fórmulas, limites geométricos, paginação e exemplos são definidos em CT-07–10 do caderno; representação persistente, identidade dos ajustes e processamento estão na Arquitetura §15. Os critérios e evidências de cada incremento ficam no plano.
