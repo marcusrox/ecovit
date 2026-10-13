@@ -355,9 +355,9 @@ test("M3.2 snapshot M3.1 validado antes da migração e adulterado recusado", as
     };
   await load(page, old);
   const before = await exported(page);
-  expect(before.schemaVersion).toBe(5);
+  expect(before.schemaVersion).toBe(6);
   expect(before.project.channelLevels).toEqual([]);
-  expect(before.generated!.convention).toBe("nominal-v6");
+  expect(before.generated!.convention).toBe("nominal-v7");
   expect(before.generated!.channels!.map((b) => b.course)).toEqual([14, 31]);
   const bad = structuredClone(old);
   bad.generated.courses[0].pieces[0].width += 1250;

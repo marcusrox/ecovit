@@ -318,12 +318,19 @@ describe("M3.3 grautes nominais", () => {
       old = {
         ...d,
         schemaVersion: 4,
+        adjustments: {
+          ...d.adjustments,
+          channels: d.adjustments.channels.map(({ scope: _scope, ...a }) => {
+            void _scope;
+            return a;
+          }),
+        },
         project,
         generated: g,
         generationState: { status: "current", diagnostics: g.diagnostics },
       };
     const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(5);
+    expect(migrated.schemaVersion).toBe(6);
     expect(migrated.project.groutSettings).toEqual(defaultGroutSettings(false));
     expect(migrated.adjustments).toEqual(d.adjustments);
     expect(generate(migrated).grouts).toEqual([]);
@@ -343,10 +350,7 @@ describe("M3.3 grautes nominais", () => {
       ...good,
       adjustments: {
         ...good.adjustments,
-        grout: [
-          ...good.adjustments.grout,
-          { ...good.adjustments.grout[0], id: crypto.randomUUID() },
-        ],
+        grout: [...good.adjustments.grout, { ...good.adjustments.grout[0] }],
       },
     };
     expect(() => parseFile(JSON.stringify(duplicate))).toThrow("duplicado");

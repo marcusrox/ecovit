@@ -48,6 +48,39 @@ export function toggleGrout(
   cell: Point & { wallIds: string[] },
   present: boolean,
 ): Project {
+  if (doc.schemaVersion === 6) {
+    const eligible = doc.adjustments.grout.filter(
+      (a) =>
+        groutId(a) === groutId(cell) &&
+        a.wallIds.some((id) => cell.wallIds.includes(id)),
+    );
+    if (
+      !eligible.length &&
+      doc.adjustments.grout.length >= MAX_GROUT_ADJUSTMENTS
+    )
+      throw new Error("Limite de ajustes de graute atingido.");
+    const action = present ? ("exclude" as const) : ("include" as const);
+    return {
+      ...doc,
+      adjustments: {
+        ...doc.adjustments,
+        grout: eligible.length
+          ? doc.adjustments.grout.map((a) =>
+              eligible.includes(a) ? { ...a, action } : a,
+            )
+          : [
+              ...doc.adjustments.grout,
+              {
+                id: crypto.randomUUID(),
+                x: cell.x,
+                y: cell.y,
+                wallIds: [...cell.wallIds].sort(),
+                action,
+              },
+            ],
+      },
+    };
+  }
   const previous = doc.adjustments.grout.find(
     (a) => groutId(a) === groutId(cell),
   );
@@ -256,8 +289,13 @@ export function applyGrout(doc: Project, result: Composition): Composition {
         }
     }
   // Adjustments never participate in automatic anchors or redistribute removals.
-  for (const a of [...doc.adjustments.grout].sort(
-    (a, b) => a.y - b.y || a.x - b.x,
+  for (const a of [...doc.adjustments.grout].sort((a, b) =>
+    result.convention === "nominal-v7"
+      ? Number(a.action === "exclude") - Number(b.action === "exclude") ||
+        a.y - b.y ||
+        a.x - b.x ||
+        a.id.localeCompare(b.id)
+      : a.y - b.y || a.x - b.x,
   )) {
     const id = groutId(a),
       cell = cells.get(id);

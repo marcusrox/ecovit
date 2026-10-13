@@ -23,7 +23,9 @@ export function suppressBand(
   if (!doc.model.walls.some((w) => w.id === wallId))
     throw new Error("Parede da faixa ausente.");
   if (
-    doc.adjustments.channels.some((a) => a.wallId === wallId && a.top === top)
+    doc.adjustments.channels.some(
+      (a) => a.wallId === wallId && a.top === top && a.scope?.kind !== "range",
+    )
   )
     return doc;
   if (doc.adjustments.channels.length >= MAX_CHANNEL_SUPPRESSIONS)
@@ -34,7 +36,7 @@ export function suppressBand(
       ...doc.adjustments,
       channels: [
         ...doc.adjustments.channels,
-        { id: crypto.randomUUID(), wallId, top },
+        { id: crypto.randomUUID(), wallId, top, scope: { kind: "wall" } },
       ],
     },
   };
@@ -51,6 +53,15 @@ export function restoreBand(
       channels: doc.adjustments.channels.filter(
         (a) => a.wallId !== wallId || a.top !== top,
       ),
+    },
+  };
+}
+export function restoreSuppression(doc: Project, id: string): Project {
+  return {
+    ...doc,
+    adjustments: {
+      ...doc.adjustments,
+      channels: doc.adjustments.channels.filter((a) => a.id !== id),
     },
   };
 }
@@ -135,7 +146,14 @@ export function applyChannels(doc: Project, result: Composition): Composition {
       !w ||
       (a.top - f.start) % h ||
       a.top <= f.start ||
-      a.top > f.start + w.height
+      a.top > f.start + w.height ||
+      (result.convention === "nominal-v7" &&
+        a.scope?.kind === "range" &&
+        (a.scope.from < (w.a.y === w.b.y ? bounds(w, m).x : bounds(w, m).y) ||
+          a.scope.to >
+            (w.a.y === w.b.y
+              ? bounds(w, m).x + bounds(w, m).width
+              : bounds(w, m).y + bounds(w, m).height)))
     ) {
       const b = w ? bounds(w, m) : { x: 0, y: 0 };
       result.diagnostics.push({
@@ -199,8 +217,21 @@ export function applyChannels(doc: Project, result: Composition): Composition {
         .filter((a) => a.top === top)
         .map((a) => a.wallId),
     );
-    for (const c of cells.values())
-      if (c.walls.some((id) => suppressedWalls.has(id))) c.origins.clear();
+    for (const c of cells.values()) {
+      const suppressed =
+        result.convention === "nominal-v7"
+          ? doc.adjustments.channels.some((a) => {
+              const w = wallMap.get(a.wallId);
+              if (!w || a.top !== top || !c.walls.includes(w.id)) return false;
+              const s = w.a.y === w.b.y ? c.x : c.y;
+              return (
+                a.scope?.kind !== "range" ||
+                (s >= a.scope.from && s < a.scope.to)
+              );
+            })
+          : c.walls.some((id) => suppressedWalls.has(id));
+      if (suppressed) c.origins.clear();
+    }
     const bands = new Map<string, ChannelBand>();
     for (const c of cells.values())
       if (c.origins.size)

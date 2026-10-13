@@ -2,14 +2,16 @@
 
 **Data:** 10 de outubro de 2026  
 **Atualização documental:** 13 de outubro de 2026\
-**Base:** [PRD 0.13](Ecovit-PRD.md) e [Arquitetura 1.6](Ecovit-Arquitetura-Tecnica.md)\
-**Estado:** M1, M2, M3.1 e M3.2 aprovados; M3.3 implementado e verificado pelo Codex, aguardando teste manual/aceite. Relatórios e roteiros na seção 7. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais.
+**Base:** [PRD 0.14](Ecovit-PRD.md) e [Arquitetura 1.7](Ecovit-Arquitetura-Tecnica.md)\
+**Estado:** M1, M2, M3.1, M3.2 e M3.3 aprovados pelo solicitante; M3.4 implementado e verificado pelo Codex, aguardando teste manual/aceite; relatório na seção 8. Relatórios e roteiros anteriores na seção 7. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais.
 
 **Endereço local padrão:** `http://127.0.0.1:5173/`, conforme o README. Referências a `localhost` nos relatórios históricos preservam a origem usada naquela ocasião. Projetos salvos em `localhost` permanecem naquela origem; para transferi-los, baixar `.ecovit` na origem antiga e carregar na origem escolhida.
 
 ## 1. Como usar este plano
 
-Cada marco acrescenta uma funcionalidade testável ao aplicativo definitivo. M1 mantém sua especificação e relatório; M2 está detalhado na seção 5 e M3 na seção 7. M significa Marco e é a única sigla usada para essas etapas. Subdivisões usam ponto: M3.1 (Vãos), M3.2 (Canaletas) e M3.3 (Grauteamentos). Tarefas usam M3-T01 e critérios de aceite M3-A01; RF, CT e EX continuam identificando requisitos, convenções técnicas e exemplos. A padronização altera apenas os nomes, preservando o vínculo pelo número de marco e item, sem mudar escopo ou aprovação.
+Cada marco acrescenta uma funcionalidade testável ao aplicativo definitivo. M1 mantém sua especificação e relatório; M2 está detalhado na seção 5, M3.1–3.3 na seção 7 e M3.4 na seção 8. M significa Marco e é a única sigla usada para essas etapas. Subdivisões usam ponto: M3.1 (Vãos), M3.2 (Canaletas), M3.3 (Grauteamentos) e M3.4 (Evolução da edição no canvas). Preservar IDs existentes M3-T01/M3-A01; M3.4 usa IDs próprios M3.4-T01/M3.4-A01, sem renumerar entregas aceitas. RF, CT e EX continuam identificando requisitos, convenções técnicas e exemplos.
+
+Requisitos e arquitetura descrevem o comportamento atualmente especificado, distinguindo o que está implementado. Cada evolução recebe escopo, critérios e relatório no incremento vigente; relatos/aceites anteriores registram a versão entregue e não são reescritos como se já contivessem as mudanças. Correções posteriores recebem registro relacionado aos IDs afetados. Novo feedback não amplia silenciosamente o incremento: ajustar seu escopo antes de implementar; depois do aceite, criar nova revisão/incremento quando pertinente.
 
 Fluxo: especificar a entrega → implementar → verificar os critérios pertinentes → disponibilizar roteiro de teste → incorporar feedback. A pesquisa construtiva precede os algoritmos correspondentes e será registrada no caderno técnico, por assunto. Não haverá prova técnica ou aplicativo experimental separado.
 
@@ -21,7 +23,8 @@ O plano organiza a implementação parcial do PRD; um requisito atendido parcial
 |---|---|---|---|---|
 | M1 — Planta editável e persistência | Criar projeto, desenhar/editar paredes, desfazer, salvar e transportar arquivo | RF-01/02/03/08/09/11/12, nos recortes abaixo | Nenhuma | Aprovada pelo solicitante em 10/10/2026 |
 | M2 — Composição e inspeção de fiadas | Catálogo nominal, retas, L, retângulo, T básico, transição simples de alturas, inspeção e persistência; cruz apenas reconhecida e diagnosticada | RF-01/03/04/05/09/10, persistência RF-11/12 | M1 e definições P1–P5 do caderno | Aprovada em 12/10/2026; relatório na seção 6 |
-| M3 — Vãos e elementos construtivos | Portas, janelas e vãos integrados à composição; canaletas e grauteamentos automáticos e ajustáveis | RF-04/06/07/09/10 | M2 e definições nominais CT-07–10 | M3.1/M3.2 aprovados; M3.3 implementado, aguardando teste manual/aceite |
+| M3 — Vãos e elementos construtivos | Portas, janelas e vãos integrados à composição; canaletas e grauteamentos automáticos e ajustáveis | RF-04/06/07/09/10 | M2 e definições nominais CT-07–10 | M3.1/M3.2/M3.3 aprovados; aceite de M3.3 em 13/10/2026 |
+| M3.4 — Evolução da edição no canvas | Continuidade/união de paredes, movimento com dependentes e destaque do módulo de início | RF-02/03/06/07/09/10/11/12, CT-11 | M3.3 aprovado e decisões D34-01/02 | Implementado; teste manual/aceite pendente; relatório na seção 8 |
 | M4 — Lajes e múltiplos pavimentos | Lajes, limites verticais, até três pavimentos e verificação dos alinhamentos | RF-08/13 e propagação dos RF-04/05/07 | M3 e pesquisa de transições verticais | A detalhar |
 | M5 — Consulta e conclusão da primeira versão | Quantitativos, duplicação de projetos e fechamento dos cenários restantes do PRD | RF-10/11/12 e cenários de aceite | M4 | A detalhar |
 
@@ -133,7 +136,7 @@ M1 estará pronta para teste do solicitante quando seus critérios tiverem evid�
 | Implementação | M1 aprovada; M2 implementada (relatório na seção 6) |
 | Comandos e testes automatizados | Implementados; resultados no relatório abaixo |
 | Teste manual do solicitante | Aprovação global recebida em 10/10/2026; sem checklist individual informado |
-| Próxima ação | Teste manual e aceite de M3.3 conforme roteiro da seção 7; não iniciar M4 sem solicitação própria |
+| Próxima ação | Teste manual e aceite de M3.4 conforme seção 8; M4 depende de solicitação própria |
 
 ## 4. Relatório da implementação de M1 — 10/10/2026
 
@@ -446,7 +449,7 @@ O solicitante declarou: **“O M2 está validado por mim.”** M2 aprovada, incl
 
 ## 7. M3 — Vãos, canaletas e grautes nominais
 
-**Revisão:** 13/10/2026. **Estado:** M3.1 e M3.2 aprovados pelo solicitante; M3.3 implementado, aguardando teste manual/aceite. O usuário confirmou desenho nominal, configurações de projeto, automação como ponto de partida e ajustes persistentes. PRD §20, Arquitetura §15 e Caderno revisão 9 CT-07–10/EX-21–35 são as referências. Os antigos bloqueios por apoios dimensionados e passagem física deixam de se aplicar. Aceites globais e relatórios ao final desta seção.
+**Revisão:** 13/10/2026. **Estado:** M3.1, M3.2 e M3.3 aprovados pelo solicitante. O usuário confirmou desenho nominal, configurações de projeto, automação como ponto de partida e ajustes persistentes. PRD §20, Arquitetura §15 e Caderno revisão 9 CT-07–10/EX-21–35 são as referências. Os antigos bloqueios por apoios dimensionados e passagem física deixam de se aplicar. Aceites globais e relatórios ao final desta seção.
 
 ### Escopo e sequência
 
@@ -784,3 +787,221 @@ Executar `./Start-Ecovit.ps1` na raiz, manter o terminal aberto e acessar `http:
 | 10 | Bases 30/28 com d=100; distância menor que um módulo e Aplicar; Restaurar padrões com exclusão existente | EX-34 passos 90/98 cm, sem 105/112; alternativa explícita para d<m; restaurar configuração não apaga exclusão |
 
 Limitações: representação nominal, sem dimensões físicas de furos/canais, resistência, aço, aprovação estrutural ou quantitativos. Lajes/múltiplos pavimentos permanecem em M4; cruz/transições sem suporte de M2 não foram ampliadas. Não houve auditoria completa de acessibilidade. M3.3 aguarda teste manual e aceite; M3.1/M3.2 continuam aprovados. Não iniciar M4 automaticamente.
+
+### Verificação geral do projeto — 13/10/2026
+
+Solicitação: revisar o estado atual e orientar a continuidade. Revisados PRD, arquitetura, plano, convenções pertinentes do caderno, domínio, coordenação de estado, persistência, pontos de integração do editor e testes. Nenhuma funcionalidade nova ou alteração de código nesta revisão. O estado atual contém M3.3 no commit `0e3dc1e`; a descrição de alterações locais no relatório anterior registra o momento daquela entrega. Há alterações preexistentes em `package.json`/`package-lock.json`, incluindo Vitest de `^3.2.0` para `^5.0.4`; preservadas e usadas nas verificações abaixo.
+
+| Verificação pelo Codex | Resultado nesta revisão |
+|---|---|
+| `./Start-Ecovit.ps1 -Task typecheck` | Passou |
+| `./Start-Ecovit.ps1 -Task lint` | Passou |
+| `./Start-Ecovit.ps1 -Task test` | 125 testes passaram em 8 arquivos, com Vitest 5.0.4 |
+| `./Start-Ecovit.ps1 -Task test:e2e` | 72 fluxos passaram, 36 em Chrome e 36 em Edge, em aproximadamente 2,4 minutos |
+| `./Start-Ecovit.ps1 -Task build` | Passou; JS 845,47 kB / 263,97 kB gzip; permanecem avisos de comentários do Zod e bundle acima de 500 kB |
+| Inspeção visual | Captura gerada pelo e2e de janela/canaleta/graute em 1440×1000 inspecionada, com seleção, intervalos e controles legíveis; não equivale a auditoria completa de interface/acessibilidade |
+| Teste manual do solicitante | Não realizado nesta revisão; aceite de M3.3 permanece pendente |
+
+Não foram encontradas falhas impeditivas nos verificadores executados ou nos trechos revisados. O domínio continua independente de React/Konva/Zustand/Dexie. Histórico exclui resultados gerados; persistência mantém o fluxo sequencial e liberação de controles em falhas. Testes de navegador usam perfis isolados. Esta revisão não incluiu auditoria de vulnerabilidades de dependências, teste em instalação limpa ou comprovação da meta de três pavimentos/100 mil peças.
+
+Observações para continuidade:
+
+- O modelo, a validação de arquivo e várias funções de composição/editor usam explicitamente um único térreo (`floors[0]`); lajes ainda são uma coleção vazia. M4 exige evolução conjunta de dados, resultado por pavimento, seleção, histórico, dependências e migração. Não basta adicionar um seletor à interface.
+- A proteção atual de geração limita a estimativa de células multiplicada pelas fiadas a 100 mil, não uma capacidade comprovada de 100 mil peças efetivas. As cargas aprovadas continuam úteis como regressão; a meta completa deverá ser medida no cenário de M4.
+- Canvas e App concentram bastante código. Extrair responsabilidades concretas tocadas pela próxima entrega pode reduzir risco; não há necessidade demonstrada de reescrita ou nova biblioteca. O aviso de bundle pede avaliação de carregamento quando houver cenário de publicação, sem invalidar o build atual.
+
+Próxima ação recomendada: executar o roteiro manual de M3.3 acima e registrar o retorno do solicitante. Depois, quando M4 for solicitado, detalhar somente seu primeiro incremento, consultando/pesquisando as transições verticais no caderno antes dos algoritmos. Uma sequência possível para discussão é pavimentos e migração; lajes e limites da alvenaria; sobreposição/alinhamentos e carga conjunta. Essa sequência é orientação, não novos marcos aprovados nem autorização de implementação. Quantitativos e duplicação de projetos continuam em M5; cruz e demais casos não suportados devem permanecer explícitos na avaliação de fechamento do PRD.
+
+### Execução assistida do roteiro de M3.3 pelo Codex — 13/10/2026
+
+A pedido do solicitante, executados fluxos reais no navegador por Playwright, com perfis isolados e projetos sintéticos, downloads e reabertura. Não usados projetos pessoais. Esta é verificação do Codex, não execução manual/aceite do solicitante. Nenhuma mudança no código do aplicativo. Complementos locais reproduzíveis em `.tools/m33-review.spec.ts` e `.tools/m33-review.config.ts`, ignorados pelo Git; capturas `.tools/m33-roteiro-*.png` e arquivo efetivamente transportado `.tools/m33-transferencia.ecovit`.
+
+| Passo do roteiro | Cobertura executada e resultado |
+|---|---|
+| 1 | Projeto criado pela tela, parede desenhada, quatro defaults/100 cm conferidos no download; Cancelar preservou configuração; Aplicar, Restaurar e Desfazer cobertos nos fluxos existentes. Passou. |
+| 2 | Parede 400 cm, somente Intervalos: centros 106,25/206,25/306,25; habilitar Pontas acrescentou 6,25/393,75. Passou. |
+| 3 | Hover de remover/adicionar inspecionado nas capturas; exclusão de 206,25 persistiu após mudar fiada, reabrir e recalcular, sem substituto. Reinclusão preservou ID. Passou. |
+| 4 | Janela de EX-33: inclusão gerou [0,98) e [210,280); fiada 20 sem alvo; remoção na 35 retirou o eixo completo. Passou. |
+| 5 | Furo na canaleta selecionável; supressão e restauração conservaram grautes, com peças da fiada restauradas; Selecionar encerrou Graute. Passou. |
+| 6 | L e T importados como geometrias de teste e editados pela interface: um eixo compartilhado entre duas paredes, remoção/reinclusão por clique. Laterais de janela em 93,75/206,25; reta conectada com pontas só em 6,25/193,75. Passou. |
+| 7 | Seletor e botão focado acionado com Enter adicionaram/removeram; Escape, soltura fora, navegação central e Espaço e referência sem edição cobertos por fluxos de navegador. Passou. |
+| 8 | Encurtamento preservou ajuste pendente, diagnóstico/descarte/desfazer verificados; excluir parede pela tela removeu ajuste e desfazer restaurou parede, ID e graute. Passou. |
+| 9 | Arquivo baixado do Chrome e importado efetivamente no Edge, com novo ID de projeto e composição/ajustes iguais. Legado M3.2 migrou com categorias desligadas e supressão preservada; Restaurar padrões/Aplicar ativou graute explicitamente sem apagar supressão. Passou. |
+| 10 | Bases 30/28: posições e passos 90/98 cm conferidos no navegador e domínio; d=12 cm ofereceu explicitamente módulo 15/14 cm e só mudou após escolha. Restaurar configuração com exclusão preservada coberto na suíte existente. Passou. |
+
+Resultados: `./Start-Ecovit.ps1 -Task test` passou com 125 testes. Suíte geral de navegador: 71/72 passaram na primeira rodada; a carga M2 no Edge teve `download.path: canceled` e arquivos de trace ausentes enquanto a execução complementar usava a mesma pasta de saída. Conflito de artefatos atribuído à execução simultânea dos verificadores, não a uma falha de geometria constatada. Configuração complementar passou a usar saída separada; o teste afetado passou sozinho na repetição (42 mil peças, 1.498 ms no fluxo medido). Os 16 fluxos de M3.3 da suíte geral passaram, oito por navegador. Complementos: sete passaram inicialmente, nove passaram na rodada ampliada e o décimo, adicionado para Enter/exclusão de parede, passou isoladamente. Não se declara uma nova rodada completa de 72/72 após a correção da execução.
+
+Capturas de pontas, encontros L/T, hover +/− e importação no Edge inspecionadas. Marcadores, preenchimento, seleção e intervalos legíveis no cenário de 1440×1000. O T conserva informação de ligação complementar, conforme escopo aprovado. Carga M3.3 desta rodada: 100 janelas, 200 eixos e 300 intervalos; 1.519 ms em Chrome e 1.538 ms em Edge, incluindo abertura/importação/geração/salvamento e com verificações concorrentes; não é benchmark isolado.
+
+Não encontrada falha do aplicativo nos cenários verificados. Pendente do solicitante: avaliar conforto dos gestos e leitura no monitor/zoom habitual, experimentar um projeto representativo próprio com backup e confirmar o aceite de M3.3. A automação dos passos e a inspeção de capturas não encerram essas avaliações. M4 não iniciado.
+
+### Aceite global de M3.3 — 13/10/2026
+
+O solicitante declarou: **“ok. registre o aceite o m3.3”**. Registrado aceite global de M3.3, concluindo a aprovação dos três incrementos de M3 no alcance nominal acordado. Esse aceite substitui as pendências globais de aprovação nos relatórios históricos, preservando os resultados reais das verificações do Codex. Não foram informados resultados individuais por passo do roteiro manual nem uma auditoria de acessibilidade; não se atribui ao solicitante a execução dos testes automatizados.
+
+Mantidas as limitações documentadas: sem dimensionamento estrutural, cruz/transições ainda não suportadas, lajes/múltiplos pavimentos em M4 e quantitativos em M5. M4 permanece a detalhar mediante solicitação própria; o aceite não inicia sua implementação.
+
+Atualizados os estados atuais no plano, PRD, arquitetura, caderno técnico e README. Revisão documental de consistência e `git diff --check`; sem alteração de código ou repetição dos testes do aplicativo.
+
+## 8. M3.4 — Evolução da edição no canvas
+
+**Data:** 13/10/2026. **Estado:** implementado na versão 0.6.0, aguardando teste manual/aceite. Implementação solicitada após a revisão documental; M3.3 permanece aprovado. A prioridade solicitada é ajustar a edição antes de M4. Não foi autorizado implementar M4 nem os demais marcos.
+
+### Escopo e referências
+
+Três ajustes no aplicativo existente: criar continuidade que prolonga/une paredes compatíveis; mover parede com dependentes por arraste e prévia; destacar o módulo de início das quatro ferramentas de criação. Fonte de comportamento: [PRD §21](Ecovit-PRD.md#21-m34--evolução-da-edição-no-canvas--13102026); transformações e exemplos: [Caderno §9](Ecovit-Caderno-Tecnico.md#9-m34--convenções-de-edição-geométrica--13102026); dados, migração e execução: [Arquitetura §16](Ecovit-Arquitetura-Tecnica.md#16-contratos-de-m34--evolução-da-edição--13102026). Preservar RF existentes. Este plano organiza a entrega, sem repetir contratos completos.
+
+D34-01 e D34-02 foram confirmadas pelo solicitante durante a preparação: supressões de canaleta ficam nos trechos originais ao unir; ajuste manual de graute compartilhado fica nas paredes imóveis e é copiado com a parede movida. Demais regras de compatibilidade, identidade, cancelamento e limites estão especificadas nas referências e serão verificadas nos critérios abaixo. Nenhuma nova regra construtiva foi criada.
+
+Fora deste recorte: dividir/rotacionar paredes, selecionar/mover grupos, união ao redimensionar, consolidação geral de arquivos antigos, solução genérica de sobreposições, edição de tijolos, ampliação do catálogo de encontros, lajes, pavimentos e quantitativos. União ao mover faz parte do escopo: posicionar em continuidade colinear compatível consolida a cadeia. Paredes incompatíveis mantêm entidades distintas com motivo na prévia. Novo feedback poderá revisar o recorte explicitamente antes de sua implementação.
+
+### Tarefas
+
+- [x] **M3.4-T01 — Especificação:** atualizar PRD, arquitetura, caderno, plano, AGENTS e indicação de disponibilidade no README; registrar decisões de preservação.
+- [x] **M3.4-T02 — Contratos e migração:** arquivo v6/nominal-v7, supressões wall/range, IDs/âncoras/vínculos de encontros, registros de graute coincidentes, validação de estrutura/alcance e convenções antigas; preservar snapshots originais e bloqueio entre abas. Evoluir os comandos e o commit para impedir dupla reconciliação de vãos ou perda de dependentes absorvidos.
+- [x] **M3.4-T03 — Continuidade/união:** operação de domínio, compatibilidade, identidade sobrevivente, remapeamento de dependentes, prévia e confirmação pelos gestos de criação e movimento.
+- [x] **M3.4-T04 — Movimento:** translação modular, dependentes exclusivos/compartilhados, união no destino, prioridade dos alvos, cancelamentos e integração atômica com histórico/fluxo sequencial.
+- [x] **M3.4-T05 — Hover inicial e ajustes herdados:** destaque nas quatro ferramentas, ocultação por modo/estado, identificação e restauração de supressões herdadas na Fiada.
+- [x] **M3.4-T06 — Verificação e entrega:** critérios abaixo, regressões pertinentes, inspeção visual, relatório real, roteiro para solicitante e aceite separado.
+
+### Critérios de aceite
+
+| ID | Resultado verificável |
+|---|---|
+| M3.4-A01 | Extensão por criação mantém uma parede e ID; ponte entre duas compatíveis consolida a cadeia; ambos os sentidos, horizontal/vertical e diferentes lados equivalentes — EX-36/37. |
+| M3.4-A02 | Distância não desenhada/ocupada, altura/faixa incompatíveis e sobreposição não geram união indevida; motivo da incompatibilidade na prévia; ramal perpendicular preservado. Sem união global ao reabrir/importar nem por redimensionamento — EX-41. |
+| M3.4-A03 | Sobrevivente determinístico, seleção atualizada, IDs de vãos/ajustes preservados e referências remapeadas; vãos não mudam posição mundial; desfazer/refazer recupera exatamente entidades e IDs — EX-37. |
+| M3.4-A04 | União mantém supressão nos trechos originais, ponte não suprimida; extensão de entidade única conserva alcance wall; novas remoções cobrem parede inteira mesmo havendo ranges; restauração por UUID preserva outros ajustes na mesma parede/cota. Faixas/células/origens sem duplicação — EX-38/44. |
+| M3.4-A05 | Arrastar corpo em Selecionar move só parede e dependentes com prévia modular; sem união, comprimento/orientação/altura/offset/cotas e IDs exclusivos preservados; vizinhas imóveis. Destino em continuidade compatível une a cadeia, preservando posições mundiais de destino e atualizando seleção/offsets; movimento+união em um gesto e um histórico — EX-39/43. |
+| M3.4-A06 | Ajustes compartilhados de inclusão/exclusão conservam original nas paredes imóveis e cópia transladada com novo ID na movida; undo/redo preservam identidade; exclusão coincidente prevalece independentemente da ordem; clique muda apenas registros elegíveis preservando IDs e descarte age por ID; limites sem perda de intenção — EX-40/45. |
+| M3.4-A07 | Clique simples seleciona; alças/vãos/seletor de sobrepostos mantêm prioridade; navegação não move; Escape/blur/soltura fora cancelam, zero delta sem histórico; bloqueios respeitados — EX-41. |
+| M3.4-A08 | Destaque corresponde à célula que contém o centro da cruz nas quatro ferramentas, inclusive coordenadas negativas; a criação inclui a célula inteira em ambos os sentidos, inclusive arraste inverso pela extremidade; hospedeira ambígua exige escolha; zoom/câmera/ferramenta atualizam hover sem novo mousemove; hover não salva/calcula/historiciza e não fica preso — EX-42/48/49/50. |
+| M3.4-A09 | Encontros e automáticos recompostos sem transportar peças; escolhas preservadas com ID/âncora e vínculo verificável, sem colisão de componentId apagar registros; intenções incompatíveis localizáveis e descartáveis individualmente; conflitos entre vãos reunidos não apagam trabalho — CT-11/EX-46/47. |
+| M3.4-A10 | Arquivos v1–v5 validados com schemas/motores originais antes da migração; defaults/IDs/supressões preservados; v6 nominal-v7 executa todos os estágios e preserva ranges, escolhas e registros coincidentes após save/reopen/download/import; IDs duplicados, alcance não modular, referências órfãs e snapshots adulterados recusados; bloqueio entre abas preservado. |
+| M3.4-A11 | Salvar/calcular/salvar e falhas do motor/duas gravações liberam controles e preservam memória/download; sem cálculo durante hover/prévia; histórico não guarda resultados gerados. |
+| M3.4-A12 | Regressões M1/M2/M3.1–3.3, Chrome/Edge, bases 25/30/28 e módulo 12,51 cm, sentidos/lados, múltiplos ajustes e cancelamentos; limites sem truncamento; evidências automatizadas e aceite do solicitante registrados separadamente. |
+
+### Verificações na implementação
+
+Executar typecheck, lint, domínio/persistência, e2e pertinentes e build. Usar EX-36–48 com entradas/saídas independentes; conferir intervalos, posições mundiais, associações, cobertura e IDs, não apenas quantidade de paredes. Repetir transformações/reflexões e ordem/sentido do desenho para identidade determinística. Ensaiar supressões distintas/dormentes/concorrentes, vãos pendentes, ajustes include/exclude compartilhados, limites de cópias e diagnóstico de topologia alterada. Incluir movimento até uma ponta e até o intervalo entre duas paredes, prévia consolidada, cancelamento, desfazer/refazer e dependentes exclusivos/compartilhados; garantir ausência de gravação intermediária. Testar snapshots v5 antes da migração e v6 após ela, com adulteração e leitura bloqueada. Não exigir solução de cruz/transições excluídas nem testar dimensão resistente.
+
+Gestos de navegador em perfis isolados; verificar hover, prévia e integridade do download após confirmação/cancelamento. Suítes complementares devem ter saídas de artefatos separadas ou executar sequencialmente para evitar o conflito registrado na execução assistida de M3.3. Medir carga pertinente à edição sem declarar desempenho de M4. Só extrair responsabilidades concretas necessárias; sem nova biblioteca, Worker ou protótipo separado.
+
+### Roteiro manual após implementação
+
+| Passo | Ação | Esperado |
+|---|---|---|
+| 1 | Desenhar A de 100 cm; prolongar até 200; repetir em vertical e sentido inverso | Prévia do total; uma parede; ID mantido; desfazer volta a 100 — A01. |
+| 2 | Duas paredes [0,100) e [200,300); inserir ponte; incluir janela na segunda antes | Uma parede 300, janela no mesmo lugar; desfazer/refazer restaura dependências — A01/A03. |
+| 3 | Repetir com alturas/lados incompatíveis e ramal perpendicular | Incompatibilidade visível, paredes distintas; ramal não desaparece — A02. |
+| 4 | Suprimir canaleta só de A e fazer ponte; remover faixa da consolidada e restaurar este último ajuste | Herança restrita a A; nova remoção integral; restauração não apaga a herança — A04. |
+| 5 | Selecionar e mover parede com janela/graute por 25×50 cm; Escape, soltura fora e desfazer | Prévia inclui vãos; cancelamentos intactos; só parede escolhida se move — A05/A07. |
+| 6 | L com inclusão e depois exclusão compartilhada; mover uma das paredes e desfazer/refazer | Intenção imóvel mais cópia transladada, IDs recuperáveis e vizinha imóvel — A06/A09. |
+| 7 | Passar cursor nas quatro ferramentas, mudar zoom, navegar, sair do canvas | Célula de início legível e correspondente ao gesto; nenhum efeito no projeto — A08. |
+| 8 | Reabrir, baixar/importar e conferir supressões/ajustes após edição; testar cópia antiga | Integridade e migração corretas; nenhum arquivo original modificado — A10. |
+| 9 | Mover C para uma ponta compatível e depois repetir preenchendo o intervalo entre A/B, com janela/supressão em C; cancelar, confirmar e desfazer/refazer | Prévia consolidada; uma parede ao confirmar; dependentes no destino, supressão no trecho transladado, um único desfazer restaura paredes separadas — A05/EX-43. |
+
+### Registro documental
+
+PRD 0.14, arquitetura 1.7 e caderno revisão 10 atualizados. AGENTS permite a nova evolução sem liberar divisão/edição de tijolos. README distingue funções implementadas de especificadas. Aceites e relatos anteriores preservados. Revisão de consistência, referências locais e `git diff --check`; nenhum teste do aplicativo executado por se tratar apenas de documentação. Implementação, verificação de código, roteiro manual e aceite de M3.4 permanecem pendentes; M4 não iniciado.
+
+Refinamento solicitado em 13/10/2026: união automática também ao mover para continuidade compatível, substituindo a delimitação inicial ao desenho. Atualizados PRD §21, Arquitetura §16, CT-11/EX-43, tarefas, critérios e roteiro. Mantidas D34-01/02 e a exclusão de união por redimensionamento. Revisão documental; nenhuma implementação iniciada.
+
+### Revisão de prontidão de M3.4 — 13/10/2026
+
+Revisados contratos contra `project.ts`, `openings.ts`, `grout.ts`, `channels.ts`, `composition.ts`, `files.ts`, `store.ts`, Canvas e Fiada. Não foram alterados arquivos de código. Identificados e fechados os seguintes pontos de integração na Arquitetura §16 e nos critérios existentes, sem renumerá-los:
+
+| Ponto encontrado no código vigente | Contrato de M3.4 e verificação |
+|---|---|
+| commit aplica reconcileOpenings a toda mudança de parede, inclusive um candidato já transladado | Tipo explícito de comando; transformar uma vez e preservar offsets/posição conforme operação — A03/A05/A11. |
+| Filtros do store eliminam dependentes de IDs ausentes, podendo confundir absorção por união com exclusão | Remapear primeiro; validar relações no candidato final; ID sobrevivente retornado à seleção — A03/A09/A10. |
+| Supressão é única por parede/cota, e restoreBand elimina todos os registros do alvo | v6 admite alcances múltiplos com IDs distintos; adicionar wall apesar de ranges; restaurar só ID escolhido — A04/A10, EX-38/44. |
+| Graute é único por coordenada; toggle remove todos os registros e applyGrout depende da ordem das ações | Validação v6 permite intenções coincidentes; inclusões antes de exclusões; clique atualiza elegíveis preservando IDs — A06/A10, EX-45. |
+| Escolhas de encontro só têm componentId/signature, dependentes da segmentação/IDs; não há identidade própria nem âncora persistida | UUID/anchor/binding, critério conservador de correspondência geométrica, pendências localizáveis e descarte individual — A09/A10, EX-46. |
+| Motor contém condições explícitas para cada nominal-vN; novo enum sozinho deixaria estágios de fora | Incluir pipeline completo v7, manter algoritmos/schemas antigos para validar snapshots — A10/A12. |
+| Vãos válidos em hospedeiras separadas podem ficar incompatíveis depois de consolidadas | Tratar transformação como edição indireta, conservar vãos/IDs e diagnosticar; não usar putOpening para apagar/bloquear intenção — A03/A09, EX-47. |
+| makeWall gera UUID durante a prévia, seleção atual usa preview.id e alvo de vão pega primeira hospedeira | Planejamento sem IDs persistentes, ID final retornado ao editor, escolha de hospedeira explícita e mesma âncora de hover/gesto — A03/A07/A08, EX-48. |
+
+Também explicitados extensão simples versus consolidação para o alcance de supressão, altura do trecho novo quando houver incompatibilidade direta, fim da propagação em cadeia incompatível, delta relativo ao ponto de pega e prioridade das alças. União por redimensionamento e sobreposição positiva continuam fora do recorte especificado; união por movimento permanece incluída.
+
+EX-44–48 acrescentados ao caderno e incorporados aos critérios existentes. Na implementação, verificar tanto operações em memória quanto exportação/reabertura; nenhuma pendência de decisão de produto identificada nos casos revisados. Os contratos estão prontos para orientar a implementação solicitada, sem garantir ausência de erros de código futuro. M3.4 ainda não implementado, testado ou aceito. As verificações desta revisão foram documentais: consistência de contratos, exemplos e referências, links locais e git diff --check; nenhum teste do aplicativo ou instalação de dependências.
+
+### Organização do AGENTS.md — 13/10/2026
+
+Por solicitação, AGENTS.md passa a concentrar orientações de trabalho, consulta às referências e validação. Retiradas as cópias de regras de produto/arquitetura e a referência específica a M3.4; substituídas por instruções para usar e atualizar o documento responsável. PRD, arquitetura e caderno continuam sendo as fontes dessas regras; nenhum comportamento, escopo ou aceite foi alterado. Preservadas orientações contra ampliação silenciosa, invenção de regras construtivas e implementação sem solicitação. Revisão documental e `git diff --check`, sem mudança de código ou testes do aplicativo.
+
+### Relatório de implementação de M3.4 — 13/10/2026
+
+Solicitação: registrar commit e depois implementar M3.4. Commit preparatório **3cdaa2e** reuniu documentação/aceite de M3.3, especificação/revisão de M3.4, organização do AGENTS e atualização local do Vitest já verificada. Nenhum push foi solicitado/executado. Implementação posterior permanece no working tree para teste, sem segundo commit automático.
+
+Aplicativo versão **0.6.0**. Operações de domínio em `src/domain/wall-editing.ts`: criação de continuidade prolonga/une a cadeia compatível; movimento translada uma parede com seus dependentes e une no destino. Preview usa a mesma geometria, sem geração de fiadas ou UUID persistente; confirmação retorna o ID sobrevivente. União não depende de ordem/sentido, respeita face/faixa/altura/pavimento, mantém ramais e diagnostica incompatibilidades/sobreposição. Alças continuam prioritárias; para criar sobre a ponta selecionada, limpar seleção primeiro. Redimensionar não dispara união.
+
+Planta/Selecionar permite arrastar corpo da parede. Janela/porta/vão acompanha o movimento; vãos imóveis mantêm posição mundial após unir. Remapeamento precede filtros de exclusão e commit move/create evita dupla reconciliação de offsets. Cancelamentos, navegação, clique simples e delta zero preservam documento. Graute manual compartilhado é desdobrado em original imóvel e cópia transladada; inclusões/exclusões coincidentes são preservadas, com exclusão prevalecendo independentemente de ordem. Desfazer/refazer recupera IDs/associações e o estado anterior à união/movimento em uma operação.
+
+Supressão wall segue extensão simples. Consolidação de duas ou mais existentes converte wall em range herdado, limitado ao trecho original ou já transladado. Remoção completa posterior é independente de ranges; restauração usa UUID e não elimina as demais intenções da mesma parede/cota. Fiada identifica alcance herdado/parede inteira. Escolhas de encontros têm UUID, âncora e binding; mudanças de topologia conservam pendências localizáveis, com descarte individual e opção global explicitamente rotulada. Componentes independentes permanecem disponíveis.
+
+Quadrado cinza de início em Parede/Porta/Janela/Vão, alinhado ao alvo real. Abertura pela extremidade final mostra última célula interior com âncora final; alvo múltiplo exige seleção de hospedeira antes de novo arraste. Zoom/câmera/ferramenta recalculam destaque sem modificar projeto. Correção visual após captura: camada cinza passou para cima do desenho, pois ficava encoberta pela parede.
+
+Arquivo **v6 / nominal-v7**; schema vigente exige scope de canaleta e identidade/âncora/binding de encontro. Domínio aceita representação antiga para conferir convenções anteriores. Leitura v1–v5 valida snapshot original antes de migrar; preserva geometrias/IDs/configurações, sem união geral ou ativação de categorias desligadas. Em leitura bloqueada, preserva resultado antigo desatualizado, sem salvar/calcular. Tabela IndexedDB e limite de arquivo 50 MB mantidos. Aplicativos anteriores rejeitam v6 como versão futura; manter backup de arquivos antigos. Download/importação não modifica arquivo fonte.
+
+#### Verificações reais pelo Codex
+
+| Verificação | Resultado |
+|---|---|
+| `./Start-Ecovit.ps1 -Task typecheck` | Passou, incluindo última ampliação dos testes de navegador |
+| `./Start-Ecovit.ps1 -Task lint` | Passou, sem erros/avisos |
+| `./Start-Ecovit.ps1 -Task test` | **152 passaram**: 125 regressões atualizadas ao contrato vigente, 24 testes de domínio M3.4 e 3 de estado/histórico/falha M3.4 |
+| `./Start-Ecovit.ps1 -Task test:e2e` | Rodada completa **82 passaram**, 41 por navegador: 72 regressões + 10 fluxos iniciais de M3.4. Depois de ampliar o teste de zoom e acrescentar carga/hospedeira ambígua, **6 verificações pertinentes passaram** (3 por navegador). Suíte atual contém 86 casos; não se declara nova execução integral de 86 após essa ampliação |
+| `./Start-Ecovit.ps1 -Task build` | Passou; JS 857,94 kB / 267,75 kB gzip. Permanecem avisos conhecidos de comentários de otimização do Zod e bundle maior que 500 kB |
+| Inspeção visual | Capturas de ponte, movimento/união com janela e célula cinza em 1440×1000 inspecionadas; comprimento total, posição da janela e marcador legíveis. Capturas `.tools/m34-*.png`, ignoradas pelo Git |
+| Carga de edição | 100 paredes, 40 fiadas, 42 mil peças; mover uma parede em **1.214 ms Chrome / 1.251 ms Edge**, incluindo gesto e salvar/calcular/salvar. Conferidas extremidades, vizinhas intactas e contagem no download. Não é benchmark isolado ou garantia para outros computadores/M4 |
+| Servidor | HTTP 200 em `http://127.0.0.1:5173/` |
+| Documentação/Git | Estados atuais e README atualizados, referências locais e `git diff --check` conferidos; sem alteração de escopo de M4 |
+| Teste manual/aceite do solicitante | **Pendente**; não atribuído resultado individual ou aceite automaticamente |
+
+Rodadas intermediárias identificaram falhas corrigidas antes da entrega: enum de composição v7 incompleto na validação, restrição antiga de coordenada única para grautes, ajustes dos fixtures/expectativas para v6, seleção de parede em sobreposição que estava omitindo o seletor, e camada de hover encoberta. Uma rodada de regressão durante edição teve 69/72 e um timeout de download no Chrome; a rodada completa estabilizada de 82 passou após as correções, assim como as ampliações pertinentes. Casos que antes recusavam duplicata de coordenada foram atualizados para recusar UUID duplicado; a coexistência legítima tem novo teste de ordem/precedência. Fixtures de arquivos antigos mantêm campos originais antes da migração, sem acrescentar scope/IDs novos artificialmente. Testes usam perfis isolados e documentos sintéticos, sem usar projetos pessoais.
+
+#### Evidências por critérios
+
+| Critérios | Alcance verificado |
+|---|---|
+| A01–03 | EX-36/37 em horizontal/vertical, dois sentidos/lados; ordem das paredes, sobrevivente, ponte, ramal preservado e undo/redo; browser confirma preview/arquivo/seleção |
+| A04 | EX-38/44: extensão wall, herança range, novo wall apesar de range e restauração por ID, sem suprimir ponte/vizinha; domínio e Fiada |
+| A05–07 | EX-39/40/41/43: delta modular, janela, vizinha imóvel, cópia compartilhada include/exclude, uma operação, Escape/blur/soltura fora/zero; estado verifica duas gravações e recuperação de falha |
+| A08 | EX-42/48: quatro ferramentas, alvo inverso pela ponta final, zoom mantendo âncora, hospedeira múltipla sem inserção arbitrária e hover sem alterar documento; inspeção visual |
+| A09 | EX-46/47: escolha com ID/âncora pendente após desconectar, descarte na interface; vãos conservados com diagnóstico de separação após união |
+| A10–11 | Snapshot v5 conferido/adulteração recusada; regressões v1–v4, arquivo v6 de ranges/coincidências/pendências, ID duplicado e alcance não modular/orfão; commit explícito, histórico sem resultado e retry; regressões de quota/bloqueio entre abas |
+| A12 | Bases 25/30/28 e módulo 12,51 no domínio, rotações/sentidos/lados, Chrome/Edge, 100 paredes na edição; verificações automatizadas separadas do aceite manual |
+
+#### Limites e próximo teste
+
+Sem lajes/pavimentos/quantitativos, divisão/rotação/grupos ou união por redimensionamento. União trata contato contíguo colinear, não sobreposição longitudinal positiva; paredes incompatíveis permanecem separadas. Cruz/transições sem suporte continuam diagnosticadas. Escolhas de encontro que perderem vínculo exigem revisão/descarte e não são transplantadas automaticamente. Modelo nominal, sem validação estrutural. Não realizada auditoria completa de acessibilidade nem desempenho de três pavimentos/100 mil peças.
+
+Para testar: atualizar `http://127.0.0.1:5173/`, baixar backup antes de abrir projeto pessoal e seguir os nove passos do roteiro desta seção. Priorizar ponte entre duas paredes, movimento com união, janela/graute compartilhado e restauração individual das supressões herdadas; conferir conforto do drag/zoom e leitura do quadrado cinza no monitor habitual. M3.4 disponível para teste, aguardando aceite; M4 não iniciado.
+
+### Correção de usabilidade do módulo inicial — 13/10/2026
+
+Feedback do solicitante: destaque podia saltar para a célula vizinha sem o centro da cruz sair da célula atual; ao arrastar para cima/esquerda, o desenho não incluía o módulo inicialmente destacado. Diagnóstico: uso de Math.round para o vértice mais próximo e âncora fixa na borda inferior longitudinal. Correção solicitada e implementada no aplicativo, mantendo M3.4 aguardando aceite.
+
+Nova regra: o hotspot da cruz seleciona a célula que contém o ponto por floor, incluindo coordenadas negativas. Parede/Porta/Janela/Vão compartilham identificação da célula na prévia e na pressão. Arraste conserva célula e posição bruta de pressão; direção escolhe a borda inicial e garante a célula inteira no elemento. Lado da espessura mantém a parede sobre a célula escolhida. O final continua modular; não se altera o comportamento de alças, movimento de parede ou movimento de vão. Na ponta final de hospedeira, a última célula interior é elegível. Pequeno deslocamento até 3 px não cria elemento; abertura considera delta longitudinal, sem criação por arraste puramente transversal. Conexão só é mostrada/efetivada no fim quando compatível com a faixa escolhida; não desloca o início para outro módulo. Prolongamento pode ser iniciado na célula livre contígua à ponta.
+
+Funções de dados em `src/domain/drawing.ts`, integradas ao Canvas. PRD §21, Arquitetura §16, CT-11/EX-49/50, A08 e README atualizados. Sem evolução de arquivo ou convenção de composição; paredes/vãos salvos não são deslocados pela correção. Sem commit/push adicional.
+
+Verificações reais:
+
+- Tipos e lint passaram.
+- **162 testes passaram**: 152 anteriores mais 10 de seleção por célula/negativas/bases 25/30/28/12,51, quatro sentidos/dois lados, abertura inversa e conexão que não deve deslocar a faixa inicial.
+- Navegador: rodada completa com **88/90 passando**; os dois casos de seleção/exclusão L/T ainda procuravam rótulo de 100 cm do gesto antigo. Atualizada a expectativa para 112,5 cm, pois a parede desenhada para cima agora inclui o módulo inicial [100;112,5). **Ambos passaram na repetição isolada em Chrome/Edge.** Não se declara outra rodada integral de 90/90; todos os 90 cenários foram verificados após considerar essa repetição. Os quatro novos cenários de navegador exercitam várias posições dentro da mesma célula, quatro sentidos de parede e Porta/Janela/Vão em ambos eixos/sentidos, conferindo geometria no download.
+- Build passou; JS 858,43 kB / 267,98 kB gzip. Avisos conhecidos de Zod/bundle grande permanecem.
+- Documentação e git diff --check conferidos. Testes em perfis isolados e projetos sintéticos.
+
+Pendente do solicitante: atualizar o aplicativo na mesma origem e conferir o centro da cruz nas metades/quadrantes de uma célula, depois desenhar para cima/esquerda e verificar a inclusão do módulo inicial. Conferir também prolongamento a partir de célula livre adjacente e conforto do encaixe/zoom. Esta verificação do Codex não constitui aceite manual.
+
+
+### Ajuste de orientação dos rótulos de aberturas — 13/10/2026
+
+Feedback do solicitante: rótulos de portas, janelas e vãos verticais devem acompanhar a orientação do elemento, à esquerda e ancorados embaixo, como indicado no print. Implementado no canvas: leitura de baixo para cima, origem na extremidade inferior visual, independente do sentido da parede; horizontais continuam acima. Mantido conteúdo tipo/base–topo, fonte de 11 px e folga de 5 px. Retângulos de colisão consideram rotação e métricas do texto; em conflito, deslocar para esquerda/cima sem perder âncora longitudinal. Mesmo renderer cobre prévia, movimento e redimensionamento. Painel transitório de medidas continua horizontal. Sem mudança de dados, formato de arquivo ou motor. PRD §21 e Arquitetura §16 atualizados.
+
+Verificações do Codex: typecheck, lint e build passaram (avisos já existentes sobre anotações do Zod e tamanho do bundle). Verificação dirigida por Playwright em Chrome e Edge confirmou os três tipos em ambos eixos, parede vertical desenhada no sentido inverso, rotação, âncora inferior, afastamento e colisões horizontais/verticais; capturas conferidas visualmente. Regressões pertinentes de criação/edição de aberturas: **18 testes passaram**, nove por navegador, nos arquivos openings.spec.ts e drawing.spec.ts. Não houve nova execução integral da suíte de domínio ou de todos os fluxos e2e, pois a alteração está restrita à apresentação dos rótulos.
+
+Teste manual do solicitante pendente: atualizar o aplicativo, conferir os três tipos em paredes verticais e horizontais no zoom habitual, incluindo prévia, movimento e redimensionamento. Textos podem ultrapassar a extensão de aberturas curtas e ficam sujeitos ao recorte do canvas; não reduzir fonte nem mudar os dados para acomodá-los. M3.4 continua aguardando aceite; M4 não iniciado.

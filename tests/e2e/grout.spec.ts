@@ -325,14 +325,21 @@ test("M3.3 legado M3.2 validado e adulterado recusado antes de migrar", async ({
     old = {
       ...d,
       schemaVersion: 4,
+      adjustments: {
+        ...d.adjustments,
+        channels: d.adjustments.channels.map(({ scope: _scope, ...a }) => {
+          void _scope;
+          return a;
+        }),
+      },
       project,
       generated: g,
       generationState: { status: "current", diagnostics: g.diagnostics },
     };
   await load(page, old);
   const before = await exported(page);
-  expect(before.schemaVersion).toBe(5);
-  expect(before.generated!.convention).toBe("nominal-v6");
+  expect(before.schemaVersion).toBe(6);
+  expect(before.generated!.convention).toBe("nominal-v7");
   expect(before.project.groutSettings).toEqual(defaultGroutSettings(false));
   expect(before.generated!.grouts).toEqual([]);
   expect(before.adjustments.channels).toEqual(d.adjustments.channels);

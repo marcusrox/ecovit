@@ -20,7 +20,12 @@ export type Opening = {
 };
 export type OpeningSettings = { base: number; top: number };
 export type ChannelLevel = { id: string; top: number };
-export type ChannelSuppression = { id: string; wallId: string; top: number };
+export type ChannelSuppression = {
+  id: string;
+  wallId: string;
+  top: number;
+  scope?: { kind: "wall" } | { kind: "range"; from: number; to: number };
+};
 export type GroutSettings = {
   junctions: boolean;
   openings: boolean;
@@ -45,7 +50,7 @@ export const defaultChannelLevels = (): ChannelLevel[] =>
 export type Tool = "select" | "wall" | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 5;
+  schemaVersion: 5 | 6;
   project: {
     id: string;
     name: string;
@@ -118,7 +123,7 @@ export function createProject(name: string, base: Base): Project {
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 5,
+    schemaVersion: 6,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -146,7 +151,7 @@ export function createProject(name: string, base: Base): Project {
     adjustments: { junctions: [], grout: [], channels: [] },
     generated: null,
     generationState: { status: "outdated", diagnostics: [] },
-    metadata: { createdAt: now, updatedAt: now, appVersion: "0.5.0" },
+    metadata: { createdAt: now, updatedAt: now, appVersion: "0.6.0" },
   };
 }
 export const snap = (n: number, module: number) =>
@@ -164,13 +169,14 @@ export function makeWall(
   floorId: string,
   height: number,
   side: 1 | -1,
+  id: string = crypto.randomUUID(),
 ): Wall | null {
   const start = snapPoint(a, module),
     end = snapPoint(cursor, module);
   if (Math.abs(end.x - start.x) >= Math.abs(end.y - start.y)) end.y = start.y;
   else end.x = start.x;
   if (end.x === start.x && end.y === start.y) return null;
-  return { id: crypto.randomUUID(), floorId, a: start, b: end, height, side };
+  return { id, floorId, a: start, b: end, height, side };
 }
 export function resizeWall(
   w: Wall,

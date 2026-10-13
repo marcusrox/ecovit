@@ -1,4 +1,4 @@
-import { generate, type Composition } from "../domain/composition";
+import { generate, signature, type Composition } from "../domain/composition";
 import { create } from "zustand";
 import {
   remember,
@@ -67,7 +67,10 @@ type State = Inspection & {
   select: string | null;
   open: (doc: Project, fresh?: boolean) => Promise<void>;
   close: () => void;
-  commit: (doc: Project) => Promise<void>;
+  commit: (
+    doc: Project,
+    command?: "resize" | "move" | "create/merge",
+  ) => Promise<void>;
   undo: (redo?: boolean) => Promise<void>;
   notify: (message: string) => void;
   choose: (id: string | null) => void;
@@ -75,7 +78,7 @@ type State = Inspection & {
 };
 export const useStore = create<State>((set, get) => {
   async function persist(doc: Project) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.5.0" } };
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.6.0" } };
     set({ doc });
     set({ busy: true, saved: "saving" });
     let saveFailed = false;
@@ -188,13 +191,15 @@ export const useStore = create<State>((set, get) => {
         history: { past: [], future: [] },
       });
     },
-    commit: async (candidate) => {
+    commit: async (candidate, command = "resize") => {
       const s = get();
       if (s.busy || s.readonly || !s.doc) return;
       try {
         const doc = validateProject(
           {
-            ...reconcileOpenings(s.doc, candidate),
+            ...(command === "resize"
+              ? reconcileOpenings(s.doc, candidate)
+              : candidate),
             adjustments: {
               ...candidate.adjustments,
               grout: candidate.adjustments.grout
@@ -208,11 +213,25 @@ export const useStore = create<State>((set, get) => {
               channels: candidate.adjustments.channels.filter((a) =>
                 candidate.model.walls.some((w) => w.id === a.wallId),
               ),
-              junctions: candidate.adjustments.junctions.filter((a) =>
-                a.wallIds.every((id) =>
-                  candidate.model.walls.some((w) => w.id === id),
-                ),
-              ),
+              junctions: candidate.adjustments.junctions
+                .map((a) => {
+                  const wallIds = a.wallIds.filter((id) =>
+                    candidate.model.walls.some((w) => w.id === id),
+                  );
+                  const applicable =
+                    wallIds.length === a.wallIds.length &&
+                    signature(
+                      candidate.model.walls.filter((w) =>
+                        wallIds.includes(w.id),
+                      ),
+                    ) === a.signature;
+                  return {
+                    ...a,
+                    wallIds,
+                    binding: applicable ? a.binding : ("pending" as const),
+                  };
+                })
+                .filter((a) => a.wallIds.length),
             },
             generated: s.doc.generated,
             generationState: changedInputs(s.doc, candidate)
@@ -220,7 +239,7 @@ export const useStore = create<State>((set, get) => {
               : s.doc.generationState,
             metadata: {
               ...candidate.metadata,
-              appVersion: "0.5.0",
+              appVersion: "0.6.0",
               updatedAt: new Date().toISOString(),
             },
           },
@@ -229,6 +248,9 @@ export const useStore = create<State>((set, get) => {
         set({
           preview: null,
           pendingOpening: null,
+          channelBand: null,
+          groutCell: null,
+          component: null,
           doc,
           history: remember(s.history, s.doc),
           message: "",
