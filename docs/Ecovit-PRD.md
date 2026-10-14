@@ -1,8 +1,8 @@
 # Ecovit — Documento de requisitos do produto (PRD)
 
-**Versão:** 0.14 — Evolução da edição no canvas em M3.4\
+**Versão:** 0.15 — Suporte nominal à cruz implementado em M3.5\
 **Data:** 13 de outubro de 2026\
-**Status:** M1/M2 e M3.1/M3.2/M3.3 aprovados pelo solicitante; M3.4 implementado na versão 0.6.0, aguardando teste manual e aceite.\
+**Status:** M1/M2 e M3.1/M3.2/M3.3 aprovados pelo solicitante; M3.4/M3.5 implementados, com teste manual/aceite próprios pendentes.\
 **Plataforma:** aplicação web, inicialmente com interface e documentação em português brasileiro.
 
 ## 1. Visão do produto
@@ -186,7 +186,7 @@ O resultado deverá distinguir sugestão automática de ajuste manual por indica
 
 ### RF-05 — Encontros automáticos e editáveis
 
-**Recorte aprovado para M2:** L alternado e T com parede principal contínua e ramal encostado, conforme [caderno técnico](Ecovit-Caderno-Tecnico.md). O T indica necessidade de ligação complementar, sem dimensioná-la. A cruz será reconhecida e diagnosticada, mas sua composição automática fica fora do primeiro M2. O objetivo completo abaixo permanece para evolução; essa exclusão não implica implementação automática em M3.
+**Recorte histórico aprovado para M2:** L alternado e T com parede principal contínua e ramal encostado, conforme [caderno técnico](Ecovit-Caderno-Tecnico.md). O T indica necessidade de ligação complementar, sem dimensioná-la. A cruz foi reconhecida e diagnosticada, com composição automática excluída de M2 e dos incrementos implementados até M3.4. Por solicitação de 13/10/2026, M3.5 passa a exigir suporte nominal à cruz conforme §22 e CT-12; essa especificação não representa funcionalidade já implementada.
 
 O Ecovit reconhecerá encontros em L, T e cruz e definirá automaticamente uma composição compatível com os padrões suportados, conforme as convenções nominais documentadas no caderno técnico. Considerará alternância das peças, fechamento geométrico das paredes, alinhamento dos eixos nominais e representação de canaletas. Peças especiais e sua preparação só serão incorporadas quando houver procedimentos documentados; a composição nominal não comprova amarração resistente ou passagem física.
 
@@ -516,6 +516,8 @@ Face externa como referência fixa de paredes, espessura igual à largura do tij
 
 Tela “Configurações do projeto”, acessível no editor, compacta e inspirada no print fornecido: grupos Vãos, Canaletas e Graute vertical. Não copiar abas ou controles sem função solicitada, como armaduras, grampos e idioma. Aplicar confirma uma única operação de histórico e recálculo; Cancelar não modifica nada. Restaurar padrões atua no grupo e só efetiva ao aplicar; não apaga ajustes manuais existentes.
 
+Apresentação revisada em 14/10/2026 por solicitação: três grupos lado a lado em telas de computador, com campos/padrões visíveis sem rolagem nos tamanhos comuns. Explicações longas ficam nos ícones “i”, acessíveis por clique e teclado; altura resultante e fiadas permanecem visíveis. Aplicar e Cancelar ficam em rodapé sempre acessível. Listas extensas de canaletas podem rolar dentro do grupo; telas pequenas/baixas permitem rolagem do conteúdo, sem esconder ações ou limitar a quantidade de níveis. Sem alterar valores, regras, ajustes ou formato do projeto.
+
 Restaurar padrões de configuração é diferente de restaurar ajustes automáticos: a primeira ação preserva inclusões/exclusões e supressões; a segunda remove explicitamente o ajuste escolhido para permitir novamente a automação.
 
 | Grupo | Campos e comportamento |
@@ -615,3 +617,17 @@ Portas, janelas e vãos verticais exibem o rótulo à esquerda, com leitura de b
 Se ajustes preservados coincidirem no mesmo eixo, qualquer exclusão aplicável prevalece sobre inclusões, independentemente da ordem dos registros. Adicionar/remover pelo furo define a ação explicitamente em todos os ajustes aplicáveis daquele eixo, conservando IDs e associações; não apagar ajustes pendentes na mesma coordenada. Descartar um ajuste continua agindo apenas pelo seu ID. Supressões de canaleta também são restauradas pelo ID escolhido; não restaurar todos os trechos da mesma parede/cota implicitamente.
 
 As regras geométricas e exemplos estão em CT-11/EX-36–48 do caderno; dados/migração na Arquitetura §16; tarefas, aceite e roteiro no Plano §8. Sem nova regra resistente, divisão/rotação de paredes, edição de tijolos, lajes, pavimentos ou quantitativos.
+
+## 22. M3.5 — Composição nominal de encontros em cruz — 13/10/2026
+
+**Solicitação:** incluir suporte à cruz, inclusive quando integrada a um contorno fechado com encontros L/T. Implementação posteriormente autorizada e entregue no aplicativo 0.7.0; verificações no Plano §9, teste manual/aceite pendentes. Complementa RF-04/05/07/09/10/12 e substitui a exclusão da cruz somente na nova entrega; os relatos e contratos anteriores permanecem históricos.
+
+Uma cruz ortogonal com quatro ramos de alvenaria deve receber composição automática conforme CT-12, sem exigir que o usuário altere medidas, separe paredes ou transforme o cruzamento em dois T. Resolver o componente conectado inteiro, incluindo contorno externo e divisórias; uma cruz suportada não pode apagar as peças desse conjunto. Não basta mostrar apenas uma cruz isolada resolvida. Modelagem nominal não comprova ligação resistente entre paredes.
+
+A convenção geométrica de CT-12 usa uma faixa principal contínua horizontal na fase A e vertical na B, com os dois ramos transversais terminando na face de contato. A célula central é ocupada uma vez. Manter pareamento de células, alternância global e limites geométricos documentados; não desenhar peça em L/cruz nem alterar faces, espessuras ou comprimentos. Não apresentar a troca de direção como amarração estrutural comprovada. Alternativa na primeira fiada inverte a fase do componente inteiro, com prévia/confirmar/cancelar; sem escolhas independentes que disputem a mesma ocupação.
+
+Integrar vãos, canaletas e grautes pelos contratos existentes após compor a alvenaria. Vãos não podem invadir a célula compartilhada do encontro nas alturas em que as paredes coexistem; um vão acima de uma parede encerrada não invade o encontro inferior. Preservar edição indireta incompatível com diagnóstico. Canaletas coincidentes e eixo de graute do cruzamento não duplicam por parede/origem. Ajustes, movimento/união de paredes, histórico e transporte permanecem aplicáveis. Classificar a geometria existente em cada fiada, preservando fase quando a cruz se tornar reta após terminar uma das paredes.
+
+Para conflito real de ocupação, alturas sem padrão, escolha pendente ou combinação de encontros incompatível, manter diagnóstico localizável e componente afetado sem composição; outros componentes continuam visíveis. Não usar o simples reconhecimento de cruz como erro. Informar a consequência: “Composição suspensa em N paredes conectadas: [motivo]”, destacando encontro e paredes afetadas. Snapshots antigos com cruz bloqueada permanecem validados pelo contrato original antes da migração; o editor atual não deve atribuir suporte ausente à modulação nem usar mensagem operacional dependente de “no M2”.
+
+CT-12/EX-51–55 define geometria/exemplos; Arquitetura §17 define processamento/migração; Plano §9 define tarefas/aceite. Sem lajes, múltiplos pavimentos, quantitativos, aço, peças especiais ou validação estrutural. M3.4 continua com seu aceite próprio pendente.

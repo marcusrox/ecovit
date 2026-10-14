@@ -1,8 +1,10 @@
 # Ecovit — Caderno técnico
 
-**Revisão:** 10 — Convenções de união e translação para M3.4
+**Revisão:** 11 — Cruz nominal de CT-12 implementada em M3.5
 **Estado:** M2 e M3.1 aprovados em 12/10/2026; M3.2 e M3.3 aprovados em 13/10/2026. CT-10 implementado; CT-11 implementado em M3.4 e casos EX-36–48 exercitados em verificações de domínio/navegador; aceite manual pendente.\
 **Alcance implementado:** composição geométrica de paredes, vãos, canaletas e grautes em um pavimento, conforme [plano §7/8](Ecovit-Plano-Implementacao.md). O [PRD](Ecovit-PRD.md) continua sendo a referência de produto. CT-07/08/09 preservados; CT-10 e EX-22/32–34 exercitados por posições/intervalos independentes, categorias e ajustes. Evidências e limites por critério estão no plano.
+
+**Evolução implementada:** CT-12/EX-51–55 inclui composição nominal da cruz em M3.5, com verificações registradas no plano e aceite manual pendente. A exclusão de P3/EX-11 permanece como contrato histórico das convenções nominal-v1–v7.
 
 ## 1. Evidência, convenção e limite
 
@@ -103,7 +105,7 @@ Usar padrões locais explícitos e verificados; não introduzir otimizador, busc
 
 Ordenação determinística: células por y e depois x. Percurso aberto começa na primeira extremidade nessa ordem. Havendo cantos, a fase A é ancorada horizontalmente somente no primeiro canto geométrico nessa ordem; a paridade do caminho determina os demais. Essa âncora conserva o padrão do L simples, sem depender de IDs, ordem ou sentido do desenho. Retas mantêm CT-04 e ramais mantêm paginação desde o contato. Ciclo começa na primeira célula e escolhe a próxima priorizando maior x e menor y; a fase B desloca esse início uma célula. Conferir fechamento e quantidade par de células. Alternativa inverte A/B do conjunto inteiro, não cada canto isoladamente.
 
-Percursos devem visitar todas as células uma vez, ter duas extremidades ou formar ciclo, e não apresentar ramificação após a separação dos T. Cruz, sobreposição colinear e transições de altura não suportadas continuam diagnosticadas. O antigo mínimo de quatro células na ponte do U era consequência da reserva simultânea de cantos e deixa de existir. EX-18 demonstra agora a solução coordenada. A regra não usa busca combinatória nem otimização por pontuação.
+Percursos devem visitar todas as células uma vez, ter duas extremidades ou formar ciclo, e não apresentar ramificação após a separação dos T. Em nominal-v1–v7, a cruz permanece sem composição; sua evolução está em CT-12. Sobreposição colinear e transições de altura não suportadas continuam diagnosticadas. O antigo mínimo de quatro células na ponte do U era consequência da reserva simultânea de cantos e deixa de existir. EX-18 demonstra agora a solução coordenada. A regra não usa busca combinatória nem otimização por pontuação.
 
 Revisão motivada pelo feedback sobre o projeto FR: a primeira implementação cobria a área, mas impunha cantos iguais e criava meio junto ao encontro. Esta substituição é uma definição geométrica nominal derivada de CT-03/04 e do pareamento já usado no anel EX-04; não acrescenta regra física, peça especial, junta ou dimensão de fabricante. Fontes construtivas e ressalvas de ligação dos T permanecem; não se alega validação estrutural.
 
@@ -111,7 +113,7 @@ Revisão motivada pelo feedback sobre o projeto FR: a primeira implementação c
 
 F3 descreve continuidade da parede externa e ligação da interna por grampos; F6 reforça a distinção entre composição e ligação. Aplicar a continuidade ao ramo principal de qualquer T é uma convenção geométrica do Ecovit. Exibir “Composição geométrica resolvida; ligação complementar necessária”. Essa informação não impede a classificação de geometria nominal resolvida quando CT-06 passar, mas deve permanecer visível e persistida. Não desenhar/dimensionar grampos ou graute no M2, nem apresentar encosto como amarração direta.
 
-**Cruz (P3):** composição automática excluída do primeiro M2 por aprovação explícita após a pesquisa. Reconhecer e emitir “Sem solução automática para este encontro”. Não extrapolar a solução T para dois ramais encostados nem inventar ciclo de fiadas. Retomar o tema em revisão futura de escopo, sem incluí-lo automaticamente em M3. EX-11 verifica reconhecimento e diagnóstico, não composição.
+**Cruz (P3, contrato histórico nominal-v1–v7):** composição automática excluída de M2 e dos incrementos implementados até M3.4. Reconhecer e emitir diagnóstico; EX-11 verifica reconhecimento, não composição. A nova inclusão solicitada em 13/10/2026 está definida em CT-12/EX-51–55. Sua convenção deve ser implementada explicitamente em nominal-v8, sem reinterpretar snapshots antigos ou simplesmente remover o bloqueio do motor.
 
 Um componente conectado sem padrão completo fica inteiro sem composição no modo Fiada, com destaque no encontro causador. A Planta permanece completa e os componentes independentes resolvidos continuam visíveis. Essa é a regra aprovada, não uma opção de implementação. Isso evita peças cortadas artificialmente na fronteira de uma solução parcial. Esse comportamento é um resultado com pendência, não uma exceção de execução.
 
@@ -185,7 +187,7 @@ L1/L2/L4 são limitações físicas conhecidas, com tratamento nominal aprovado 
 |---|---|---|---|
 | P1 | L alternado, mínimo geométrico de `2m` por ramo | CT-05; EX-03/14 | Verificar fechamento conjunto; não é mínimo normativo |
 | P2 | Principal contínua e ramal encostado; aviso de ligação complementar | F3/F6; CT-05; EX-10/13 | Geometria derivada para o Ecovit, sem dimensionar ligação |
-| P3 | Reconhecer cruz; excluir composição automática do primeiro M2 | Decisão do solicitante após pesquisa; EX-11 | Nova inclusão exige revisão de escopo, não ocorre automaticamente em M3 |
+| P3 | Reconhecer cruz; excluir composição automática do primeiro M2 | Decisão histórica; EX-11 | Preservado em nominal-v1–v7; inclusão futura solicitada em M3.5, CT-12/EX-51–55 |
 | P4 | Compatibilidade por ocupação e alternância em todas as fases | CT-05; EX-17/18 | Sem distância mínima universal ou busca genérica de solução |
 | P5 | L → reta com continuidade de fase | CT-02; EX-15/16 | Convenção nominal; outras transições ainda fora do suporte |
 
@@ -381,3 +383,35 @@ A posição ativa da cruz seleciona a célula que contém o ponto, sem aproxima�
 
 - **EX-49:** m=12,5; cursor em (52,5;52,5), (58,75;52,5), (52,5;58,75) ou (58,75;58,75) cm destaca a mesma célula [50,62,5)×[50,62,5). Em (-41,25;-41,25), destaca [-50,-37,5) em ambos os eixos.
 - **EX-50:** célula inicial longitudinal [50,62,5), cursor de pressão 58,75; arrastar até 25 em sentido negativo gera [25,62,5), comprimento 37,5; até 100 em positivo gera [50,100), comprimento 50. Vale para abertura na hospedeira e para parede com faixa transversal contendo a célula, nas duas orientações/lados. Não excluir a célula inicial por usar sua borda inferior como âncora fixa.
+
+## 10. M3.5 — Convenção da cruz nominal — 13/10/2026
+
+### CT-12 — Cruz, fases e composição do conjunto
+
+**Estado:** convenção geométrica implementada, solicitada após a cruz suspender um conjunto de seis paredes conectado a um contorno fechado. Verificações no Plano §9; aceite manual pendente. A investigação desta revisão usa os contratos internos CT-02/03/04/05/06/08/09/10, o pareamento de células já adotado e os exemplos independentes abaixo. Nenhuma nova dimensão física, regra de fabricante ou ligação resistente foi pesquisada/confirmada; a convenção é do desenho nominal do Ecovit. Substitui a exclusão P3 para nominal-v8, preservando EX-11 e nominal-v1–v7 como contratos históricos.
+
+Reconhecer cruz pela célula com quatro vizinhos ortogonais na união da alvenaria ativa, não pelo número/IDs das paredes nem só por extremidades coincidentes. Cada ramo deve existir nessa fiada. Contato por vértice, sobreposição colinear e região mais espessa que os padrões existentes não viram cruz válida automaticamente.
+
+Definição de fase: `p=((n−1) mod 2) XOR phase_do_componente`, sem reiniciar em mudança de altura. A usa continuidade horizontal pela célula central; B usa continuidade vertical. Os dois ramos perpendiculares terminam no contato com a faixa principal, sem ocupar a célula central. A mudança de direção é uma convenção geométrica de duas fases, não evidência de amarração resistente. Informar “Composição nominal; ligação entre paredes não dimensionada”, uma vez por componente, sem classificar como erro estrutural.
+
+Separar os contatos dos ramos transversais no percurso de paginação, sem retirar células do modelo, criar paredes novas ou abrir vazios. Aplicar CT-04 e a paginação contínua de CT-05 aos percursos restantes: pares de células ortogonalmente adjacentes são inteiros; células terminais não pareadas são meios. Percursos retos sem cantos começam na menor coordenada; ramal com um contato inicia nesse contato; com dois contatos usar ordenação geométrica dos extremos. Cantos e ciclos seguem a ordenação/fechamento de CT-05. Na separação, a faixa principal conserva suas duas conexões; se outro encontro exigir cortar/ocupar essa mesma conexão de modo incompatível, diagnosticar o conflito, sem decidir pela ordem ou inserir peças arbitrárias.
+
+A separação de T permanece a de CT-05. Cruzes usam CT-12 em cada fase; depois disso cada região deve ser percurso sem ramificação ou ciclo par. Verificar as duas fases no conjunto inteiro, com uma ocupação por célula, sem peça em L/cruz, meios interiores artificiais ou disputa entre reservas. Meios no contato de ramos separados são términos nominais, como em T; não afirmar corte executado. Não adotar distância mínima universal entre encontros: conferir compatibilidade por células/peças nas duas fases. O cenário de contorno fechado de EX-53 é obrigatório.
+
+Para alturas diferentes, obter a ocupação ativa antes de identificar/separar encontros naquela fiada. A transição simples cruz → reta de EX-54 é obrigatória. Aplicar CT-05 a L/T ainda presentes, sem prolongar parede encerrada ou reiniciar fase. Outras transições/combinações só são resolvidas se os padrões documentados cobrirem integralmente ambas as fases; caso contrário conservar diagnóstico específico. Não prometer solução universal para qualquer desenho com cruz.
+
+Só após a paginação, subtrair vãos por CT-07/08, preservando sua validação de encontro; depois tipar canaletas e gerar grautes por CT-09/10. A invasão de encontro considera sobreposição vertical efetiva: o vão acima do topo de uma parede encerrada não invade aquele encontro das fiadas inferiores. Graute de encontro usa um eixo no centro da célula compartilhada, com associações das paredes presentes e intervalos reais de alvenaria; não gerar quatro eixos por quatro ramos. Canaletas compartilham ocupação/origens, respeitando supressões e alcances herdados de CT-11. Seleção/prévia inverte a fase global do componente; escolhas pendentes de M3.4 não passam a ativas silenciosamente.
+
+### Exemplos independentes de M3.5
+
+Índices de células inteiros `(x,y)`, lado m, altura-base h; A/B como acima. Desativar faixas globais/categorias de graute para conferir apenas peças comuns. Aplicam-se às bases 25/30/28 e módulos personalizados compatíveis, sem nova hipótese física.
+
+| ID | Entrada | Resultado esperado |
+|---|---|---|
+| EX-51 | Cruz mínima: `(0,0),(-1,0),(1,0),(0,-1),(0,1)` | 5 células. A: inteiro `(-1,0)–(0,0)`, meios `(1,0),(0,-1),(0,1)`. B: inteiro `(0,0)–(0,1)`, meios `(0,-1),(-1,0),(1,0)`. Cada fase tem 1 inteiro + 3 meios; nenhum inteiro liga duas células através do centro já ocupado. EX-11 continua exigindo diagnóstico nas convenções antigas. |
+| EX-52 | Horizontal `x=-3…3,y=0`; vertical `y=-3…3,x=0` | 13 células, 5 inteiros + 3 meios em cada fase. A: principal horizontal com pares `(-3,-2),(-1,0),(1,2)` e meio x=3; ramais verticais pareiam distâncias 1/2 desde o contato e deixam meio em ±3. B: principal vertical com meio y=-3, pares `(-2,-1),(0,1),(2,3)`; ramais horizontais deixam meio em ±1 e pareiam distâncias 2/3. Centro único, alternância de direção, sentido do desenho/IDs sem efeito. |
+| EX-53 | Contorno externo `16m×12m`, espessura m para dentro; vertical interior células `(8,y),y=1…7`; horizontal interior `(x,4),x=1…12`; todas altura 3h | Seis paredes, um componente: perímetro `2×16+2×12−4=52` células; interior `7+12−1=18`; total 70. T em `(8,0)` e `(0,4)`, cruz `(8,4)`, quatro L externos. A: anel 26 inteiros, horizontal interior 6, dois ramais verticais de 3 células com 1 inteiro + 1 meio cada: total 34 inteiros + 2 meios. B: anel 26, principal vertical 3 inteiros + 1 meio, ramal horizontal de 7 células 3 inteiros + 1 meio, de 4 células 1 inteiro + 2 meios: total 33 inteiros + 4 meios. Nada do contorno desaparece; inverter fase troca a sequência inteira. |
+| EX-54 | EX-52 com horizontal altura 3h e vertical 2h; variante alturas trocadas | Primeiras duas fiadas cruz A/B; terceira tem só a reta de 7 células, 3 inteiros + 1 meio, na fase absoluta A. Com alternativa global começa B/A e terceira é B; posição do meio segue CT-04, sem reset de fase. Nenhum trecho acima de sua altura. |
+| EX-55 | EX-53 com m=12,5,h=7,altura 280; janela na parede inferior, células x=4/5,y=11, base 98/topo 210; incluir graute manual em origem `(4m,11m)` e testar níveis/supressões | 70 células nas fiadas completas; 68 nas fiadas 15–30, descontadas só as duas células do vão. Sem peça invadindo o vazio ou reinício de fase. Graute nesse eixo ocupa [0,98) e [210,280), sem trecho no vazio; centro da cruz tem um eixo quando Encontros está habilitado. Canaletas e ajustes seguem CT-09/10/11 sem duplicação. Salvar/desfazer/mover/transportar preserva intenção e composição correspondente. |
+
+Conferência documental: `2I+M` reproduz 5/13/70 células; EX-53 tem contorno compartilhado só uma vez e divisão explícita das regiões nas duas fases. Essas contas independentes orientaram os testes executados na implementação, registrados no plano §9, incluindo rotações/reflexões e encontros próximos. Orientação padrão é pelos eixos mundiais, não pelos IDs ou ordem de desenho. Não inferir medidas do arquivo do solicitante a partir de pixels das imagens: EX-53 é caso nominal próprio com topologia equivalente.

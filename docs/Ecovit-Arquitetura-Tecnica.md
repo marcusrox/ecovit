@@ -1,8 +1,8 @@
 # Ecovit — Arquitetura Técnica
 
-**Versão:** 1.7 — Contratos da evolução de edição em M3.4\
+**Versão:** 1.8 — Composição da cruz em M3.5\
 **Data:** 13 de outubro de 2026\
-**Base funcional:** PRD Ecovit 0.14; M3.1/M3.2/M3.3 aprovados; M3.4 implementado, aguardando aceite manual. O aplicativo 0.6.0 usa arquivo versão 6 e composição nominal-v7.\
+**Base funcional:** PRD Ecovit 0.15; M3.1/M3.2/M3.3 aprovados; M3.4/M3.5 implementados, com aceite manual pendente. Aplicativo 0.7.0, arquivo versão 7/composição nominal-v8.\
 **Objetivo:** implementar o editor e o motor construtivo com uma stack acessível, sem infraestrutura desnecessária.
 
 ## 1. Decisões de arquitetura
@@ -365,3 +365,31 @@ Alvos de conexão durante o arraste só são efetivados se respeitarem a faixa i
 ### Orientação dos rótulos de aberturas — 13/10/2026
 
 No renderer do canvas, identificar orientação pela parede hospedeira. Rótulo vertical usa rotação de −90° em coordenadas de tela e origem junto à extremidade inferior do openingBox, à esquerda, com folga de 5 px entre texto e elemento. Horizontal continua acima. Usar métricas do texto para retângulos de colisão nas duas orientações; afastar em passos de 14 px para esquerda/cima preservando âncora longitudinal e evitando atravessar a borda correspondente do canvas. Aplicar igualmente a prévias e elementos confirmados. Painel transitório de medidas permanece horizontal. Nenhuma alteração em modelo, arquivo ou composição.
+
+## 17. Contratos de M3.5 — Cruz nominal — 13/10/2026
+
+**Estado:** implementado, com resultados no Plano §9 e aceite manual pendente. Produto em PRD §22, geometria em CT-12/EX-51–55. O motor nominal-v8 compõe a cruz suportada; os geradores nominal-v1–v7 mantêm sua interpretação de cruz bloqueada para validar arquivos antigos.
+
+### Processamento e resultado
+
+Introduzir nominal-v8 com todos os estágios de nominal-v7. Construir ocupação ativa por fiada antes de classificar encontros. Para cada fase, aplicar separação de contatos de T por CT-05 e de cruz por CT-12, sem eliminar células físicas. Separação muda conexões do percurso, não paredes/modelo. Verificar que reservas de continuidade/contato de encontros próximos não se contradizem; não resolver por ordem dos IDs. Paginar percursos/ciclos com os contratos existentes e conferir cobertura única das células e legalidade de cada inteiro/meio. Só depois subtrair vãos, tipar canaletas e gerar intervalos de graute.
+
+Não basta retirar o `continue` associado ao diagnóstico cross: o paginador atual também recusa ramificações de quatro vizinhos. Identificação/separação, fases, ordenação, cobertura, alternativas, mudanças de altura e estágios associados precisam seguir a nova convenção. Conferir todas as condições explícitas por convention, inclusive channels/grout e validação de snapshots.
+
+Componentes são os conjuntos conectados da geometria, incluindo contornos e divisórias. Cruz suportada deve compor todo o conjunto, não apenas recortar/desenhar um símbolo local. Preservar política de componente sem peças somente quando houver incompatibilidade real não resolvida, erro de geometria ou escolha pendente; componentes independentes permanecem calculados. Identificar encontros por ocupação por fiada, para suportar EX-54 sem recomeçar fase. Não persistir uma duplicação da topologia derivada nem transformar regiões separadas de paginação em paredes artificiais.
+
+Alternativa usa a phase global e os contratos UUID/anchor/binding de M3.4; deve ser oferecida também ao conjunto com cruz sem depender da presença de um L, depois de validar suas fases. Prévia mostra todo o conjunto; cancelar não modifica documento. Fases/ajustes ativos ainda aplicáveis são preservados; pendências não se tornam ativas só porque o novo motor passou a suportar cruz.
+
+Manter união de células de canaleta, origens/supressões/alcances e associação de grautes com intervalo de alvenaria. O encontro em cruz produz um eixo nominal central quando a categoria estiver habilitada. Remover/restaurar canaleta ou graute não altera a classificação arquitetônica do encontro. Movimento/união/encurtamento e histórico continuam usando CT-11, sem deslocar ajustes para buscar um padrão.
+
+### Formato e migração
+
+Envelope versão 7 e nominal-v8 mantêm os dados de intenção de M3.4; sem controle de regra, parâmetro físico ou peça especial. Schemas/validação evoluídos explicitamente. Antes de migrar, validar snapshot inteiro nominal-v1–v7 pela convenção original, incluindo arquivos versão 6 cuja cruz tinha diagnóstico e componente vazio. Adulteração/futuro/órfãos continuam recusados; conservar algoritmo e representação legados, em vez de comparar resultado antigo com a nova composição.
+
+Migrar em memória, conservar IDs, paredes/vãos, escolhas, níveis/categorias e ajustes; marcar resultado antigo desatualizado e recalcular pelo fluxo salvar modelo → calcular → salvar resultado, somente com bloqueio de edição. Informar que a nova convenção recompõe cruzes antes sem suporte. Categorias de graute desligadas e supressões continuam assim; configurações ativas passam a incidir na alvenaria agora composta. Não escrever no arquivo original, não recalcular/gravar em leitura bloqueada e não habilitar automáticos silenciosamente. Falhas preservam intenção, memória e controles recuperáveis.
+
+### Diagnósticos e interação
+
+Na convenção atual, a cruz é limite de suporte, não prova de erro de medida. Na futura, cruz válida recebe composição e informação nominal por CT-12; diagnóstico de erro exige motivo específico: reservas incompatíveis, percurso sem padrão, altura inválida, vão invadindo encontro ou ajuste pendente. Distinguir suporte, entrada, conflito geométrico, limite de processamento e exceção do motor; não classificar toda cruz como exceção de execução.
+
+Mensagens mostram consequência no conjunto e N paredes distintas, com IDs/posição/fiadas corretos; localização realça o encontro e as paredes afetadas, com seleção/consulta na Planta/Fiada. Não usar somente “no M2” no texto operacional. Sem composição parcial apresentada como solução completa. Não criar erro estrutural para remoções voluntárias ou ausência de dimensões físicas.

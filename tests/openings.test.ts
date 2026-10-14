@@ -332,7 +332,7 @@ describe("M3.1 geometria e arquivo", () => {
       generationState: { status: "current", diagnostics: g.diagnostics },
     };
     const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(6);
+    expect(migrated.schemaVersion).toBe(7);
     expect(migrated.generationState.status).toBe("outdated");
     expect(generate(migrated).courses).toEqual(g.courses);
     const bad = structuredClone(old);

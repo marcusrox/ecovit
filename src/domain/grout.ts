@@ -48,7 +48,7 @@ export function toggleGrout(
   cell: Point & { wallIds: string[] },
   present: boolean,
 ): Project {
-  if (doc.schemaVersion === 6) {
+  if (doc.schemaVersion >= 6) {
     const eligible = doc.adjustments.grout.filter(
       (a) =>
         groutId(a) === groutId(cell) &&
@@ -199,7 +199,7 @@ export function applyGrout(doc: Project, result: Composition): Composition {
   const junctions = new Set<string>();
   for (const comp of result.components)
     for (const j of comp.junctions) {
-      if (j.kind === "cross") continue;
+      if (j.kind === "cross" && result.convention !== "nominal-v8") continue;
       junctions.add(groutId(j));
       if (settings.junctions) add(j, `junction:${j.kind}:${groutId(j)}`);
     }
@@ -290,7 +290,7 @@ export function applyGrout(doc: Project, result: Composition): Composition {
     }
   // Adjustments never participate in automatic anchors or redistribute removals.
   for (const a of [...doc.adjustments.grout].sort((a, b) =>
-    result.convention === "nominal-v7"
+    result.convention === "nominal-v7" || result.convention === "nominal-v8"
       ? Number(a.action === "exclude") - Number(b.action === "exclude") ||
         a.y - b.y ||
         a.x - b.x ||

@@ -50,7 +50,7 @@ export const defaultChannelLevels = (): ChannelLevel[] =>
 export type Tool = "select" | "wall" | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 5 | 6;
+  schemaVersion: 5 | 6 | 7;
   project: {
     id: string;
     name: string;
@@ -123,7 +123,7 @@ export function createProject(name: string, base: Base): Project {
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 6,
+    schemaVersion: 7,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -151,7 +151,7 @@ export function createProject(name: string, base: Base): Project {
     adjustments: { junctions: [], grout: [], channels: [] },
     generated: null,
     generationState: { status: "outdated", diagnostics: [] },
-    metadata: { createdAt: now, updatedAt: now, appVersion: "0.6.0" },
+    metadata: { createdAt: now, updatedAt: now, appVersion: "0.7.0" },
   };
 }
 export const snap = (n: number, module: number) =>

@@ -377,7 +377,7 @@ describe("M3.4 continuidade e movimento", () => {
         generationState: { status: "current", diagnostics: g.diagnostics },
       };
     const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(6);
+    expect(migrated.schemaVersion).toBe(7);
     expect(migrated.model.walls).toEqual([a, b]);
     expect(migrated.generationState.status).toBe("outdated");
     expect(migrated.project.groutSettings).toEqual(d.project.groutSettings);

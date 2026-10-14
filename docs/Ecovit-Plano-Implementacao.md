@@ -2,14 +2,16 @@
 
 **Data:** 10 de outubro de 2026  
 **Atualização documental:** 13 de outubro de 2026\
-**Base:** [PRD 0.14](Ecovit-PRD.md) e [Arquitetura 1.7](Ecovit-Arquitetura-Tecnica.md)\
+**Base:** [PRD 0.15](Ecovit-PRD.md) e [Arquitetura 1.8](Ecovit-Arquitetura-Tecnica.md)\
 **Estado:** M1, M2, M3.1, M3.2 e M3.3 aprovados pelo solicitante; M3.4 implementado e verificado pelo Codex, aguardando teste manual/aceite; relatório na seção 8. Relatórios e roteiros anteriores na seção 7. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais.
+
+**Entrega atual:** M3.5 — Cruz nominal implementada por solicitação de 13/10/2026, com verificações do Codex e roteiro na seção 9; teste manual/aceite pendentes. Não altera o aceite pendente de M3.4.
 
 **Endereço local padrão:** `http://127.0.0.1:5173/`, conforme o README. Referências a `localhost` nos relatórios históricos preservam a origem usada naquela ocasião. Projetos salvos em `localhost` permanecem naquela origem; para transferi-los, baixar `.ecovit` na origem antiga e carregar na origem escolhida.
 
 ## 1. Como usar este plano
 
-Cada marco acrescenta uma funcionalidade testável ao aplicativo definitivo. M1 mantém sua especificação e relatório; M2 está detalhado na seção 5, M3.1–3.3 na seção 7 e M3.4 na seção 8. M significa Marco e é a única sigla usada para essas etapas. Subdivisões usam ponto: M3.1 (Vãos), M3.2 (Canaletas), M3.3 (Grauteamentos) e M3.4 (Evolução da edição no canvas). Preservar IDs existentes M3-T01/M3-A01; M3.4 usa IDs próprios M3.4-T01/M3.4-A01, sem renumerar entregas aceitas. RF, CT e EX continuam identificando requisitos, convenções técnicas e exemplos.
+Cada marco acrescenta uma funcionalidade testável ao aplicativo definitivo. M1 mantém sua especificação e relatório; M2 está detalhado na seção 5, M3.1–3.3 na seção 7, M3.4 na seção 8 e M3.5 na seção 9. M significa Marco e é a única sigla usada para essas etapas. Subdivisões usam ponto: M3.1 (Vãos), M3.2 (Canaletas), M3.3 (Grauteamentos), M3.4 (Evolução da edição no canvas) e M3.5 (Cruz nominal). Preservar IDs existentes; M3.4/M3.5 usam seus próprios prefixos de tarefa/aceite, sem renumerar entregas aceitas. RF, CT e EX continuam identificando requisitos, convenções técnicas e exemplos.
 
 Requisitos e arquitetura descrevem o comportamento atualmente especificado, distinguindo o que está implementado. Cada evolução recebe escopo, critérios e relatório no incremento vigente; relatos/aceites anteriores registram a versão entregue e não são reescritos como se já contivessem as mudanças. Correções posteriores recebem registro relacionado aos IDs afetados. Novo feedback não amplia silenciosamente o incremento: ajustar seu escopo antes de implementar; depois do aceite, criar nova revisão/incremento quando pertinente.
 
@@ -25,6 +27,7 @@ O plano organiza a implementação parcial do PRD; um requisito atendido parcial
 | M2 — Composição e inspeção de fiadas | Catálogo nominal, retas, L, retângulo, T básico, transição simples de alturas, inspeção e persistência; cruz apenas reconhecida e diagnosticada | RF-01/03/04/05/09/10, persistência RF-11/12 | M1 e definições P1–P5 do caderno | Aprovada em 12/10/2026; relatório na seção 6 |
 | M3 — Vãos e elementos construtivos | Portas, janelas e vãos integrados à composição; canaletas e grauteamentos automáticos e ajustáveis | RF-04/06/07/09/10 | M2 e definições nominais CT-07–10 | M3.1/M3.2/M3.3 aprovados; aceite de M3.3 em 13/10/2026 |
 | M3.4 — Evolução da edição no canvas | Continuidade/união de paredes, movimento com dependentes e destaque do módulo de início | RF-02/03/06/07/09/10/11/12, CT-11 | M3.3 aprovado e decisões D34-01/02 | Implementado; teste manual/aceite pendente; relatório na seção 8 |
+| M3.5 — Cruz nominal | Composição de cruz isolada e integrada a L/T/contorno, fases, elementos associados e diagnósticos | RF-04/05/07/09/10/12, CT-12 | Contratos de M3.4 preservados; exemplos EX-51–55 | Implementado e verificado pelo Codex; teste manual/aceite pendentes; seção 9 |
 | M4 — Lajes e múltiplos pavimentos | Lajes, limites verticais, até três pavimentos e verificação dos alinhamentos | RF-08/13 e propagação dos RF-04/05/07 | M3 e pesquisa de transições verticais | A detalhar |
 | M5 — Consulta e conclusão da primeira versão | Quantitativos, duplicação de projetos e fechamento dos cenários restantes do PRD | RF-10/11/12 e cenários de aceite | M4 | A detalhar |
 
@@ -1005,3 +1008,106 @@ Feedback do solicitante: rótulos de portas, janelas e vãos verticais devem aco
 Verificações do Codex: typecheck, lint e build passaram (avisos já existentes sobre anotações do Zod e tamanho do bundle). Verificação dirigida por Playwright em Chrome e Edge confirmou os três tipos em ambos eixos, parede vertical desenhada no sentido inverso, rotação, âncora inferior, afastamento e colisões horizontais/verticais; capturas conferidas visualmente. Regressões pertinentes de criação/edição de aberturas: **18 testes passaram**, nove por navegador, nos arquivos openings.spec.ts e drawing.spec.ts. Não houve nova execução integral da suíte de domínio ou de todos os fluxos e2e, pois a alteração está restrita à apresentação dos rótulos.
 
 Teste manual do solicitante pendente: atualizar o aplicativo, conferir os três tipos em paredes verticais e horizontais no zoom habitual, incluindo prévia, movimento e redimensionamento. Textos podem ultrapassar a extensão de aberturas curtas e ficam sujeitos ao recorte do canvas; não reduzir fonte nem mudar os dados para acomodá-los. M3.4 continua aguardando aceite; M4 não iniciado.
+
+## 9. M3.5 — Suporte à cruz nominal — 13/10/2026
+
+### Solicitação e escopo
+
+O solicitante apresentou Planta com contorno fechado/divisórias formando cruz e Fiada sem peças, com diagnóstico “Sem solução automática para encontro em cruz no M2”. A avaliação confirmou o bloqueio deliberado do componente conectado, não um diagnóstico de medida fora da malha. Primeiro solicitou atualizar a documentação; posteriormente autorizou “implementar alterações do M3.5 que garante suporte a cruz”. O registro documental anterior permanece histórico; a implementação abaixo não constitui aceite manual.
+
+M3.5 inclui padrão nominal CT-12, resolução integral do conjunto com cruz/L/T/contorno, fases/prévia, altura por fiada, integração com vãos/canaletas/grautes, diagnóstico explícito, histórico e migração. Exclui dimensões físicas, regras resistentes, armaduras, peças especiais, lajes, múltiplos pavimentos e quantitativos. A política antiga de componente vazio é preservada para conflitos reais sem padrão completo, não aplicada indiscriminadamente a cruz suportada. Não encurtar/afastar paredes para simular ausência de cruz nem retirar o bloqueio sem novo paginador.
+
+Referências normativas: PRD §22 (produto), CT-12/EX-51–55 (geometria), Arquitetura §17 (dados/processamento/migração). Preservar contratos/aceites anteriores; RF-05 ganha o recorte da cruz sem prometer solução universal de todas as combinações.
+
+### Tarefas implementadas e verificadas pelo Codex
+
+- [x] **M3.5-T01:** implementar nominal-v8 com separação explícita da cruz por fase e validação conjunta dos percursos/reservas, mantendo geradores legados.
+- [x] **M3.5-T02:** resolver cruz integrada a L/T/contorno e a transição simples cruz → reta; manter a fase absoluta e a alternativa global.
+- [x] **M3.5-T03:** integrar subtração de vãos, canaletas, grautes e ajustes/transformações de M3.4, sem duplicar células/origens/eixos.
+- [x] **M3.5-T04:** seleção/prévia/confirmar/cancelar, diagnóstico com alcance das paredes e motivos atuais; preservar câmera e navegação.
+- [x] **M3.5-T05:** envelope 7/nominal-v8, validação original de snapshots, migração em memória, histórico/transporte/bloqueio e recuperação de falhas.
+- [x] **M3.5-T06:** testes de posições/contagens independentes, regressões, Chrome/Edge, revisão visual, build e roteiro manual; registrar resultados reais.
+
+### Critérios de aceite
+
+| ID | Resultado verificável |
+|---|---|
+| M3.5-A01 | EX-51: cruz mínima composta, centro único, pares/meios explícitos A/B; sem diagnóstico genérico de cruz não suportada em nominal-v8. |
+| M3.5-A02 | EX-52: 13 células, 5 inteiros + 3 meios por fase; principal horizontal/vertical conforme CT-12, sem peça especial ou ligação inferida. |
+| M3.5-A03 | EX-53: seis paredes, cruz/L/T/anel no mesmo componente; 70 células, A 34 inteiros + 2 meios, B 33 + 4; contorno e divisórias visíveis. Caso independente com topologia das imagens, não dimensões inferidas dos pixels. |
+| M3.5-A04 | Determinismo por ordem/IDs/sentido, bases 25/30/28/personalizada, coordenadas negativas e rotações/reflexões; arranjo inicial por eixos mundiais, geometria íntegra nas duas fases. |
+| M3.5-A05 | Alternativa na fiada 1 inverte fase global; prévia inclui o conjunto todo, confirmação uma operação, cancelar/Escape/navegação sem gravação. |
+| M3.5-A06 | EX-54: cruz → reta conforme altura, fase absoluta preservada; demais alturas compatíveis com padrões não prolongam paredes nem reiniciam paginação. |
+| M3.5-A07 | EX-55: subtração do vão depois da paginação, células/limites corretos, canaletas/supressões preservadas e graute central único com intervalos descontados. |
+| M3.5-A08 | Encontros próximos com reservas contraditórias, sobreposição colinear, altura inválida, vão no centro e escolhas pendentes diagnosticados com motivo/alcance; componentes independentes preservados; nenhuma solução inventada pela ordem. |
+| M3.5-A09 | Diagnóstico informa N paredes e consequência, localiza encontro/conjunto; distingue limite de suporte de medida fora da malha e falha do motor; sem texto operacional dependente de M2 ou erro estrutural por supressão. |
+| M3.5-A10 | Envelope 7/nominal-v8; snapshot nominal-v7 com cruz bloqueada validado antes de migrar; adulteração recusada; IDs/configurações/ajustes/pendências e arquivo original preservados; somente leitura sem cálculo/gravação. |
+| M3.5-A11 | Histórico, reabertura, transporte, movimento/união/encurtamento e ajustes de M3.4 íntegros; falhas de ambas as gravações/motor liberam controles e preservam trabalho. |
+| M3.5-A12 | Typecheck, lint, domínio/persistência, e2e Chrome/Edge e build; posições/cobertura independentes e regressões M1–M3.4. Revisão visual e registro de limites/carga sem prometer estrutura ou três pavimentos. |
+
+### Roteiro manual — pendente do solicitante
+
+| Passo | Ação | Esperado |
+|---|---|---|
+| 1 | Desenhar cruz de EX-51/52; navegar nas fiadas 1/2/3 | Peças nas duas direções/fases especificadas, centro único, sem vazio do conjunto por ser cruz. |
+| 2 | Reproduzir seis paredes de EX-53; selecionar o conjunto | Contorno/divisórias presentes, 70 células; conferir contagens A/B e prévia global, cancelar e confirmar/desfazer. |
+| 3 | Encerrar uma parede na fiada 2 (EX-54) | Fiada 3 reta no mesmo número de fase, sem trecho acima da altura. |
+| 4 | Inserir janela de EX-55; configurar canaletas/grautes e remover/restaurar ajustes | Vazio respeitado, origens/eixos únicos e ajustes persistentes; a cruz não elimina o contorno. |
+| 5 | Aproximar encontros até incompatibilidade, invadir centro com vão e manter parede independente distante | Motivo específico e alcance das paredes; só conjunto afetado suspenso; independente continua composto. |
+| 6 | Mover/unir/encurtar, desfazer/refazer, reabrir e transportar; importar cópia M3.4 com cruz diagnosticada | Intenção/IDs preservados, snapshot original conferido e nova composição após migração; arquivos adulterados recusados. |
+
+### Registro documental anterior — histórico
+
+Atualizados PRD 0.15, arquitetura 1.8, caderno revisão 11, plano e README. Inclusão de cruz solicitada; a convenção nominal de fase e os exemplos desta revisão explicitam o comportamento a implementar, sem atribuir ao solicitante aprovação estrutural ou teste desses arranjos. P3/EX-11 e relatórios antigos preservados como históricos. Conferidas aritmética/ocupação dos exemplos, referências locais e `git diff --check`. Nenhum código, formato vigente, dependência, dado de projeto ou teste do aplicativo alterado/executado; sem commit/push solicitado. M3.5 não implementado e seu aceite manual permanece futuro; M3.4 mantém estado anterior.
+
+### Relatório de implementação de M3.5 — 13/10/2026
+
+Implementação autorizada após o registro documental acima. Aplicativo **0.7.0**, arquivo **v7 / nominal-v8**. Cruz reconhecida pela ocupação de quatro vizinhos; reservas de continuidade e cortes de contato são calculados conjuntamente antes da paginação. Fase A atravessa horizontalmente, B verticalmente; centro único, percursos contínuos, sem peças especiais. O componente inteiro de EX-53, incluindo contorno e divisórias, compõe nas duas fases. A alternativa global existente passa a atender também cruz sem L, conservando a identidade dos ajustes de M3.4.
+
+O motor usa ocupação ativa em cada fiada, mantendo fase absoluta em cruz → reta. Vãos são descontados depois dos pares; a validação de encontro considera a altura efetivamente compartilhada, permitindo janela acima de uma parede já encerrada. Canaletas seguem união de demandas e supressões; graute de encontro usa um único eixo central e os intervalos de alvenaria. Cruz válida informa que a ligação não é dimensionada. Reservas contraditórias ou outras incompatibilidades suspendem somente o componente afetado, com N paredes, motivo e localização; Localizar destaca o alcance das paredes e o ponto do diagnóstico.
+
+Snapshots antigos continuam conferidos pelos geradores originais antes da migração. Paredes, IDs, níveis, categorias, alcances e escolhas/pendências são conservados. O salvamento normal recompõe em nominal-v8; cruz anteriormente bloqueada informa a atualização após gravação bem-sucedida. Somente leitura conserva o snapshot antigo desatualizado, sem calcular ou salvar. Adulterações são recusadas antes de substituir o projeto aberto. Sem mudança da tabela IndexedDB, limite de arquivo ou dependências. Arquivos v7 exigem esta versão do aplicativo; importação/download não alteram o arquivo fonte.
+
+#### Verificações reais do Codex
+
+| Verificação | Resultado |
+|---|---|
+| `./Start-Ecovit.ps1 -Task typecheck` | Passou após os ajustes finais. |
+| `./Start-Ecovit.ps1 -Task lint` | Passou sem erros/avisos após corrigir uma expressão condicional no novo paginador. |
+| `./Start-Ecovit.ps1 -Task test` | **183 passaram**, 11 arquivos: 162 regressões, 19 testes de domínio/persistência de cruz e 2 de estado/histórico/falhas/somente leitura. |
+| `./Start-Ecovit.ps1 -Task test:e2e` | Rodada integral **102 passaram**, 51 por navegador Chrome/Edge. Após explicitar aviso de migração e janela acima da parede encerrada, os **12 cenários de cruz passaram novamente** em ambos; não se declara outra rodada integral depois desses ajustes. |
+| `./Start-Ecovit.ps1 -Task build` | Passou; JS 862,03 kB / 268,88 kB gzip. Permanecem avisos existentes sobre anotações do Zod e bundle maior que 500 kB. |
+| Revisão visual | Capturas de contorno/seis paredes, prévia, transição por altura, elementos associados e localização do conflito inspecionadas em 1440×1000; contorno e divisórias presentes, fases e controles legíveis. `.tools/m35-*.png`, ignoradas pelo Git. |
+| Carga nominal | 20 contornos com cruz, 40 fiadas, **29.200 peças**: rodada final **2.618 ms Chrome / 2.481 ms Edge**, incluindo abertura/importação/geração/salvamento. Conferidas posições e contagens de 720/740 peças nas fases A/B; medição de fluxo, sem garantia para outros computadores. |
+| Documentação/Git | PRD, arquitetura, CT-12 e README atualizados; consistência, links locais e `git diff --check` conferidos. `tests/e2e/editor.spec.ts` permaneceu intacto. Sem commit/push adicional nesta entrega. |
+| Teste manual/aceite | **Pendente do solicitante**, separado das verificações do Codex. M3.4 conserva seu estado anterior. |
+
+As primeiras verificações encontraram uma preparação incorreta do lado da parede na reflexão dos fixtures e a expressão rejeitada pelo lint; ambos corrigidos. A revisão acrescentou a verificação vertical de encontro para a janela acima da parede encerrada. Os resultados finais acima sucedem essas correções. Testes usam projetos sintéticos e perfis isolados, sem abrir/modificar projetos pessoais.
+
+#### Evidências por critério
+
+| Critérios | Alcance verificado |
+|---|---|
+| M3.5-A01–03 | EX-51/52/53: posições explícitas dos pares/meios, centro/cobertura únicos e contagens independentes A/B; seis paredes com L/T/anel visíveis no navegador. |
+| M3.5-A04 | Bases 25/30/28 e módulo 12,51, eixos/sinais, rotações/reflexões, IDs/ordem/sentido e início da alvenaria; igualdade geométrica e cobertura. |
+| M3.5-A05 | Cruz sem L oferece alternativa; prévia global, cancelar/confirmar, uma operação de histórico, desfazer/refazer, reabertura e transporte. Cancelamentos por Escape/navegação seguem o controle existente, coberto pelas regressões de Fiada. |
+| M3.5-A06 | EX-54 com alturas trocadas, fases globais e posição do meio na terceira fiada; janela acima do trecho encerrado verificada no domínio e Chrome/Edge. |
+| M3.5-A07 | EX-55: 70/68 células, intervalos do graute [0,98)/[210,280), centro único, supressão/restauração, arquivo e falha de gravação. |
+| M3.5-A08–09 | Reservas conflitantes, vão na célula compartilhada, altura inválida, escolha pendente e regressões de sobreposição; conjunto independente preservado, motivo/N paredes/localização conferidos. |
+| M3.5-A10 | Snapshot v6/nominal-v7 bloqueado conferido e recomposto; adulteração antiga/atual e versão futura recusadas. Histórico original EX-11 mantido com chamada explícita de nominal-v7. Somente leitura não gera/grava. Regressões dos formatos anteriores passaram. |
+| M3.5-A11 | Escolha/UUID e ajustes preservados no transporte e histórico; falhas do motor e das duas gravações com retry/undo/redo. Movimento da cruz e regressões de união/encurtamento/dependentes de M3.4 passaram. |
+| M3.5-A12 | Verificações técnicas, Chrome/Edge, revisão visual e carga acima. Aceite manual e validação estrutural não atribuídos. |
+
+#### Limites e próximo teste manual
+
+Modelo nominal CT-12; não dimensiona ligação ou armadura. Encontros muito próximos com reservas contraditórias, sobreposição positiva, escolhas pendentes e combinações sem percurso completo continuam diagnosticados. Não há promessa de solução universal, nem lajes, pavimentos, quantitativos ou alterações de M4. Avisos conhecidos de build permanecem; não foi feita auditoria completa de acessibilidade ou desempenho em outros dispositivos.
+
+Abra/atualize **http://127.0.0.1:5173/**; se necessário execute `./Start-Ecovit.ps1 -Task dev` na raiz. Reabra o projeto com cruz mostrado nas imagens e entre em **Fiada**, usando **Enquadrar**. Confira fiadas 1/2/3: contorno e divisórias devem aparecer. Na primeira, selecione o conjunto e teste Prévia da alternativa B, Cancelar, Confirmar e Desfazer. Confira uma parede terminando antes da outra, depois vãos/canaletas/grautes e a persistência após reabrir. Siga também os seis passos do roteiro acima, com EX-51–55 do caderno; base 25×12,5×7 cm, EX-53 ocupa 200×150 cm, centro em (100;50) cm e altura inicial 21 cm. O exemplo nominal não presume medidas das imagens. Para arquivo antigo, carregar uma cópia permite conferir migração sem substituir o arquivo original. M3.5 disponível para teste manual, aguardando retorno/aceite.
+
+### Melhoria visual das configurações — 14/10/2026
+
+Solicitação: melhorar aparência e mostrar tudo sem scroll quando possível, transferindo informações longas para “i”/“?”. Implementado painel amplo com três cartões (Vãos, Canaletas, Graute vertical), títulos/subtítulos, campos alinhados e restauração de cada grupo. Rodapé de Aplicar/Cancelar separado do conteúdo; fechamento pelo botão × ou Escape mantém cancelamento. Ajuda “i” em cada grupo, por clique/Enter, conserva as explicações anteriores. Altura resultante, limites de fiadas e cotas continuam visíveis. Lista vazia identifica que faixas locais continuam automáticas. Remoção de nível usa × com nome acessível específico. Regras de configuração, histórico, arquivo e composição preservados; alterações anteriores de M3.5 mantidas, sem commit/push nesta solicitação.
+
+Verificação do Codex: typecheck e lint passaram; build de produção passou com os avisos conhecidos de Zod/bundle. **8 cenários de navegador passaram em Chrome/Edge**: seis regressões de configuração de vãos/canaletas/grautes (Aplicar/Cancelar/Restaurar, alternativas modulares, histórico e persistência) e dois de apresentação/ajuda. Conferido automaticamente que os padrões com dois níveis cabem sem rolagem em **1366×768, 1280×720 e 900×680**; capturas inspecionadas visualmente. Ajuda abre/fecha pelo teclado; lista de 12 níveis permite editar o último com Aplicar/Cancelar acessíveis, e Cancelar preserva os níveis originais. Capturas `.tools/settings-*.png`, ignoradas pelo Git. `git diff --check` conferido. Domínio/persistência e suíte e2e integral não reexecutados nesta alteração de apresentação; resultados de M3.5 acima permanecem separados.
+
+Limite: quantidade arbitrária de níveis ou viewport pequena/baixa pode exigir rolagem; lista extensa rola localmente e conteúdo de telas estreitas passa para uma coluna. Não ocultar campos nem reduzir limite de níveis para eliminar a rolagem. Teste manual/aceite desta apresentação pendentes: atualizar o aplicativo, abrir Configurações, conferir leitura e conforto no monitor/zoom habitual, abrir os três ícones “i” e testar alterações com Cancelar/Aplicar/Restaurar.

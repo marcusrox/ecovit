@@ -95,6 +95,7 @@ export function Canvas({
     [openingChoices, setOpeningChoices] = useState<Opening[]>([]);
   const [channelChoices, setChannelChoices] = useState<string[]>([]);
   const selectedBand = useStore((s) => s.channelBand);
+  const diagnosticWalls = useStore((s) => s.diagnosticWalls);
   const groutMode = useStore((s) => s.groutMode);
   const selectedGrout = useStore((s) => s.groutCell);
   const [groutHover, setGroutHover] = useState<
@@ -965,6 +966,25 @@ export function Canvas({
                 fill="#174332"
               />
             )}
+          </Layer>
+          <Layer listening={false}>
+            {walls
+              .filter((w) => diagnosticWalls.includes(w.id))
+              .map((w) => {
+                const b = bounds(w, module);
+                return (
+                  <Rect
+                    key={`diagnostic-${w.id}`}
+                    x={b.x * camera.scale + camera.x}
+                    y={b.y * camera.scale + camera.y}
+                    width={b.width * camera.scale}
+                    height={b.height * camera.scale}
+                    stroke="#bd4930"
+                    strokeWidth={2}
+                    dash={[5, 3]}
+                  />
+                );
+              })}
           </Layer>
           {mode === "course" && (
             <Layer listening={false}>

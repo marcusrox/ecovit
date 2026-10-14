@@ -77,6 +77,7 @@ const composition = z
       "nominal-v5",
       "nominal-v6",
       "nominal-v7",
+      "nominal-v8",
     ]),
     courses: z
       .array(
@@ -271,7 +272,7 @@ const scope = z.discriminatedUnion("kind", [
     .strict()
     .refine((a) => a.from < a.to),
 ]);
-const currentSchema = schema.extend({
+const m34Schema = schema.extend({
   schemaVersion: z.literal(6),
   adjustments: schema.shape.adjustments.extend({
     channels: z
@@ -287,6 +288,22 @@ const currentSchema = schema.extend({
       )
       .max(10000),
   }),
+});
+const currentSchema = m34Schema.extend({ schemaVersion: z.literal(7) });
+const m34FileSchema = m34Schema.extend({
+  generated: composition
+    .extend({
+      convention: z.enum([
+        "nominal-v1",
+        "nominal-v2",
+        "nominal-v3",
+        "nominal-v4",
+        "nominal-v5",
+        "nominal-v6",
+        "nominal-v7",
+      ]),
+    })
+    .nullable(),
 });
 const m33Schema = schema.extend({
   generated: composition
@@ -417,6 +434,11 @@ export function validateProject(
     value.schemaVersion === 5;
   const isLegacy = isV2 || isV3 || isV4;
   const isOld = isLegacy || isV5;
+  const isV6 =
+    !!value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 6;
   const result = (
     isV2
       ? legacySchema
@@ -426,7 +448,9 @@ export function validateProject(
           ? m32Schema
           : isV5
             ? m33Schema
-            : currentSchema
+            : isV6
+              ? m34FileSchema
+              : currentSchema
   ).safeParse(value);
   if (!result.success)
     throw new Error(
@@ -552,7 +576,8 @@ export function validateProject(
   if (doc.generationState.status === "current") {
     if (!doc.generated) throw new Error("Composição atual ausente.");
     if (
-      (!isOld && doc.generated.convention !== "nominal-v7") ||
+      (!isOld && !isV6 && doc.generated.convention !== "nominal-v8") ||
+      (isV6 && doc.generated.convention !== "nominal-v7") ||
       (isV5 && doc.generated.convention !== "nominal-v6") ||
       (isV4 && doc.generated.convention !== "nominal-v5") ||
       (isV3 && doc.generated.convention !== "nominal-v4")
@@ -574,7 +599,7 @@ export function validateProject(
         throw new Error("Composição salva inconsistente com o modelo.");
       // Validate the old snapshot before requesting regeneration on open.
       // Never accept tampered legacy data merely because the engine evolved.
-      if (doc.generated.convention !== "nominal-v7") {
+      if (doc.generated.convention !== "nominal-v8") {
         doc.generationState = { status: "outdated", diagnostics: [] };
       }
     }
@@ -619,6 +644,10 @@ export function validateProject(
             : "pending",
       };
     });
+    doc.generationState = { status: "outdated", diagnostics: [] };
+  }
+  if (isOld || isV6) {
+    doc.schemaVersion = 7;
     doc.generationState = { status: "outdated", diagnostics: [] };
   }
   return doc;

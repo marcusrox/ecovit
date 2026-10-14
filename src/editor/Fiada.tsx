@@ -433,6 +433,7 @@ export function FiadaPanel() {
                 d.course,
               ),
               focus: { x: d.x, y: d.y },
+              diagnosticWalls: d.wallIds,
               preview: null,
             })
           }

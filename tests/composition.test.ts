@@ -169,7 +169,7 @@ describe("M2 composição nominal", () => {
     wall(d, [-1, 0], [2, 0]);
     wall(d, [0, -1], [0, 2]);
     wall(d, [10, 0], [18, 0]);
-    const g = generate(d);
+    const g = generate(d, "nominal-v7");
     expect(g.diagnostics.some((x) => x.code === "cross")).toBe(true);
     expect(counts(g, 0)).toEqual([4, 0]);
     d.model.walls.push({ ...d.model.walls[2], id: crypto.randomUUID() });

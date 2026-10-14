@@ -43,6 +43,7 @@ type Inspection = {
   channelBand: string | null;
   groutMode: boolean;
   groutCell: { x: number; y: number; wallIds: string[] } | null;
+  diagnosticWalls: string[];
 };
 const inspection: Inspection = {
   mode: "plan",
@@ -55,6 +56,7 @@ const inspection: Inspection = {
   channelBand: null,
   groutMode: false,
   groutCell: null,
+  diagnosticWalls: [],
 };
 type State = Inspection & {
   inspect: (change: Partial<Inspection>) => void;
@@ -78,7 +80,7 @@ type State = Inspection & {
 };
 export const useStore = create<State>((set, get) => {
   async function persist(doc: Project) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.6.0" } };
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.7.0" } };
     set({ doc });
     set({ busy: true, saved: "saving" });
     let saveFailed = false;
@@ -148,7 +150,7 @@ export const useStore = create<State>((set, get) => {
     message: "",
     select: null,
     notify: (message) => set({ message }),
-    choose: (select) => set({ select }),
+    choose: (select) => set({ select, diagnosticWalls: [] }),
     open: async (requested, fresh = false) => {
       if (get().busy) return;
       set({ busy: true, message: "" });
@@ -171,8 +173,21 @@ export const useStore = create<State>((set, get) => {
             ? "Este projeto está aberto em outra aba. Feche a outra aba e reabra este projeto para editar."
             : "",
         });
+        const migratingCross =
+          doc.generated?.convention !== "nominal-v8" &&
+          doc.generated?.diagnostics.some((d) => d.code === "cross");
         if (release && (fresh || doc.generationState.status === "outdated"))
           await persist(doc);
+        if (
+          release &&
+          migratingCross &&
+          get().saved === "saved" &&
+          get().doc?.generationState.status === "current"
+        )
+          set({
+            message:
+              "Projeto atualizado para a composição com suporte à cruz. Confira o resultado na Fiada e os diagnósticos.",
+          });
       } catch (e) {
         nextRelease?.();
         set({ message: String(e instanceof Error ? e.message : e) });
@@ -239,7 +254,7 @@ export const useStore = create<State>((set, get) => {
               : s.doc.generationState,
             metadata: {
               ...candidate.metadata,
-              appVersion: "0.6.0",
+              appVersion: "0.7.0",
               updatedAt: new Date().toISOString(),
             },
           },
@@ -251,6 +266,7 @@ export const useStore = create<State>((set, get) => {
           channelBand: null,
           groutCell: null,
           component: null,
+          diagnosticWalls: [],
           doc,
           history: remember(s.history, s.doc),
           message: "",

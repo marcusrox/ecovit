@@ -831,6 +831,239 @@
 .groutOptions input {
   width: auto;
 }
+.editorApp .settingsModal {
+  width: min(1040px, calc(100vw - 48px));
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #dbe3db;
+}
+.settingsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px 20px;
+}
+.settingsHeader h2 {
+  margin: 5px 0 6px;
+  font-size: 25px;
+  letter-spacing: -0.6px;
+}
+.settingsHeader p,
+.settingsCaption {
+  color: #6c7c70;
+  font-size: 12px;
+}
+.editorApp .settingsClose {
+  font-size: 24px;
+  line-height: 1;
+  border: 0;
+  background: #f1f5f0;
+  width: 32px;
+  height: 32px;
+}
+.settingsForm {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.settingsBody {
+  overflow: auto;
+  padding: 0 28px 24px;
+}
+.settingsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.settingsCard {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border: 1px solid #dce5dc;
+  border-radius: 10px;
+  padding: 18px;
+  background: #fafcf9;
+  gap: 12px;
+}
+.settingsCardHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.settingsCardHeading h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+.settingsCaption {
+  margin-top: -6px;
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+.editorApp .settingsCard .field {
+  margin: 0;
+  font-size: 12px;
+  gap: 7px;
+}
+.editorApp .settingsCard input:not([type="checkbox"]) {
+  padding: 9px 10px;
+}
+.settingsSummary {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #5e7263;
+  padding: 10px;
+  background: #edf3eb;
+  border-radius: 6px;
+}
+.editorApp .settingsRestore {
+  margin-top: auto;
+  background: transparent;
+  color: #486853;
+  border-style: dashed;
+  padding: 8px;
+  font-size: 11px;
+}
+.settingsLevels {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 218px;
+  overflow: auto;
+  padding: 3px;
+}
+.settingsLevel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  gap: 4px 8px;
+}
+.settingsLevel .field {
+  grid-column: 1;
+}
+.settingsLevel small {
+  grid-column: 1;
+  color: #6c7c70;
+  font-size: 11px;
+}
+.settingsLevel button {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
+  height: 34px;
+  color: #a65444;
+  font-size: 18px;
+}
+.settingsEmpty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  min-height: 100px;
+  text-align: center;
+  color: #6c7c70;
+  border: 1px dashed #d4dfd4;
+  border-radius: 6px;
+  padding: 14px;
+}
+.settingsEmpty small {
+  font-size: 11px;
+  line-height: 1.5;
+}
+.settingsCard .groutOptions {
+  gap: 12px;
+  margin: 2px 0 4px;
+}
+.settingsCard .groutOptions input {
+  accent-color: #245d49;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+}
+.settingsHelp {
+  position: relative;
+  line-height: 1.6;
+}
+.settingsHelp summary {
+  list-style: none;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  border: 1px solid #cbd9ce;
+  color: #456b52;
+  background: white;
+  font-weight: 600;
+  font-size: 12px;
+}
+.settingsHelp summary::-webkit-details-marker {
+  display: none;
+}
+.settingsHelp[open] summary {
+  background: #245d49;
+  color: white;
+}
+.settingsHelp > div {
+  position: absolute;
+  z-index: 2;
+  top: 30px;
+  right: 0;
+  width: 250px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #d3dfd5;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px #173a2b25;
+  color: #46604f;
+  font-size: 12px;
+}
+.settingsHelp > div p:first-child {
+  margin-top: 0;
+}
+.settingsFooter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 28px;
+  border-top: 1px solid #e1e8de;
+  background: #f6f9f3;
+}
+.settingsFooter > span {
+  margin-right: auto;
+  color: #788773;
+  font-size: 11px;
+}
+.editorApp .settingsFooter button {
+  padding: 10px 16px;
+}
+.editorApp .settingsFooter .primary {
+  width: auto;
+  margin: 0;
+}
+.settingsBody > .alternatives,
+.settingsBody > .errorText {
+  margin: 16px 0 0;
+}
+@media (max-width: 800px) {
+  .settingsGrid {
+    grid-template-columns: 1fr;
+  }
+  .settingsHeader,
+  .settingsBody,
+  .settingsFooter {
+    padding: 16px;
+  }
+  .settingsFooter > span {
+    display: none;
+  }
+  .settingsFooter {
+    justify-content: flex-end;
+  }
+}
 @media (max-width: 1100px) {
   .header {
     gap: 12px;

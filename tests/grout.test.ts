@@ -330,7 +330,7 @@ describe("M3.3 grautes nominais", () => {
         generationState: { status: "current", diagnostics: g.diagnostics },
       };
     const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(6);
+    expect(migrated.schemaVersion).toBe(7);
     expect(migrated.project.groutSettings).toEqual(defaultGroutSettings(false));
     expect(migrated.adjustments).toEqual(d.adjustments);
     expect(generate(migrated).grouts).toEqual([]);

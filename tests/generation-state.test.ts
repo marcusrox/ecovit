@@ -14,6 +14,93 @@ import { toggleGrout } from "../src/domain/grout";
 import { defaultGroutSettings } from "../src/domain/project";
 import { moveWall, createContinuation } from "../src/domain/wall-editing";
 const save = vi.mocked(saveProject);
+async function openedCross() {
+  const d = createProject("Estado cruz", {
+    length: 2500,
+    width: 1250,
+    height: 700,
+  });
+  d.project.channelLevels = [];
+  d.project.groutSettings = defaultGroutSettings(false);
+  d.model.walls = [
+    makeWall(
+      { x: -3750, y: 0 },
+      { x: 5000, y: 0 },
+      1250,
+      d.model.floors[0].id,
+      2100,
+      1,
+    )!,
+    makeWall(
+      { x: 0, y: -3750 },
+      { x: 0, y: 5000 },
+      1250,
+      d.model.floors[0].id,
+      2100,
+      1,
+    )!,
+  ];
+  await useStore.getState().open(d, true);
+  save.mockClear();
+  return useStore.getState().doc!;
+}
+it("M3.5 fase e histórico sobrevivem a falha do motor e ambas as gravações", async () => {
+  const d = await openedCross(),
+    c = d.generated!.components[0],
+    a = {
+      id: crypto.randomUUID(),
+      anchor: { x: c.x, y: c.y },
+      binding: "active" as const,
+      componentId: c.id,
+      signature: c.signature,
+      wallIds: c.wallIds,
+      phase: 1 as const,
+    };
+  vi.spyOn(engine, "generate").mockImplementationOnce(() => {
+    throw new Error("cruz simulada");
+  });
+  await useStore
+    .getState()
+    .commit({ ...d, adjustments: { ...d.adjustments, junctions: [a] } });
+  expect(useStore.getState()).toMatchObject({ busy: false, saved: "saved" });
+  expect(useStore.getState().doc!.generationState.status).toBe("outdated");
+  expect(useStore.getState().doc!.adjustments.junctions).toEqual([a]);
+  save.mockRejectedValueOnce(new Error("primeira"));
+  await useStore.getState().retry();
+  expect(useStore.getState().saved).toBe("saved");
+  expect(useStore.getState().doc!.generated!.components[0].phase).toBe(1);
+  save.mockResolvedValueOnce("ok").mockRejectedValueOnce(new Error("segunda"));
+  await useStore.getState().undo();
+  expect(useStore.getState()).toMatchObject({ busy: false, saved: "error" });
+  expect(useStore.getState().doc!.generated!.components[0].phase).toBe(0);
+  await useStore.getState().retry();
+  expect(useStore.getState().saved).toBe("saved");
+  await useStore.getState().undo(true);
+  expect(useStore.getState().doc!.adjustments.junctions).toEqual([a]);
+});
+it("M3.5 migração bloqueada preserva snapshot v7 sem cálculo/gravação", async () => {
+  const d = await openedCross();
+  useStore.getState().close();
+  const g = engine.generate(d, "nominal-v7"),
+    old = {
+      ...d,
+      schemaVersion: 6,
+      generated: g,
+      generationState: { status: "current", diagnostics: g.diagnostics },
+    };
+  const { parseFile } = await import("../src/persistence/files");
+  vi.mocked(acquireProject).mockResolvedValueOnce(null);
+  save.mockClear();
+  const spy = vi.spyOn(engine, "generate");
+  const migrated = parseFile(JSON.stringify(old));
+  spy.mockClear();
+  await useStore.getState().open(migrated, true);
+  expect(useStore.getState().readonly).toBe(true);
+  expect(save).not.toHaveBeenCalled();
+  expect(spy.mock.calls.every((c) => c[1] === "nominal-v7")).toBe(true);
+  expect(useStore.getState().doc!.generated!.courses[0].pieces).toEqual([]);
+  expect(useStore.getState().doc!.generated!.convention).toBe("nominal-v7");
+});
 it("M3.3 inclusão/exclusão e histórico mantêm eixo, ID e configuração", async () => {
   const d = await opened(),
     cell = { x: 2500, y: 0, wallIds: [d.model.walls[0].id] };

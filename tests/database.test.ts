@@ -44,7 +44,7 @@ it("M3.3 IndexedDB migra M3.2 só em memória e confere snapshot original", asyn
   });
   try {
     const loaded = await loadProject(d.project.id);
-    expect(loaded.schemaVersion).toBe(6);
+    expect(loaded.schemaVersion).toBe(7);
     expect(loaded.project.groutSettings).toEqual(defaultGroutSettings(false));
     expect((await db.table("projects").get(d.project.id)).doc).toEqual(old);
     expect(loaded.generated).toEqual(g);
@@ -102,11 +102,9 @@ it.each(["T", "cruz"])(
       status: "current",
       diagnostics: doc.generated.diagnostics,
     };
-    expect(
-      doc.generated.diagnostics.some(
-        (d) => d.severity === (kind === "T" ? "info" : "error"),
-      ),
-    ).toBe(true);
+    expect(doc.generated.diagnostics.some((d) => d.severity === "info")).toBe(
+      true,
+    );
     await saveProject(doc);
     try {
       expect(await loadProject(doc.project.id)).toEqual(doc);

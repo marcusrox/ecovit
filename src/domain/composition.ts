@@ -54,7 +54,8 @@ export type Composition = {
     | "nominal-v4"
     | "nominal-v5"
     | "nominal-v6"
-    | "nominal-v7";
+    | "nominal-v7"
+    | "nominal-v8";
   channels?: ChannelBand[];
   grouts?: GroutAxis[];
   courses: { number: number; bottom: number; top: number; pieces: Piece[] }[];
@@ -309,7 +310,8 @@ function tile(
       convention === "nominal-v4" ||
       convention === "nominal-v5" ||
       convention === "nominal-v6" ||
-      convention === "nominal-v7"
+      convention === "nominal-v7" ||
+      convention === "nominal-v8"
         ? continuousPattern(group, adjacent, phase)
         : pattern(group, adjacent, phase, convention === "nominal-v2");
     // A T branch is paginated from its contact, including reversed branches.
@@ -330,9 +332,62 @@ function tile(
   }
   return result;
 }
+// CT-12: change route connections, never masonry occupancy. Continuity at
+// every junction is reserved before cutting branches, so adjacent demands
+// cannot silently override one another.
+function tileCross(
+  cells: Cell[],
+  phase: number,
+): { pieces: Cell[][] | null; conflict?: Cell } {
+  const map = new Map(cells.map((c) => [key(c.x, c.y), c])),
+    cuts = new Set<string>(),
+    keep = new Set<string>();
+  const edge = (a: Cell, b: Cell) =>
+    [key(a.x, a.y), key(b.x, b.y)].sort().join(":");
+  for (const c of cells) {
+    const ns = neighbors(c, map);
+    if (ns.length < 3) continue;
+    const horizontal =
+      ns.length === 4
+        ? phase === 0
+        : ns.filter((n) => n.y === c.y).length === 2;
+    for (const n of ns) {
+      if (horizontal ? n.y === c.y : n.x === c.x) keep.add(edge(c, n));
+      else cuts.add(edge(c, n));
+    }
+  }
+  for (const c of cells)
+    if (
+      neighbors(c, map).some(
+        (n) => cuts.has(edge(c, n)) && keep.has(edge(c, n)),
+      )
+    )
+      return { pieces: null, conflict: c };
+  const adjacent = (c: Cell) =>
+      neighbors(c, map).filter((n) => !cuts.has(edge(c, n))),
+    result: Cell[][] = [];
+  for (const group of groups(map, adjacent)) {
+    let pieces = continuousPattern(group, adjacent, phase);
+    if (
+      group.every((c) => c.x === group[0].x) ||
+      group.every((c) => c.y === group[0].y)
+    ) {
+      const contacts = group.filter((c) =>
+        neighbors(c, map).some(
+          (n) => cuts.has(edge(c, n)) && neighbors(n, map).length >= 3,
+        ),
+      );
+      if (contacts.length === 1 && contacts[0] === group.at(-1))
+        pieces = pack([...group].reverse(), phase);
+    }
+    if (!pieces) return { pieces: null };
+    result.push(...pieces);
+  }
+  return { pieces: result };
+}
 export function generate(
   doc: Project,
-  convention: Composition["convention"] = "nominal-v7",
+  convention: Composition["convention"] = "nominal-v8",
 ): Composition {
   const { width: m, height: h } = doc.project.base,
     floor = doc.model.floors[0];
@@ -343,10 +398,13 @@ export function generate(
     diagnostics: [],
     ...(convention === "nominal-v5" ||
     convention === "nominal-v6" ||
-    convention === "nominal-v7"
+    convention === "nominal-v7" ||
+    convention === "nominal-v8"
       ? { channels: [] }
       : {}),
-    ...(convention === "nominal-v6" || convention === "nominal-v7"
+    ...(convention === "nominal-v6" ||
+    convention === "nominal-v7" ||
+    convention === "nominal-v8"
       ? { grouts: [] }
       : {}),
   };
@@ -361,12 +419,25 @@ export function generate(
   ) =>
     result.diagnostics.push({
       code,
-      message,
+      message:
+        convention === "nominal-v8" && severity === "error"
+          ? `Composição suspensa em ${new Set(wallIds).size} paredes conectadas: ${message}`
+          : message,
       wallIds: [...wallIds].sort(),
       x,
       y,
       course,
       severity,
+      ...(convention === "nominal-v8"
+        ? {
+            category:
+              code === "limit"
+                ? ("limit" as const)
+                : code === "height"
+                  ? ("input" as const)
+                  : ("geometry" as const),
+          }
+        : {}),
     });
   const total = Math.max(
     0,
@@ -440,8 +511,10 @@ export function generate(
       if (kind) comp.junctions.push({ x: c.x * m, y: c.y * m, kind });
     }
     result.components.push(comp);
+    const hasCross = comp.junctions.some((j) => j.kind === "cross");
     if (
       comp.junctions.length > 1 &&
+      !(convention === "nominal-v8" && hasCross) &&
       new Set(walls.map((w) => w.height)).size > 1
     ) {
       error(
@@ -455,6 +528,7 @@ export function generate(
     }
     if (
       comp.junctions.some((j) => j.kind === "T") &&
+      !(convention === "nominal-v8" && hasCross) &&
       new Set(walls.map((w) => w.height)).size > 1
     ) {
       error(
@@ -487,7 +561,7 @@ export function generate(
       a.wallIds.some((w) => ids.includes(w)),
     );
     if (
-      convention === "nominal-v7" &&
+      (convention === "nominal-v7" || convention === "nominal-v8") &&
       (related.some((a) => a.binding === "pending") ||
         related.filter((a) => a.componentId === id).length > 1)
     ) {
@@ -506,7 +580,11 @@ export function generate(
     }
     const choice = doc.adjustments.junctions.find((a) => a.componentId === id);
     if (choice) {
-      usedChoices.add(convention === "nominal-v7" ? choice.id! : id);
+      usedChoices.add(
+        convention === "nominal-v7" || convention === "nominal-v8"
+          ? choice.id!
+          : id,
+      );
       comp.phase = choice.phase;
     }
     if (walls.some((w) => w.height % h)) {
@@ -535,7 +613,7 @@ export function generate(
       );
       continue;
     }
-    if (comp.junctions.some((j) => j.kind === "cross")) {
+    if (hasCross && convention !== "nominal-v8") {
       const j = comp.junctions.find((j) => j.kind === "cross")!;
       error(
         "cross",
@@ -548,7 +626,12 @@ export function generate(
     }
     if (
       choice &&
-      (choice.signature !== sig || !comp.junctions.some((j) => j.kind === "L"))
+      (choice.signature !== sig ||
+        !comp.junctions.some(
+          (j) =>
+            j.kind === "L" ||
+            (convention === "nominal-v8" && j.kind === "cross"),
+        ))
     ) {
       error(
         "adjustment",
@@ -563,7 +646,8 @@ export function generate(
       convention === "nominal-v4" ||
       convention === "nominal-v5" ||
       convention === "nominal-v6" ||
-      convention === "nominal-v7"
+      convention === "nominal-v7" ||
+      convention === "nominal-v8"
         ? doc.model.openings
             .filter((o) => ids.includes(o.wallId))
             .sort((a, b) => a.id.localeCompare(b.id))
@@ -576,7 +660,11 @@ export function generate(
         openingIssue(doc, o) ??
         (cells.some(
           (c) =>
-            c.walls.length > 1 &&
+            (convention === "nominal-v8"
+              ? c.walls.filter(
+                  (w) => floor.start + w.height > floor.level + o.base,
+                ).length > 1
+              : c.walls.length > 1) &&
             c.x * m >= box.x &&
             c.x * m < box.x + box.width &&
             c.y * m >= box.y &&
@@ -593,14 +681,15 @@ export function generate(
         !issue &&
         (convention === "nominal-v5" ||
           convention === "nominal-v6" ||
-          convention === "nominal-v7")
+          convention === "nominal-v7" ||
+          convention === "nominal-v8")
       )
         continue;
       error(
         issue?.code ?? "opening-elements-pending",
         issue?.message ??
           "Elementos sobre e sob vãos ainda não calculados nesta entrega.",
-        [wall.id],
+        convention === "nominal-v8" && issue ? ids : [wall.id],
         box.x,
         box.y,
         Math.max(1, Math.floor((floor.level + o.base - floor.start) / h) + 1),
@@ -626,17 +715,31 @@ export function generate(
         courses.push([]);
         continue;
       }
-      const pieces = tile(active, ((n - 1) % 2) ^ comp.phase, convention);
-      if (
-        !pieces ||
-        !tile(active, ((n - 1) % 2) ^ (1 - comp.phase), convention)
-      ) {
+      const phase = ((n - 1) % 2) ^ comp.phase;
+      const current: ReturnType<typeof tileCross> =
+        convention === "nominal-v8" && hasCross
+          ? tileCross(active, phase)
+          : { pieces: tile(active, phase, convention) };
+      const other: ReturnType<typeof tileCross> =
+        convention === "nominal-v8" && hasCross
+          ? tileCross(active, 1 - phase)
+          : { pieces: tile(active, 1 - phase, convention) };
+      const pieces = current.pieces;
+      if (!pieces || !other.pieces) {
         error(
-          "unsupported",
-          "Sem solução automática para esta combinação de encontros.",
+          current.conflict || other.conflict
+            ? "junction-reservation-conflict"
+            : "unsupported",
+          current.conflict || other.conflict
+            ? "Encontros próximos exigem continuidade e contato incompatíveis na mesma conexão."
+            : "Sem solução automática para esta combinação de encontros.",
           ids,
-          comp.x,
-          comp.y,
+          (current.conflict ?? other.conflict)?.x !== undefined
+            ? (current.conflict ?? other.conflict)!.x * m
+            : comp.x,
+          (current.conflict ?? other.conflict)?.y !== undefined
+            ? (current.conflict ?? other.conflict)!.y * m
+            : comp.y,
           n,
         );
         failed = true;
@@ -694,9 +797,23 @@ export function generate(
       );
     }
     if (failed) continue;
-    comp.alternative = comp.junctions.some((j) => j.kind === "L");
+    comp.alternative = comp.junctions.some(
+      (j) =>
+        j.kind === "L" || (convention === "nominal-v8" && j.kind === "cross"),
+    );
     courses.forEach((pieces, i) => result.courses[i].pieces.push(...pieces));
-    if (comp.junctions.some((j) => j.kind === "T")) {
+    if (hasCross && convention === "nominal-v8") {
+      const j = comp.junctions.find((j) => j.kind === "cross")!;
+      error(
+        "cross-connection",
+        "Composição nominal; ligação entre paredes não dimensionada.",
+        ids,
+        j.x,
+        j.y,
+        1,
+        "info",
+      );
+    } else if (comp.junctions.some((j) => j.kind === "T")) {
       const j = comp.junctions.find((j) => j.kind === "T")!;
       error(
         "connection",
@@ -720,7 +837,13 @@ export function generate(
       );
   }
   for (const a of doc.adjustments.junctions)
-    if (!usedChoices.has(convention === "nominal-v7" ? a.id! : a.componentId)) {
+    if (
+      !usedChoices.has(
+        convention === "nominal-v7" || convention === "nominal-v8"
+          ? a.id!
+          : a.componentId,
+      )
+    ) {
       error(
         "adjustment",
         "Encontro alterado: retorne ao automático para resolver a escolha pendente.",
@@ -728,16 +851,19 @@ export function generate(
         a.anchor?.x ?? 0,
         a.anchor?.y ?? 0,
       );
-      if (convention === "nominal-v7")
+      if (convention === "nominal-v7" || convention === "nominal-v8")
         result.diagnostics.at(-1)!.adjustmentIds = [a.id!];
     }
   if (
     convention === "nominal-v5" ||
     convention === "nominal-v6" ||
-    convention === "nominal-v7"
+    convention === "nominal-v7" ||
+    convention === "nominal-v8"
   )
     applyChannels(doc, result);
-  return convention === "nominal-v6" || convention === "nominal-v7"
+  return convention === "nominal-v6" ||
+    convention === "nominal-v7" ||
+    convention === "nominal-v8"
     ? applyGrout(doc, result)
     : result;
 }

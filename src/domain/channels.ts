@@ -147,7 +147,8 @@ export function applyChannels(doc: Project, result: Composition): Composition {
       (a.top - f.start) % h ||
       a.top <= f.start ||
       a.top > f.start + w.height ||
-      (result.convention === "nominal-v7" &&
+      ((result.convention === "nominal-v7" ||
+        result.convention === "nominal-v8") &&
         a.scope?.kind === "range" &&
         (a.scope.from < (w.a.y === w.b.y ? bounds(w, m).x : bounds(w, m).y) ||
           a.scope.to >
@@ -219,7 +220,7 @@ export function applyChannels(doc: Project, result: Composition): Composition {
     );
     for (const c of cells.values()) {
       const suppressed =
-        result.convention === "nominal-v7"
+        result.convention === "nominal-v7" || result.convention === "nominal-v8"
           ? doc.adjustments.channels.some((a) => {
               const w = wallMap.get(a.wallId);
               if (!w || a.top !== top || !c.walls.includes(w.id)) return false;

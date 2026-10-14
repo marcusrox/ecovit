@@ -338,8 +338,8 @@ test("M3.3 legado M3.2 validado e adulterado recusado antes de migrar", async ({
     };
   await load(page, old);
   const before = await exported(page);
-  expect(before.schemaVersion).toBe(6);
-  expect(before.generated!.convention).toBe("nominal-v7");
+  expect(before.schemaVersion).toBe(7);
+  expect(before.generated!.convention).toBe("nominal-v8");
   expect(before.project.groutSettings).toEqual(defaultGroutSettings(false));
   expect(before.generated!.grouts).toEqual([]);
   expect(before.adjustments.channels).toEqual(d.adjustments.channels);

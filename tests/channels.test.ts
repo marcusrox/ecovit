@@ -344,7 +344,7 @@ describe("M3.2 canaletas nominais", () => {
         generationState: { status: "current", diagnostics: g.diagnostics },
       };
     const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(6);
+    expect(migrated.schemaVersion).toBe(7);
     expect(migrated.project.channelLevels).toEqual([]);
     expect(migrated.model).toEqual(d.model);
     expect(migrated.generationState.status).toBe("outdated");

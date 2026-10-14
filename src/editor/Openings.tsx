@@ -358,7 +358,7 @@ export function OpeningSettingsDialog({
   return (
     <div className={styles.modalBackdrop}>
       <section
-        className={styles.modal}
+        className={`${styles.modal} ${styles.settingsModal}`}
         role="dialog"
         onKeyDown={(e) => {
           e.stopPropagation();
@@ -367,9 +367,23 @@ export function OpeningSettingsDialog({
         aria-modal="true"
         aria-labelledby="settings-title"
       >
-        <h2 id="settings-title">Configurações do projeto</h2>
-        <h3>Vãos</h3>
+        <header className={styles.settingsHeader}>
+          <div>
+            <span className={styles.eyebrow}>PROJETO</span>
+            <h2 id="settings-title">Configurações do projeto</h2>
+            <p>Padrões de aberturas e elementos da alvenaria</p>
+          </div>
+          <button
+            type="button"
+            onClick={close}
+            aria-label="Fechar configurações"
+            className={styles.settingsClose}
+          >
+            ×
+          </button>
+        </header>
         <form
+          className={styles.settingsForm}
           onSubmit={(e) => {
             e.preventDefault();
             setError("");
@@ -473,204 +487,282 @@ export function OpeningSettingsDialog({
             }
           }}
         >
-          {Object.entries(values).map(([label, value]) => (
-            <Field
-              key={label}
-              label={label}
-              value={value}
-              set={(v) => field(label, v)}
-              disabled={disabled}
-            />
-          ))}
-          <p>
-            Valores em relação ao piso. Porta parte de zero; janela/vão elevado
-            tem altura igual ao topo menos a base. Os padrões só inicializam
-            novas aberturas.
-          </p>
-          <p>
-            Altura de fiada: {display(h)} cm · origem vertical:{" "}
-            {display(f.start - f.level)} cm.
-          </p>
-          <p>
-            {(() => {
-              try {
-                const b = cm(values["Base padrão de janela/vão"]),
-                  t = cm(values["Topo padrão de aberturas"]);
-                const limit = (n: number) =>
-                  Number.isInteger(n) ? String(n) : "fora da malha";
-                return `Altura de janela/vão: ${display(t - b)} cm · limites de fiadas: ${limit((f.level + b - f.start) / h)} / ${limit((f.level + t - f.start) / h)}.`;
-              } catch {
-                return "Informe base e topo para consultar a altura resultante.";
-              }
-            })()}
-          </p>
-          {!!options.length && (
-            <Suggestions
-              items={options}
-              choose={(key, n) => {
-                if (key.startsWith("Nível "))
-                  setLevels((ls) =>
-                    ls.map((l) =>
-                      l.id === key.slice(6) ? { ...l, value: display(n) } : l,
-                    ),
-                  );
-                else if (key === "Distância máxima de graute")
-                  setDistance(display(n));
-                else field(key, display(n));
-                setOptions((v) => v.filter((s) => s.field !== key));
-              }}
-            />
-          )}
-          {error && (
-            <p role="alert" className={styles.errorText}>
-              {error}
-            </p>
-          )}
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => {
-              setValues({
-                "Base padrão de janela/vão": "112",
-                "Topo padrão de aberturas": "217",
-              });
-              setOptions([]);
-              setError("");
-            }}
-          >
-            Restaurar padrões de vãos
-          </button>
-          <h3>Canaletas</h3>
-          <p>
-            Cotas de topo em relação ao piso. As faixas locais dos vãos são
-            automáticas; níveis globais vazios preservam a configuração dos
-            projetos anteriores.
-          </p>
-          {levels.map((l, i) => {
-            let course = "—";
-            try {
-              const n = (f.level + cm(l.value) - f.start) / h;
-              course =
-                Number.isInteger(n) && n > 0 ? String(n) : "fora da malha";
-            } catch {
-              /* Campo em edição. */
-            }
-            return (
-              <div key={l.id}>
-                <Field
-                  label={`Topo de canaleta ${i + 1}`}
-                  value={l.value}
-                  disabled={disabled}
-                  set={(value) =>
-                    setLevels((ls) =>
-                      ls.map((row) =>
-                        row.id === l.id ? { ...row, value } : row,
-                      ),
-                    )
-                  }
-                />
-                <small>Fiada {course}</small>
+          <div className={styles.settingsBody}>
+            <div className={styles.settingsGrid}>
+              <section
+                className={styles.settingsCard}
+                aria-labelledby="opening-settings-title"
+              >
+                <div className={styles.settingsCardHeading}>
+                  <h3 id="opening-settings-title">Vãos</h3>
+                  <SettingsHelp label="Ajuda sobre vãos">
+                    <p>
+                      Valores em relação ao piso. Porta parte de zero;
+                      janela/vão elevado tem altura igual ao topo menos a base.
+                      Os padrões só inicializam novas aberturas.
+                    </p>
+                    <p>
+                      Altura de fiada: {display(h)} cm · origem vertical:{" "}
+                      {display(f.start - f.level)} cm.
+                    </p>
+                  </SettingsHelp>
+                </div>
+                <p className={styles.settingsCaption}>
+                  Padrões para novas aberturas
+                </p>
+                {Object.entries(values).map(([label, value]) => (
+                  <Field
+                    key={label}
+                    label={label}
+                    value={value}
+                    set={(v) => field(label, v)}
+                    disabled={disabled}
+                  />
+                ))}
+                <p className={styles.settingsSummary}>
+                  {(() => {
+                    try {
+                      const b = cm(values["Base padrão de janela/vão"]),
+                        t = cm(values["Topo padrão de aberturas"]);
+                      const limit = (n: number) =>
+                        Number.isInteger(n) ? String(n) : "fora da malha";
+                      return `Altura de janela/vão: ${display(t - b)} cm · limites de fiadas: ${limit((f.level + b - f.start) / h)} / ${limit((f.level + t - f.start) / h)}.`;
+                    } catch {
+                      return "Informe base e topo para consultar a altura resultante.";
+                    }
+                  })()}
+                </p>
                 <button
+                  className={styles.settingsRestore}
                   type="button"
                   disabled={disabled}
-                  aria-label={`Remover nível de canaleta ${i + 1}`}
+                  onClick={() => {
+                    setValues({
+                      "Base padrão de janela/vão": "112",
+                      "Topo padrão de aberturas": "217",
+                    });
+                    setOptions([]);
+                    setError("");
+                  }}
+                >
+                  Restaurar padrões de vãos
+                </button>
+              </section>
+              <section
+                className={styles.settingsCard}
+                aria-labelledby="channel-settings-title"
+              >
+                <div className={styles.settingsCardHeading}>
+                  <h3 id="channel-settings-title">Canaletas</h3>
+                  <SettingsHelp label="Ajuda sobre canaletas">
+                    <p>
+                      Cotas de topo em relação ao piso. As faixas locais dos
+                      vãos são automáticas; níveis globais vazios preservam a
+                      configuração dos projetos anteriores.
+                    </p>
+                  </SettingsHelp>
+                </div>
+                <p className={styles.settingsCaption}>
+                  Níveis globais · cotas em cm
+                </p>
+                <div className={styles.settingsLevels}>
+                  {!levels.length && (
+                    <div className={styles.settingsEmpty}>
+                      <span>Sem níveis globais</span>
+                      <small>As faixas dos vãos continuam automáticas.</small>
+                    </div>
+                  )}
+                  {levels.map((l, i) => {
+                    let course = "—";
+                    try {
+                      const n = (f.level + cm(l.value) - f.start) / h;
+                      course =
+                        Number.isInteger(n) && n > 0
+                          ? String(n)
+                          : "fora da malha";
+                    } catch {
+                      /* Campo em edição. */
+                    }
+                    return (
+                      <div key={l.id} className={styles.settingsLevel}>
+                        <Field
+                          label={`Topo de canaleta ${i + 1}`}
+                          value={l.value}
+                          disabled={disabled}
+                          set={(value) =>
+                            setLevels((ls) =>
+                              ls.map((row) =>
+                                row.id === l.id ? { ...row, value } : row,
+                              ),
+                            )
+                          }
+                        />
+                        <small>Fiada {course}</small>
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          aria-label={`Remover nível de canaleta ${i + 1}`}
+                          onClick={() =>
+                            setLevels((ls) =>
+                              ls.filter((row) => row.id !== l.id),
+                            )
+                          }
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  disabled={disabled || levels.length >= MAX_CHANNEL_LEVELS}
                   onClick={() =>
-                    setLevels((ls) => ls.filter((row) => row.id !== l.id))
+                    setLevels((ls) => [
+                      ...ls,
+                      { id: crypto.randomUUID(), value: "" },
+                    ])
                   }
                 >
-                  Remover nível
+                  Adicionar nível de canaleta
                 </button>
-              </div>
-            );
-          })}
-          <button
-            type="button"
-            disabled={disabled || levels.length >= MAX_CHANNEL_LEVELS}
-            onClick={() =>
-              setLevels((ls) => [...ls, { id: crypto.randomUUID(), value: "" }])
-            }
-          >
-            Adicionar nível de canaleta
-          </button>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => {
-              setLevels(
-                defaultChannelLevels().map((l) => ({
-                  id:
-                    levels.find((row) => {
-                      try {
-                        return cm(row.value) === l.top;
-                      } catch {
-                        return false;
-                      }
-                    })?.id ?? l.id,
-                  value: display(l.top),
-                })),
-              );
-              setOptions([]);
-              setError("");
-            }}
-          >
-            Restaurar padrões de canaletas
-          </button>
-          <h3>Graute vertical</h3>
-          <div className={styles.groutOptions}>
-            {(
-              [
-                ["junctions", "Encontros"],
-                ["openings", "Laterais dos vãos"],
-                ["ends", "Pontas livres"],
-                ["intervals", "Intervalos em paredes longas"],
-              ] as const
-            ).map(([key, label]) => (
-              <label key={key}>
-                <input
-                  type="checkbox"
-                  checked={grout[key]}
+                <button
+                  className={styles.settingsRestore}
+                  type="button"
                   disabled={disabled}
-                  onChange={(e) =>
-                    setGrout((g) => ({ ...g, [key]: e.target.checked }))
-                  }
+                  onClick={() => {
+                    setLevels(
+                      defaultChannelLevels().map((l) => ({
+                        id:
+                          levels.find((row) => {
+                            try {
+                              return cm(row.value) === l.top;
+                            } catch {
+                              return false;
+                            }
+                          })?.id ?? l.id,
+                        value: display(l.top),
+                      })),
+                    );
+                    setOptions([]);
+                    setError("");
+                  }}
+                >
+                  Restaurar padrões de canaletas
+                </button>
+              </section>
+              <section
+                className={styles.settingsCard}
+                aria-labelledby="grout-settings-title"
+              >
+                <div className={styles.settingsCardHeading}>
+                  <h3 id="grout-settings-title">Graute vertical</h3>
+                  <SettingsHelp label="Ajuda sobre graute">
+                    <p>
+                      As categorias geram uma proposta automática. Desabilitar
+                      preserva inclusões manuais; remover graute não cria
+                      substitutos. Restaurar padrões preserva os ajustes.
+                    </p>
+                  </SettingsHelp>
+                </div>
+                <p className={styles.settingsCaption}>Categorias automáticas</p>
+                <div className={styles.groutOptions}>
+                  {(
+                    [
+                      ["junctions", "Encontros"],
+                      ["openings", "Laterais dos vãos"],
+                      ["ends", "Pontas livres"],
+                      ["intervals", "Intervalos em paredes longas"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <label key={key}>
+                      <input
+                        type="checkbox"
+                        checked={grout[key]}
+                        disabled={disabled}
+                        onChange={(e) =>
+                          setGrout((g) => ({ ...g, [key]: e.target.checked }))
+                        }
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+                <Field
+                  label="Distância máxima de graute"
+                  value={distance}
+                  set={setDistance}
+                  disabled={disabled}
                 />
-                {label}
-              </label>
-            ))}
+                <button
+                  className={styles.settingsRestore}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => {
+                    const g = defaultGroutSettings();
+                    setGrout(g);
+                    setDistance(display(g.distance));
+                    setOptions([]);
+                    setError("");
+                  }}
+                >
+                  Restaurar padrões de graute
+                </button>
+              </section>
+            </div>
+            {!!options.length && (
+              <Suggestions
+                items={options}
+                choose={(key, n) => {
+                  if (key.startsWith("Nível "))
+                    setLevels((ls) =>
+                      ls.map((l) =>
+                        l.id === key.slice(6) ? { ...l, value: display(n) } : l,
+                      ),
+                    );
+                  else if (key === "Distância máxima de graute")
+                    setDistance(display(n));
+                  else field(key, display(n));
+                  setOptions((v) => v.filter((s) => s.field !== key));
+                }}
+              />
+            )}
+            {error && (
+              <p role="alert" className={styles.errorText}>
+                {error}
+              </p>
+            )}
           </div>
-          <Field
-            label="Distância máxima de graute"
-            value={distance}
-            set={setDistance}
-            disabled={disabled}
-          />
-          <p>
-            As categorias geram uma proposta automática. Desabilitar preserva
-            inclusões manuais; remover graute não cria substitutos. Restaurar
-            padrões preserva os ajustes.
-          </p>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => {
-              const g = defaultGroutSettings();
-              setGrout(g);
-              setDistance(display(g.distance));
-              setOptions([]);
-              setError("");
-            }}
-          >
-            Restaurar padrões de graute
-          </button>
-          <button type="submit" disabled={disabled}>
-            Aplicar configurações
-          </button>
-          <button type="button" onClick={close}>
-            Cancelar
-          </button>
+          <footer className={styles.settingsFooter}>
+            <span>As alterações são salvas ao aplicar.</span>
+            <button type="button" onClick={close}>
+              Cancelar
+            </button>
+            <button
+              className={styles.primary}
+              type="submit"
+              disabled={disabled}
+            >
+              Aplicar configurações
+            </button>
+          </footer>
         </form>
       </section>
     </div>
+  );
+}
+function SettingsHelp({
+  label,
+  children,
+}: {
+  label: string;
+  children: import("react").ReactNode;
+}) {
+  return (
+    <details className={styles.settingsHelp}>
+      <summary aria-label={label}>i</summary>
+      <div role="note">{children}</div>
+    </details>
   );
 }
 export function Diagnostics({
@@ -773,7 +865,11 @@ export function Diagnostics({
             <button
               disabled={s.busy}
               onClick={() =>
-                s.inspect({ focus: { x: d.x, y: d.y }, preview: null })
+                s.inspect({
+                  focus: { x: d.x, y: d.y },
+                  preview: null,
+                  diagnosticWalls: d.wallIds,
+                })
               }
             >
               Localizar
@@ -788,6 +884,7 @@ export function Diagnostics({
                     d.course,
                   ),
                   focus: { x: d.x, y: d.y },
+                  diagnosticWalls: d.wallIds,
                   preview: null,
                 })
               }
@@ -801,6 +898,7 @@ export function Diagnostics({
                 s.inspect({
                   mode: "plan",
                   focus: { x: d.x, y: d.y },
+                  diagnosticWalls: d.wallIds,
                   preview: null,
                 });
                 close();
