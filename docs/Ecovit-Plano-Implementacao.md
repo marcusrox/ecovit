@@ -1,11 +1,11 @@
 # Ecovit — Plano incremental de implementação
 
 **Data:** 10 de outubro de 2026  
-**Atualização documental:** 13 de outubro de 2026\
+**Atualização documental:** 14 de outubro de 2026\
 **Base:** [PRD 0.15](Ecovit-PRD.md) e [Arquitetura 1.8](Ecovit-Arquitetura-Tecnica.md)\
-**Estado:** M1, M2, M3.1, M3.2 e M3.3 aprovados pelo solicitante; M3.4 implementado e verificado pelo Codex, aguardando teste manual/aceite; relatório na seção 8. Relatórios e roteiros anteriores na seção 7. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais.
+**Estado:** M1, M2 e M3.1–M3.5 aprovados pelo solicitante; aceites globais de M3.4 e M3.5 recebidos em 14/10/2026. Relatórios e registros de aceite nas seções 7–9. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais.
 
-**Entrega atual:** M3.5 — Cruz nominal implementada por solicitação de 13/10/2026, com verificações do Codex e roteiro na seção 9; teste manual/aceite pendentes. Não altera o aceite pendente de M3.4.
+**Entrega atual:** M3.5 — Cruz nominal implementada e aprovada pelo solicitante em 14/10/2026; M3.4 também aprovado nessa data. Próximo marco previsto: M4, a detalhar mediante solicitação própria; sua implementação não foi iniciada ou autorizada por estes aceites.
 
 **Endereço local padrão:** `http://127.0.0.1:5173/`, conforme o README. Referências a `localhost` nos relatórios históricos preservam a origem usada naquela ocasião. Projetos salvos em `localhost` permanecem naquela origem; para transferi-los, baixar `.ecovit` na origem antiga e carregar na origem escolhida.
 
@@ -26,8 +26,8 @@ O plano organiza a implementação parcial do PRD; um requisito atendido parcial
 | M1 — Planta editável e persistência | Criar projeto, desenhar/editar paredes, desfazer, salvar e transportar arquivo | RF-01/02/03/08/09/11/12, nos recortes abaixo | Nenhuma | Aprovada pelo solicitante em 10/10/2026 |
 | M2 — Composição e inspeção de fiadas | Catálogo nominal, retas, L, retângulo, T básico, transição simples de alturas, inspeção e persistência; cruz apenas reconhecida e diagnosticada | RF-01/03/04/05/09/10, persistência RF-11/12 | M1 e definições P1–P5 do caderno | Aprovada em 12/10/2026; relatório na seção 6 |
 | M3 — Vãos e elementos construtivos | Portas, janelas e vãos integrados à composição; canaletas e grauteamentos automáticos e ajustáveis | RF-04/06/07/09/10 | M2 e definições nominais CT-07–10 | M3.1/M3.2/M3.3 aprovados; aceite de M3.3 em 13/10/2026 |
-| M3.4 — Evolução da edição no canvas | Continuidade/união de paredes, movimento com dependentes e destaque do módulo de início | RF-02/03/06/07/09/10/11/12, CT-11 | M3.3 aprovado e decisões D34-01/02 | Implementado; teste manual/aceite pendente; relatório na seção 8 |
-| M3.5 — Cruz nominal | Composição de cruz isolada e integrada a L/T/contorno, fases, elementos associados e diagnósticos | RF-04/05/07/09/10/12, CT-12 | Contratos de M3.4 preservados; exemplos EX-51–55 | Implementado e verificado pelo Codex; teste manual/aceite pendentes; seção 9 |
+| M3.4 — Evolução da edição no canvas | Continuidade/união de paredes, movimento com dependentes e destaque do módulo de início | RF-02/03/06/07/09/10/11/12, CT-11 | M3.3 aprovado e decisões D34-01/02 | Aprovado pelo solicitante em 14/10/2026; seção 8 |
+| M3.5 — Cruz nominal | Composição de cruz isolada e integrada a L/T/contorno, fases, elementos associados e diagnósticos | RF-04/05/07/09/10/12, CT-12 | Contratos de M3.4 preservados; exemplos EX-51–55 | Aprovado pelo solicitante em 14/10/2026; seção 9 |
 | M4 — Lajes e múltiplos pavimentos | Lajes, limites verticais, até três pavimentos e verificação dos alinhamentos | RF-08/13 e propagação dos RF-04/05/07 | M3 e pesquisa de transições verticais | A detalhar |
 | M5 — Consulta e conclusão da primeira versão | Quantitativos, duplicação de projetos e fechamento dos cenários restantes do PRD | RF-10/11/12 e cenários de aceite | M4 | A detalhar |
 
@@ -139,7 +139,7 @@ M1 estará pronta para teste do solicitante quando seus critérios tiverem evid�
 | Implementação | M1 aprovada; M2 implementada (relatório na seção 6) |
 | Comandos e testes automatizados | Implementados; resultados no relatório abaixo |
 | Teste manual do solicitante | Aprovação global recebida em 10/10/2026; sem checklist individual informado |
-| Próxima ação | Teste manual e aceite de M3.4 conforme seção 8; M4 depende de solicitação própria |
+| Próxima ação | Detalhar o primeiro incremento de M4 mediante solicitação própria; M3.4/M3.5 aprovados |
 
 ## 4. Relatório da implementação de M1 — 10/10/2026
 
@@ -848,7 +848,7 @@ Atualizados os estados atuais no plano, PRD, arquitetura, caderno técnico e REA
 
 ## 8. M3.4 — Evolução da edição no canvas
 
-**Data:** 13/10/2026. **Estado:** implementado na versão 0.6.0, aguardando teste manual/aceite. Implementação solicitada após a revisão documental; M3.3 permanece aprovado. A prioridade solicitada é ajustar a edição antes de M4. Não foi autorizado implementar M4 nem os demais marcos.
+**Data:** 13/10/2026. **Estado:** implementado na versão 0.6.0 e aprovado pelo solicitante em 14/10/2026. Implementação solicitada após a revisão documental; M3.3 permanece aprovado. A prioridade solicitada é ajustar a edição antes de M4. Não foi autorizado implementar M4 nem os demais marcos.
 
 ### Escopo e referências
 
@@ -1009,7 +1009,13 @@ Verificações do Codex: typecheck, lint e build passaram (avisos já existentes
 
 Teste manual do solicitante pendente: atualizar o aplicativo, conferir os três tipos em paredes verticais e horizontais no zoom habitual, incluindo prévia, movimento e redimensionamento. Textos podem ultrapassar a extensão de aberturas curtas e ficam sujeitos ao recorte do canvas; não reduzir fonte nem mudar os dados para acomodá-los. M3.4 continua aguardando aceite; M4 não iniciado.
 
+### Aceite global de M3.4 — 14/10/2026
+
+O solicitante declarou: **“Registre o aceite de M3.4 e M3.5”**. Registrado aceite global de M3.4 no alcance implementado, substituindo as pendências globais de aprovação nos relatos históricos desta seção. Preservados os resultados das verificações do Codex, as limitações e os roteiros como referência; não foram informados resultados individuais por passo manual.
+
 ## 9. M3.5 — Suporte à cruz nominal — 13/10/2026
+
+**Estado atual:** implementado e aprovado pelo solicitante em 14/10/2026; registro de aceite abaixo. Pendências de aprovação nos relatos anteriores são históricas.
 
 ### Solicitação e escopo
 
@@ -1104,6 +1110,12 @@ Modelo nominal CT-12; não dimensiona ligação ou armadura. Encontros muito pr�
 
 Abra/atualize **http://127.0.0.1:5173/**; se necessário execute `./Start-Ecovit.ps1 -Task dev` na raiz. Reabra o projeto com cruz mostrado nas imagens e entre em **Fiada**, usando **Enquadrar**. Confira fiadas 1/2/3: contorno e divisórias devem aparecer. Na primeira, selecione o conjunto e teste Prévia da alternativa B, Cancelar, Confirmar e Desfazer. Confira uma parede terminando antes da outra, depois vãos/canaletas/grautes e a persistência após reabrir. Siga também os seis passos do roteiro acima, com EX-51–55 do caderno; base 25×12,5×7 cm, EX-53 ocupa 200×150 cm, centro em (100;50) cm e altura inicial 21 cm. O exemplo nominal não presume medidas das imagens. Para arquivo antigo, carregar uma cópia permite conferir migração sem substituir o arquivo original. M3.5 disponível para teste manual, aguardando retorno/aceite.
 
+### Aceite global de M3.5 — 14/10/2026
+
+O solicitante declarou: **“Registre o aceite de M3.4 e M3.5”**. Registrado aceite global de M3.5 no alcance nominal implementado, substituindo as pendências globais de aprovação nos relatos históricos desta entrega. Preservados os resultados das verificações do Codex e as limitações de composição nominal; não foram informados resultados individuais por passo manual nem aprovação estrutural.
+
+M1, M2 e M3.1–M3.5 estão aprovados. M4 permanece a detalhar mediante solicitação própria, sem autorização automática para implementação. Os aceites não atribuem aprovação específica às revisões posteriores de apresentação. Registro documental revisado quanto à consistência com o roadmap e README; sem alteração de código ou execução de testes do aplicativo nesta solicitação.
+
 ### Melhoria visual das configurações — 14/10/2026
 
 Solicitação: melhorar aparência e mostrar tudo sem scroll quando possível, transferindo informações longas para “i”/“?”. Implementado painel amplo com três cartões (Vãos, Canaletas, Graute vertical), títulos/subtítulos, campos alinhados e restauração de cada grupo. Rodapé de Aplicar/Cancelar separado do conteúdo; fechamento pelo botão × ou Escape mantém cancelamento. Ajuda “i” em cada grupo, por clique/Enter, conserva as explicações anteriores. Altura resultante, limites de fiadas e cotas continuam visíveis. Lista vazia identifica que faixas locais continuam automáticas. Remoção de nível usa × com nome acessível específico. Regras de configuração, histórico, arquivo e composição preservados; alterações anteriores de M3.5 mantidas, sem commit/push nesta solicitação.
@@ -1173,3 +1185,19 @@ Rodadas intermediárias: editor/Fiada tiveram 26 passes, mas dois testes das con
 Esta entrega não inclui auditoria completa de acessibilidade ou garantia óptica em todos os monitores/níveis de zoom. Telas estreitas/baixas ou listas extensas podem precisar de rolagem; estados desabilitados mantêm menor opacidade. Legendas técnicas com ■/○/▱/● e direções geométricas de Inverter lado são exceções documentadas, sem substituição por pictogramas do pacote. Lint protege os imports usuais; escolha semântica e qualidade visual também exigem revisão. Nenhum controle futuro acrescentado.
 
 Para abrir, atualizar **http://127.0.0.1:5173/**. Se necessário, executar `./Start-Ecovit.ps1 -Task dev` na raiz. Conferir: (1) início, cartão de criação, formulário e projetos salvos; (2) barra Selecionar/Parede/Porta/Janela/Vão/Configurações e estado de salvamento; (3) desfazer/refazer, selecionado/desabilitado e dicas com mouse/Tab; (4) Fiada anterior/próxima, zoom, enquadrar e recolher/abrir painéis; (5) Configurações e seus três “i”, remover nível e Aplicar/Cancelar/Restaurar. Avaliar peso dos traços, contraste e centralização no monitor/zoom habitual. Teste manual e aceite desta padronização aguardam retorno do solicitante.
+
+### Separação das portas de uso e testes — 14/10/2026
+
+Solicitação: reservar 5173 ao solicitante e 5174 aos testes do Codex. Implementado `dev:test` no package.json e no Start-Ecovit.ps1; Playwright usa exclusivamente 127.0.0.1:5174, com porta estrita e servidor próprio, sem reutilização de instâncias. O comando dev continua na 5173. AGENTS.md determina que o Codex não inicie, encerre ou reinicie o servidor do solicitante, apenas indique como iniciá-lo. README e Arquitetura atualizados. Sem mudanças no bloqueio de projetos ou na atualização automática do Vite.
+
+Verificação do Codex: lint, typecheck e git diff --check passaram. O cenário de bloqueio/liberação entre abas passou em Chrome e Edge no servidor 5174 (dois casos); o runner permaneceu aberto após os dois resultados e foi interrompido com Ctrl+C, sem resumo final de saída. A primeira execução falhou porque lucide-react, já registrado no lockfile, não estava instalado localmente; dependência instalada sem mudança de versões ou lockfile e casos repetidos com sucesso. Suíte e2e integral, build e domínio não reexecutados nesta mudança de configuração. Teste manual do solicitante pendente: iniciar com ./Start-Ecovit.ps1 -Task dev e conferir uso em 127.0.0.1:5173. Separar portas não elimina atualizações de código recebidas pelo servidor de desenvolvimento do solicitante.
+
+## 10. Definições iniciais de M4 — 14/10/2026
+
+Estado: decisões de produto confirmadas pelo solicitante; M4 não implementado. A divisão em M4.1 (Pavimentos), M4.2 (Lajes e limites verticais) e M4.3 (Coordenação entre pavimentos) permanece proposta para organização, sem tarefas detalhadas ou autorização automática para implementar.
+
+Confirmado: nova Planta por pavimento e fiadas reiniciando em 1; até uma laje de fechamento por pavimento, pertencente ao inferior; sugestão editável de início da alvenaria pelo topo da laje inferior ou, sem laje, pelo início da alvenaria inferior mais sua altura padrão, sem espessuras adicionais presumidas. Laje limita somente trechos cobertos da parede, preservando altura solicitada nos dados e nos trechos descobertos/aberturas. Incompatibilidade com fiadas completas pede decisão do usuário. Alteração posterior da laje propõe atualização das cotas do superior, aplicada somente mediante confirmação.
+
+PRD RF-08/13, Arquitetura §18 e caderno técnico atualizados juntos. Permanecem para o detalhamento do incremento os critérios geométricos de cobertura parcial, a proposta concreta de atualização das propriedades de cota e seu alcance quando houver vários pavimentos. Não inferir sincronização automática ou regras físicas. Próximo passo: acordar a divisão e iniciar o detalhamento do primeiro incremento quando solicitado.
+
+Verificação do Codex: revisão de consistência entre as quatro referências e git diff --check. Alteração apenas documental nesta solicitação; sem testes do aplicativo, implementação ou alteração do formato vigente. Teste e aceite de M4 permanecem futuros; aceites de M3.4/M3.5 preservados.

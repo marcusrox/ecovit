@@ -28,11 +28,18 @@ Consulte as seções pertinentes à alteração. Não duplique esses documentos 
 
 ## Validação
 
+### Portas e inicialização
+
+- A porta **5173** (`http://127.0.0.1:5173/`) é reservada ao uso do solicitante. O Codex não deve iniciar o aplicativo nessa porta; quando necessário, apenas orientar o solicitante a executar `./Start-Ecovit.ps1 -Task dev` e abrir o endereço. Não encerrar nem reiniciar o servidor do solicitante.
+- Todos os testes de navegador e verificações interativas do Codex devem usar a porta **5174** (`http://127.0.0.1:5174/`) e sessões de navegador isoladas dos projetos pessoais. Para servidor interativo, usar `./Start-Ecovit.ps1 -Task dev:test` ou `npm run dev:test`.
+- `npm run test:e2e` inicia seu próprio servidor na porta 5174, sem reaproveitar servidores existentes. Se a porta estiver ocupada, identificar a instância; não recorrer à porta 5173 nem encerrar processos de origem desconhecida.
+
 Os scripts abaixo estão implementados no `package.json`. Consulte o README para instalação e execução; nesta máquina, `Start-Ecovit.ps1 -Task <tarefa>` também utiliza o runtime local do Codex.
 
 | Comando | Finalidade |
 |---|---|
-| `npm run dev` | Abrir o aplicativo para teste local |
+| `npm run dev` | Solicitante inicia o aplicativo na porta 5173 |
+| `npm run dev:test` | Codex inicia o aplicativo para verificações na porta 5174 |
 | `npm run typecheck` | Verificar tipos |
 | `npm run lint` | Verificar o código |
 | `npm test` | Executar testes de domínio e persistência, sem modo de observação |

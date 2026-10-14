@@ -1,4 +1,4 @@
-param([ValidateSet('dev','typecheck','lint','test','test:e2e','build')][string]$Task = 'dev')
+param([ValidateSet('dev','dev:test','typecheck','lint','test','test:e2e','build')][string]$Task = 'dev')
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
 $nodeCommand = Get-Command node -ErrorAction SilentlyContinue

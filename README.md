@@ -2,11 +2,11 @@
 
 Editor local de plantas com paredes ortogonais e malha de meio tijolo. M1/M2 incluem desenho/edição de paredes, histórico, composição nominal de fiadas, inspeção e persistência. M3.1 acrescenta portas, janelas e vãos, inclusive empilhados; M3.2 acrescenta canaletas, supressão e restauração; M3.3 implementa grautes nominais automáticos e manuais. M1, M2 e os três incrementos de M3 estão aprovados pelo solicitante; aceite global de M3.3 recebido em 13/10/2026. Lajes, múltiplos pavimentos e quantitativos permanecem futuros.
 
-M3.5 implementa suporte nominal à cruz, inclusive contorno/divisórias conectados, com fases A/B e alternativa global: [PRD §22](docs/Ecovit-PRD.md#22-m35--composição-nominal-de-encontros-em-cruz--13102026), CT-12 e [plano §9](docs/Ecovit-Plano-Implementacao.md#9-m35--suporte-à-cruz-nominal--13102026). Cruz suportada compõe o conjunto inteiro; conflitos reais continuam diagnosticados. Aplicativo 0.7.0, arquivo versão 7/composição nominal-v8; snapshots antigos são conferidos antes da migração. Teste manual/aceite de M3.5 pendentes; estado de M3.4 preservado.
+M3.5 implementa suporte nominal à cruz, inclusive contorno/divisórias conectados, com fases A/B e alternativa global: [PRD §22](docs/Ecovit-PRD.md#22-m35--composição-nominal-de-encontros-em-cruz--13102026), CT-12 e [plano §9](docs/Ecovit-Plano-Implementacao.md#9-m35--suporte-à-cruz-nominal--13102026). Cruz suportada compõe o conjunto inteiro; conflitos reais continuam diagnosticados. Aplicativo 0.7.0, arquivo versão 7/composição nominal-v8; snapshots antigos são conferidos antes da migração. Aceite global de M3.5 recebido em 14/10/2026.
 
 Para testar, abrir projeto com cruz e alternar para Fiada: o contorno deve permanecer composto. Na primeira fiada, selecionar Conjunto e usar Prévia da alternativa, Cancelar ou Confirmar; a alternativa inverte a sequência global A/B. Projetos antigos com cruz bloqueada são recompostos após migração, sem mudar paredes/configurações/ajustes. Casos e roteiro manual em Plano §9. A composição é nominal, sem dimensionamento estrutural.
 
-M3.4 — Evolução da edição no canvas está implementado na versão 0.6.0, aguardando teste manual/aceite: continuidade/união de paredes ao desenhar ou mover, movimento com dependentes e destaque do módulo de início. Escopo e verificações no [plano §8](docs/Ecovit-Plano-Implementacao.md#8-m34--evolução-da-edição-no-canvas). M1/M2/M3.1–3.3 mantêm seus aceites.
+M3.4 — Evolução da edição no canvas foi implementado na versão 0.6.0 e recebeu aceite global em 14/10/2026: continuidade/união de paredes ao desenhar ou mover, movimento com dependentes e destaque do módulo de início. Escopo e verificações no [plano §8](docs/Ecovit-Plano-Implementacao.md#8-m34--evolução-da-edição-no-canvas). M1/M2/M3.1–3.3 mantêm seus aceites. Próximo marco previsto: M4, ainda não iniciado e a detalhar mediante solicitação própria.
 
 ## Abrir nesta máquina
 
@@ -86,6 +86,8 @@ npm run build
 Nesta máquina, pode-se usar `./Start-Ecovit.ps1 -Task typecheck` e o mesmo formato com `lint`, `test`, `test:e2e` ou `build`.
 
 Vitest cobre geometria, arquivo, histórico e IndexedDB. Playwright usa Chrome e Edge instalados, com perfis isolados que não alteram seus projetos pessoais; é preciso ter ambos os navegadores instalados para executar a suíte completa. As capturas e traces de falhas ficam em `test-results/`, fora do controle de versão. O build estático fica em `dist/`.
+
+A porta **5173** é reservada ao solicitante: o Codex apenas orienta sua inicialização com `./Start-Ecovit.ps1 -Task dev`, sem iniciar, encerrar ou reiniciar esse servidor. Os testes de navegador usam **http://127.0.0.1:5174/**. Playwright inicia e encerra seu próprio servidor, sem reaproveitar instâncias existentes; se 5174 estiver ocupada, a execução falha. Para verificações interativas do Codex, usar `./Start-Ecovit.ps1 -Task dev:test` ou `npm run dev:test`, com sessão de navegador isolada. Encerrar esse servidor antes de executar a suíte e2e. Projetos pessoais continuam na origem 5173; a separação de portas não elimina as atualizações automáticas do Vite quando o código é alterado.
 
 ## Documentação e relatório
 

@@ -2,7 +2,7 @@
 
 **Versão:** 0.15 — Suporte nominal à cruz implementado em M3.5\
 **Data:** 13 de outubro de 2026\
-**Status:** M1/M2 e M3.1/M3.2/M3.3 aprovados pelo solicitante; M3.4/M3.5 implementados, com teste manual/aceite próprios pendentes.\
+**Status:** M1/M2 e M3.1–M3.5 aprovados pelo solicitante; aceites globais de M3.4/M3.5 registrados em 14/10/2026 no plano.\
 **Plataforma:** aplicação web, inicialmente com interface e documentação em português brasileiro.
 
 ## 1. Visão do produto
@@ -132,7 +132,7 @@ O editor terá um único canvas e dois modos principais: **Planta** e **Fiada**.
 
 No modo Planta, o usuário cria e altera a arquitetura: paredes, portas, janelas, vãos e lajes. Paredes aparecem como faixas contínuas com contorno e espessura, sobre o grid de meio tijolo. A modulação das peças é calculada ao concluir cada desenho, mas a visualização padrão da Planta não mostra furos nem a divisão de cada tijolo; essa distribuição será inspecionada no modo Fiada.
 
-Cada parede reta terá identificador próprio e poderá ser criada, selecionada, excluída, redimensionada a partir de qualquer uma das duas extremidades e movida com seus dependentes. Criar ou mover uma parede para continuidade colinear poderá unir paredes compatíveis, conforme §21. Não haverá ferramenta de dividir paredes. A seleção mostrará realce, comprimento modular e propriedades compactas. Movimento e união estão implementados em M3.4, aguardando aceite manual.
+Cada parede reta terá identificador próprio e poderá ser criada, selecionada, excluída, redimensionada a partir de qualquer uma das duas extremidades e movida com seus dependentes. Criar ou mover uma parede para continuidade colinear poderá unir paredes compatíveis, conforme §21. Não haverá ferramenta de dividir paredes. A seleção mostrará realce, comprimento modular e propriedades compactas. Movimento e união estão implementados em M3.4, com aceite global recebido em 14/10/2026.
 
 A referência de desenho e encaixe será sempre a **face externa**, com espessura igual à largura do tijolo-base. A prévia mostrará a face de referência e o lado ocupado pela espessura, permitindo inverter esse lado antes de confirmar. Em paredes internas, “face externa” identifica a face adotada como referência, sem exigir detecção de recintos. Essa face permanecerá estável ao editar a parede. Encontros em L alinharão as faces externas no canto; o motor resolverá a região compartilhada sem duplicar peças. Cotas externas serão a referência principal; cotas internas poderão ser consultadas sem alterar o encaixe.
 
@@ -230,13 +230,17 @@ Permitir remover canaletas somente na Fiada onde aparecem; renderizar canaletas 
 
 ### RF-13 — Lajes de piso e cobertura
 
-Permitir criar lajes por contorno ortogonal simples, sem auto-interseções, associado a pavimento e cota, com espessura definida pelo usuário. Será possível editar contorno, nível, espessura e aberturas, também ortogonais simples e contidas na laje.
+Permitir criar lajes por contorno ortogonal simples, sem auto-interseções, associado a pavimento e cota, com espessura definida pelo usuário. Será possível editar contorno, nível, espessura e aberturas, também ortogonais simples e contidas na laje. No M4, permitir no máximo uma laje por pavimento, cadastrada como fechamento do pavimento inferior; ela poderá servir de piso ao superior ou de cobertura quando não houver outro andar. Múltiplas lajes em níveis distintos no mesmo pavimento ficam para evolução futura.
 
 A mesma ferramenta atenderá lajes de piso e de cobertura. A finalidade poderá ser indicada como informação. A cota será sempre a da face superior; a face inferior será essa cota menos a espessura. A espessura será armazenada apenas na laje, sem campo duplicado no pavimento.
 
 Cada parede terá altura inicial herdada do padrão do pavimento e editável. Seu topo solicitado será a referência de início da alvenaria mais essa altura. Quando uma laje de fechamento associada cobrir o trecho, seu limite superior será o menor entre esse topo e a face inferior da laje. Sem laje de fechamento, valerá o topo solicitado. Limites incompatíveis com fiadas serão sinalizados com alternativas, sem cortes ou arredondamentos silenciosos. Grauteamentos e encontros respeitarão a alvenaria existente em cada trecho. Não haverá modelagem de telhados: a altura da parede será suficiente para representar seu término.
 
 Lajes aparecerão como camada 2D e participarão da coordenação de paredes, cintas e grauteamentos. Serão limites para a propagação dos encontros quando encerrarem o trecho de parede. Sua criação não criará outro pavimento automaticamente.
+
+Decisão de produto de 14/10/2026 para M4: preservar a altura solicitada de cada parede e limitar somente sua composição nos trechos cobertos pela laje. Em trechos fora do contorno ou sob aberturas da laje, manter o topo solicitado. A mesma parede poderá ter limites efetivos diferentes ao longo de sua extensão. Se o limite não comportar fiadas completas, apresentar alternativas para decisão do usuário, sem cortes ou arredondamentos silenciosos. Essa definição é nominal e não determina apoio ou dimensionamento estrutural.
+
+Após alterar a cota ou espessura da laje, propor a atualização das cotas do pavimento superior afetadas pela mudança, explicitando valores anteriores e propostos; aplicar essas alterações somente após confirmação. Até essa confirmação, conservar as cotas existentes e informar eventuais conflitos. Não presumir deslocamento automático em cascata de outros pavimentos ou substituição de cotas personalizadas; os detalhes da proposta serão definidos no incremento correspondente.
 
 **Aceite:** alterar a espessura atualiza as cotas das faces e evidencia conflitos nos elementos dependentes; a laje delimita a propagação associada. Dimensionamento resistente e armaduras da laje ficam fora desta entrega.
 
@@ -245,6 +249,8 @@ Lajes aparecerão como camada 2D e participarão da coordenação de paredes, ci
 O projeto começará com um térreo e propriedades iniciais visíveis e editáveis, sem exigir cadastro prévio de todos os níveis. Adicionar, renomear, duplicar e remover pavimentos até o limite de três. Cada pavimento terá cota de piso acabado, referência de início da alvenaria e altura padrão para novas paredes. Alterar o padrão não modificará silenciosamente paredes existentes. A espessura pertencerá exclusivamente à laje associada.
 
 Compartilhar origem e coordenadas horizontais. Permitir sobreposição do pavimento adjacente para comparar paredes, vãos, aberturas de laje e reservas verticais. Duplicar um pavimento criará elementos independentes com novos identificadores.
+
+Decisões de produto de 14/10/2026 para M4: cada pavimento funciona como uma nova Planta, com seus elementos próprios; a numeração das fiadas reinicia em 1 a partir de sua referência de início da alvenaria, independentemente da cota global. Ao criar um pavimento superior, sugerir o início da alvenaria na face superior da laje de fechamento do inferior. Sem laje cadastrada, sugerir a referência de início da alvenaria inferior mais sua altura padrão de paredes. A sugestão será apresentada para conferência e edição antes de confirmar; não acrescentar espessuras presumidas de laje, contrapiso, revestimento ou outras camadas. A regra de sugestão não confunde início da alvenaria com cota de piso acabado, que permanece propriedade distinta.
 
 Desalinhamentos e interrupções serão informados para revisão, sem serem interpretados automaticamente como aprovação ou reprovação estrutural. Escadas e aberturas de laje poderão ser representadas por contornos de referência.
 
@@ -571,7 +577,7 @@ As fórmulas, limites geométricos, paginação e exemplos são definidos em CT-
 
 ## 21. M3.4 — Evolução da edição no canvas — 13/10/2026
 
-Esta revisão evolui RF-02/03/06/07/09/10/11/12. M1/M2/M3.1–3.3 mantêm os relatos e aceites da versão entregue; M3.4 terá verificação e aceite próprios. Implementação de M3.4 foi solicitada após a revisão documental; resultados e aceite separado no Plano §8. As regras abaixo substituem a antiga proibição de mover paredes e complementam as regras de identidade e supressão de §20, apenas nas operações novas.
+Esta revisão evolui RF-02/03/06/07/09/10/11/12. M1/M2/M3.1–3.3 mantêm os relatos e aceites da versão entregue; M3.4 tem verificações próprias e recebeu aceite global em 14/10/2026. Implementação de M3.4 foi solicitada após a revisão documental; resultados e aceite separado no Plano §8. As regras abaixo substituem a antiga proibição de mover paredes e complementam as regras de identidade e supressão de §20, apenas nas operações novas.
 
 ### Continuidade e união ao desenhar ou mover
 
@@ -624,7 +630,7 @@ As regras geométricas e exemplos estão em CT-11/EX-36–48 do caderno; dados/m
 
 ## 22. M3.5 — Composição nominal de encontros em cruz — 13/10/2026
 
-**Solicitação:** incluir suporte à cruz, inclusive quando integrada a um contorno fechado com encontros L/T. Implementação posteriormente autorizada e entregue no aplicativo 0.7.0; verificações no Plano §9, teste manual/aceite pendentes. Complementa RF-04/05/07/09/10/12 e substitui a exclusão da cruz somente na nova entrega; os relatos e contratos anteriores permanecem históricos.
+**Solicitação:** incluir suporte à cruz, inclusive quando integrada a um contorno fechado com encontros L/T. Implementação posteriormente autorizada e entregue no aplicativo 0.7.0; verificações e aceite global de 14/10/2026 no Plano §9. Complementa RF-04/05/07/09/10/12 e substitui a exclusão da cruz somente na nova entrega; os relatos e contratos anteriores permanecem históricos.
 
 Uma cruz ortogonal com quatro ramos de alvenaria deve receber composição automática conforme CT-12, sem exigir que o usuário altere medidas, separe paredes ou transforme o cruzamento em dois T. Resolver o componente conectado inteiro, incluindo contorno externo e divisórias; uma cruz suportada não pode apagar as peças desse conjunto. Não basta mostrar apenas uma cruz isolada resolvida. Modelagem nominal não comprova ligação resistente entre paredes.
 
@@ -634,4 +640,4 @@ Integrar vãos, canaletas e grautes pelos contratos existentes após compor a al
 
 Para conflito real de ocupação, alturas sem padrão, escolha pendente ou combinação de encontros incompatível, manter diagnóstico localizável e componente afetado sem composição; outros componentes continuam visíveis. Não usar o simples reconhecimento de cruz como erro. Informar a consequência: “Composição suspensa em N paredes conectadas: [motivo]”, destacando encontro e paredes afetadas. Snapshots antigos com cruz bloqueada permanecem validados pelo contrato original antes da migração; o editor atual não deve atribuir suporte ausente à modulação nem usar mensagem operacional dependente de “no M2”.
 
-CT-12/EX-51–55 define geometria/exemplos; Arquitetura §17 define processamento/migração; Plano §9 define tarefas/aceite. Sem lajes, múltiplos pavimentos, quantitativos, aço, peças especiais ou validação estrutural. M3.4 continua com seu aceite próprio pendente.
+CT-12/EX-51–55 define geometria/exemplos; Arquitetura §17 define processamento/migração; Plano §9 define tarefas/aceite. Sem lajes, múltiplos pavimentos, quantitativos, aço, peças especiais ou validação estrutural. M3.4 também recebeu aceite global em 14/10/2026.

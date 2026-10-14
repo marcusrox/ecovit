@@ -2,7 +2,7 @@
 
 **Versão:** 1.8 — Composição da cruz em M3.5\
 **Data:** 13 de outubro de 2026\
-**Base funcional:** PRD Ecovit 0.15; M3.1/M3.2/M3.3 aprovados; M3.4/M3.5 implementados, com aceite manual pendente. Aplicativo 0.7.0, arquivo versão 7/composição nominal-v8.\
+**Base funcional:** PRD Ecovit 0.15; M3.1–M3.5 aprovados; aceites globais de M3.4/M3.5 recebidos em 14/10/2026. Aplicativo 0.7.0, arquivo versão 7/composição nominal-v8.\
 **Objetivo:** implementar o editor e o motor construtivo com uma stack acessível, sem infraestrutura desnecessária.
 
 ## 1. Decisões de arquitetura
@@ -244,6 +244,8 @@ Cloudflare Pages: comando npm run build e diretório dist. Em aaPanel: publicar 
 
 Preferir um endereço estável, por exemplo um subdomínio dedicado, pois IndexedDB pertence à origem do site. Mudar domínio/protocolo não transfere os projetos locais; arquivos .ecovit permitem transporte.
 
+Operação local (14/10/2026): `127.0.0.1:5173` é reservado ao solicitante, que inicia o servidor; o Codex somente fornece a orientação de início. Testes automatizados e verificações interativas do Codex usam `127.0.0.1:5174` e sessões isoladas. Playwright gerencia servidor próprio com porta estrita, sem reutilizar instâncias existentes. `dev:test` permite iniciar o servidor de verificações interativas. A origem dos projetos pessoais permanece 5173; esta separação não altera o bloqueio por projeto nem a atualização automática do servidor de desenvolvimento.
+
 Inicialmente o acesso exige conexão para carregar o aplicativo. Depois de aberto, operações locais não dependem de API remota, mas recarregamento offline não será garantido. Sem PWA ou Service Worker nesta fase, pois funcionamento offline não é requisito.
 
 Publicar recursos estáticos com nomes de conteúdo gerados pelo build e evitar cache prolongado do HTML. Não carregar dependências essenciais por CDN externa em tempo de uso.
@@ -406,7 +408,7 @@ No renderer do canvas, identificar orientação pela parede hospedeira. Rótulo 
 
 ## 17. Contratos de M3.5 — Cruz nominal — 13/10/2026
 
-**Estado:** implementado, com resultados no Plano §9 e aceite manual pendente. Produto em PRD §22, geometria em CT-12/EX-51–55. O motor nominal-v8 compõe a cruz suportada; os geradores nominal-v1–v7 mantêm sua interpretação de cruz bloqueada para validar arquivos antigos.
+**Estado:** implementado, com resultados no Plano §9 e aceite global recebido em 14/10/2026. Produto em PRD §22, geometria em CT-12/EX-51–55. O motor nominal-v8 compõe a cruz suportada; os geradores nominal-v1–v7 mantêm sua interpretação de cruz bloqueada para validar arquivos antigos.
 
 ### Processamento e resultado
 
@@ -431,3 +433,11 @@ Migrar em memória, conservar IDs, paredes/vãos, escolhas, níveis/categorias e
 Na convenção atual, a cruz é limite de suporte, não prova de erro de medida. Na futura, cruz válida recebe composição e informação nominal por CT-12; diagnóstico de erro exige motivo específico: reservas incompatíveis, percurso sem padrão, altura inválida, vão invadindo encontro ou ajuste pendente. Distinguir suporte, entrada, conflito geométrico, limite de processamento e exceção do motor; não classificar toda cruz como exceção de execução.
 
 Mensagens mostram consequência no conjunto e N paredes distintas, com IDs/posição/fiadas corretos; localização realça o encontro e as paredes afetadas, com seleção/consulta na Planta/Fiada. Não usar somente “no M2” no texto operacional. Sem composição parcial apresentada como solução completa. Não criar erro estrutural para remoções voluntárias ou ausência de dimensões físicas.
+
+## 18. Diretrizes iniciais de M4 — 14/10/2026
+
+Decisões de produto em RF-08/13; ainda não implementadas. A composição e a numeração das fiadas serão locais a cada pavimento, começando em 1, com conversão para cotas globais pela referência de início da alvenaria. Pavimentos compartilham origem horizontal, mas seus elementos e ajustes devem ser independentes. M4 admite no máximo uma laje de fechamento por pavimento, pertencente ao inferior.
+
+Manter separados a altura solicitada da parede e seus limites efetivos por trecho, derivados da cobertura do contorno da laje e de suas aberturas; não substituir a altura persistida pela altura limitada. A sugestão de início do pavimento superior usa o topo da laje inferior ou, na ausência dela, o início da alvenaria inferior mais a altura padrão de paredes. Sugestões não incluem camadas presumidas e são editáveis antes da confirmação. Alterações posteriores da laje propõem atualização das cotas, sem aplicar silenciosamente a proposta ao pavimento superior.
+
+Formato, migração, granularidade dos trechos parcialmente cobertos, atualização das propriedades de cota e eventual alcance entre vários pavimentos serão detalhados no incremento correspondente, consultando o caderno antes dos algoritmos. Não há mudança do formato vigente ou autorização de implementação nesta definição.
