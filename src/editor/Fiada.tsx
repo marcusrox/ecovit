@@ -60,6 +60,9 @@ export function FiadaToolbar() {
         <>
           <button
             aria-label="Fiada anterior"
+            className={styles.iconButton}
+            title="Fiada anterior"
+            data-tooltip="Fiada anterior"
             disabled={s.busy || s.course <= 1}
             onClick={() => s.inspect({ course: s.course - 1, preview: null })}
           >
@@ -88,6 +91,9 @@ export function FiadaToolbar() {
           </label>
           <button
             aria-label="Próxima fiada"
+            className={styles.iconButton}
+            title="Próxima fiada"
+            data-tooltip="Próxima fiada"
             disabled={s.busy || s.course >= total}
             onClick={() => s.inspect({ course: s.course + 1, preview: null })}
           >
@@ -196,7 +202,7 @@ export function FiadaPanel() {
   if (collapsed)
     return (
       <button
-        className={styles.reopen}
+        className={`${styles.reopen} ${styles.iconText}`}
         aria-label="Abrir inspeção de fiadas"
         onClick={() => setCollapsed(false)}
       >
@@ -209,6 +215,9 @@ export function FiadaPanel() {
         <span>FIADAS E ENCONTROS</span>
         <button
           aria-label="Recolher inspeção de fiadas"
+          className={styles.iconButton}
+          title="Recolher inspeção de fiadas"
+          data-tooltip="Recolher inspeção de fiadas"
           onClick={() => setCollapsed(true)}
         >
           <Icon name="right" />

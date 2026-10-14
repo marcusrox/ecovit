@@ -322,6 +322,10 @@ A página inicial reúne criação, abertura de projetos locais e carregamento d
 
 A identidade visual usa verde profundo, verde oliva e fundo areia, com fonte de sistema para controles e detalhe serifado no título inicial, sem depender de fontes remotas. A lista vazia explica onde aparecerão os projetos, e a orientação de backup permanece visível após os cartões. Essa adaptação da página inicial não altera o foco do editor em computadores com mouse e teclado.
 
+### Iconografia consistente
+
+Diretriz registrada em 14/10/2026: ações e indicadores da interface atual e futura devem usar um único catálogo amplo, com traços uniformes, aparência refinada, contraste legível e alinhamento central. Mesma ação conserva símbolo e significado em todo o aplicativo. Ícones complementam rótulos; controles sem texto têm nome acessível e dica visual. Não misturar emoji ou caracteres de fonte com ícones de ação/status. Logotipo e desenhos técnicos do canvas preservam sua identidade e significado. Biblioteca, variantes, exceções e verificações são definidos na [Arquitetura §2.1](Ecovit-Arquitetura-Tecnica.md#21-padrão-de-iconografia--14102026). Migração para Lucide React implementada, com resultados no plano e teste manual/aceite pendentes; formatos e regras do motor preservados.
+
 ### Interface centrada no canvas
 
 Revisão da paginação: retas conectadas e cantos devem seguir a continuidade do percurso. Orientação igual para todos os cantos de uma fiada não é requisito. Inteiros ocupam o canto conforme a paridade do trecho; meios não devem ser introduzidos no interior para atender orientação imposta. As duas fases devem alternar cada canto e cobrir exatamente a geometria. Meios necessários nas extremidades permanecem permitidos. A definição nominal e o tratamento específico dos T estão em CT-05.

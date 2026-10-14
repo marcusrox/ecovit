@@ -34,22 +34,65 @@
   flex: none;
   pointer-events: none;
 }
-:global(button:has(> svg)) {
+.iconText,
+.iconButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   vertical-align: middle;
 }
-.editorApp .tools button:has(> svg),
-.editorApp .zoom button:has(> svg),
-.editorApp .fiadaToolbar button:has(> svg) {
+.editorApp .tools .iconText,
+.editorApp .tools .iconButton,
+.editorApp .zoom .iconText,
+.editorApp .zoom .iconButton,
+.editorApp .fiadaToolbar .iconButton {
   min-height: 30px;
 }
-.editorApp .tools button[aria-label]:has(> svg),
-.editorApp .fiadaToolbar button[aria-label]:has(> svg) {
+.editorApp button.iconButton {
   width: 30px;
   padding: 5px;
+}
+.iconButton {
+  position: relative;
+}
+button.iconButton {
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+}
+.iconButton[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #234e3b;
+  color: white;
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+  display: none;
+  z-index: 12;
+}
+.iconButton[data-tooltip]:is(:hover, :focus-visible)::after {
+  display: block;
+}
+.modal .iconButton[data-tooltip]::after {
+  bottom: auto;
+  top: calc(100% + 7px);
+  left: auto;
+  right: 0;
+  transform: none;
+}
+.modal .settingsLevel .iconButton[data-tooltip]::after {
+  top: 50%;
+  right: calc(100% + 6px);
+  transform: translateY(-50%);
 }
 .bigPlus,
 .projectIcon {
@@ -153,6 +196,9 @@
   font-size: 15px;
 }
 .saveStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   color: #6b8170;
   white-space: nowrap;
@@ -374,7 +420,7 @@
 }
 .localNote {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
   font-size: 12px;
   color: #68735f;

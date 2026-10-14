@@ -176,7 +176,10 @@ function Properties({ doc }: { doc: Project }) {
   };
   if (collapsed)
     return (
-      <button className={styles.reopen} onClick={() => setCollapsed(false)}>
+      <button
+        className={`${styles.reopen} ${styles.iconText}`}
+        onClick={() => setCollapsed(false)}
+      >
         Propriedades <Icon name="left" />
       </button>
     );
@@ -186,6 +189,9 @@ function Properties({ doc }: { doc: Project }) {
         <span>{wall ? "PAREDE SELECIONADA" : "PROPRIEDADES DO TÉRREO"}</span>
         <button
           aria-label="Recolher propriedades"
+          className={styles.iconButton}
+          title="Recolher propriedades"
+          data-tooltip="Recolher propriedades"
           onClick={() => setCollapsed(true)}
         >
           <Icon name="right" />
@@ -481,13 +487,25 @@ export default function App() {
               className={`${styles.saveStatus} ${saved === "error" ? styles.errorText : ""}`}
               role="status"
             >
+              <Icon
+                name={
+                  readonly
+                    ? "readonly"
+                    : saved === "saving"
+                      ? "saving"
+                      : saved === "error"
+                        ? "warning"
+                        : "saved"
+                }
+                size="compact"
+              />
               {readonly
-                ? "◉ Somente leitura"
+                ? "Somente leitura"
                 : saved === "saving"
-                  ? "◌ Salvando…"
+                  ? "Salvando…"
                   : saved === "error"
-                    ? "⚠ Não salvo"
-                    : "✓ Salvo no navegador"}
+                    ? "Não salvo"
+                    : "Salvo no navegador"}
             </span>
             <div className={styles.headerActions}>
               <button
@@ -508,11 +526,12 @@ export default function App() {
               <button
                 disabled={busy || importing}
                 onClick={() => input.current?.click()}
+                className={styles.iconText}
               >
                 <Icon name="upload" /> Carregar arquivo
               </button>
               <button
-                className={styles.primary}
+                className={`${styles.primary} ${styles.iconText}`}
                 disabled={busy || importing}
                 onClick={() => download(doc)}
               >
@@ -526,6 +545,7 @@ export default function App() {
             <button
               disabled={busy || importing}
               onClick={() => input.current?.click()}
+              className={styles.iconText}
             >
               <Icon name="upload" /> Carregar .ecovit
             </button>
@@ -545,6 +565,9 @@ export default function App() {
           )}
           <button
             aria-label="Fechar aviso"
+            className={styles.iconButton}
+            title="Fechar aviso"
+            data-tooltip="Fechar aviso"
             onClick={() => useStore.getState().notify("")}
           >
             <Icon name="close" />
@@ -557,9 +580,7 @@ export default function App() {
             <div className={styles.toolbar}>
               <div className={styles.tools}>
                 <button
-                  className={
-                    tool === "select" && !groutMode ? styles.active : ""
-                  }
+                  className={`${styles.iconText} ${tool === "select" && !groutMode ? styles.active : ""}`}
                   aria-pressed={tool === "select" && !groutMode}
                   disabled={busy || readonly}
                   onClick={() => {
@@ -572,7 +593,7 @@ export default function App() {
                   <Icon name="select" /> Selecionar
                 </button>
                 <button
-                  className={tool === "wall" ? styles.active : ""}
+                  className={`${styles.iconText} ${tool === "wall" ? styles.active : ""}`}
                   aria-pressed={tool === "wall"}
                   disabled={busy || readonly}
                   onClick={() => {
@@ -590,7 +611,7 @@ export default function App() {
                     <button
                       key={kind}
                       aria-pressed={tool === kind}
-                      className={tool === kind ? styles.active : ""}
+                      className={`${styles.iconText} ${tool === kind ? styles.active : ""}`}
                       disabled={busy || readonly}
                       onClick={() => {
                         useStore.getState().inspect({ pendingOpening: null });
@@ -604,6 +625,7 @@ export default function App() {
                 <button
                   disabled={busy || readonly}
                   onClick={() => setSettings(true)}
+                  className={styles.iconText}
                 >
                   <Icon name="settings" /> Configurações
                 </button>
@@ -634,6 +656,8 @@ export default function App() {
                   )}
                 <button
                   aria-label="Desfazer"
+                  className={styles.iconButton}
+                  data-tooltip="Desfazer (Ctrl+Z)"
                   title="Desfazer (Ctrl+Z)"
                   disabled={busy || readonly || !history.past.length}
                   onClick={() => void useStore.getState().undo()}
@@ -642,6 +666,8 @@ export default function App() {
                 </button>
                 <button
                   aria-label="Refazer"
+                  className={styles.iconButton}
+                  data-tooltip="Refazer (Ctrl+Y)"
                   title="Refazer (Ctrl+Y)"
                   disabled={busy || readonly || !history.future.length}
                   onClick={() => void useStore.getState().undo(true)}
@@ -733,11 +759,13 @@ export default function App() {
               }}
             >
               <span className={styles.bigPlus} aria-hidden="true">
-                <Icon name="plus" size={30} />
+                <Icon name="plus" size="feature" />
               </span>
               <strong>Novo projeto</strong>
               <span>Escolha o tijolo-base e dê forma à sua próxima ideia.</span>
-              <b>Criar planta →</b>
+              <b className={styles.iconText}>
+                Criar planta <Icon name="next" />
+              </b>
             </button>
             <section
               className={styles.projectList}
@@ -745,7 +773,9 @@ export default function App() {
             >
               {!projects.length ? (
                 <div className={styles.empty}>
-                  <span aria-hidden="true">⌂</span>
+                  <span aria-hidden="true">
+                    <Icon name="home" size="feature" />
+                  </span>
                   <h3>Um espaço para suas ideias</h3>
                   <p>
                     Os projetos salvos neste navegador
@@ -766,7 +796,7 @@ export default function App() {
                     }
                   >
                     <span className={styles.projectIcon} aria-hidden="true">
-                      <Icon name="plan" size={26} />
+                      <Icon name="plan" size="card" />
                     </span>
                     <span className={styles.projectInfo}>
                       <strong>{p.name}</strong>
@@ -776,14 +806,18 @@ export default function App() {
                         {new Date(p.updatedAt).toLocaleDateString("pt-BR")}
                       </small>
                     </span>
-                    <b aria-hidden="true">↗</b>
+                    <span aria-hidden="true">
+                      <Icon name="next" />
+                    </span>
                   </button>
                 ))
               )}
             </section>
           </div>
           <p className={styles.localNote}>
-            <span aria-hidden="true">↳</span>
+            <span aria-hidden="true">
+              <Icon name="download" />
+            </span>
             <span>
               Seus desenhos ficam neste navegador. Baixe o arquivo .ecovit para
               fazer backup ou levar seu projeto para outro dispositivo.
@@ -800,8 +834,10 @@ export default function App() {
             aria-labelledby="create-title"
           >
             <button
-              className={styles.close}
+              className={`${styles.close} ${styles.iconButton}`}
               aria-label="Fechar criação"
+              title="Fechar criação"
+              data-tooltip="Fechar criação"
               onClick={() => setCreating(false)}
             >
               <Icon name="close" />
@@ -888,8 +924,12 @@ export default function App() {
                   {formError}
                 </p>
               )}
-              <button disabled={busy} className={styles.primary} type="submit">
-                Criar projeto →
+              <button
+                disabled={busy}
+                className={`${styles.primary} ${styles.iconText}`}
+                type="submit"
+              >
+                Criar projeto <Icon name="next" />
               </button>
             </form>
           </section>

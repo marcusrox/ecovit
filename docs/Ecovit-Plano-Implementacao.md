@@ -1119,3 +1119,57 @@ Por solicitação, criado primeiro o commit **3a971bf** com M3.5 e a apresentaç
 Verificações finais: typecheck, lint e build passaram; avisos conhecidos de Zod/bundle permanecem (JS 866,42 kB / 270,15 kB gzip). **14 cenários passaram em Chrome/Edge**, nos arquivos editor.spec.ts e settings.spec.ts, cobrindo desenho/edição/histórico/transporte, cancelamentos, falha de gravação, bloqueio entre abas, ajuda e configurações. Conferidos centros dos SVGs com tolerância de 1 px e ausência de texto excedendo os botões; revisão visual de toolbar e configurações em `.tools/icons-*.png` e `.tools/settings-*.png`. Testes que procuravam nomes com símbolos antigos foram atualizados para os nomes textuais. A captura intermediária revelou largura fixa aplicada indevidamente aos botões com texto; corrigida antes da rodada final e incluída verificação de excesso. `git diff --check` passou. Domínio e suíte e2e integral não reexecutados nesta mudança de apresentação.
 
 Teste manual/aceite pendentes: atualizar http://127.0.0.1:5173/, conferir contraste e centralização no zoom habitual, testar barra de ferramentas, controles de Fiada, zoom, fechar/recolher painéis e os ícones “i” das configurações. Ícones desabilitados conservam a indicação visual de indisponibilidade.
+
+### Varredura e padrão de iconografia — 14/10/2026
+
+Registro histórico anterior à implementação abaixo; as pendências desta varredura foram tratadas na migração solicitada posteriormente.
+
+Solicitação: avaliar uso geral e documentar uma padronização para a interface atual e futura. Estado inicial limpo após commit/push **bfdd24c**, que inclui a revisão anterior; o texto acima descreve o estado antes desse commit. Esta entrega altera somente documentação, sem instalar pacote ou modificar ícones do aplicativo.
+
+| Superfície | Situação encontrada | Encaminhamento |
+|---|---|---|
+| Coleção central | `src/ui/Icon.tsx` contém 18 paths autorais, sem biblioteca externa instalada; nomes semânticos, grade 24, traço 1,8, tamanho padrão 18 e SVG decorativo. | Preservar ponto central e consumidores; migrar os desenhos para Lucide React. Coleção pequena não oferece um catálogo amplo para a evolução do produto. |
+| Ferramentas/cabeçalho/painéis/Fiada/zoom/configurações | Usam Icon; help, fechar/remover, upload/download, história e navegação já estão majoritariamente uniformes. | Manter semântica e rever variantes, tamanhos, estados e aparência óptica na migração. |
+| Salvamento/criação | Status usa ✓/⚠; Criar planta/Criar projeto ainda usam → em texto. | Migrar símbolos de status/ações para o catálogo, mantendo textos e anúncio acessível. |
+| Alinhamento | SVG block e flex/grid; espaçamento de 6 px. Largura fixa de ferramentas/Fiada depende de aria-label e presença de SVG, não de variante explícita. | Centralizar variantes de controle para evitar que uma futura combinação de rótulo/ícone receba largura inadequada. Teste geométrico não substitui avaliação óptica. |
+| Cores/tamanhos | currentColor segue controles; tamanhos 16/18 e 26/30 nos cartões; disabled usa opacidade do controle. | Variantes comuns 16/18/24/32 e traço 2 para a adoção do pacote, com contraste e estados sem clarear ações habilitadas. |
+| Logo e desenho | SVG próprio da marca; Konva desenha peças/furos/grautes/sinais +/−. Inverter lado mostra direções como texto; legendas usam ■/○/▱/●. | Marca e símbolos técnicos não são substituídos por ícones de ação. Rever legendas como amostras fiéis do desenho e distinguir direção geométrica de ação. |
+| Proteção futura | PRD trata ajuda/identidade, arquitetura registrava somente coleção local; não há dependência Lucide nem regra de lint para imports. | PRD §8 e Arquitetura §2.1 agora definem padrão alvo, estado da migração e verificações. AGENTS aponta para essa referência, sem duplicar especificação. |
+
+Escolha técnica documentada: **Lucide React**, catálogo único de contorno, imports individuais no componente central, sem fontes/CDN nem cópia de paths por tela. Fontes oficiais e critérios estão na Arquitetura §2.1. Objetivo estético de elegância/refinamento exige escolha semântica, tamanho real, contraste e alinhamento coerentes; o nome da biblioteca sozinho não assegura boa aparência.
+
+Pendências para executar a migração: instalar versão estável compatível, trocar o mapa dos 18 desenhos, revisar status/setas e tamanhos/controles, adicionar restrição de lint aos imports, verificar ícones atuais e novos nas superfícies listadas e executar tipos/lint/build/e2e pertinentes Chrome/Edge com inspeção visual. Ainda não se declara conformidade completa, regra de lint instalada, teste manual ou aceite do novo catálogo. Não iniciada implementação nesta varredura; nenhuma mudança no motor/arquivo ou novo marco funcional.
+
+Verificação desta entrega: busca em todos os arquivos de src, dependências, CSS, testes existentes de alinhamento e referências documentais; consistência entre estado atual e padrão alvo, links locais e `git diff --check`. Testes do aplicativo não reexecutados, pois só os documentos e AGENTS foram alterados. Sem commit/push adicional.
+
+### Implementação da iconografia Lucide — 14/10/2026
+
+Solicitação executada no aplicativo existente. Inspeção inicial encontrou alterações documentais em AGENTS, arquitetura, PRD e plano; preservadas e complementadas. Sem commit/push nesta entrega. Lucide React **1.57.0** instalado com dependência exata, compatível com React 19; lockfile acrescenta o pacote e metadados de peers, sem mudar as versões anteriores nele registradas.
+
+Substituídos os 18 paths por imports individuais no `Icon.tsx`, mantendo nomes semânticos. Mapa agora tem 24 ícones, incluindo salvamento/somente leitura, criação e estado vazio. Parede usa BrickWall; porta DoorClosed; janela SquareSplitHorizontal; vão SquareDashed, com rótulos preservados. Status conserva texto/role=status e usa SVG decorativo. Migrados também glifos de casa, seta de abrir cartão e orientação de backup da página inicial. Logotipo, canvas, sinais geométricos, unidades e legendas técnicas preservados.
+
+Variantes tipadas compact/control/card/feature (16/18/24/32 px), traço 2 e currentColor. Controles usam classes explícitas iconButton/iconText, centro flex/grid, espaço de 6 px e área regular; não dependem de :only-child, presença de SVG ou aria-label para inferir largura. Controles sem texto têm nome, title e dica por hover/focus-visible. Estado disabled mantém aparência do controle inteiro; texto dos demais botões permanece. Preservados handlers, atalhos, foco, histórico e exibição contextual, sem mudar domínio, persistência ou formato.
+
+ESLint bloqueia imports/reexports/subpaths e import()/require() literais da biblioteca fora do componente central. Licença integral original (ISC e avisos MIT de derivados) distribuída em `public/third-party/lucide-react-LICENSE.txt`, incluída em dist pelo Vite. README, PRD e arquitetura registram a migração implementada; AGENTS continua remetendo ao contrato central.
+
+#### Verificações reais
+
+| Verificação | Resultado |
+|---|---|
+| Typecheck / lint | Passaram após a revisão final. |
+| Build | Passou; JS **876,01 kB / 273,23 kB gzip**, CSS 22,43 kB / 5,26 kB gzip. Permanecem avisos conhecidos de anotações do Zod e bundle maior que 500 kB. |
+| E2e pertinentes Chrome/Edge | Rodada final **34 passaram**, 17 por navegador: criação/edição/histórico/transporte, cancelamentos, falha de gravação, bloqueio entre abas, Fiada/prévia/migração/câmera e configurações dos três grupos. Inclui os dois cenários de apresentação/estados em cada navegador. Não é execução integral da suíte e2e. |
+| Resoluções e alinhamento | 1366×768, 1280×720 e 900×680; padrões visíveis sem scroll, centro SVG com tolerância 1 px, textos sem excesso, lista extensa editável com ações acessíveis. Estado selecionado, disabled, foco por teclado, dicas e navegação entre fiadas conferidos. |
+| Inspeção visual | Capturas de início/criação, ferramentas, Fiada e configurações inspecionadas; símbolos distinguíveis, áreas/espaços regulares, rótulos e foco legíveis. `.tools/lucide-*.png`, `.tools/settings-*.png` e `.tools/icons-*.png`, ignoradas pelo Git. |
+| Proteção dos imports | Script de verificação `.tools/check-icon-lint.mjs`: **8 casos passaram**, permitindo componente central/uso de Icon e recusando import direto, subpath, namespace, reexport, import() e require() externos. Script auxiliar ignorado, sem alterar testes de domínio. |
+| Licenças/bundle | SHA-256 do LICENSE instalado, cópia em public e cópia em dist idênticos. Bundle contém ícones usados e ausência verificada de um ícone não utilizado; imports estáticos permitem eliminar o catálogo não usado. |
+| Integridade | Busca deixa import de lucide-react somente em Icon.tsx; SVG avulso de interface somente no logotipo; glifos restantes correspondem a medidas/direções/legendas técnicas. Nenhum diff em domínio, persistência ou store. Links locais e git diff --check conferidos. |
+| Teste manual/aceite do solicitante | **Pendentes**. |
+
+Rodadas intermediárias: editor/Fiada tiveram 26 passes, mas dois testes das configurações detectaram que dicas ocultas aumentavam a área rolável. Corrigido com display:none e posicionamento lateral na lista; os testes passaram. O novo teste de dica inicialmente usava foco programático após clique de mouse; corrigida a preparação para modalidade real de teclado com Tab, sem mudar a regra focus-visible. A revisão visual identificou símbolos decorativos restantes no início; migrados antes da rodada final de 34. Testes usam documentos sintéticos/perfis isolados. Não reexecutados testes de domínio/persistência nesta alteração de apresentação; motor e formato permanecem intactos.
+
+#### Limites e roteiro manual
+
+Esta entrega não inclui auditoria completa de acessibilidade ou garantia óptica em todos os monitores/níveis de zoom. Telas estreitas/baixas ou listas extensas podem precisar de rolagem; estados desabilitados mantêm menor opacidade. Legendas técnicas com ■/○/▱/● e direções geométricas de Inverter lado são exceções documentadas, sem substituição por pictogramas do pacote. Lint protege os imports usuais; escolha semântica e qualidade visual também exigem revisão. Nenhum controle futuro acrescentado.
+
+Para abrir, atualizar **http://127.0.0.1:5173/**. Se necessário, executar `./Start-Ecovit.ps1 -Task dev` na raiz. Conferir: (1) início, cartão de criação, formulário e projetos salvos; (2) barra Selecionar/Parede/Porta/Janela/Vão/Configurações e estado de salvamento; (3) desfazer/refazer, selecionado/desabilitado e dicas com mouse/Tab; (4) Fiada anterior/próxima, zoom, enquadrar e recolher/abrir painéis; (5) Configurações e seus três “i”, remover nível e Aplicar/Cancelar/Restaurar. Avaliar peso dos traços, contraste e centralização no monitor/zoom habitual. Teste manual e aceite desta padronização aguardam retorno do solicitante.

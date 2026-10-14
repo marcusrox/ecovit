@@ -23,6 +23,7 @@ Consulte as seções pertinentes à alteração. Não duplique esses documentos 
 - Não mantenha cópias dessas regras neste arquivo. Ao alterar comportamento ou decisão técnica, atualize o documento responsável junto com a implementação e registre a mudança no plano.
 - Distinga funcionalidade especificada de funcionalidade implementada e aprovada; não trate a existência de uma especificação como autorização para implementá-la.
 - Não introduza bibliotecas, serviços ou abstrações sem necessidade concreta da entrega e compatibilidade com a arquitetura.
+- Para mudanças de interface, consulte o padrão de iconografia na [Arquitetura §2.1](docs/Ecovit-Arquitetura-Tecnica.md#21-padrão-de-iconografia--14102026), incluindo o estado da migração e as verificações exigidas; mantenha as regras nesse documento.
 - Não invente regras construtivas, peças especiais, espaçamentos ou apoios. Consulte e registre a pesquisa no caderno técnico antes dos algoritmos correspondentes; não apresente convenções nominais como comprovação física ou aprovação estrutural.
 
 ## Validação

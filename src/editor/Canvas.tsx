@@ -1437,6 +1437,8 @@ export function Canvas({
             disabled={busy}
             title="Reduzir zoom"
             aria-label="Reduzir zoom"
+            className={styles.iconButton}
+            data-tooltip="Reduzir zoom"
             onClick={() => zoom(1 / 1.2)}
           >
             <Icon name="minus" />
@@ -1446,11 +1448,13 @@ export function Canvas({
             disabled={busy}
             title="Ampliar zoom"
             aria-label="Ampliar zoom"
+            className={styles.iconButton}
+            data-tooltip="Ampliar zoom"
             onClick={() => zoom(1.2)}
           >
             <Icon name="plus" />
           </button>
-          <button disabled={busy} onClick={fit}>
+          <button disabled={busy} onClick={fit} className={styles.iconText}>
             <Icon name="fit" /> Enquadrar
           </button>
         </div>

@@ -36,7 +36,43 @@ Usar releases estáveis e compatíveis no início da implementação, com versõ
 
 As dependências escolhidas são de código aberto, sem licença comercial obrigatória para esta solução. Conferir as licenças das versões instaladas e preservar seus avisos. Não será usado SDK comercial de editor.
 
-Ícones da interface: coleção SVG local em `src/ui/Icon.tsx`, revisada em 14/10/2026, sem dependência adicional. Grade 24×24, traço 1,8, pontas/junções arredondadas, tamanho padrão 18 px e cor herdada do controle. SVG decorativo usa aria-hidden; botão conserva nome textual ou aria-label. Centralização por flex/grid, sem depender da linha-base da fonte; largura fixa somente nos botões exclusivamente icônicos. Logotipo e sinais de anotação do desenho conservam seus contratos próprios.
+Histórico dos ícones em 14/10/2026: a coleção SVG local de 18 paths, com traço 1,8, foi substituída pela implementação Lucide descrita na seção 2.1. Preservados os nomes semânticos usados pelas telas, o logotipo e a representação dos desenhos técnicos.
+
+### 2.1. Padrão de iconografia — 14/10/2026
+
+**Implementado em 14/10/2026:** Lucide React (`lucide-react` **1.57.0**) é o catálogo único para ícones de interface, na família de contorno. Dependência exata no package.json/lockfile, compatível com React 19. `src/ui/Icon.tsx` centraliza importações individuais e nomes semânticos, sem paths autorais. Verificações e pendências de teste manual no Plano, “Implementação da iconografia Lucide”.
+
+A escolha atende à necessidade concreta de catálogo amplo com linguagem visual consistente, SVGs configuráveis e componentes React. Importações individuais permitem incluir apenas os ícones usados. Consultadas as fontes oficiais em 14/10/2026: [catálogo](https://lucide.dev/icons/), [React/importações](https://lucide.dev/guide/react/getting-started), [traço](https://lucide.dev/guide/react/basics/stroke-width) e [licença](https://lucide.dev/license). Licença integral do pacote, incluindo avisos ISC/MIT dos derivados, em `public/third-party/lucide-react-LICENSE.txt`, copiada pelo build para dist. Em futuras atualizações, selecionar versão estável compatível, atualizar lockfile e conferir/manter os avisos distribuídos; sem CDN/fontes remotas.
+
+#### Uso obrigatório na interface
+
+- Centralizar imports de `lucide-react` e o mapa de nomes semânticos em `src/ui/Icon.tsx`. Telas usam esse componente; não importam a biblioteca diretamente, não copiam paths nem criam SVGs avulsos para controles. Preservar nomes internos como select, wall e settings para trocar desenhos sem mudar os consumidores.
+- Importar explicitamente somente os ícones usados. Não carregar o catálogo inteiro por namespace, nome vindo de arquivo de projeto, CDN ou carregamento dinâmico. Ícones são apresentação, não dados persistidos do projeto.
+- Uma ação tem o mesmo ícone em todas as telas. Selecionar pelo significado e pela legibilidade em tamanho real; não pelo enfeite. Ferramentas de parede/porta/janela/vão precisam ser distinguíveis entre si e conservar rótulos. A escolha visual desses quatro desenhos deve ser conferida na migração, sem associar ícone a regra construtiva.
+- Usar exclusivamente a família de contorno; não misturar pacotes, emoji, fontes de ícones, duotone ou estilos preenchidos nas ações. Ícones adicionais vêm do mesmo catálogo. Se faltar correspondência exata, escolher símbolo reconhecível acompanhado de rótulo; registrar a decisão no mapa central, sem criar um segundo catálogo.
+
+#### Aparência, alinhamento e acesso
+
+| Propriedade | Padrão para a migração e novas implementações |
+|---|---|
+| Tamanho | Variantes centrais control=18 px, compact=16 px, card=24 px, feature=32 px. API aceita somente essas variantes, sem medidas arbitrárias por tela. Cartões/estado vazio migrados dos antigos 26/30 px. |
+| Traço | 2 unidades na grade 24×24, extremidades/junções arredondadas, sem preenchimento; conferir peso nos tamanhos previstos. Não variar traço para indicar seleção. |
+| Cor | currentColor do controle, com verde profundo para ações normais, branco sobre ação principal/selecionada e cor semântica em avisos/exclusões. Não clarear ícones habilitados com opacity; indisponibilidade segue o estado disabled do controle. Cor acompanha texto/estado, sem códigos isolados por ícone. |
+| Contêiner | Flex/grid centralizado nos dois eixos, SVG block e sem encolhimento. Ícone + texto com espaço de 6 px e largura suficiente para ambos. Botão somente com ícone usa variante explícita e área regular; não deduzir ausência de texto por :only-child, pois esse seletor ignora nós de texto. |
+| Interação | Ícone decorativo aria-hidden/focusable=false; nome acessível e foco pertencem ao botão/summary. Ação só com ícone precisa de aria-label em português e dica visual por hover/foco. Texto de status permanece legível e anunciado; ícone/cor não são a única informação. |
+| Consistência | Reusar variantes de controle e estados normal/hover/foco/selecionado/disabled. Verificar centro geométrico e aparência óptica; assimetria natural do desenho não se corrige com deslocamentos avulsos por tela. |
+
+**Exceções de natureza, não bibliotecas alternativas:** logotipo Ecovit é identidade própria; tijolos, furos, canaletas, eixos, grautes, alças e sinais geométricos do canvas são desenhos do domínio. Não substituí-los por pictogramas genéricos. Multiplicação em medidas, sinais numéricos e unidades continuam texto. Legendas de peças/eixos devem usar amostras dos desenhos correspondentes; os caracteres ■/○/▱/● atuais são candidatos à melhoria de fidelidade, sem importar peças do Lucide.
+
+#### Migração do existente e verificação
+
+Os 18 paths foram substituídos pelo mapa central: select→MousePointer2, wall→BrickWall, door→DoorClosed, window→SquareSplitHorizontal, opening→SquareDashed, settings→SlidersHorizontal, undo/redo→Undo2/Redo2, left/right→ChevronLeft/ChevronRight, close→X, plus/minus→Plus/Minus, download/upload→Download/Upload, fit→Scan, info→Info, plan→PanelsTopLeft. Porta representa folha/batente, janela quadro dividido, vão contorno tracejado; símbolos são ferramentas, não detalhes construtivos.
+
+Mapa ampliado para status saved/warning/saving/readonly→Check/TriangleAlert/LoaderCircle/LockKeyhole, next→ArrowRight e home→House. Substituídos também os glifos de estado vazio, abertura de cartão e orientação de backup da página inicial. Inverter lado conserva direções ↓/→/↑/← como indicação geométrica separada do texto da ação; +/− do graute e legendas técnicas permanecem desenhos/sinais do domínio. Handlers, nomes acessíveis, condições de exibição, atalhos, foco e histórico preservados. Não acrescentar ícone a todo botão de texto automaticamente; usar quando facilitar reconhecimento.
+
+Controles usam classes explícitas iconButton/iconText; ícones sozinhos têm área regular, dicas por hover/focus-visible e title. SVG não recebe foco. Dicas ocultas usam display:none para não aumentar área rolável; na lista de canaletas, dica aparece ao lado do controle. Texto do salvamento permanece no status anunciado. Seleção usa os estados existentes; disabled conserva opacidade do controle inteiro, sem clarear ícone habilitado.
+
+Em futuras alterações, verificar imports/paths/glifos restantes, centralização e ausência de sobreposição em todas as superfícies afetadas: início/criação, cabeçalho/status, ferramentas, Fiada, zoom, painéis, configurações/ajuda e diagnósticos. Rodar tipos/lint/build e e2e pertinentes Chrome/Edge, com revisão visual de 1366×768, 1280×720 e 900×680 e zoom habitual. Reusar verificações de centro (tolerância 1 px para a caixa SVG) e texto que não excede botões; validar também legibilidade óptica e estados. ESLint bloqueia imports/reexports estáticos (incluindo subpaths) e import()/require() literais de lucide-react fora do componente central. A regra foi verificada com casos permitidos e proibidos; não substitui revisão semântica/visual nem é uma barreira contra código deliberadamente ofuscado.
 
 React oferece suporte a TypeScript; Konva tem integração declarativa com React e eventos para formas. A escolha é uma decisão de adequação ao produto, não uma garantia de desempenho sem medição. Referências: [React e TypeScript](https://react.dev/learn/typescript), [react-konva](https://konvajs.org/docs/react/index.html).
 

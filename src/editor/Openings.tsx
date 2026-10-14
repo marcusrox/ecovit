@@ -126,7 +126,10 @@ function OpeningForm({
   const [collapsed, setCollapsed] = useState(false);
   if (collapsed)
     return (
-      <button className={styles.reopen} onClick={() => setCollapsed(false)}>
+      <button
+        className={`${styles.reopen} ${styles.iconText}`}
+        onClick={() => setCollapsed(false)}
+      >
         Propriedades do vão <Icon name="left" />
       </button>
     );
@@ -136,6 +139,9 @@ function OpeningForm({
         <span>{pending ? "CONFIRMAR NOVO VÃO" : "VÃO SELECIONADO"}</span>
         <button
           aria-label="Recolher propriedades"
+          className={styles.iconButton}
+          title="Recolher propriedades"
+          data-tooltip="Recolher propriedades"
           onClick={() => setCollapsed(true)}
         >
           <Icon name="right" />
@@ -378,7 +384,9 @@ export function OpeningSettingsDialog({
             type="button"
             onClick={close}
             aria-label="Fechar configurações"
-            className={styles.settingsClose}
+            className={`${styles.settingsClose} ${styles.iconButton}`}
+            title="Fechar configurações"
+            data-tooltip="Fechar configurações"
           >
             <Icon name="close" />
           </button>
@@ -603,13 +611,16 @@ export function OpeningSettingsDialog({
                           type="button"
                           disabled={disabled}
                           aria-label={`Remover nível de canaleta ${i + 1}`}
+                          className={styles.iconButton}
+                          title={`Remover nível de canaleta ${i + 1}`}
+                          data-tooltip={`Remover nível de canaleta ${i + 1}`}
                           onClick={() =>
                             setLevels((ls) =>
                               ls.filter((row) => row.id !== l.id),
                             )
                           }
                         >
-                          <Icon name="close" size={16} />
+                          <Icon name="close" size="compact" />
                         </button>
                       </div>
                     );
@@ -761,8 +772,13 @@ function SettingsHelp({
 }) {
   return (
     <details className={styles.settingsHelp}>
-      <summary aria-label={label}>
-        <Icon name="info" size={18} />
+      <summary
+        aria-label={label}
+        className={styles.iconButton}
+        title={label}
+        data-tooltip={label}
+      >
+        <Icon name="info" />
       </summary>
       <div role="note">{children}</div>
     </details>
