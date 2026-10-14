@@ -10,13 +10,11 @@ test("Configurações cabem na tela, ajuda por teclado e muitos níveis mantêm 
     height: 700,
   });
   await page.goto("/");
-  await page
-    .getByTestId("import-file")
-    .setInputFiles({
-      name: "config.ecovit",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(doc)),
-    });
+  await page.getByTestId("import-file").setInputFiles({
+    name: "config.ecovit",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(doc)),
+  });
   await expect(page.getByRole("status")).toContainText("Salvo");
   await page
     .getByRole("button", { name: "Configurações", exact: true })
@@ -70,4 +68,33 @@ test("Configurações cabem na tela, ajuda por teclado e muitos níveis mantêm 
   await expect(
     dialog.getByLabel("Topo de canaleta 3", { exact: true }),
   ).toHaveCount(0);
+  const offsets = await page
+    .locator("button:has(> svg), summary:has(> svg)")
+    .evaluateAll((controls) =>
+      controls.map((el) => {
+        const icon = el.querySelector("svg")!.getBoundingClientRect();
+        const box = el.getBoundingClientRect();
+        return {
+          y: Math.abs(icon.y + icon.height / 2 - box.y - box.height / 2),
+          x: el.textContent?.trim()
+            ? 0
+            : Math.abs(icon.x + icon.width / 2 - box.x - box.width / 2),
+        };
+      }),
+    );
+  for (const offset of offsets) {
+    expect(offset.y).toBeLessThanOrEqual(1);
+    expect(offset.x).toBeLessThanOrEqual(1);
+  }
+  const overflowing = await page
+    .locator("button:has(> svg)")
+    .evaluateAll((buttons) =>
+      buttons
+        .filter((button) => button.scrollWidth > button.clientWidth + 1)
+        .map((button) => button.textContent),
+    );
+  expect(overflowing).toEqual([]);
+  await dialog.getByRole("button", { name: "Fechar configurações" }).click();
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.screenshot({ path: `.tools/icons-${info.project.name}.png` });
 });

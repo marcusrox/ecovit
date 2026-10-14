@@ -29,6 +29,33 @@
   opacity: 0.45;
   cursor: default;
 }
+.icon {
+  display: block;
+  flex: none;
+  pointer-events: none;
+}
+:global(button:has(> svg)) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+.editorApp .tools button:has(> svg),
+.editorApp .zoom button:has(> svg),
+.editorApp .fiadaToolbar button:has(> svg) {
+  min-height: 30px;
+}
+.editorApp .tools button[aria-label]:has(> svg),
+.editorApp .fiadaToolbar button[aria-label]:has(> svg) {
+  width: 30px;
+  padding: 5px;
+}
+.bigPlus,
+.projectIcon {
+  display: grid;
+  place-items: center;
+}
 :global(button:focus-visible),
 :global(input:focus-visible),
 :global(select:focus-visible),
@@ -994,7 +1021,7 @@
   width: 23px;
   height: 23px;
   border-radius: 50%;
-  border: 1px solid #cbd9ce;
+  border: 0;
   color: #456b52;
   background: white;
   font-weight: 600;

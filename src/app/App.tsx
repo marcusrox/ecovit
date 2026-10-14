@@ -20,6 +20,7 @@ import { download, importedCopy, readFile } from "../persistence/files";
 import { listProjects, loadProject } from "../persistence/database";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
+import { Icon } from "../ui/Icon";
 
 function Brand() {
   return (
@@ -176,7 +177,7 @@ function Properties({ doc }: { doc: Project }) {
   if (collapsed)
     return (
       <button className={styles.reopen} onClick={() => setCollapsed(false)}>
-        Propriedades ‹
+        Propriedades <Icon name="left" />
       </button>
     );
   return (
@@ -187,7 +188,7 @@ function Properties({ doc }: { doc: Project }) {
           aria-label="Recolher propriedades"
           onClick={() => setCollapsed(true)}
         >
-          ›
+          <Icon name="right" />
         </button>
       </div>
       {wall ? (
@@ -508,14 +509,14 @@ export default function App() {
                 disabled={busy || importing}
                 onClick={() => input.current?.click()}
               >
-                Carregar arquivo
+                <Icon name="upload" /> Carregar arquivo
               </button>
               <button
                 className={styles.primary}
                 disabled={busy || importing}
                 onClick={() => download(doc)}
               >
-                ↓ Baixar projeto
+                <Icon name="download" /> Baixar projeto
               </button>
             </div>
           </>
@@ -526,7 +527,7 @@ export default function App() {
               disabled={busy || importing}
               onClick={() => input.current?.click()}
             >
-              ↑ Carregar .ecovit
+              <Icon name="upload" /> Carregar .ecovit
             </button>
           </div>
         )}
@@ -546,7 +547,7 @@ export default function App() {
             aria-label="Fechar aviso"
             onClick={() => useStore.getState().notify("")}
           >
-            ×
+            <Icon name="close" />
           </button>
         </div>
       )}
@@ -568,7 +569,7 @@ export default function App() {
                       .inspect({ groutMode: false, groutCell: null });
                   }}
                 >
-                  ↖ Selecionar
+                  <Icon name="select" /> Selecionar
                 </button>
                 <button
                   className={tool === "wall" ? styles.active : ""}
@@ -581,7 +582,7 @@ export default function App() {
                     setTool("wall");
                   }}
                 >
-                  ▰ Parede
+                  <Icon name="wall" /> Parede
                 </button>
                 <span className={styles.divider} />
                 {mode === "plan" &&
@@ -596,6 +597,7 @@ export default function App() {
                         setTool(kind);
                       }}
                     >
+                      <Icon name={kind} />
                       {openingLabel[kind]}
                     </button>
                   ))}
@@ -603,7 +605,7 @@ export default function App() {
                   disabled={busy || readonly}
                   onClick={() => setSettings(true)}
                 >
-                  Configurações
+                  <Icon name="settings" /> Configurações
                 </button>
                 {mode === "plan" &&
                   tool === "select" &&
@@ -636,7 +638,7 @@ export default function App() {
                   disabled={busy || readonly || !history.past.length}
                   onClick={() => void useStore.getState().undo()}
                 >
-                  ↶
+                  <Icon name="undo" />
                 </button>
                 <button
                   aria-label="Refazer"
@@ -644,7 +646,7 @@ export default function App() {
                   disabled={busy || readonly || !history.future.length}
                   onClick={() => void useStore.getState().undo(true)}
                 >
-                  ↷
+                  <Icon name="redo" />
                 </button>
               </div>
             </div>
@@ -731,7 +733,7 @@ export default function App() {
               }}
             >
               <span className={styles.bigPlus} aria-hidden="true">
-                +
+                <Icon name="plus" size={30} />
               </span>
               <strong>Novo projeto</strong>
               <span>Escolha o tijolo-base e dê forma à sua próxima ideia.</span>
@@ -764,16 +766,7 @@ export default function App() {
                     }
                   >
                     <span className={styles.projectIcon} aria-hidden="true">
-                      <svg
-                        width="26"
-                        height="26"
-                        viewBox="0 0 32 32"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                      >
-                        <path d="M5 5h22v22H5zM5 17h12V5M17 17v10M22 17h5" />
-                      </svg>
+                      <Icon name="plan" size={26} />
                     </span>
                     <span className={styles.projectInfo}>
                       <strong>{p.name}</strong>
@@ -811,7 +804,7 @@ export default function App() {
               aria-label="Fechar criação"
               onClick={() => setCreating(false)}
             >
-              ×
+              <Icon name="close" />
             </button>
             <span className={styles.eyebrow}>UM NOVO COMEÇO</span>
             <h2 id="create-title">Vamos criar sua planta.</h2>

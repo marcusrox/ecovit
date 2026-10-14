@@ -36,6 +36,8 @@ Usar releases estáveis e compatíveis no início da implementação, com versõ
 
 As dependências escolhidas são de código aberto, sem licença comercial obrigatória para esta solução. Conferir as licenças das versões instaladas e preservar seus avisos. Não será usado SDK comercial de editor.
 
+Ícones da interface: coleção SVG local em `src/ui/Icon.tsx`, revisada em 14/10/2026, sem dependência adicional. Grade 24×24, traço 1,8, pontas/junções arredondadas, tamanho padrão 18 px e cor herdada do controle. SVG decorativo usa aria-hidden; botão conserva nome textual ou aria-label. Centralização por flex/grid, sem depender da linha-base da fonte; largura fixa somente nos botões exclusivamente icônicos. Logotipo e sinais de anotação do desenho conservam seus contratos próprios.
+
 React oferece suporte a TypeScript; Konva tem integração declarativa com React e eventos para formas. A escolha é uma decisão de adequação ao produto, não uma garantia de desempenho sem medição. Referências: [React e TypeScript](https://react.dev/learn/typescript), [react-konva](https://konvajs.org/docs/react/index.html).
 
 ## 3. Organização do código

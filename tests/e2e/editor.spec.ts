@@ -100,7 +100,7 @@ test("M1 medidas incompatíveis, base personalizada, lado e gestos cancelados", 
   await page.keyboard.press("Escape");
   await page.mouse.up();
   expect((await exported(page)).model.walls).toHaveLength(0);
-  await page.getByRole("button", { name: "▰ Parede", exact: true }).click();
+  await page.getByRole("button", { name: "Parede", exact: true }).click();
   await page.mouse.move(a.x, a.y);
   await page.mouse.down();
   await page.mouse.move(b.x, b.y);
@@ -166,7 +166,7 @@ test("M1 segunda aba bloqueada e desbloqueada após encerrar a primeira", async 
   await other.getByRole("button", { name: /Casa de teste/ }).click();
   await expect(other.getByRole("status")).toContainText("Somente leitura");
   await expect(
-    other.getByRole("button", { name: "▰ Parede", exact: true }),
+    other.getByRole("button", { name: "Parede", exact: true }),
   ).toBeDisabled();
   await page.close();
   // Closing the tab and releasing its Web Lock are asynchronous in the browser.
@@ -185,7 +185,7 @@ test("M1 segunda aba bloqueada e desbloqueada após encerrar a primeira", async 
   await other.getByRole("button", { name: /Casa de teste/ }).click();
   await expect(other.getByRole("status")).toContainText("Salvo");
   await expect(
-    other.getByRole("button", { name: "▰ Parede", exact: true }),
+    other.getByRole("button", { name: "Parede", exact: true }),
   ).toBeEnabled();
 });
 
@@ -194,17 +194,17 @@ test("M1 encontro L/T, seleção, excluir e atalhos sem interferir em campos", a
 }) => {
   await create(page);
   await drag(page, [0, 0], [20000, 0]);
-  await page.getByRole("button", { name: "↖ Selecionar", exact: true }).click();
+  await page.getByRole("button", { name: "Selecionar", exact: true }).click();
   const empty = await point(page, 10000, 15000);
   await page.mouse.click(empty.x, empty.y);
-  await page.getByRole("button", { name: "▰ Parede", exact: true }).click();
+  await page.getByRole("button", { name: "Parede", exact: true }).click();
   await drag(page, [20000, 10000], [20000, 0]);
-  await page.getByRole("button", { name: "↖ Selecionar", exact: true }).click();
+  await page.getByRole("button", { name: "Selecionar", exact: true }).click();
   await page.mouse.click(empty.x, empty.y);
-  await page.getByRole("button", { name: "▰ Parede", exact: true }).click();
+  await page.getByRole("button", { name: "Parede", exact: true }).click();
   await drag(page, [10000, 10000], [10000, 0]);
   expect((await exported(page)).model.walls).toHaveLength(3);
-  await page.getByRole("button", { name: "↖ Selecionar", exact: true }).click();
+  await page.getByRole("button", { name: "Selecionar", exact: true }).click();
   const crossing = await point(page, 11000, 1000);
   await page.mouse.click(crossing.x, crossing.y);
   await expect(

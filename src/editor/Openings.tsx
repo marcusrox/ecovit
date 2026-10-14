@@ -16,6 +16,7 @@ import {
 } from "../domain/openings";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
+import { Icon } from "../ui/Icon";
 import { validateChannelLevels, MAX_CHANNEL_LEVELS } from "../domain/channels";
 
 type Suggestion = { field: string; requested: number; values: number[] };
@@ -126,7 +127,7 @@ function OpeningForm({
   if (collapsed)
     return (
       <button className={styles.reopen} onClick={() => setCollapsed(false)}>
-        Propriedades do vão ‹
+        Propriedades do vão <Icon name="left" />
       </button>
     );
   return (
@@ -137,7 +138,7 @@ function OpeningForm({
           aria-label="Recolher propriedades"
           onClick={() => setCollapsed(true)}
         >
-          ›
+          <Icon name="right" />
         </button>
       </div>
       <h2>{openingLabel[o.kind]}</h2>
@@ -379,7 +380,7 @@ export function OpeningSettingsDialog({
             aria-label="Fechar configurações"
             className={styles.settingsClose}
           >
-            ×
+            <Icon name="close" />
           </button>
         </header>
         <form
@@ -608,7 +609,7 @@ export function OpeningSettingsDialog({
                             )
                           }
                         >
-                          ×
+                          <Icon name="close" size={16} />
                         </button>
                       </div>
                     );
@@ -760,7 +761,9 @@ function SettingsHelp({
 }) {
   return (
     <details className={styles.settingsHelp}>
-      <summary aria-label={label}>i</summary>
+      <summary aria-label={label}>
+        <Icon name="info" size={18} />
+      </summary>
       <div role="note">{children}</div>
     </details>
   );

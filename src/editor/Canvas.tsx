@@ -33,6 +33,7 @@ import {
 } from "../domain/drawing";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
+import { Icon } from "../ui/Icon";
 import { isChannel } from "../domain/channels";
 import {
   activeGrout,
@@ -1438,7 +1439,7 @@ export function Canvas({
             aria-label="Reduzir zoom"
             onClick={() => zoom(1 / 1.2)}
           >
-            −
+            <Icon name="minus" />
           </button>
           <span>{Math.round((camera.scale / 0.012) * 100)}%</span>
           <button
@@ -1447,10 +1448,10 @@ export function Canvas({
             aria-label="Ampliar zoom"
             onClick={() => zoom(1.2)}
           >
-            +
+            <Icon name="plus" />
           </button>
           <button disabled={busy} onClick={fit}>
-            Enquadrar
+            <Icon name="fit" /> Enquadrar
           </button>
         </div>
       </div>

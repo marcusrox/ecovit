@@ -3,6 +3,7 @@ import { generate } from "../domain/composition";
 import { display } from "../domain/project";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
+import { Icon } from "../ui/Icon";
 import { restoreSuppression, suppressBand } from "../domain/channels";
 import { GroutPanel } from "./Grout";
 
@@ -62,7 +63,7 @@ export function FiadaToolbar() {
             disabled={s.busy || s.course <= 1}
             onClick={() => s.inspect({ course: s.course - 1, preview: null })}
           >
-            ‹
+            <Icon name="left" />
           </button>
           <label>
             Fiada{" "}
@@ -90,7 +91,7 @@ export function FiadaToolbar() {
             disabled={s.busy || s.course >= total}
             onClick={() => s.inspect({ course: s.course + 1, preview: null })}
           >
-            ›
+            <Icon name="right" />
           </button>
           {active && (
             <span>
@@ -199,7 +200,7 @@ export function FiadaPanel() {
         aria-label="Abrir inspeção de fiadas"
         onClick={() => setCollapsed(false)}
       >
-        Inspeção de fiadas ‹
+        Inspeção de fiadas <Icon name="left" />
       </button>
     );
   return (
@@ -210,7 +211,7 @@ export function FiadaPanel() {
           aria-label="Recolher inspeção de fiadas"
           onClick={() => setCollapsed(true)}
         >
-          ›
+          <Icon name="right" />
         </button>
       </div>
       <h2>Inspeção de fiadas</h2>
