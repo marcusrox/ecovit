@@ -1,12 +1,15 @@
 # Ecovit — Plano incremental de implementação
 
-**Estado:** M1, M2 e M3.1–M3.5 implementados e aceitos pelo solicitante. M4 e M5 previstos.
-**Base:** [PRD](Ecovit-PRD.md), [arquitetura](Ecovit-Arquitetura-Tecnica.md) e [caderno técnico](Ecovit-Caderno-Tecnico.md).
-**Aplicativo:** 0.7.0; arquivo versão 7; composição nominal-v8.
+**Data:** 10 de outubro de 2026  
+**Atualização documental:** 15 de outubro de 2026\
+**Base:** [PRD 0.15](Ecovit-PRD.md) e [Arquitetura 1.8](Ecovit-Arquitetura-Tecnica.md)\
+**Estado:** M1, M2 e M3.1–M3.5 aprovados pelo solicitante; aceites globais de M3.4 e M3.5 recebidos em 14/10/2026. Relatórios e registros de aceite nas seções 7–9. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais.
 
 ## 1. Como usar este plano
 
-O plano separa o alcance de cada marco, seus critérios, verificações e aceite. M significa Marco. RF identifica requisitos do PRD; CT e EX identificam convenções e exemplos do caderno. Os IDs permanecem estáveis para relacionar especificação, implementação e testes.
+Ideias para evoluções futuras estão no [backlog](Ecovit-Backlog.md), criado em 15/10/2026 com oito propostas do solicitante. Registro apenas documental, sem implementação, priorização ou alteração do escopo dos marcos. Verificação do Codex: revisão de consistência com o PRD e a arquitetura e `git diff --check`; testes do aplicativo não se aplicam. As ideias serão detalhadas quando suas entregas forem iniciadas; não há teste manual de funcionalidade nesta alteração.
+
+Cada marco acrescenta uma funcionalidade testável ao aplicativo definitivo. M1 mantém sua especificação e relatório; M2 está detalhado na seção 5, M3.1–3.3 na seção 7, M3.4 na seção 8 e M3.5 na seção 9. M significa Marco e é a única sigla usada para essas etapas. Subdivisões usam ponto: M3.1 (Vãos), M3.2 (Canaletas), M3.3 (Grauteamentos), M3.4 (Evolução da edição no canvas) e M3.5 (Cruz nominal). Preservar IDs existentes; M3.4/M3.5 usam seus próprios prefixos de tarefa/aceite, sem renumerar entregas aceitas. RF, CT e EX continuam identificando requisitos, convenções técnicas e exemplos.
 
 Os marcos são cumulativos. Uma limitação do recorte de M1 ou M2 não descreve, por si só, o aplicativo completo: o suporte vigente resulta de M1–M3.5. Contratos de envelopes e convenções antigas permanecem necessários à validação de arquivos legados.
 
