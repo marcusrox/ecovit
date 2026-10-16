@@ -14,16 +14,16 @@ Consulte as seções pertinentes à alteração. Não duplique esses documentos 
 - Implemente somente a entrega ou alteração solicitada. O plano não autoriza executar todas as entregas de uma vez.
 - Entregue funcionalidades no próprio aplicativo, sem prova técnica ou protótipo separado.
 - Detalhe entregas futuras apenas quando forem iniciadas. Preserve os IDs de requisitos e aceite para relacionar implementação e verificações.
-- Ao concluir, registre no plano o que foi implementado, verificações executadas, limitações e o que falta testar. Separe verificação do Codex de teste manual do solicitante; não declare este último concluído sem seu retorno.
+- Ao concluir, mantenha no plano um resumo consolidado por marco do alcance implementado, verificações executadas, limitações e testes pendentes. Separe verificação do Codex de teste manual do solicitante; não declare este último concluído sem seu retorno.
 - Corrija falhas pertinentes antes de declarar a entrega pronta para teste. Mudanças de comportamento motivadas por feedback devem atualizar especificação e código juntos.
 
 ## Uso das especificações
 
 - Use o PRD para comportamento e limites do produto, a arquitetura para decisões técnicas e contratos de dados, o caderno técnico para convenções geométricas/construtivas e o plano para escopo, andamento e aceite da entrega solicitada.
-- Não mantenha cópias dessas regras neste arquivo. Ao alterar comportamento ou decisão técnica, atualize o documento responsável junto com a implementação e registre a mudança no plano.
+- Não mantenha cópias dessas regras neste arquivo. Ao alterar comportamento ou contrato técnico, atualize o documento responsável junto com a implementação e consolide o estado do marco no plano. A documentação descreve o produto por assunto e marco, sem diário de decisões, datas de ajustes ou relatos de tentativas intermediárias. Preserve IDs e contratos legados necessários à compatibilidade de arquivos; distinga-os do comportamento vigente.
 - Distinga funcionalidade especificada de funcionalidade implementada e aprovada; não trate a existência de uma especificação como autorização para implementá-la.
 - Não introduza bibliotecas, serviços ou abstrações sem necessidade concreta da entrega e compatibilidade com a arquitetura.
-- Para mudanças de interface, consulte o padrão de iconografia na [Arquitetura §2.1](docs/Ecovit-Arquitetura-Tecnica.md#21-padrão-de-iconografia--14102026), incluindo o estado da migração e as verificações exigidas; mantenha as regras nesse documento.
+- Para mudanças de interface, consulte o padrão de iconografia na [Arquitetura §2.1](docs/Ecovit-Arquitetura-Tecnica.md#21-padrão-de-iconografia), incluindo a implementação e as verificações exigidas; mantenha as regras nesse documento.
 - Não invente regras construtivas, peças especiais, espaçamentos ou apoios. Consulte e registre a pesquisa no caderno técnico antes dos algoritmos correspondentes; não apresente convenções nominais como comprovação física ou aprovação estrutural.
 
 ## Validação
