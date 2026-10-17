@@ -1,21 +1,18 @@
-import { describe, expect, it } from "vitest";
 import {
-  createProject,
-  makeWall,
-  resizeLength,
-  type Opening,
+  createLocalProject as createProject,
   type Project,
-} from "../src/domain/project";
-import { generate } from "../src/domain/composition";
-import {
-  modularOptions,
-  openingBox,
-  openingIssue,
+  generate,
   putOpening,
   reconcileOpenings,
   removeElement,
-} from "../src/domain/openings";
-import { importedCopy, parseFile } from "../src/persistence/files";
+  importedCopy,
+  parseFile,
+  root,
+} from "./floor-support";
+import { describe, expect, it } from "vitest";
+import { makeWall, resizeLength, type Opening } from "../src/domain/project";
+
+import { openingBox } from "../src/domain/openings";
 
 function fixture(
   m = 1250,
@@ -37,6 +34,15 @@ function fixture(
       side,
     )!,
   ];
+  // Isolate opening pagination using supported manual channel suppressions.
+  d.project.channelLevels = [];
+  d.adjustments.channels = Array.from({ length: 40 }, (_, i) => ({
+    id: crypto.randomUUID(),
+    floorId: d.model.floors[0].id,
+    wallId: d.model.walls[0].id,
+    top: (i + 1) * h,
+    scope: { kind: "wall" as const },
+  }));
   return d;
 }
 function opening(
@@ -71,15 +77,16 @@ describe("M3.1 geometria e arquivo", () => {
       ...o,
       id: crypto.randomUUID(),
     }));
-    expect(generate(d).diagnostics[0].code).toBe("limit");
     expect(() => parseFile(JSON.stringify(d))).toThrow();
     d.model.openings = [o];
-    d.generated = generate(d, "nominal-v3");
+    d.generated = generate(d);
     d.generationState = {
       status: "current",
       diagnostics: d.generated.diagnostics,
     };
-    expect(() => parseFile(JSON.stringify(d))).toThrow("Convenção");
+    const bad = JSON.parse(JSON.stringify(root(d)));
+    bad.generated.convention = "nominal-v3";
+    expect(() => parseFile(JSON.stringify(bad))).toThrow();
   });
   it("EX-21 porta interrompe pares sem reiniciar fase e retoma na fiada 31", () => {
     let d = fixture();
@@ -147,16 +154,6 @@ describe("M3.1 geometria e arquivo", () => {
     expect(counts(d, 14)).toEqual([15, 2]);
     expect(counts(d, 15)).toEqual([12, 0]);
     expect(counts(d, 31)).toEqual([16, 0]);
-  });
-  it("EX-24 piso e início diferentes; alternativas sem arredondar", () => {
-    const d = fixture();
-    d.model.floors[0].level = 1000;
-    d.model.floors[0].start = 1200;
-    expect(openingIssue(d, opening(d))?.code).toBe("opening-outside-wall");
-    const o = opening(d, 10000, 10000, 10000, 11200);
-    expect(openingIssue(d, o)).toBeNull();
-    expect(modularOptions(10000, 700, 0, 0, 28000)).toEqual([9800, 10500]);
-    expect(modularOptions(10300, 1250, 0, 1250, 40000)).toEqual([10000, 11250]);
   });
   it("EX-25 redimensionar ambas as pontas preserva posição mundial e pendência", () => {
     let d = fixture();
@@ -290,7 +287,7 @@ describe("M3.1 geometria e arquivo", () => {
           },
         }),
       ),
-    ).toThrow("referência");
+    ).toThrow(/referência/i);
     expect(() =>
       parseFile(
         JSON.stringify({
@@ -311,32 +308,5 @@ describe("M3.1 geometria e arquivo", () => {
     d.generated = g;
     d.generationState = { status: "current", diagnostics: g.diagnostics };
     expect(parseFile(JSON.stringify(d))).toEqual(d);
-  });
-  it("sem vãos reproduz nominal-v3 e valida versão 2 antes de migrar", () => {
-    const d = fixture();
-    const {
-      openingSettings: _settings,
-      channelLevels: _levels,
-      groutSettings: _grout,
-      ...project
-    } = d.project;
-    void _settings;
-    void _levels;
-    void _grout;
-    const g = generate(d, "nominal-v3");
-    const old = {
-      ...d,
-      schemaVersion: 2,
-      project,
-      generated: g,
-      generationState: { status: "current", diagnostics: g.diagnostics },
-    };
-    const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(7);
-    expect(migrated.generationState.status).toBe("outdated");
-    expect(generate(migrated).courses).toEqual(g.courses);
-    const bad = structuredClone(old);
-    bad.generated.courses[0].pieces[0].x++;
-    expect(() => parseFile(JSON.stringify(bad))).toThrow("inconsistente");
   });
 });

@@ -1,10 +1,7 @@
-import { bounds, type Point, type Project } from "./project";
+import { bounds, type Point, type EditableProject as Project } from "./project";
 import type { Composition } from "./composition";
 import { openingBox } from "./openings";
-
 export const MAX_GROUT_ADJUSTMENTS = 10000;
-export const MAX_GROUT_AXES = 20000;
-export const MAX_GROUT_INTERVALS = 200000;
 // Identity uses the integer world origin of the nominal cell. Its displayed
 // centre is derived, including for modules with an odd number of 0.1mm units.
 export const groutId = (p: Point) => `${p.x}:${p.y}`;
@@ -12,14 +9,22 @@ export type GroutAxis = Point & {
   id: string;
   wallIds: string[];
   origins: string[];
-  intervals: { bottom: number; top: number }[];
+  intervals: {
+    bottom: number;
+    top: number;
+  }[];
 };
 export function activeGrout(axis: GroutAxis, bottom: number, top: number) {
   return axis.intervals.some((i) => i.bottom < top && i.top > bottom);
 }
 export function courseCells(doc: Project, result: Composition, course: number) {
   const m = doc.project.base.width,
-    cells = new Map<string, Point & { wallIds: string[] }>();
+    cells = new Map<
+      string,
+      Point & {
+        wallIds: string[];
+      }
+    >();
   const walls = new Map(doc.model.walls.map((w) => [w.id, w]));
   for (const p of result.courses[course - 1]?.pieces ?? [])
     for (let y = p.y; y < p.y + p.height; y += m)
@@ -43,12 +48,14 @@ export function courseCells(doc: Project, result: Composition, course: number) {
       }
   return [...cells.values()].sort((a, b) => a.y - b.y || a.x - b.x);
 }
-export function toggleGrout(
-  doc: Project,
-  cell: Point & { wallIds: string[] },
+export function toggleGrout<T extends Project>(
+  doc: T,
+  cell: Point & {
+    wallIds: string[];
+  },
   present: boolean,
-): Project {
-  if (doc.schemaVersion >= 6) {
+): T {
+  {
     const eligible = doc.adjustments.grout.filter(
       (a) =>
         groutId(a) === groutId(cell) &&
@@ -72,6 +79,9 @@ export function toggleGrout(
               ...doc.adjustments.grout,
               {
                 id: crypto.randomUUID(),
+                floorId: doc.model.walls.find((w) =>
+                  cell.wallIds.includes(w.id),
+                )!.floorId,
                 x: cell.x,
                 y: cell.y,
                 wallIds: [...cell.wallIds].sort(),
@@ -94,6 +104,8 @@ export function toggleGrout(
         ...doc.adjustments.grout.filter((a) => groutId(a) !== groutId(cell)),
         {
           id: previous?.id ?? crypto.randomUUID(),
+          floorId: doc.model.walls.find((w) => cell.wallIds.includes(w.id))!
+            .floorId,
           x: cell.x,
           y: cell.y,
           wallIds: [...cell.wallIds].sort(),
@@ -103,7 +115,10 @@ export function toggleGrout(
     },
   };
 }
-export function discardGroutAdjustment(doc: Project, id: string): Project {
+export function discardGroutAdjustment<T extends Project>(
+  doc: T,
+  id: string,
+): T {
   return {
     ...doc,
     adjustments: {
@@ -152,7 +167,6 @@ export function applyGrout(doc: Project, result: Composition): Composition {
   // Actual composed masonry defines both eligible markers and vertical spans.
   const cells = new Map<string, GroutAxis>();
   const byWall = new Map<string, Set<string>>();
-  let intervalCount = 0;
   for (const row of result.courses) {
     for (const c of courseCells(doc, result, row.number)) {
       const id = groutId(c),
@@ -176,16 +190,8 @@ export function applyGrout(doc: Project, result: Composition): Composition {
       if (last?.top === bottom) last.top = top;
       else {
         axis.intervals.push({ bottom, top });
-        intervalCount++;
       }
       cells.set(id, axis);
-      if (cells.size > MAX_GROUT_AXES || intervalCount > MAX_GROUT_INTERVALS) {
-        report(
-          "grout-limit",
-          "Limite de eixos ou intervalos excedido. Modelo preservado; grautes não calculados.",
-        );
-        return result;
-      }
     }
   }
   const candidates = new Map<string, Set<string>>();
@@ -199,7 +205,6 @@ export function applyGrout(doc: Project, result: Composition): Composition {
   const junctions = new Set<string>();
   for (const comp of result.components)
     for (const j of comp.junctions) {
-      if (j.kind === "cross" && result.convention !== "nominal-v8") continue;
       junctions.add(groutId(j));
       if (settings.junctions) add(j, `junction:${j.kind}:${groutId(j)}`);
     }
@@ -289,13 +294,12 @@ export function applyGrout(doc: Project, result: Composition): Composition {
         }
     }
   // Adjustments never participate in automatic anchors or redistribute removals.
-  for (const a of [...doc.adjustments.grout].sort((a, b) =>
-    result.convention === "nominal-v7" || result.convention === "nominal-v8"
-      ? Number(a.action === "exclude") - Number(b.action === "exclude") ||
-        a.y - b.y ||
-        a.x - b.x ||
-        a.id.localeCompare(b.id)
-      : a.y - b.y || a.x - b.x,
+  for (const a of [...doc.adjustments.grout].sort(
+    (a, b) =>
+      Number(a.action === "exclude") - Number(b.action === "exclude") ||
+      a.y - b.y ||
+      a.x - b.x ||
+      a.id.localeCompare(b.id),
   )) {
     const id = groutId(a),
       cell = cells.get(id);

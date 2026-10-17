@@ -3,16 +3,11 @@ import {
   LIMIT,
   bounds,
   validateBase,
-  defaultGroutSettings,
+  withoutResult,
   type Project,
 } from "../domain/project";
-import {
-  MAX_GROUT_ADJUSTMENTS,
-  MAX_GROUT_AXES,
-  MAX_GROUT_INTERVALS,
-  groutId,
-} from "../domain/grout";
-import { generate, signature } from "../domain/composition";
+import { MAX_GROUT_ADJUSTMENTS } from "../domain/grout";
+import { generate } from "../domain/composition";
 import { MAX_OPENINGS, openingBox } from "../domain/openings";
 import {
   MAX_CHANNEL_LEVELS,
@@ -25,6 +20,7 @@ const id = z.string().uuid();
 const empty = z.array(z.never()).max(0);
 const diagnostic = z
   .object({
+    floorId: id,
     code: z.string(),
     severity: z.enum(["error", "info"]),
     message: z.string(),
@@ -69,82 +65,78 @@ const component = z
   .strict();
 const composition = z
   .object({
-    convention: z.enum([
-      "nominal-v1",
-      "nominal-v2",
-      "nominal-v3",
-      "nominal-v4",
-      "nominal-v5",
-      "nominal-v6",
-      "nominal-v7",
-      "nominal-v8",
-    ]),
-    courses: z
-      .array(
-        z
-          .object({
-            number: positive,
-            bottom: integer,
-            top: integer,
-            pieces: z.array(piece).max(100000),
-          })
-          .strict(),
-      )
-      .max(1000),
-    components: z.array(component).max(20000),
+    floorId: id,
+    courses: z.array(
+      z
+        .object({
+          number: positive,
+          bottom: integer,
+          top: integer,
+          pieces: z.array(piece),
+        })
+        .strict(),
+    ),
+    components: z.array(component),
     diagnostics: z.array(diagnostic),
-    grouts: z
-      .array(
-        z
-          .object({
-            id: z.string(),
-            x: integer,
-            y: integer,
-            wallIds: z.array(id),
-            origins: z.array(z.string()),
-            intervals: z
-              .array(
-                z
-                  .object({ bottom: integer, top: integer })
-                  .strict()
-                  .refine((i) => i.top > i.bottom),
-              )
-              .max(MAX_GROUT_INTERVALS),
-          })
-          .strict(),
-      )
-      .max(MAX_GROUT_AXES)
-      .optional(),
-    channels: z
-      .array(
-        z
-          .object({
-            id: z.string(),
-            wallId: id,
-            top: integer,
-            course: positive,
-            cells: z
-              .array(
-                z
-                  .object({
-                    x: integer,
-                    y: integer,
-                    origins: z.array(z.string()),
-                  })
-                  .strict(),
-              )
-              .max(20000),
-          })
-          .strict(),
-      )
-      .max(100000)
-      .optional(),
+    grouts: z.array(
+      z
+        .object({
+          id: z.string(),
+          x: integer,
+          y: integer,
+          wallIds: z.array(id),
+          origins: z.array(z.string()),
+          intervals: z.array(
+            z
+              .object({ bottom: integer, top: integer })
+              .strict()
+              .refine((i) => i.top > i.bottom),
+          ),
+        })
+        .strict(),
+    ),
+
+    channels: z.array(
+      z
+        .object({
+          id: z.string(),
+          wallId: id,
+          top: integer,
+          course: positive,
+          cells: z.array(
+            z
+              .object({
+                x: integer,
+                y: integer,
+                origins: z.array(z.string()),
+              })
+              .strict(),
+          ),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export const MAX_FILE = 50 * 1024 * 1024;
+const scope = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("wall") }).strict(),
+  z
+    .object({ kind: z.literal("range"), from: integer, to: integer })
+    .strict()
+    .refine((s) => s.to > s.from),
+]);
+const generated = z
+  .object({
+    convention: z.literal("nominal-v9"),
+    floors: z.array(composition).min(1).max(4),
+    diagnostics: z.array(diagnostic),
   })
   .strict();
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(5),
+    schemaVersion: z.literal(8),
     project: z
       .object({
         id,
@@ -153,7 +145,8 @@ const schema = z
         base: z
           .object({ length: positive, width: positive, height: positive })
           .strict(),
-        origin: z.object({ x: z.literal(0), y: z.literal(0) }).strict(),
+        origin: point,
+        initialWallHeight: positive.optional(),
         openingSettings: z.object({ base: integer, top: integer }).strict(),
         channelLevels: z
           .array(z.object({ id, top: integer }).strict())
@@ -176,14 +169,14 @@ const schema = z
             z
               .object({
                 id,
-                name: z.literal("Térreo"),
+                name: z.string().trim().min(1).max(100),
                 level: integer,
-                start: integer,
                 defaultHeight: positive,
               })
               .strict(),
           )
-          .length(1),
+          .min(1)
+          .max(4),
         walls: z
           .array(
             z
@@ -222,19 +215,31 @@ const schema = z
           .array(
             z
               .object({
+                id,
+                floorId: id,
+                anchor: point,
+                binding: z.enum(["active", "pending"]),
                 componentId: z.string(),
                 signature: z.string(),
-                wallIds: z.array(id),
+                wallIds: z.array(id).min(1).max(10000),
                 phase: z.union([z.literal(0), z.literal(1)]),
               })
               .strict(),
           )
           .max(10000),
+        channels: z
+          .array(
+            z
+              .object({ id, floorId: id, wallId: id, top: integer, scope })
+              .strict(),
+          )
+          .max(MAX_CHANNEL_SUPPRESSIONS),
         grout: z
           .array(
             z
               .object({
                 id,
+                floorId: id,
                 x: integer,
                 y: integer,
                 wallIds: z.array(id).min(1).max(10000),
@@ -243,12 +248,9 @@ const schema = z
               .strict(),
           )
           .max(MAX_GROUT_ADJUSTMENTS),
-        channels: z
-          .array(z.object({ id, wallId: id, top: integer }).strict())
-          .max(MAX_CHANNEL_SUPPRESSIONS),
       })
       .strict(),
-    generated: composition.nullable(),
+    generated: generated.nullable(),
     generationState: z
       .object({
         status: z.enum(["outdated", "current"]),
@@ -259,397 +261,140 @@ const schema = z
       .object({
         createdAt: z.string().datetime(),
         updatedAt: z.string().datetime(),
-        appVersion: z.string().max(30),
+        appVersion: z.string(),
       })
       .strict(),
   })
   .strict();
 
-const scope = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("wall") }).strict(),
-  z
-    .object({ kind: z.literal("range"), from: integer, to: integer })
-    .strict()
-    .refine((a) => a.from < a.to),
-]);
-const m34Schema = schema.extend({
-  schemaVersion: z.literal(6),
-  adjustments: schema.shape.adjustments.extend({
-    channels: z
-      .array(z.object({ id, wallId: id, top: integer, scope }).strict())
-      .max(MAX_CHANNEL_SUPPRESSIONS),
-    junctions: z
-      .array(
-        schema.shape.adjustments.shape.junctions.element.extend({
-          id,
-          anchor: point,
-          binding: z.enum(["active", "pending"]),
-        }),
-      )
-      .max(10000),
-  }),
-});
-const currentSchema = m34Schema.extend({ schemaVersion: z.literal(7) });
-const m34FileSchema = m34Schema.extend({
-  generated: composition
-    .extend({
-      convention: z.enum([
-        "nominal-v1",
-        "nominal-v2",
-        "nominal-v3",
-        "nominal-v4",
-        "nominal-v5",
-        "nominal-v6",
-        "nominal-v7",
-      ]),
-    })
-    .nullable(),
-});
-const m33Schema = schema.extend({
-  generated: composition
-    .extend({
-      convention: z.enum([
-        "nominal-v1",
-        "nominal-v2",
-        "nominal-v3",
-        "nominal-v4",
-        "nominal-v5",
-        "nominal-v6",
-      ]),
-    })
-    .nullable(),
-});
-
-export const MAX_FILE = 50 * 1024 * 1024;
-const m32Composition = composition.omit({ grouts: true }).extend({
-  convention: z.enum([
-    "nominal-v1",
-    "nominal-v2",
-    "nominal-v3",
-    "nominal-v4",
-    "nominal-v5",
-  ]),
-});
-const m32Schema = schema.extend({
-  schemaVersion: z.literal(4),
-  project: schema.shape.project.omit({ groutSettings: true }),
-  adjustments: schema.shape.adjustments.extend({ grout: empty }),
-  generated: m32Composition.nullable(),
-});
-const oldComposition = composition
-  .omit({ channels: true, grouts: true })
-  .extend({
-    convention: z.enum([
-      "nominal-v1",
-      "nominal-v2",
-      "nominal-v3",
-      "nominal-v4",
-    ]),
-    courses: z
-      .array(
-        composition.shape.courses.element.extend({
-          pieces: z
-            .array(
-              piece
-                .omit({ origins: true })
-                .extend({ kind: z.enum(["whole", "half"]) }),
-            )
-            .max(100000),
-        }),
-      )
-      .max(1000),
-  });
-const m31Schema = schema.extend({
-  schemaVersion: z.literal(3),
-  project: schema.shape.project.omit({
-    channelLevels: true,
-    groutSettings: true,
-  }),
-  adjustments: schema.shape.adjustments.extend({
-    channels: empty,
-    grout: empty,
-  }),
-  generated: oldComposition.nullable(),
-});
-const legacySchema = schema.extend({
-  schemaVersion: z.literal(2),
-  project: schema.shape.project.omit({
-    openingSettings: true,
-    channelLevels: true,
-    groutSettings: true,
-  }),
-  model: schema.shape.model.extend({ openings: empty }),
-  adjustments: schema.shape.adjustments.extend({
-    channels: empty,
-    grout: empty,
-  }),
-  generated: oldComposition
-    .extend({ convention: z.enum(["nominal-v1", "nominal-v2", "nominal-v3"]) })
-    .nullable(),
-});
+function checked(values: number[]) {
+  if (values.some((n) => !Number.isSafeInteger(n) || Math.abs(n) > LIMIT))
+    throw new Error("Medidas ou cotas excedem o limite do editor.");
+}
 export function validateProject(
   value: unknown,
   checkGenerated = true,
 ): Project {
   if (
-    value &&
-    typeof value === "object" &&
-    "schemaVersion" in value &&
-    value.schemaVersion === 1
-  ) {
-    const legacy = legacySchema
-      .extend({
-        schemaVersion: z.literal(1),
-        adjustments: z
-          .object({ junctions: empty, grout: empty, channels: empty })
-          .strict(),
-        generated: z.null(),
-        generationState: z
-          .object({ status: z.literal("outdated"), diagnostics: empty })
-          .strict(),
-      })
-      .safeParse(value);
-    if (!legacy.success) throw new Error("Arquivo versão 1 inválido.");
-    value = { ...legacy.data, schemaVersion: 2 };
-  }
-  const isV2 =
-    !!value &&
-    typeof value === "object" &&
-    "schemaVersion" in value &&
-    value.schemaVersion === 2;
-  const isV3 =
-    !!value &&
-    typeof value === "object" &&
-    "schemaVersion" in value &&
-    value.schemaVersion === 3;
-  const isV4 =
-    !!value &&
-    typeof value === "object" &&
-    "schemaVersion" in value &&
-    value.schemaVersion === 4;
-  const isV5 =
-    !!value &&
-    typeof value === "object" &&
-    "schemaVersion" in value &&
-    value.schemaVersion === 5;
-  const isLegacy = isV2 || isV3 || isV4;
-  const isOld = isLegacy || isV5;
-  const isV6 =
-    !!value &&
-    typeof value === "object" &&
-    "schemaVersion" in value &&
-    value.schemaVersion === 6;
-  const result = (
-    isV2
-      ? legacySchema
-      : isV3
-        ? m31Schema
-        : isV4
-          ? m32Schema
-          : isV5
-            ? m33Schema
-            : isV6
-              ? m34FileSchema
-              : currentSchema
-  ).safeParse(value);
-  if (!result.success)
-    throw new Error(
-      "Arquivo inválido ou conteúdo/versão ainda não suportados pelo Ecovit.",
-    );
-  const doc = result.data as Project;
-  validateBase(doc.project.base);
-  const module = doc.project.base.width,
-    ids = new Set<string>([doc.project.id, doc.model.floors[0].id]);
-  for (const wall of doc.model.walls) {
-    const box = bounds(wall, module),
-      floor = doc.model.floors[0];
-    if (
-      [
-        box.x,
-        box.y,
-        box.x + box.width,
-        box.y + box.height,
-        floor.start - floor.level,
-        floor.start + wall.height - floor.level,
-      ].some((n) => Math.abs(n) > LIMIT)
-    )
-      throw new Error("Medidas da parede ou cotas excedem o limite do editor.");
-    if (ids.has(wall.id) || wall.floorId !== doc.model.floors[0].id)
-      throw new Error(
-        "Arquivo contém identificadores duplicados ou referências inválidas.",
-      );
-    ids.add(wall.id);
-    if (
-      (wall.a.x === wall.b.x) === (wall.a.y === wall.b.y) ||
-      [wall.a.x, wall.a.y, wall.b.x, wall.b.y].some((n) => n % module !== 0)
-    )
-      throw new Error(
-        "Arquivo contém parede fora da malha ou sem comprimento.",
-      );
-  }
-  const choices = new Set<string>();
-  for (const o of doc.model.openings) {
-    if (ids.has(o.id) || !doc.model.walls.some((w) => w.id === o.wallId))
-      throw new Error("Vão com ID duplicado ou referência de parede inválida.");
-    ids.add(o.id);
-    const box = openingBox(
-      o,
-      doc.model.walls.find((w) => w.id === o.wallId)!,
-      module,
-    );
-    if (
-      [
-        o.offset + o.width,
-        o.base + o.height,
-        doc.model.floors[0].level + o.base + o.height,
-        box.x,
-        box.y,
-        box.x + box.width,
-        box.y + box.height,
-      ].some((n) => !Number.isSafeInteger(n) || Math.abs(n) > LIMIT)
-    )
-      throw new Error("Medidas do vão excedem o limite do editor.");
-  }
-  if (
-    !isV2 &&
-    doc.project.openingSettings.top <= doc.project.openingSettings.base
+    !value ||
+    typeof value !== "object" ||
+    !("schemaVersion" in value) ||
+    value.schemaVersion !== 8
   )
-    throw new Error("O topo padrão deve ser maior que a base padrão.");
-  if (!isV2 && !isV3) {
-    const tops = new Set<number>();
-    for (const l of doc.project.channelLevels) {
-      if (ids.has(l.id) || tops.has(l.top))
-        throw new Error("Níveis de canaleta duplicados.");
-      ids.add(l.id);
-      tops.add(l.top);
-      if (Math.abs(doc.model.floors[0].level + l.top) > LIMIT)
-        throw new Error("Cota de canaleta excede o limite.");
-    }
-    const targets = new Set<string>();
-    for (const a of doc.adjustments.channels) {
-      const target = `${a.wallId}:${a.top}`;
-      if (
-        ids.has(a.id) ||
-        (isOld && targets.has(target)) ||
-        !doc.model.walls.some((w) => w.id === a.wallId)
-      )
-        throw new Error(
-          "Supressão de canaleta duplicada ou com referência inválida.",
-        );
-      ids.add(a.id);
-      targets.add(target);
-      if (
-        !isOld &&
-        a.scope?.kind === "range" &&
-        (a.scope.from % module || a.scope.to % module)
-      )
-        throw new Error("Alcance de canaleta fora da malha.");
-    }
-  }
-  if (!isLegacy) {
-    const targets = new Set<string>();
-    for (const a of doc.adjustments.grout) {
-      const target = groutId(a);
-      if (
-        ids.has(a.id) ||
-        (isOld && targets.has(target)) ||
-        new Set(a.wallIds).size !== a.wallIds.length ||
-        a.wallIds.some((id) => !doc.model.walls.some((w) => w.id === id))
-      )
-        throw new Error(
-          "Ajuste de graute duplicado ou com referência inválida.",
-        );
-      ids.add(a.id);
-      targets.add(target);
-    }
-  }
-  for (const a of doc.adjustments.junctions) {
+    throw new Error(
+      "Formato incompatível. Crie um novo projeto; arquivos de marcos anteriores não são convertidos.",
+    );
+  const parsed = schema.safeParse(value);
+  if (!parsed.success)
+    throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");
+  const doc = parsed.data as Project;
+  validateBase(doc.project.base);
+  const m = doc.project.base.width,
+    h = doc.project.base.height;
+  if (
+    doc.project.initialWallHeight !== undefined &&
+    doc.project.initialWallHeight % h
+  )
+    throw new Error("A altura inicial das paredes deve ser modular.");
+  const ids = new Set<string>();
+  const take = (id: string) => {
+    if (ids.has(id)) throw new Error("Identificadores duplicados.");
+    ids.add(id);
+  };
+  take(doc.project.id);
+  const floors = new Map(doc.model.floors.map((f) => [f.id, f]));
+  for (let i = 0; i < doc.model.floors.length; i++) {
+    const f = doc.model.floors[i];
+    take(f.id);
     if (
-      (isOld ? choices.has(a.componentId) : !a.id || ids.has(a.id)) ||
-      (!isOld && new Set(a.wallIds).size !== a.wallIds.length) ||
-      a.wallIds.some((id) => !doc.model.walls.some((w) => w.id === id))
-    )
-      throw new Error("Escolhas de encontros inválidas.");
-    choices.add(a.componentId);
-    if (!isOld && a.id) ids.add(a.id);
-  }
-  if (doc.generationState.status === "current") {
-    if (!doc.generated) throw new Error("Composição atual ausente.");
-    if (
-      (!isOld && !isV6 && doc.generated.convention !== "nominal-v8") ||
-      (isV6 && doc.generated.convention !== "nominal-v7") ||
-      (isV5 && doc.generated.convention !== "nominal-v6") ||
-      (isV4 && doc.generated.convention !== "nominal-v5") ||
-      (isV3 && doc.generated.convention !== "nominal-v4")
+      f.level % h ||
+      f.defaultHeight % h ||
+      (i > 0 && doc.model.floors[i - 1].level >= f.level)
     )
       throw new Error(
-        "Convenção de composição incompatível com a versão do arquivo.",
+        "Pavimentos devem ter cotas modulares distintas e estar ordenados pela cota.",
       );
+    checked([f.level + f.defaultHeight]);
+  }
+  const walls = new Map(doc.model.walls.map((w) => [w.id, w]));
+  for (const w of doc.model.walls) {
+    take(w.id);
+    const f = floors.get(w.floorId);
+    if (!f) throw new Error("Referência de pavimento inválida.");
+    if (
+      (w.a.x === w.b.x) === (w.a.y === w.b.y) ||
+      [w.a.x, w.a.y, w.b.x, w.b.y].some((n) => n % m)
+    )
+      throw new Error("Parede fora da malha ou sem comprimento.");
+    const b = bounds(w, m);
+    checked([b.x, b.y, b.x + b.width, b.y + b.height, f.level + w.height]);
+  }
+  for (const o of doc.model.openings) {
+    take(o.id);
+    const w = walls.get(o.wallId);
+    if (!w) throw new Error("Referência de parede do vão inválida.");
+    const b = openingBox(o, w, m),
+      Z = floors.get(w.floorId)!.level;
+    checked([
+      o.offset + o.width,
+      o.base + o.height,
+      Z + o.base,
+      Z + o.base + o.height,
+      b.x,
+      b.y,
+      b.x + b.width,
+      b.y + b.height,
+    ]);
+  }
+  if (doc.project.openingSettings.top <= doc.project.openingSettings.base)
+    throw new Error("O topo padrão deve ser maior que a base padrão.");
+  const tops = new Set<number>();
+  for (const l of doc.project.channelLevels) {
+    take(l.id);
+    if (tops.has(l.top)) throw new Error("Níveis de canaleta duplicados.");
+    tops.add(l.top);
+    for (const f of floors.values()) checked([f.level + l.top]);
+  }
+  for (const a of [...doc.adjustments.junctions, ...doc.adjustments.grout]) {
+    take(a.id);
+    if (
+      !floors.has(a.floorId) ||
+      new Set(a.wallIds).size !== a.wallIds.length ||
+      a.wallIds.some((id) => walls.get(id)?.floorId !== a.floorId)
+    )
+      throw new Error(
+        "Ajuste com referência inválida ou entre pavimentos diferentes.",
+      );
+  }
+  for (const a of doc.adjustments.channels) {
+    take(a.id);
+    if (walls.get(a.wallId)?.floorId !== a.floorId)
+      throw new Error("Supressão com referência inválida.");
+    if (a.scope?.kind === "range" && (a.scope.from % m || a.scope.to % m))
+      throw new Error("Alcance de canaleta fora da malha.");
+  }
+  if (doc.generationState.status === "outdated") {
+    if (doc.generated !== null || doc.generationState.diagnostics.length)
+      throw new Error("Documento desatualizado deve ter resultado ausente.");
+  } else {
+    if (!doc.generated) throw new Error("Composição atual ausente.");
     if (checkGenerated) {
-      // Normalize both snapshots through the same schema before comparing JSON:
-      // object property insertion order is not a change in project contents.
-      const expected = composition.parse(
-        generate(doc, doc.generated.convention),
-      );
+      const expected = generated.parse(generate(doc));
       if (
         JSON.stringify(doc.generated) !== JSON.stringify(expected) ||
         JSON.stringify(doc.generationState.diagnostics) !==
           JSON.stringify(expected.diagnostics)
       )
         throw new Error("Composição salva inconsistente com o modelo.");
-      // Validate the old snapshot before requesting regeneration on open.
-      // Never accept tampered legacy data merely because the engine evolved.
-      if (doc.generated.convention !== "nominal-v8") {
-        doc.generationState = { status: "outdated", diagnostics: [] };
-      }
     }
   }
-  if (isLegacy) {
-    doc.schemaVersion = 5;
-    doc.project = {
-      ...doc.project,
-      openingSettings: doc.project.openingSettings ?? {
-        base: 11200,
-        top: 21700,
-      },
-      channelLevels: doc.project.channelLevels ?? [],
-      groutSettings: defaultGroutSettings(false),
-    };
-    doc.generationState = { status: "outdated", diagnostics: [] };
-  }
-  if (isOld) {
-    doc.schemaVersion = 6;
-    doc.adjustments.channels = doc.adjustments.channels.map((a) => ({
-      ...a,
-      scope: { kind: "wall" },
-    }));
-    doc.adjustments.junctions = doc.adjustments.junctions.map((a) => {
-      const component = doc.generated?.components.find(
-        (c) => c.id === a.componentId,
-      );
-      const walls = doc.model.walls.filter((w) => a.wallIds.includes(w.id));
-      const boxes = walls.map((w) => bounds(w, module));
-      return {
-        ...a,
-        id: crypto.randomUUID(),
-        anchor: component
-          ? { x: component.x, y: component.y }
-          : {
-              x: boxes.length ? Math.min(...boxes.map((b) => b.x)) : 0,
-              y: boxes.length ? Math.min(...boxes.map((b) => b.y)) : 0,
-            },
-        binding:
-          component?.alternative && signature(walls) === a.signature
-            ? "active"
-            : "pending",
-      };
-    });
-    doc.generationState = { status: "outdated", diagnostics: [] };
-  }
-  if (isOld || isV6) {
-    doc.schemaVersion = 7;
-    doc.generationState = { status: "outdated", diagnostics: [] };
-  }
+  if (
+    new TextEncoder().encode(JSON.stringify(withoutResult(doc))).byteLength >
+    MAX_FILE
+  )
+    throw new Error(
+      "A intenção do projeto excede o limite de arquivo de 50 MB.",
+    );
   return doc;
 }
 export function parseFile(text: string): Project {
@@ -680,13 +425,29 @@ export function importedCopy(doc: Project): Project {
     metadata: { ...doc.metadata, createdAt: now, updatedAt: now },
   };
 }
+export function serializeFile(doc: Project): {
+  text: string;
+  omittedResult: boolean;
+} {
+  const full = JSON.stringify(doc);
+  if (new TextEncoder().encode(full).byteLength <= MAX_FILE)
+    return { text: full, omittedResult: false };
+  const text = JSON.stringify(withoutResult(doc));
+  if (new TextEncoder().encode(text).byteLength > MAX_FILE)
+    throw new Error(
+      "A intenção do projeto excede o limite de arquivo de 50 MB.",
+    );
+  return { text, omittedResult: doc.generated !== null };
+}
 export function download(doc: Project) {
+  const file = serializeFile(doc);
   const url = URL.createObjectURL(
-    new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" }),
+    new Blob([file.text], { type: "application/json" }),
   );
   const a = document.createElement("a");
   a.href = url;
   a.download = `${doc.project.name.replace(/[^\p{L}\p{N} _-]/gu, "_") || "projeto"}.ecovit`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return file.omittedResult;
 }

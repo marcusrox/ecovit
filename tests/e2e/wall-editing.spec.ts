@@ -159,7 +159,9 @@ test("M3.4 mover com janela e supressão até intervalo une em uma operação", 
   await page.getByRole("button", { name: "Refazer", exact: true }).click();
   expect((await exported(page)).model).toEqual(merged.model);
   await course(page, 16);
-  const band = merged.generated!.channels!.find((b) => b.course === 16)!;
+  const band = merged.generated!.floors[0].channels!.find(
+    (b) => b.course === 16,
+  )!;
   await page.getByLabel("Selecionar faixa de canaleta").selectOption(band.id);
   await page
     .getByRole("button", { name: "Remover faixa de canaleta", exact: true })
@@ -184,6 +186,7 @@ test("M3.4 movimento compartilha intenção, cancelamentos e zero sem mudanças"
   d.model.walls = [a, b];
   d.adjustments.grout = [
     {
+      floorId: d.model.floors[0].id,
       id: crypto.randomUUID(),
       x: 0,
       y: 0,
@@ -324,7 +327,7 @@ test("M3.4 carga de movimento em 100 paredes mantém projeto íntegro", async ({
     d.model.walls.slice(1),
   );
   expect(
-    moved.generated!.courses.reduce((n, c) => n + c.pieces.length, 0),
+    moved.generated!.floors[0].courses.reduce((n, c) => n + c.pieces.length, 0),
   ).toBe(42000);
   console.log(
     `M3.4 movimento ${info.project.name}: 100 paredes/42.000 peças em ${elapsed} ms, inclui gesto e salvar/calcular/salvar.`,

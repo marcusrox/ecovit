@@ -5,7 +5,6 @@ import {
   makeWall,
   type Project,
 } from "../../src/domain/project";
-import { generate } from "../../src/domain/composition";
 import { putOpening } from "../../src/domain/openings";
 const base = { length: 2500, width: 1250, height: 700 };
 test("M3.2 carga de 100 janelas com demandas globais coincidentes", async ({
@@ -37,14 +36,19 @@ test("M3.2 carga de 100 janelas com demandas globais coincidentes", async ({
   const elapsed = Date.now() - start,
     result = await exported(page);
   expect(
-    result.generated!.courses.reduce((sum, c) => sum + c.pieces.length, 0),
+    result.generated!.floors[0].courses.reduce(
+      (sum, c) => sum + c.pieces.length,
+      0,
+    ),
   ).toBe(36800);
-  expect(result.generated!.channels).toHaveLength(200);
+  expect(result.generated!.floors[0].channels).toHaveLength(200);
   expect(
-    result.generated!.courses[15].pieces.filter((p) => p.kind === "channel"),
+    result.generated!.floors[0].courses[15].pieces.filter(
+      (p) => p.kind === "channel",
+    ),
   ).toHaveLength(900);
   expect(
-    result.generated!.courses[15].pieces.filter(
+    result.generated!.floors[0].courses[15].pieces.filter(
       (p) => p.kind === "half-channel",
     ),
   ).toHaveLength(200);
@@ -136,7 +140,9 @@ test("M3.2 níveis com alternativas, cancelar/restaurar e origens coincidentes",
   await course(page, 14);
   let d = await exported(page);
   expect(
-    d.generated!.courses[13].pieces.filter((p) => p.kind === "channel"),
+    d.generated!.floors[0].courses[13].pieces.filter(
+      (p) => p.kind === "channel",
+    ),
   ).toHaveLength(5);
   await page
     .getByRole("button", { name: "Configurações", exact: true })
@@ -164,7 +170,7 @@ test("M3.2 níveis com alternativas, cancelar/restaurar e origens coincidentes",
   await page.getByRole("button", { name: "Aplicar configurações" }).click();
   d = await exported(page);
   expect(d.project.channelLevels[0].top).toBe(9800);
-  const merged = d.generated!.channels!.find((b) => b.course === 14)!;
+  const merged = d.generated!.floors[0].channels!.find((b) => b.course === 14)!;
   expect(merged.cells).toHaveLength(32);
   expect(
     merged.cells.filter((c) => c.origins.length === 2).map((c) => c.x),
@@ -212,7 +218,7 @@ test("M3.2 EX-35 remover toda faixa, preservar outras e restaurar após reabertu
   await load(page, d);
   await course(page, 16);
   const before = await exported(page),
-    band = before.generated!.channels!.find((b) => b.course === 16)!;
+    band = before.generated!.floors[0].channels!.find((b) => b.course === 16)!;
   await page.getByLabel("Selecionar faixa de canaleta").selectOption(band.id);
   await expect(
     page.getByText(/24 células de canaleta realçadas/),
@@ -223,10 +229,12 @@ test("M3.2 EX-35 remover toda faixa, preservar outras e restaurar após reabertu
     .click();
   let after = await exported(page);
   expect(
-    after.generated!.courses[15].pieces.some((p) => p.kind.includes("channel")),
+    after.generated!.floors[0].courses[15].pieces.some((p) =>
+      p.kind.includes("channel"),
+    ),
   ).toBe(false);
-  expect(after.generated!.courses[31].pieces).toEqual(
-    before.generated!.courses[31].pieces,
+  expect(after.generated!.floors[0].courses[31].pieces).toEqual(
+    before.generated!.floors[0].courses[31].pieces,
   );
   await page
     .getByRole("button", { name: "Configurações", exact: true })
@@ -243,17 +251,19 @@ test("M3.2 EX-35 remover toda faixa, preservar outras e restaurar após reabertu
   await course(page, 16);
   after = await exported(page);
   expect(
-    after.generated!.courses[15].pieces.some((p) => p.kind.includes("channel")),
+    after.generated!.floors[0].courses[15].pieces.some((p) =>
+      p.kind.includes("channel"),
+    ),
   ).toBe(false);
   await page
     .getByRole("button", { name: "Restaurar faixa suprimida", exact: true })
     .click();
-  expect((await exported(page)).generated!.courses[15].pieces).toEqual(
-    before.generated!.courses[15].pieces,
-  );
+  expect(
+    (await exported(page)).generated!.floors[0].courses[15].pieces,
+  ).toEqual(before.generated!.floors[0].courses[15].pieces);
   await page.getByRole("button", { name: "Desfazer", exact: true }).click();
   expect(
-    (await exported(page)).generated!.courses[15].pieces.some((p) =>
+    (await exported(page)).generated!.floors[0].courses[15].pieces.some((p) =>
       p.kind.includes("channel"),
     ),
   ).toBe(false);
@@ -285,7 +295,7 @@ test("M3.2 célula compartilhada escolhe parede e referência não recebe remoç
     .click();
   const after = await exported(page);
   expect(after.adjustments.channels[0].wallId).toBe(d.model.walls[1].id);
-  const corner = after.generated!.courses[15].pieces.find(
+  const corner = after.generated!.floors[0].courses[15].pieces.find(
     (p) => p.x === 0 && p.y === 0,
   )!;
   expect(corner.kind).toBe("whole");
@@ -316,7 +326,7 @@ test("M3.2 extensão e nível movido preservam supressão na cota original", asy
   await page.getByLabel("Comprimento", { exact: true }).fill("450");
   await page.getByLabel("Comprimento", { exact: true }).press("Enter");
   expect(
-    (await exported(page)).generated!.courses[15].pieces.some((p) =>
+    (await exported(page)).generated!.floors[0].courses[15].pieces.some((p) =>
       p.kind.includes("channel"),
     ),
   ).toBe(false);
@@ -328,46 +338,11 @@ test("M3.2 extensão e nível movido preservam supressão na cota original", asy
   const after = await exported(page);
   expect(after.adjustments.channels[0].top).toBe(11200);
   expect(
-    after.generated!.courses[16].pieces.every((p) =>
+    after.generated!.floors[0].courses[16].pieces.every((p) =>
       p.kind.includes("channel"),
     ),
   ).toBe(true);
   expect(after.generated!.diagnostics).toEqual([]);
-});
-test("M3.2 snapshot M3.1 validado antes da migração e adulterado recusado", async ({
-  page,
-}) => {
-  const d = fixture();
-  const {
-    channelLevels: _levels,
-    groutSettings: _grout,
-    ...project
-  } = d.project;
-  void _levels;
-  void _grout;
-  const g = generate(d, "nominal-v4"),
-    old = {
-      ...d,
-      schemaVersion: 3,
-      project,
-      generated: g,
-      generationState: { status: "current", diagnostics: g.diagnostics },
-    };
-  await load(page, old);
-  const before = await exported(page);
-  expect(before.schemaVersion).toBe(7);
-  expect(before.project.channelLevels).toEqual([]);
-  expect(before.generated!.convention).toBe("nominal-v8");
-  expect(before.generated!.channels!.map((b) => b.course)).toEqual([14, 31]);
-  const bad = structuredClone(old);
-  bad.generated.courses[0].pieces[0].width += 1250;
-  await page.getByTestId("import-file").setInputFiles({
-    name: "adulterado.ecovit",
-    mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify(bad)),
-  });
-  await expect(page.getByRole("alert")).toContainText("inconsistente");
-  expect(await exported(page)).toEqual(before);
 });
 test("M3.2 falha de armazenamento preserva supressão e resultado em download", async ({
   page,
@@ -388,7 +363,9 @@ test("M3.2 falha de armazenamento preserva supressão e resultado em download", 
   expect(after.adjustments.channels).toHaveLength(1);
   expect(after.generationState.status).toBe("current");
   expect(
-    after.generated!.courses[13].pieces.some((p) => p.kind.includes("channel")),
+    after.generated!.floors[0].courses[13].pieces.some((p) =>
+      p.kind.includes("channel"),
+    ),
   ).toBe(false);
   await expect(
     page.getByRole("button", {

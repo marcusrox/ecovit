@@ -1,10 +1,12 @@
 # Ecovit — Arquitetura Técnica
 
-**Versão documental:** 1.8
-**Base funcional:** PRD Ecovit 0.15. M1–M3.5 implementados e aceitos; M4/M5 previstos.
-**Aplicativo:** 0.7.0; arquivo versão 7; composição nominal-v8.
+**Versão documental:** 1.14
+**Base funcional:** PRD Ecovit 0.21. M1–M3.5 implementados e aceitos; M4.1 implementado com aceite manual pendente; M4.2/M4.3 e M5 previstos.
+**Aplicativo:** 0.8.0; arquivo versão 8; composição nominal-v9.
 
-As seções gerais descrevem a arquitetura do aplicativo. As seções de M3, M3.4 e M3.5 definem contratos implementados; a seção de M4 contém diretrizes ainda não implementadas. Versões de formato e convenções nominais identificam contratos de dados, não etapas pendentes de desenvolvimento.
+As seções gerais descrevem a arquitetura do aplicativo. As seções de M3–M3.5 registram contratos históricos; M4.1 está implementado conforme §19, preservando as regras nominais locais. Lajes e comparação visual de M4 permanecem previstas. Versões de formato e convenções nominais identificam contratos de dados, não etapas pendentes de desenvolvimento.
+
+Durante o MVP, cada marco pode quebrar compatibilidade com formatos de marcos anteriores, sem obrigação de implementar ou manter migrações, conversores ou geradores exclusivamente para esse fim. M4.1 aplica essa decisão: arquivos e documentos locais anteriores são recusados, sem conversão. Os contratos e geradores legados descritos nas seções dos marcos anteriores registram o comportamento já entregue; não constituem obrigação de mantê-los nos marcos seguintes. As diretrizes de M4 estão na seção 18 e o contrato vigente de M4.1 na seção 19. Leitores e geradores exclusivamente legados foram removidos.
 
 ## 1. Organização da aplicação
 
@@ -65,7 +67,7 @@ A escolha atende à necessidade concreta de catálogo amplo com linguagem visual
 
 #### Mapa semântico e verificação
 
-O mapa central relaciona ações a ícones: select→MousePointer2, wall→BrickWall, door→DoorClosed, window→SquareSplitHorizontal, opening→SquareDashed, settings→SlidersHorizontal, undo/redo→Undo2/Redo2, left/right→ChevronLeft/ChevronRight, close→X, plus/minus→Plus/Minus, download/upload→Download/Upload, fit→Scan, info→Info, plan→PanelsTopLeft. Porta representa folha/batente, janela quadro dividido, vão contorno tracejado; símbolos são ferramentas, não detalhes construtivos.
+O mapa central relaciona ações a ícones: select→MousePointer2, wall→BrickWall, door→DoorClosed, window→SquareSplitHorizontal, opening→SquareDashed, settings→SlidersHorizontal, undo/redo→Undo2/Redo2, left/right→ChevronLeft/ChevronRight, close→X, plus/minus→Plus/Minus, copy/delete→Copy/Trash2, download/upload→Download/Upload, fit→Scan, info→Info, plan→PanelsTopLeft. Porta representa folha/batente, janela quadro dividido, vão contorno tracejado; símbolos são ferramentas, não detalhes construtivos.
 
 O mapa também inclui status saved/warning/saving/readonly→Check/TriangleAlert/LoaderCircle/LockKeyhole, next→ArrowRight e home→House. Estado vazio, abertura de cartão e orientação de backup usam o mesmo catálogo. Inverter lado conserva direções ↓/→/↑/← como indicação geométrica separada do texto da ação; +/− do graute e legendas técnicas permanecem desenhos/sinais do domínio. Handlers, nomes acessíveis, condições de exibição, atalhos, foco e histórico preservados. Não acrescentar ícone a todo botão de texto automaticamente; usar quando facilitar reconhecimento.
 
@@ -83,7 +85,7 @@ Um repositório, um pacote e um build. Estrutura implementada:
 - src/editor: canvas, modos Planta/Fiada, ferramentas, seleção e câmera.
 - src/domain: tipos do projeto, geometria, operações de edição e motor de composição, canaletas e grautes.
 - src/state: estado compartilhado e coordenação de comandos/resultados.
-- src/persistence: IndexedDB, leitura/escrita de .ecovit e migrações.
+- src/persistence: IndexedDB e leitura/escrita estrita do formato .ecovit vigente.
 - src/ui: iconografia e estilos comuns.
 - tests: casos de domínio, arquivos de referência, persistência e fluxos de navegador.
 
@@ -100,7 +102,7 @@ O domínio e o motor não importam React, Zustand, Konva ou Dexie. São funçõe
 3. A aplicação registra a alteração no histórico, marca o resultado como desatualizado e impede novas operações até terminar este fluxo.
 4. Salva o documento atual no IndexedDB; se a escrita falhar, informa a falha e continua com o documento em memória.
 5. Mostra “Calculando…”, permite que o navegador pinte esse estado e executa uma chamada do motor para o projeto inteiro.
-6. Em caso de sucesso, substitui o resultado completo e salva novamente. Em caso de falha de cálculo, mantém o modelo e o resultado anterior desatualizado, informando o problema.
+6. Em caso de sucesso, substitui o resultado completo e salva novamente. Em caso de falha de cálculo, mantém o modelo com resultado ausente/desatualizado, informando o problema.
 7. Libera os controles, inclusive em caso de falha. Download serializa o documento atual em memória, independentemente de sucesso do salvamento local.
 
 Um indicador simples de operação em andamento impede sobreposição de edição, desfazer, carregamento, troca de projeto e download. Não haverá fila, cálculo concorrente ou protocolo de revisões de mensagens. O estado do resultado será atualizado ou desatualizado; isso não é controle de versões de regras construtivas.
@@ -143,9 +145,9 @@ Aceitar dimensões-base com precisão de 0,1 mm, validar comprimento igual a dua
 
 As extremidades da face externa de referência de cada parede serão múltiplos do módulo horizontal. A espessura será a largura do tijolo-base. Armazenar a face e o lado ocupado pela espessura, preservando esse lado ao redimensionar qualquer extremidade. A prévia permite inverter o lado antes da criação. Em paredes internas, a face externa é a face de referência escolhida, sem inferência de recintos. Encontros em L alinham as faces externas e têm composição compartilhada sem peças duplicadas.
 
-Vãos usam distância modular ao longo da face externa desde a extremidade de menor coordenada e largura do vão bruto. Ao redimensionar a parede, preservar a posição do vão na planta e recalcular essa distância; sinalizar os que não couberem. Alturas usarão o passo vertical e referências do piso/alvenaria. O modelo nominal usa passo igual à altura-base, conforme CT-02 do [caderno técnico](Ecovit-Caderno-Tecnico.md), sem configuração adicional de junta. Essa convenção não comprova junta física nula nem passo instalado de qualquer fabricante.
+Vãos usam distância modular ao longo da face externa desde a extremidade de menor coordenada e largura do vão bruto. Ao redimensionar a parede, preservar a posição do vão na planta e recalcular essa distância; sinalizar os que não couberem. Alturas usarão o passo vertical e referência única do pavimento. O modelo nominal usa passo igual à altura-base, conforme CT-02 do [caderno técnico](Ecovit-Caderno-Tecnico.md), sem configuração adicional de junta. Essa convenção não comprova junta física nula nem passo instalado de qualquer fabricante.
 
-Em M4 (previsto), a laje terá contorno e aberturas ortogonais simples, cota da face superior e espessura armazenada somente nela. A face inferior é a cota superior menos a espessura. O topo da parede será o início da alvenaria mais sua altura, limitado pela face inferior de uma laje de fechamento associada onde ela cobrir a parede. Sem essa laje, vale a altura da parede. Incompatibilidades com fiadas geram diagnóstico, sem arredondamento silencioso. A altura padrão do pavimento inicializa novas paredes; não substitui as alturas existentes. Não haverá entidade ou editor de telhados.
+Em M4.1, cada pavimento tem uma cota única, comum ao início de todas as suas paredes. Em M4.2, essa cota será também a face superior da laje. Cotas são múltiplas inteiras da altura-base, podem ser negativas e não podem coincidir entre pavimentos. O topo de cada parede é essa cota mais sua altura, sem limitação por lajes. A laje terá contorno e aberturas ortogonais simples na malha horizontal e espessura positiva armazenada somente nela; sua face superior será derivada da cota do próprio pavimento e a face inferior será essa cota menos a espessura. Alterar a espessura move somente a face inferior. Manter todas as validações existentes por pavimento isolado; não verificar colisão ou apoio entre andares nem acrescentar um verificador volumétrico de lajes. Incompatibilidades de altura de parede com fiadas continuam sujeitas à validação modular, sem arredondamento silencioso. A altura padrão do pavimento inicializa novas paredes; não substitui as alturas existentes. Não haverá entidade ou editor de telhados.
 
 Pixels só existirão na câmera e no renderizador. Aplicar conversão tela/projeto antes de encaixar no grid. Zoom não modifica nenhuma dimensão física.
 
@@ -159,14 +161,14 @@ Pipeline inicial:
 2. Construir a rede de paredes e seus encontros.
 3. Aplicar escolhas de encontros da primeira fiada.
 4. Distribuir peças ao longo de todas as fiadas.
-5. Aplicar vãos, alturas das paredes e limites de lajes de fechamento.
+5. Aplicar vãos e alturas das paredes; em M4, converter cotas locais pela cota única do pavimento, sem recorte por lajes.
 6. Gerar a proposta de grauteamentos e elementos em canaletas.
 7. Reconciliar ajustes manuais e verificar continuidade/colisões.
 8. Produzir diagnósticos e quantitativos.
 
 A ordem interna poderá ser ajustada às dependências do algoritmo; elementos estruturais que mudam peças exigirão nova composição da região afetada. Não tratar canaletas como apenas uma cor aplicada depois da geração.
 
-Recalcular o projeto inteiro após cada alteração geométrica ou construtiva confirmada. Em M4 (previsto), o mesmo fluxo inclui todos os pavimentos e verificações entre eles, sem rastreamento de regiões pendentes. Alterações apenas de nome, seleção ou câmera não exigem geração.
+Recalcular o projeto inteiro após cada alteração geométrica ou construtiva confirmada. Em M4.1, o mesmo fluxo inclui todos os pavimentos, com composição e validações locais independentes, sem detecção de interferências ou desalinhamentos entre andares e sem rastreamento de regiões pendentes. Alterações apenas de nome, seleção ou câmera não exigem geração.
 
 Executar uma chamada síncrona do motor no fluxo principal, depois de exibir o estado de espera. Novas operações ficam indisponíveis até terminar; não enfileirar cliques para executá-los depois. Usar tratamento de erro que sempre libere os controles. Não haverá cancelamento ou progresso percentual durante essa chamada; uma espera de processamento é aceita nesta versão.
 
@@ -188,7 +190,7 @@ Não adicionar event sourcing ou persistência de cada movimento do mouse.
 
 ## 9. Persistência e arquivo .ecovit
 
-O formato vigente é envelope versão 7/composição nominal-v8. Snapshots legados são conferidos integralmente por recomputação com sua convenção original antes da migração e do recálculo. Preservar modelo, IDs, configurações e ajustes; recusar adulteração e versões não suportadas. Em leitura bloqueada, conservar o resultado antigo identificado, sem calcular ou salvar. Contratos por marco nas seções 15–17.
+O formato vigente é envelope versão 8/composição nominal-v9, conforme §19. Somente esse formato é aceito. Snapshots atuais são conferidos por recomputação completa antes de abrir; versões anteriores/futuras e adulteração são recusadas sem conversão. Em leitura bloqueada, o cálculo confere o snapshot, sem substituir ou atualizar o documento nem salvar. Registros locais incompatíveis permanecem identificados na lista, sem exclusão automática. A tabela abaixo registra a evolução histórica; não implica leitores antigos.
 
 | Marco | Envelope | Convenção de composição |
 |---|---|---|
@@ -199,6 +201,7 @@ O formato vigente é envelope versão 7/composição nominal-v8. Snapshots legad
 | M3.3 | 5 | nominal-v6 |
 | M3.4 | 6 | nominal-v7 |
 | M3.5 | 7 | nominal-v8 |
+| M4.1 (vigente) | 8 | nominal-v9 |
 
 IndexedDB, via Dexie, armazena registros de projetos com id, updatedAt e documento completo; nome e demais metadados pertencem ao documento. A interface e o motor não dependem da representação interna do banco. Referência: [Dexie e IndexedDB](https://dexie.org/docs).
 
@@ -211,21 +214,21 @@ Falhas de quota ou indisponibilidade manterão o documento em memória e oferece
 JSON UTF-8 com extensão .ecovit:
 
 - format: identificador ecovit.
-- schemaVersion: versão do formato; M1 usa 1, M2 usa 2, M3.1 usa 3, M3.2 usa 4 e M3.3 vigente usa 5; contratos na seção 15.
+- schemaVersion: 8 no contrato vigente de M4.1; contratos na seção 19.
 - project: identificadores, nome, unidades e dimensões-base.
 - model: pavimentos, paredes, vãos, lajes e referências verticais.
 - adjustments: escolhas de encontros e ajustes de graute/canaletas.
-- generated: última composição disponível e catálogo, ou ausência de resultado antes da primeira geração.
+- generated: resultado completo agrupado por pavimento ou null quando desatualizado.
 - generationState: atualidade do resultado e diagnósticos.
 - metadata: datas e versão do aplicativo que gravou o documento.
 
 Não incluir nós Konva, funções, histórico inteiro ou dados de mouse. A versão do formato não é uma versão das regras construtivas.
 
-Validar estrutura com Zod, relações entre identificadores e limites de quantidade/tamanho antes de substituir o projeto aberto. O limite de arquivo é de 50 MB. Mensagens devem explicar a rejeição. Migrações preservam o arquivo original; formato futuro não reconhecido não é carregado parcialmente. [Zod](https://zod.dev/).
+Validar estrutura com Zod, relações entre identificadores e limites de quantidade/tamanho antes de substituir o projeto aberto. O limite de arquivo é de 50 MiB. Mensagens devem explicar a rejeição. A importação preserva o arquivo original; formato incompatível não é carregado parcialmente. [Zod](https://zod.dev/).
 
 Na reabertura, conservar a composição salva. Regeneração posterior deve reconciliar escolhas e ajustes e mostrar incompatibilidades. Dados gerados são verificáveis e não dispensam validação.
 
-Se o arquivo contiver resultado desatualizado ou ausente, recalcular automaticamente pelo mesmo fluxo antes de disponibilizar quantitativos. Resultado antigo pode ser preservado como referência identificada, mas nunca apresentado como composição atual. Reabrir um documento atualizado preserva sua composição; a próxima alteração geométrica ou construtiva dispara o recálculo normal.
+Documento desatualizado contém resultado null e diagnósticos vazios. Com bloqueio exclusivo, recalcular automaticamente pelo mesmo fluxo; em somente leitura, conservar esse estado sem regenerar. Quantitativos pertencem a M5. Reabrir um documento atualizado preserva sua composição; a próxima alteração geométrica ou construtiva dispara o recálculo normal.
 
 No futuro, um backend poderá armazenar esse documento por projeto, sem mudar o canvas ou o motor. Criar apenas funções específicas de salvar/carregar/listar agora, sem construir camadas genéricas para bancos ainda inexistentes.
 
@@ -298,7 +301,10 @@ As referências oficiais fundamentam as escolhas de tecnologia. Evidências de t
 
 ## 15. Contratos de M3 nominal
 
-M3.1 cobre vãos e seus padrões; M3.2 cobre canaletas e supressões; M3.3 cobre grautes nominais e ajustes. O contrato de M3.3 é arquivo versão 5/composição nominal-v6; o formato vigente de M3.5 consta na seção 9. PRD §14, Plano §7 e CT-07–10 são referências; nenhuma exigência de física de cavidades, dimensionamento de apoio/armadura ou cadastro de fabricante.
+As seções 15–17 registram os contratos de dados dos marcos anteriores. Seus leitores, migrações e geradores antigos não integram M4.1; formato, persistência, resultado ausente e limites vigentes são os de §19. As regras nominais locais e operações construtivas permanecem, sem compatibilidade com arquivos anteriores.
+
+
+M3.1 cobre vãos e seus padrões; M3.2 cobre canaletas e supressões; M3.3 cobre grautes nominais e ajustes. O contrato de M3.3 é arquivo versão 5/composição nominal-v6; o formato vigente de M4.1 consta nas seções 9/19. PRD §14, Plano §7 e CT-07–10 são referências; nenhuma exigência de física de cavidades, dimensionamento de apoio/armadura ou cadastro de fabricante.
 
 ### Dados persistentes
 
@@ -349,7 +355,7 @@ A migração preserva geometria, IDs e escolhas. Sem vãos e com níveis globais
 
 Migrar em memória e salvar somente com bloqueio de edição; nunca modificar arquivo original. Arquivo atualizado exige conferência de resultado pela própria convenção; adulterado/futuro é recusado antes de substituir aberto. Rascunho com pendência geométrica íntegra pode salvar/reabrir. Importação segue como cópia; limite 50 MB mantido. Revisar limites de vãos/faixas/eixos antes de alocar, sem truncamento.
 
-A evolução de quantitativos permanece futura. Não deduzir volume de graute ou consumo de aço de símbolos sem dimensões. O envelope de M3.3 é v5/nominal-v6. A tabela IndexedDB armazena o documento inteiro; migrações ocorrem em memória e só são gravadas com bloqueio de edição. O aplicativo vigente registra appVersion 0.7.0. Resultado atual de versão 5 exige nominal-v6; versões 4/3 exigem nominal-v5/v4 antes da migração. Validar integralmente snapshots nominal-v1–v5 pela convenção original antes de adicionar configurações de graute e marcar resultado desatualizado. Leitura bloqueada mantém o resultado antigo identificado, sem gravação nem cálculo. Limites defensivos: mil vãos, 100 níveis, 10 mil supressões, 10 mil ajustes de graute, 20 mil eixos e 200 mil intervalos, além dos limites existentes e arquivo 50 MB; sem truncamento. Cálculo excedido preserva modelo e diagnostica o limite.
+A evolução de quantitativos permanece futura. Não deduzir volume de graute ou consumo de aço de símbolos sem dimensões. O envelope de M3.3 é v5/nominal-v6. A tabela IndexedDB armazena o documento inteiro; migrações ocorrem em memória e só são gravadas com bloqueio de edição. O aplicativo de M3.5 registrava appVersion 0.7.0; M4.1 registra 0.8.0. Resultado atual de versão 5 exige nominal-v6; versões 4/3 exigem nominal-v5/v4 antes da migração. Validar integralmente snapshots nominal-v1–v5 pela convenção original antes de adicionar configurações de graute e marcar resultado desatualizado. Leitura bloqueada mantém o resultado antigo identificado, sem gravação nem cálculo. Limites defensivos: mil vãos, 100 níveis, 10 mil supressões, 10 mil ajustes de graute, 20 mil eixos e 200 mil intervalos, além dos limites existentes e arquivo 50 MB; sem truncamento. Cálculo excedido preserva modelo e diagnostica o limite.
 
 ## 16. Contratos de M3.4 — Evolução da edição
 
@@ -438,16 +444,96 @@ Migrar em memória, conservar IDs, paredes/vãos, escolhas, níveis/categorias e
 
 ### Diagnósticos e interação
 
-Na convenção vigente nominal-v8, implementada e aceita em M3.5, a cruz suportada recebe composição e informação nominal por CT-12. Apenas nas convenções legadas nominal-v1–v7 a cruz permanece como limite de suporte, para validação dos snapshots antigos, sem constituir prova de erro de medida. Na convenção vigente, diagnóstico de erro exige motivo específico: reservas incompatíveis, percurso sem padrão, altura inválida, vão invadindo encontro ou ajuste pendente. Distinguir suporte, entrada, conflito geométrico, limite de processamento e exceção do motor; não classificar toda cruz como exceção de execução.
+Na convenção nominal-v8, implementada e aceita em M3.5 e preservada localmente em nominal-v9, a cruz suportada recebe composição e informação nominal por CT-12. Apenas nas convenções legadas nominal-v1–v7 a cruz permanece como limite de suporte, para validação dos snapshots antigos, sem constituir prova de erro de medida. Na convenção vigente, diagnóstico de erro exige motivo específico: reservas incompatíveis, percurso sem padrão, altura inválida, vão invadindo encontro ou ajuste pendente. Distinguir suporte, entrada, conflito geométrico, limite de processamento e exceção do motor; não classificar toda cruz como exceção de execução.
 
 Mensagens mostram consequência no conjunto e N paredes distintas, com IDs/posição/fiadas corretos; localização realça o encontro e as paredes afetadas, com seleção/consulta na Planta/Fiada. Não usar somente “no M2” no texto operacional. Sem composição parcial apresentada como solução completa. Não criar erro estrutural para remoções voluntárias ou ausência de dimensões físicas.
 
 ## 18. Diretrizes iniciais de M4
 
-Decisões de produto em RF-08/13; ainda não implementadas. A composição e a numeração das fiadas serão locais a cada pavimento, começando em 1, com conversão para cotas globais pela referência de início da alvenaria. Pavimentos compartilham origem horizontal, mas seus elementos e ajustes devem ser independentes. M4 admite no máximo uma laje de fechamento por pavimento, pertencente ao inferior.
+Decisões de produto em RF-08/13; pavimentos implementados em M4.1 (§19), lajes e comparação visual previstos em M4.2/M4.3. M4 admite até quatro pavimentos, sem classificação de piso ou cobertura. Cada pavimento terá uma cota única especificada na criação, múltipla inteira da altura-base do tijolo, admitindo negativos e zero, sem cotas repetidas. Ordenar por cota crescente e derivar adjacência dessa ordem; editar cota pode alterar a ordem, sem trocar identidades ou referências. A composição e a numeração das fiadas serão locais a cada pavimento, começando em 1, com conversão para cotas globais por essa cota. Todas as suas paredes começam nela; bases de vãos e níveis de canaletas são relativos à mesma referência. Pavimentos compartilham origem horizontal, mas seus elementos e ajustes devem ser independentes.
 
-Conforme RF-07, gerar grautes separadamente por pavimento, aplicando o padrão configurado à geometria e aos limites verticais locais. Inclusões/exclusões individuais devem ter alcance restrito ao pavimento das paredes associadas. Associações de um mesmo ajuste não podem abranger paredes de pavimentos diferentes; coincidência de x/y não autoriza compartilhar, unificar ou aplicar ajustes entre andares. Identificação e agrupamento de eixos, aplicação de ajustes e diagnósticos devem considerar o pavimento, além da posição horizontal. Comparações entre pavimentos não propagam ajustes. A representação concreta desses vínculos e sua migração serão definidas no incremento de pavimentos, preservando os ajustes existentes no térreo.
+Cada pavimento admite no máximo uma laje, pertencente a ele, com ou sem paredes. Sua face superior coincide com a cota do pavimento e não tem campo de cota editável independente; a espessura cresce para baixo. A laje não participa do recorte da alvenaria nem da determinação dos topos de paredes, encontros ou grautes. Contorno e aberturas afetam somente sua própria geometria. Usar vértices modulares, contornos ortogonais simples e aberturas estritamente internas, sem contato ou sobreposição entre si ou com a borda externa. Validar o candidato completo antes de confirmar; rejeitar edição inválida preservando o estado anterior, sem corrigir aberturas automaticamente. Exclusão de abertura preserva a laje; exclusão de laje remove suas aberturas e preserva paredes e ajustes. Uma laje acima das paredes é desenhada em outro pavimento na cota informada pelo usuário, que pode ficar sem paredes.
 
-Manter separados a altura solicitada da parede e seus limites efetivos por trecho, derivados da cobertura do contorno da laje e de suas aberturas; não substituir a altura persistida pela altura limitada. A sugestão de início do pavimento superior usa o topo da laje inferior ou, na ausência dela, o início da alvenaria inferior mais a altura padrão de paredes. Sugestões não incluem camadas presumidas e são editáveis antes da confirmação. Alterações posteriores da laje propõem atualização das cotas, sem aplicar silenciosamente a proposta ao pavimento superior.
+Conforme RF-07, gerar grautes separadamente por pavimento, aplicando o padrão configurado à geometria e aos limites verticais locais. Inclusões/exclusões individuais devem ter alcance restrito ao pavimento das paredes associadas. Associações de um mesmo ajuste não podem abranger paredes de pavimentos diferentes; coincidência de x/y não autoriza compartilhar, unificar ou aplicar ajustes entre andares. Identificação e agrupamento de eixos, aplicação de ajustes e diagnósticos devem considerar o pavimento, além da posição horizontal. Não haverá vínculos de continuidade de reforços entre andares. Os contratos vigentes de M4.1 estão na seção 19, sem migração de arquivos anteriores.
 
-Formato, migração, granularidade dos trechos parcialmente cobertos, atualização das propriedades de cota e eventual alcance entre vários pavimentos serão detalhados no incremento correspondente, consultando o caderno antes dos algoritmos. Não há mudança do formato vigente ou autorização de implementação nesta definição.
+O topo de cada parede é a cota do seu pavimento mais sua altura. Não derivar limites efetivos por cobertura de laje nem propor atualizações de cotas de outros pavimentos após editar uma laje. Alterar a cota de um pavimento desloca seus elementos verticalmente, preservando alturas e medidas relativas. A transformação de ajustes persistidos em cotas absolutas deve acompanhar esse deslocamento na mesma operação de histórico; não alterar as cotas dos demais pavimentos.
+
+Duplicação copia a intenção editável completa definida em RF-08, inclusive ajustes pendentes, atribui novos IDs e remapeia todas as referências internas. Exigir cota de destino válida, aplicar a diferença de cotas aos registros absolutos e preservar medidas relativas; recalcular resultados. Remoção elimina pavimento, elementos e ajustes em uma única operação desfazível; não remover o último nem modificar os demais. Seleção após remoção segue RF-08. Desfazer restaura identidades e relações.
+
+Criar pavimento vazio inicializa a altura padrão conforme a criação do projeto, com edição e validação modular antes da confirmação, sem herdar outro andar; duplicação usa o padrão da origem. Troca de pavimento mantém a câmera, limpa a seleção e cancela gestos/prévias sem commit; lembrar a última fiada por pavimento durante a sessão. Sem paredes, Fiada mostra estado vazio, sem índice fictício ou controles de edição construtiva ativos.
+
+Somente em Planta, renderizar uma referência de pavimento por vez, imediatamente inferior ou superior na ordem de cotas, escolhida pelo usuário. Exibir paredes, vãos e laje/aberturas em aparência atenuada com identificação do pavimento; a referência não participa de hit-testing ou edição. Não exibir essa camada em Fiada; conservar a referência de fiada adjacente do próprio pavimento. Não executar detecção de colisão, apoio ou interseção entre elementos de pavimentos distintos, nem gerar diagnósticos de desalinhamento/descontinuidade entre andares. Manter todas as validações existentes, inclusive colisões de composição, aplicadas separadamente a cada pavimento; o estado geométrico resulta dessas verificações locais. A laje mantém suas regras de contorno/aberturas, sem novo verificador volumétrico neste marco.
+
+Desenho de laje/aberturas por vértices, com prévia ortogonal, fechamento explícito e cancelamento por Escape sem commit. Movimento da laje aplica uma única translação modular ao contorno e às suas aberturas, na mesma operação de histórico. Validar o candidato completo antes de confirmar. Alças/gestos de edição de bordas serão detalhados em M4.2.
+
+M4.1 adota novo contrato de arquivo e armazenamento local com cota única, sem ler, migrar ou converter documentos de marcos anteriores. Identificar formato incompatível e informar a necessidade de criar novo projeto, sem executar geradores legados ou apagar automaticamente os dados antigos. Preservar o documento corrente em memória ao recusar importação. A implementação de M4 pode remover código de migração e geradores mantidos exclusivamente para compatibilidade anterior. M4.1 implementa envelope 8/nominal-v9 na seção 19, sem leitores ou conversores legados.
+
+## 19. Contratos de M4.1 — Pavimentos
+
+**Estado:** implementado; verificação do Codex e teste/aceite manual separados no Plano §10.1. Produto em RF-07/08/09/10/12; convenções e exemplos em Caderno §11.1/EX-56–64; tarefas e aceite em Plano §10.1. Envelope 8 e convenção nominal-v9 são os contratos vigentes do aplicativo 0.8.0. M4.1 não contém lajes, sobreposição visual entre pavimentos ou quantitativos.
+
+### 19.1. Intenção persistida e referências
+
+Manter o envelope de documento único (`format`, `schemaVersion`, `project`, `model`, `adjustments`, `generated`, `generationState`, `metadata`), com `schemaVersion: 8`. Usar inteiros em 0,1 mm e UUIDs únicos em todo o documento para entidades de intenção. Resultado derivado usa IDs determinísticos, sem UUID novo a cada geração.
+
+| Registro | Contrato de M4.1 |
+|---|---|
+| `model.floors[]` | `{ id, name, level, defaultHeight }`; remover `start`. `level` é a única cota global do pavimento. Array com 1–4 registros, ordenado por `level` crescente, cotas distintas e `level % base.height === 0`. Nome aparado, 1–100 caracteres; nomes repetidos permitidos. `defaultHeight` positivo e modular. |
+| `model.walls[]` | Manter `{ id, floorId, a, b, side, height }`. `floorId` obrigatório, referenciando pavimento existente. Coordenadas horizontais mundiais na malha; altura relativa à cota do pavimento. Não armazenar base/topo duplicados na parede. |
+| `model.openings[]` | Manter vínculo por `wallId`, sem `floorId` redundante; proprietário derivado da parede. `base` e `height` são medidas relativas, com as validações locais existentes. |
+| `model.slabs` | Array vazio obrigatório neste incremento; não aceitar registros de laje nem criar schema antecipado para M4.2. |
+| `adjustments.junctions[]` | `id`, `floorId`, `anchor`, `binding`, `componentId`, `signature`, `wallIds`, `phase` obrigatórios; manter semântica de escolha ativa/pendente de M3.4/M3.5. Todas as paredes pertencem ao `floorId` declarado. |
+| `adjustments.grout[]` | `{ id, floorId, x, y, wallIds, action }`; todas as paredes associadas pertencem ao mesmo pavimento. `x/y` continuam a origem inteira da célula nominal mundial, sem arredondar seu centro. |
+| `adjustments.channels[]` | `{ id, floorId, wallId, top, scope }`; hospedeira do mesmo pavimento. `top` é cota global absoluta. `scope` obrigatório, `wall` ou `range`, com os mesmos alcances e regras de M3.4. |
+| Referência inicial do projeto | `project.initialWallHeight`: altura modular positiva escolhida na criação, independente dos padrões editáveis dos pavimentos. Gravada em novos projetos e preservada no histórico/importação; criação de novo pavimento usa essa referência, duplicação usa o padrão do andar copiado. O campo pode estar ausente em documentos de M4.1 já salvos sem essa informação: sugerir 280 cm e exigir alternativa explícita se não modular; não inferir a referência perdida pela altura atual de outro pavimento. |
+| Configurações do projeto | Manter `openingSettings`, `channelLevels` e `groutSettings` comuns ao projeto. Bases/topos de vãos e níveis de canaletas são relativos à cota de cada pavimento. IDs de níveis pertencem ao projeto e não são duplicados ao copiar pavimento. |
+
+Referências órfãs, UUID duplicado, associação entre pavimentos e cotas não modulares/duplicadas são erros de integridade, recusados antes de substituir o documento corrente. Pendência geométrica válida continua salvável: vão que deixou de caber, altura de parede incompatível após alteração indireta ou ajuste com alvo geométrico perdido não se confundem com referência órfã. Preservar os contratos existentes para essas pendências. Não salvar registros parcialmente remapeados.
+
+### 19.2. Coordenadas e composição
+
+Para pavimento de cota `Z`, altura-base `h` e fiada local `n >= 1`, intervalo relativo `[(n−1)h, nh)` e global `[Z+(n−1)h, Z+nh)`. Parede ocupa `[Z,Z+H)`. Vão ocupa `[Z+base,Z+base+height)`. Nível comum de canaleta com topo `c` solicita a fiada `c/h` em cada pavimento, com topo global `Z+c`. Espessuras/juntas extras não são acrescentadas. Fase A/B depende do número local da fiada e da escolha do componente, nunca de `Z/h`.
+
+Executar nominal-v9 por pavimento, com paginação e regras nominais de M3.5 preservadas. Selecionar apenas paredes, vãos e ajustes daquele pavimento antes de montar células, componentes, encontros, faixas e eixos. Não criar um mapa geométrico comum a todos os andares para depois tentar separá-los. Contexto de pavimento pode ser parâmetro de funções de domínio; não criar serviço, Worker, fila, biblioteca ou adaptação de arquivos antigos.
+
+Resultado persistido: `generated: null | { convention: "nominal-v9", floors: FloorComposition[], diagnostics: Diagnostic[] }`. Cada `FloorComposition` contém `floorId`, `courses`, `components`, `channels`, `grouts` e `diagnostics`. Haverá um resultado por pavimento, na mesma ordem das cotas. `courses` usa número e `bottom/top` locais, a partir de zero; faixas de canaletas mantêm `top` global e `course` local; intervalos de graute mantêm `bottom/top` globais. Conversão para exibição não altera essas referências persistidas.
+
+Identidade de componente, peça, faixa e eixo inclui `floorId` além da identidade geométrica/associações já usada. Resultado de outro pavimento não pode colidir por ter os mesmos `x/y`, número de fiada ou desenho. Escolhas, supressões e eixos coincidentes continuam com suas regras locais, inclusive precedência de exclusões, sem afetar outro andar. Não reiniciar fase dentro de um pavimento quando uma parede termina.
+
+Diagnóstico local tem `floorId` obrigatório e fiadas locais, além dos IDs e localização existentes. Lista geral de diagnósticos é a concatenação determinística dos diagnósticos locais na ordem das cotas; não persistir contagens de validade independentes dessa lista. Não há diagnóstico de orçamento global de geração. Falhas de execução são informadas pelo estado da operação, sem inventar fiada ou alvo local. Qualquer erro local impede validade global, mas não elimina resultados de pavimentos ou componentes independentes. Pavimento vazio produz arrays vazios, sem fiada 1 artificial. Não verificar colisão, apoio ou alinhamento entre pavimentos.
+
+### 19.3. Operações, isolamento e histórico
+
+A reconciliação de escolhas considera somente alterações na geometria ou nas associações das paredes correspondentes. Recalcular o projeto inteiro não autoriza mudar vínculos de escolhas cuja geometria/associação permaneceu intacta, inclusive escolhas incompatíveis diagnosticadas. Criar ou duplicar pavimento preserva a intenção da origem e dos demais pavimentos.
+
+Antes de reconstruir `componentId/signature` de uma escolha duplicada, conferir ambos contra as paredes associadas da origem. Se não corresponderem, a escolha da cópia terá `binding: pending`, conservando fase e âncora, até resolução explícita pelo usuário. O remapeamento não pode tornar aplicável uma escolha incompatível ainda marcada `active`. A origem permanece intacta; escolhas compatíveis continuam ativas e escolhas já pendentes continuam pendentes, sem cálculo adicional para essa conferência.
+
+- **Criar:** candidato com nome, cota e altura padrão; iniciar vazio e selecionar após confirmar. Térreo inicial em `level=0`. Referência inicial de altura é 280 cm, modular para a altura usual de tijolo de 7 cm (40 fiadas), sem etapa adicional de compatibilização nesse caso. Somente para altura-base personalizada incompatível, aplicar as alternativas explícitas já previstas. Não usar propriedades do pavimento vizinho como padrão. Cancelar não gera ID persistido, histórico ou salvamento.
+- **Editar:** cota válida mantém IDs e medidas relativas; transladar `top` absoluto das supressões pelo delta de cota, inclusive ajustes dormentes/pendentes. Ordenar pavimentos novamente. IDs, coordenadas horizontais, âncoras, escolhas e associações mantêm identidade. Altura padrão vale só para paredes futuras. Renomear é operação de histórico e salvamento, sem recálculo. Não reconciliar vínculos nem alterar intenção construtiva na renomeação, inclusive em documento válido com escolha incompatível diagnosticada; conservar o snapshot correspondente. Mudança confirmada de cota ou altura padrão segue o recálculo completo normal; valores inalterados não criam operação.
+- **Duplicar:** validar cota, limite de pavimentos e integridade/limites estruturais dos registros antes de materializar a cópia, sem estimar orçamento de geração. Novo mapa de UUIDs para pavimento, paredes, vãos e ajustes, incluindo pendentes quando existirem; não exigir sua criação artificial para a duplicação. Remapear `floorId`, `wallId(s)`, IDs de vãos usados em referências, `componentId` e `signature`; estes últimos são reconstruídos com as novas associações, sem transportar IDs derivados da origem. Âncoras e alcances horizontais mantêm posição; supressões absolutas recebem delta de cota. Preservar `binding` pendente quando já existente, sem promover a ativo nem gerar nova pendência em uma cópia válida. Configurações comuns e seus IDs não mudam. Não copiar resultado gerado. Uma operação de histórico seguida de recálculo completo do projeto; selecionar a cópia.
+- **Remover:** eliminar pavimento e intenção de sua propriedade, inclusive ajustes pendentes; impedir remoção do último. Preservar IDs/cotas dos restantes. Seleção segue RF-08; remoção de pavimento não ativo preserva o ativo. Desfazer/refazer recupera exatamente IDs, associações, cotas e pendências. Troca de pavimento por si só não cria histórico.
+- **Editar arquitetura e ajustes:** criar, mover, redimensionar, unir, selecionar e diagnosticar somente no pavimento ativo; validações geométricas e reconciliação consideram a propriedade real dos elementos, não apenas o filtro do renderer. Configurações comuns recalculam todos os pavimentos sem apagar ajustes locais. União de paredes exige mesmo pavimento, como em M3.4.
+
+Alterações geométricas ou construtivas confirmadas passam pelo fluxo único salvar intenção → recalcular projeto inteiro → salvar resultado, com bloqueio de novas mutações e um único bloqueio exclusivo por projeto entre abas. Renomeação salva e registra histórico sem invalidar o resultado nem disparar cálculo; troca de pavimento, seleção e câmera são transitórias e não salvam/historicizam o documento. Não mudar para processamento parcial por ter apenas um andar alterado. Histórico de até 50 operações guarda intenção, sem peças geradas; desfazer/refazer que altere composição usa o fluxo completo, enquanto desfazer/refazer apenas de nome não recalcula. Ao invalidar resultado em M4.1, usar `generated: null`, `status: "outdated"` e diagnósticos derivados vazios, evitando snapshots antigos com pavimentos/IDs já removidos. Falha do motor preserva intenção e estado desatualizado; falha de salvamento preserva memória e download conforme contratos gerais. Nenhum resultado parcial de execução é publicado se houver exceção; erros geométricos diagnosticados são resultados concluídos, não exceções.
+
+### 19.4. Editor e sessão
+
+Ao trocar pavimento, descartar também textos e alternativas numéricas ainda não confirmados nas propriedades. Rodapé e diagnósticos identificam o pavimento pelo nome atual. A lista de diagnósticos na Fiada apresenta os diagnósticos agregados do projeto: ao localizar um item, selecionar primeiro o proprietário e limitar a fiada ao resultado desse proprietário, como no painel geral.
+
+Estado transitório com `activeFloorId` e última fiada válida por `floorId`, fora do arquivo/histórico. Na abertura selecionar o pavimento de menor cota em Planta. Criar/duplicar seleciona o novo e conserva o modo; se estiver em Fiada, nova visita inicia em 1 quando houver fiadas, mesmo que um componente esteja sem peças por diagnóstico. Lembrar a última fiada válida por pavimento durante a sessão; reduzir altura ajusta para a última existente e informa, conforme RF-04. Pavimento sem paredes mostra “Este pavimento não tem paredes” e desabilita navegação/ajustes, mas permite voltar à Planta e criar paredes. Com paredes e resultado ausente ou sem fiadas por falha de processamento ou incompatibilidade geométrica, mostrar o estado de cálculo/diagnóstico correspondente, sem afirmar que o pavimento não tem paredes.
+
+Troca mantém câmera, limpa seleção, hover, prévia de encontro e gesto pendente, sem commit. Desfazer/refazer conserva o ativo se ele ainda existir; caso contrário, selecionar o de menor cota, limpando seleção e referências de UI órfãs. Localizar diagnóstico muda primeiro o pavimento, depois aplica o modo, seleção e enquadramento solicitados. Tentar trocar durante o fluxo ocupado não cancela a mutação em andamento; desabilitar o seletor até terminar. As ações Novo pavimento, Duplicar pavimento e Excluir pavimento na barra usam somente ícones Plus/Copy/Trash2 pelo componente central, classe iconButton, aria-label em português, title e data-tooltip por hover/focus-visible. Preservar os estados indisponíveis e a confirmação da exclusão. M4.1 não exibe ferramenta Laje nem controle de sobreposição entre andares. Iconografia e verificações de interface seguem §2.1.
+
+### 19.5. Persistência, integridade e limites
+
+Aceitar somente envelope 8 e resultados nominal-v9 em M4.1; recusar versões 1–7 e futuras sem carregar schemas/motores legados para conversão. IndexedDB mantém registros completos; lista identifica documentos incompatíveis por versão, permite informar que não podem ser abertos e criar novo projeto, sem executar cálculo nem apagar registros antigos automaticamente. Reutilizar tabela e bloqueio existentes se não houver necessidade concreta de mudança física do banco; não confundir schemaVersion do documento com versão do banco. Importação válida continua criando cópia com novo ID de projeto, preservando IDs internos do documento; importação inválida preserva memória, histórico e seleção do projeto aberto.
+
+Documento com `status: "current"` exige resultado completo por pavimento, convenção correta e diagnóstico agregado idêntico ao recalculado deterministamente pelo motor nominal-v9; `generationState.diagnostics` deve ser igual a `generated.diagnostics`. Recusar snapshot adulterado, mesmo se a quantidade de peças coincidir. Documento `outdated` exige `generated: null` e diagnósticos derivados vazios; pode conter pendências geométricas íntegras. Validar estrutura e referências antes de substituir o documento corrente, sem estimativa de orçamento de geração. Leitura bloqueada por outra aba permite cálculo exclusivamente para conferir o snapshot, sem substituir o resultado ou atualizar/gravar o documento. Regenerar composição para atualizar o projeto exige bloqueio de edição; não regenerar documento desatualizado enquanto estiver em leitura bloqueada.
+
+Transporte: `serializeFile` produz JSON compacto. Se o documento completo exceder 50 MiB por conter o resultado derivado, serializar `withoutResult(doc)` com toda a intenção, `generated: null` e diagnósticos vazios. Informar a reconstrução na abertura; não mudar a memória atual, seus ajustes ou resultado. Com bloqueio exclusivo, a abertura recompõe o projeto inteiro pelo fluxo normal. Resultado presente continua sujeito à verificação integral de snapshot; não ignorar adulteração. A intenção serializada sem resultado também deve caber em 50 MiB, verificada antes de confirmar mutações; esse é um limite de integridade/transporte da entrada, sem estimativa de peças ou bloqueio de geração. Arquivos JSON recebidos acima de 50 MiB continuam recusados; não introduzir compressão, biblioteca ou formato paralelo.
+
+Não haverá controle de orçamento de geração em M4.1: remover estimativas `C_f*N_f` e tetos de geração por módulos, células, fiadas, peças, eixos ou intervalos derivados. Não recusar criação, cópia, cálculo ou reabertura pela quantidade estimada ou gerada, nem criar diagnóstico global de orçamento. Quantitativos continuam previstos em M5, para futura análise pelo usuário; não antecipar contadores ou telas nessa entrega.
+
+Permanecem os limites de integridade/entrada: arquivo 50 MiB; 10 mil paredes, mil vãos, 100 níveis comuns, 10 mil escolhas de encontros, 10 mil supressões e 10 mil ajustes manuais de graute no projeto inteiro. Esses limites de registros de intenção não são estimativas de peças ou de custo de geração. Manter medidas representáveis e limites de coordenadas existentes (±100 milhões de unidades internas), validando também cotas globais derivadas e deltas antes de aplicar. Não truncar, descartar ajustes ou salvar candidato parcialmente transformado. Excesso dos limites estruturais/transformação recusa a operação sem mudar o documento. Falha real de execução preserva intenção e segue o estado desatualizado descrito acima; a retirada do orçamento não significa capacidade ilimitada ou garantia de tempo/memória.
+
+Verificações de referência cobrem todas as bases e os limites de integridade acima; registrar carga observada no aplicativo, sem afirmar quatro pavimentos/100 mil peças testados por apenas existir especificação. Verificar a ausência dos antigos bloqueios de orçamento, sem transformar volumes altos em metas de teste obrigatórias. Não introduzir processamento incremental silenciosamente para cumprir metas futuras. Contratos de laje e de sobreposição permanecem nos incrementos próprios.

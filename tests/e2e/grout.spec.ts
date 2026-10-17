@@ -6,9 +6,7 @@ import {
   makeWall,
   type Project,
 } from "../../src/domain/project";
-import { generate } from "../../src/domain/composition";
 import { putOpening } from "../../src/domain/openings";
-import { suppressBand } from "../../src/domain/channels";
 const base = { length: 2500, width: 1250, height: 700 };
 function fixture(window = false) {
   let d = createProject("Grautes", base);
@@ -125,11 +123,11 @@ test("M3.3 EX-32 exclusão persistente sem compensação, teclado e transporte",
   await course(page, 1);
   await page.getByRole("button", { name: "Graute", exact: true }).click();
   expect(
-    (await exported(page)).generated!.grouts!.map((a) => a.x + 625),
+    (await exported(page)).generated!.floors[0].grouts!.map((a) => a.x + 625),
   ).toEqual([10625, 20625, 30625]);
   await click(page, 20625);
   const excluded = await exported(page);
-  expect(excluded.generated!.grouts!.map((a) => a.x + 625)).toEqual([
+  expect(excluded.generated!.floors[0].grouts!.map((a) => a.x + 625)).toEqual([
     10625, 30625,
   ]);
   await page.reload();
@@ -145,7 +143,7 @@ test("M3.3 EX-32 exclusão persistente sem compensação, teclado e transporte",
   );
   await page.getByRole("button", { name: "Desfazer", exact: true }).click();
   expect(
-    (await exported(page)).generated!.grouts!.map((a) => a.x + 625),
+    (await exported(page)).generated!.floors[0].grouts!.map((a) => a.x + 625),
   ).toEqual([10625, 30625]);
   await load(page, excluded);
   expect((await exported(page)).adjustments.grout).toEqual(
@@ -158,7 +156,9 @@ test("M3.3 EX-32 exclusão persistente sem compensação, teclado e transporte",
   await apply(page);
   const restored = await exported(page);
   expect(restored.adjustments.grout).toEqual(excluded.adjustments.grout);
-  expect(restored.generated!.grouts!.some((a) => a.x === 20000)).toBe(false);
+  expect(restored.generated!.floors[0].grouts!.some((a) => a.x === 20000)).toBe(
+    false,
+  );
 });
 test("M3.3 EX-33 incluir e remover todos intervalos, vazio sem alvo e canaleta preservada", async ({
   page,
@@ -168,7 +168,7 @@ test("M3.3 EX-33 incluir e remover todos intervalos, vazio sem alvo e canaleta p
   await page.getByRole("button", { name: "Graute", exact: true }).click();
   await click(page, 10625);
   let d = await exported(page);
-  expect(d.generated!.grouts![0].intervals).toEqual([
+  expect(d.generated!.floors[0].grouts![0].intervals).toEqual([
     { bottom: 0, top: 9800 },
     { bottom: 21000, top: 28000 },
   ]);
@@ -186,12 +186,14 @@ test("M3.3 EX-33 incluir e remover todos intervalos, vazio sem alvo e canaleta p
   await page
     .getByRole("button", { name: "Remover faixa de canaleta", exact: true })
     .click();
-  expect((await exported(page)).generated!.grouts).toEqual(d.generated!.grouts);
+  expect((await exported(page)).generated!.floors[0].grouts).toEqual(
+    d.generated!.floors[0].grouts,
+  );
   await page.getByRole("button", { name: "Graute", exact: true }).click();
   await course(page, 35);
   await click(page, 10625);
   d = await exported(page);
-  expect(d.generated!.grouts).toEqual([]);
+  expect(d.generated!.floors[0].grouts).toEqual([]);
 });
 test("M3.3 cancelamentos, navegação e referência não alteram graute", async ({
   page,
@@ -264,7 +266,7 @@ test("M3.3 diagnósticos de eixo e distância, correção e descarte", async ({
   await page.getByLabel("Comprimento", { exact: true }).press("Enter");
   const after = await exported(page);
   expect(after.adjustments.grout).toEqual(before.adjustments.grout);
-  expect(after.generated!.grouts).toEqual([]);
+  expect(after.generated!.floors[0].grouts).toEqual([]);
   expect(
     after.generated!.diagnostics.some(
       (d) => d.code === "grout-adjustment-target-missing",
@@ -285,8 +287,8 @@ test("M3.3 diagnósticos de eixo e distância, correção e descarte", async ({
   expect((await exported(page)).adjustments.grout).toEqual([]);
   await page.getByRole("button", { name: "Desfazer", exact: true }).click();
   await page.getByRole("button", { name: "Desfazer", exact: true }).click();
-  expect((await exported(page)).generated!.grouts).toEqual(
-    before.generated!.grouts,
+  expect((await exported(page)).generated!.floors[0].grouts).toEqual(
+    before.generated!.floors[0].grouts,
   );
   const invalid = fixture();
   invalid.project.groutSettings = {
@@ -313,46 +315,6 @@ test("M3.3 diagnósticos de eixo e distância, correção e descarte", async ({
   await apply(page);
   expect((await exported(page)).generated!.diagnostics).toEqual([]);
 });
-test("M3.3 legado M3.2 validado e adulterado recusado antes de migrar", async ({
-  page,
-}) => {
-  let d = fixture(true);
-  d.project.channelLevels = [{ id: crypto.randomUUID(), top: 11200 }];
-  d = suppressBand(d, d.model.walls[0].id, 11200);
-  const { groutSettings: _settings, ...project } = d.project;
-  void _settings;
-  const g = generate(d, "nominal-v5"),
-    old = {
-      ...d,
-      schemaVersion: 4,
-      adjustments: {
-        ...d.adjustments,
-        channels: d.adjustments.channels.map(({ scope: _scope, ...a }) => {
-          void _scope;
-          return a;
-        }),
-      },
-      project,
-      generated: g,
-      generationState: { status: "current", diagnostics: g.diagnostics },
-    };
-  await load(page, old);
-  const before = await exported(page);
-  expect(before.schemaVersion).toBe(7);
-  expect(before.generated!.convention).toBe("nominal-v8");
-  expect(before.project.groutSettings).toEqual(defaultGroutSettings(false));
-  expect(before.generated!.grouts).toEqual([]);
-  expect(before.adjustments.channels).toEqual(d.adjustments.channels);
-  const bad = structuredClone(old);
-  bad.generated.channels![0].cells[0].origins = ["adulterado"];
-  await page.getByTestId("import-file").setInputFiles({
-    name: "adulterado.ecovit",
-    mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify(bad)),
-  });
-  await expect(page.getByRole("alert")).toContainText("inconsistente");
-  expect(await exported(page)).toEqual(before);
-});
 test("M3.3 falha de armazenamento preserva download e recuperação", async ({
   page,
 }) => {
@@ -371,7 +333,7 @@ test("M3.3 falha de armazenamento preserva download e recuperação", async ({
   await click(page, 10625);
   await expect(page.getByRole("status")).toContainText("Não salvo");
   const d = await exported(page);
-  expect(d.generated!.grouts).toHaveLength(1);
+  expect(d.generated!.floors[0].grouts).toHaveLength(1);
   expect(d.adjustments.grout).toHaveLength(1);
   expect(d.generationState.status).toBe("current");
   await page.evaluate(() => {
@@ -412,13 +374,15 @@ test("M3.3 carga 100 janelas com posições e intervalos independentes", async (
   await load(page, d);
   const elapsed = Date.now() - start,
     r = await exported(page);
-  expect(r.generated!.grouts).toHaveLength(200);
-  expect(r.generated!.grouts!.flatMap((a) => a.intervals)).toHaveLength(300);
-  expect(r.generated!.grouts!.slice(0, 2).map((a) => a.x + 625)).toEqual([
-    10625, 20625,
-  ]);
+  expect(r.generated!.floors[0].grouts).toHaveLength(200);
+  expect(
+    r.generated!.floors[0].grouts!.flatMap((a) => a.intervals),
+  ).toHaveLength(300);
+  expect(
+    r.generated!.floors[0].grouts!.slice(0, 2).map((a) => a.x + 625),
+  ).toEqual([10625, 20625]);
   expect(r.generated!.diagnostics).toEqual([]);
-  expect(r.generated!.grouts![0].intervals).toEqual([
+  expect(r.generated!.floors[0].grouts![0].intervals).toEqual([
     { bottom: 0, top: 9800 },
     { bottom: 21000, top: 28000 },
   ]);

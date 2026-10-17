@@ -46,8 +46,9 @@ async function openedCross() {
 }
 it("M3.5 fase e histórico sobrevivem a falha do motor e ambas as gravações", async () => {
   const d = await openedCross(),
-    c = d.generated!.components[0],
+    c = d.generated!.floors[0].components[0],
     a = {
+      floorId: d.model.floors[0].id,
       id: crypto.randomUUID(),
       anchor: { x: c.x, y: c.y },
       binding: "active" as const,
@@ -68,45 +69,28 @@ it("M3.5 fase e histórico sobrevivem a falha do motor e ambas as gravações", 
   save.mockRejectedValueOnce(new Error("primeira"));
   await useStore.getState().retry();
   expect(useStore.getState().saved).toBe("saved");
-  expect(useStore.getState().doc!.generated!.components[0].phase).toBe(1);
+  expect(
+    useStore.getState().doc!.generated!.floors[0].components[0].phase,
+  ).toBe(1);
   save.mockResolvedValueOnce("ok").mockRejectedValueOnce(new Error("segunda"));
   await useStore.getState().undo();
   expect(useStore.getState()).toMatchObject({ busy: false, saved: "error" });
-  expect(useStore.getState().doc!.generated!.components[0].phase).toBe(0);
+  expect(
+    useStore.getState().doc!.generated!.floors[0].components[0].phase,
+  ).toBe(0);
   await useStore.getState().retry();
   expect(useStore.getState().saved).toBe("saved");
   await useStore.getState().undo(true);
   expect(useStore.getState().doc!.adjustments.junctions).toEqual([a]);
-});
-it("M3.5 migração bloqueada preserva snapshot v7 sem cálculo/gravação", async () => {
-  const d = await openedCross();
-  useStore.getState().close();
-  const g = engine.generate(d, "nominal-v7"),
-    old = {
-      ...d,
-      schemaVersion: 6,
-      generated: g,
-      generationState: { status: "current", diagnostics: g.diagnostics },
-    };
-  const { parseFile } = await import("../src/persistence/files");
-  vi.mocked(acquireProject).mockResolvedValueOnce(null);
-  save.mockClear();
-  const spy = vi.spyOn(engine, "generate");
-  const migrated = parseFile(JSON.stringify(old));
-  spy.mockClear();
-  await useStore.getState().open(migrated, true);
-  expect(useStore.getState().readonly).toBe(true);
-  expect(save).not.toHaveBeenCalled();
-  expect(spy.mock.calls.every((c) => c[1] === "nominal-v7")).toBe(true);
-  expect(useStore.getState().doc!.generated!.courses[0].pieces).toEqual([]);
-  expect(useStore.getState().doc!.generated!.convention).toBe("nominal-v7");
 });
 it("M3.3 inclusão/exclusão e histórico mantêm eixo, ID e configuração", async () => {
   const d = await opened(),
     cell = { x: 2500, y: 0, wallIds: [d.model.walls[0].id] };
   await useStore.getState().commit(toggleGrout(d, cell, false));
   const included = useStore.getState().doc!;
-  expect(included.generated!.grouts!.some((a) => a.x === 2500)).toBe(true);
+  expect(included.generated!.floors[0].grouts!.some((a) => a.x === 2500)).toBe(
+    true,
+  );
   expect(save.mock.calls.map((c) => c[0].generationState.status)).toEqual([
     "outdated",
     "current",
@@ -129,9 +113,9 @@ it("M3.3 inclusão/exclusão e histórico mantêm eixo, ID e configuração", as
       groutSettings: defaultGroutSettings(false),
     },
   });
-  expect(useStore.getState().doc!.generated!.grouts!.map((a) => a.x)).toEqual([
-    2500,
-  ]);
+  expect(
+    useStore.getState().doc!.generated!.floors[0].grouts!.map((a) => a.x),
+  ).toEqual([2500]);
 });
 it("M3.3 falha de motor e duas gravações mantêm ajustes e permitem recuperar", async () => {
   const d = await opened(),
@@ -147,7 +131,9 @@ it("M3.3 falha de motor e duas gravações mantêm ajustes e permitem recuperar"
   await useStore.getState().retry();
   expect(useStore.getState()).toMatchObject({ busy: false, saved: "saved" });
   expect(
-    useStore.getState().doc!.generated!.grouts!.some((a) => a.x === 2500),
+    useStore
+      .getState()
+      .doc!.generated!.floors[0].grouts!.some((a) => a.x === 2500),
   ).toBe(true);
   save
     .mockResolvedValueOnce("ok")
@@ -178,32 +164,6 @@ it("M3.3 exclusão de parede remove dependente e desfazer restaura identidade", 
   );
   expect(useStore.getState().doc!.generated).toEqual(previous.generated);
 });
-it("M3.3 bloqueio de edição mantém snapshot M3.2 em memória e não grava migração", async () => {
-  const d = await opened();
-  useStore.getState().close();
-  const { groutSettings: _settings, ...project } = d.project;
-  void _settings;
-  const g = engine.generate(d, "nominal-v5");
-  const old = {
-    ...d,
-    project,
-    schemaVersion: 4,
-    generated: g,
-    generationState: { status: "current", diagnostics: g.diagnostics },
-  };
-  vi.mocked(acquireProject).mockResolvedValueOnce(null);
-  save.mockClear();
-  // Opening/importing performs the same validation in the real state boundary.
-  const { parseFile } = await import("../src/persistence/files");
-  await useStore.getState().open(parseFile(JSON.stringify(old)), true);
-  expect(useStore.getState().readonly).toBe(true);
-  expect(save).not.toHaveBeenCalled();
-  expect(useStore.getState().doc!.project.groutSettings).toEqual(
-    defaultGroutSettings(false),
-  );
-  expect(useStore.getState().doc!.generated!.convention).toBe("nominal-v5");
-  expect(useStore.getState().doc!.generationState.status).toBe("outdated");
-});
 async function channelProject() {
   const d = await opened();
   await useStore.getState().commit({
@@ -222,11 +182,13 @@ it("M3.2 supressão/restauração e histórico conservam identidade e outras fia
   await useStore.getState().commit(suppressBand(d, wallId, 1400));
   const suppressed = useStore.getState().doc!;
   expect(
-    suppressed.generated!.courses[1].pieces.every(
+    suppressed.generated!.floors[0].courses[1].pieces.every(
       (p) => p.kind === "whole" || p.kind === "half",
     ),
   ).toBe(true);
-  expect(suppressed.generated!.courses[0]).toEqual(d.generated!.courses[0]);
+  expect(suppressed.generated!.floors[0].courses[0]).toEqual(
+    d.generated!.floors[0].courses[0],
+  );
   await useStore.getState().commit(restoreBand(suppressed, wallId, 1400));
   await useStore.getState().undo();
   expect(useStore.getState().doc!.adjustments.channels).toEqual(
@@ -250,13 +212,15 @@ it("M3.2 falha do motor preserva supressão e retry recompõe; segundo save pres
   expect(useStore.getState().doc!.adjustments.channels).toHaveLength(1);
   expect(useStore.getState().doc!.generationState.status).toBe("outdated");
   await useStore.getState().retry();
-  expect(useStore.getState().doc!.generated!.channels).toEqual([]);
+  expect(useStore.getState().doc!.generated!.floors[0].channels).toEqual([]);
   save.mockResolvedValueOnce("ok").mockRejectedValueOnce(new Error("quota"));
   await useStore
     .getState()
     .commit(restoreBand(useStore.getState().doc!, wallId, 1400));
   expect(useStore.getState()).toMatchObject({ busy: false, saved: "error" });
-  expect(useStore.getState().doc!.generated!.channels).toHaveLength(1);
+  expect(useStore.getState().doc!.generated!.floors[0].channels).toHaveLength(
+    1,
+  );
   await useStore.getState().retry();
   expect(useStore.getState().saved).toBe("saved");
 });
@@ -413,13 +377,14 @@ it("excluir parede remove ajuste na mesma operação; desfazer recupera escolha"
     .getState()
     .commit({ ...d, model: { ...d.model, walls: modelWalls } });
   const current = useStore.getState().doc!,
-    c = current.generated!.components[0];
+    c = current.generated!.floors[0].components[0];
   await useStore.getState().commit({
     ...current,
     adjustments: {
       ...current.adjustments,
       junctions: [
         {
+          floorId: d.model.floors[0].id,
           id: crypto.randomUUID(),
           anchor: { x: c.x, y: c.y },
           binding: "active",

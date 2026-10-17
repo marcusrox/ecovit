@@ -1,16 +1,19 @@
-import { describe, expect, it } from "vitest";
 import {
-  createProject,
-  defaultGroutSettings,
-  makeWall,
+  createLocalProject as createProject,
   type Project,
-} from "../src/domain/project";
-import { generate, type Composition } from "../src/domain/composition";
-import { parseFile } from "../src/persistence/files";
-import { putOpening } from "../src/domain/openings";
+  generate,
+  parseFile,
+  putOpening,
+  suppressBand,
+  restoreSuppression,
+  toggleGrout,
+} from "./floor-support";
+import { describe, expect, it } from "vitest";
+import { defaultGroutSettings, makeWall } from "../src/domain/project";
+import { type Composition } from "../src/domain/composition";
+
 import { moveWall } from "../src/domain/wall-editing";
-import { suppressBand, restoreSuppression } from "../src/domain/channels";
-import { toggleGrout } from "../src/domain/grout";
+
 function project(m = 1250, h = 700) {
   const d = createProject("Cruz", { length: 2 * m, width: m, height: h });
   d.project.channelLevels = [];
@@ -78,7 +81,7 @@ function coverage(d: Project, g = generate(d)) {
 }
 function current(
   d: Project,
-  convention: Composition["convention"] = "nominal-v8",
+  convention: Composition["convention"] = "nominal-v9",
 ) {
   const g = generate(d, convention);
   return {
@@ -146,6 +149,7 @@ describe("M3.5 CT-12 cruz nominal", () => {
       c = g.components[0];
     d.adjustments.junctions = [
       {
+        floorId: d.model.floors[0].id,
         id: crypto.randomUUID(),
         anchor: { x: c.x, y: c.y },
         binding: "active",
@@ -208,10 +212,9 @@ describe("M3.5 CT-12 cruz nominal", () => {
         }
       }
   });
-  it("IDs/ordem/sentido não alteram posições; piso/início mantêm fase", () => {
+  it("IDs/ordem/sentido não alteram posições; cota única mantém fase", () => {
     const d = ring();
-    d.model.floors[0].level = 1000;
-    d.model.floors[0].start = 1200;
+    d.model.floors[0].level = 1400;
     const g = generate(d);
     const rev = {
       ...d,
@@ -243,7 +246,7 @@ describe("M3.5 CT-12 cruz nominal", () => {
         }),
       ),
     );
-    expect(g.courses[0].bottom).toBe(200);
+    expect(g.courses[0].bottom).toBe(0);
   });
   it("EX-55 vãos, canaletas, graute compartilhado e supressão íntegros", () => {
     let d = ring();
@@ -347,22 +350,6 @@ describe("M3.5 CT-12 cruz nominal", () => {
       false,
     );
   });
-  it("nominal-v7 cruza sem peças; migração valida antes de recompor e preserva ajustes", () => {
-    let d = ring();
-    d = suppressBand(d, d.model.walls[0].id, 11200);
-    const old = { ...current(d, "nominal-v7"), schemaVersion: 6 };
-    expect(old.generated!.courses[0].pieces).toEqual([]);
-    expect(old.generated!.diagnostics[0].code).toBe("cross");
-    const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(7);
-    expect(migrated.generated).toEqual(old.generated);
-    expect(migrated.generationState.status).toBe("outdated");
-    expect(migrated.adjustments).toEqual(d.adjustments);
-    expect(counts(generate(migrated), 1)).toEqual([34, 2]);
-    const bad = structuredClone(old);
-    bad.generated!.diagnostics[0].message = "adulterado";
-    expect(() => parseFile(JSON.stringify(bad))).toThrow("inconsistente");
-  });
   it("snapshot nominal-v8 adulterado e futuro recusados", () => {
     const d = current(ring());
     const bad = structuredClone(d);
@@ -377,6 +364,7 @@ describe("M3.5 CT-12 cruz nominal", () => {
       c = generate(d).components[0];
     d.adjustments.junctions = [
       {
+        floorId: d.model.floors[0].id,
         id: crypto.randomUUID(),
         anchor: { x: 10000, y: 5000 },
         binding: "pending",

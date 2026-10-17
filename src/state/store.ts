@@ -1,4 +1,9 @@
-import { generate, signature, type Composition } from "../domain/composition";
+import {
+  generate,
+  signature,
+  floorView,
+  type Composition,
+} from "../domain/composition";
 import { create } from "zustand";
 import {
   remember,
@@ -6,6 +11,7 @@ import {
   type History,
   type Project,
   type Opening,
+  type EditableProject,
 } from "../domain/project";
 import {
   acquireProject,
@@ -13,11 +19,20 @@ import {
   saveProject,
 } from "../persistence/database";
 import { validateProject } from "../persistence/files";
+import { mergeFloorView } from "../domain/floors";
+import { useMemo } from "react";
 import { reconcileOpenings } from "../domain/openings";
 let release: (() => void) | null = null;
 const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
-    previous.model,
+    {
+      ...previous.model,
+      floors: previous.model.floors.map((f) => ({
+        id: f.id,
+        level: f.level,
+        defaultHeight: f.defaultHeight,
+      })),
+    },
     previous.adjustments,
     previous.project.base,
     previous.project.openingSettings,
@@ -25,7 +40,14 @@ const changedInputs = (previous: Project, next: Project) =>
     previous.project.groutSettings,
   ]) !==
   JSON.stringify([
-    next.model,
+    {
+      ...next.model,
+      floors: next.model.floors.map((f) => ({
+        id: f.id,
+        level: f.level,
+        defaultHeight: f.defaultHeight,
+      })),
+    },
     next.adjustments,
     next.project.base,
     next.project.openingSettings,
@@ -61,6 +83,9 @@ const inspection: Inspection = {
 type State = Inspection & {
   inspect: (change: Partial<Inspection>) => void;
   doc: Project | null;
+  activeFloorId: string | null;
+  coursesByFloor: Record<string, number>;
+  switchFloor: (id: string) => void;
   history: History;
   busy: boolean;
   readonly: boolean;
@@ -70,8 +95,8 @@ type State = Inspection & {
   open: (doc: Project, fresh?: boolean) => Promise<void>;
   close: () => void;
   commit: (
-    doc: Project,
-    command?: "resize" | "move" | "create/merge",
+    doc: EditableProject,
+    command?: "resize" | "move" | "create/merge" | "floor",
   ) => Promise<void>;
   undo: (redo?: boolean) => Promise<void>;
   notify: (message: string) => void;
@@ -80,10 +105,11 @@ type State = Inspection & {
 };
 export const useStore = create<State>((set, get) => {
   async function persist(doc: Project) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.7.0" } };
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.8.0" } };
     set({ doc });
     set({ busy: true, saved: "saving" });
     let saveFailed = false;
+    let courseMessage = "";
     try {
       try {
         await saveProject(doc);
@@ -113,7 +139,17 @@ export const useStore = create<State>((set, get) => {
             diagnostics: generated.diagnostics,
           },
         };
-        set({ doc: current });
+        const s = get();
+        const total =
+          generated.floors.find((f) => f.floorId === s.activeFloorId)?.courses
+            .length ?? 0;
+        const course = Math.min(s.course, Math.max(1, total));
+        if (course !== s.course)
+          courseMessage =
+            total > 0
+              ? `A fiada anterior deixou de existir. Selecionada a fiada ${total}.`
+              : "Este pavimento não tem fiadas disponíveis.";
+        set({ doc: current, course });
         await saveProject(current);
         saveFailed = false;
       }
@@ -121,7 +157,7 @@ export const useStore = create<State>((set, get) => {
         saved: saveFailed ? "error" : "saved",
         message: saveFailed
           ? "A primeira gravação falhou. O trabalho e o cálculo foram preservados; baixe uma cópia ou tente salvar."
-          : "",
+          : courseMessage,
       });
     } catch {
       set({
@@ -142,6 +178,28 @@ export const useStore = create<State>((set, get) => {
           ? { groutMode: false, groutCell: null }
           : {}),
       }),
+    activeFloorId: null,
+    coursesByFloor: {},
+    switchFloor: (id) => {
+      const s = get();
+      if (
+        s.busy ||
+        !s.doc?.model.floors.some((f) => f.id === id) ||
+        id === s.activeFloorId
+      )
+        return;
+      set({
+        ...inspection,
+        mode: s.mode,
+        activeFloorId: id,
+        coursesByFloor: {
+          ...s.coursesByFloor,
+          ...(s.activeFloorId ? { [s.activeFloorId]: s.course } : {}),
+        },
+        course: s.coursesByFloor[id] ?? 1,
+        select: null,
+      });
+    },
     doc: null,
     history: { past: [], future: [] },
     busy: false,
@@ -165,6 +223,8 @@ export const useStore = create<State>((set, get) => {
         set({
           ...inspection,
           doc,
+          activeFloorId: doc.model.floors[0].id,
+          coursesByFloor: {},
           readonly: !release,
           history: { past: [], future: [] },
           select: null,
@@ -173,21 +233,8 @@ export const useStore = create<State>((set, get) => {
             ? "Este projeto está aberto em outra aba. Feche a outra aba e reabra este projeto para editar."
             : "",
         });
-        const migratingCross =
-          doc.generated?.convention !== "nominal-v8" &&
-          doc.generated?.diagnostics.some((d) => d.code === "cross");
         if (release && (fresh || doc.generationState.status === "outdated"))
           await persist(doc);
-        if (
-          release &&
-          migratingCross &&
-          get().saved === "saved" &&
-          get().doc?.generationState.status === "current"
-        )
-          set({
-            message:
-              "Projeto atualizado para a composição com suporte à cruz. Confira o resultado na Fiada e os diagnósticos.",
-          });
       } catch (e) {
         nextRelease?.();
         set({ message: String(e instanceof Error ? e.message : e) });
@@ -210,57 +257,110 @@ export const useStore = create<State>((set, get) => {
       const s = get();
       if (s.busy || s.readonly || !s.doc) return;
       try {
+        candidate = mergeFloorView(s.doc, candidate);
+        if (
+          JSON.stringify(candidate.project) === JSON.stringify(s.doc.project) &&
+          JSON.stringify(candidate.model) === JSON.stringify(s.doc.model) &&
+          JSON.stringify(candidate.adjustments) ===
+            JSON.stringify(s.doc.adjustments)
+        )
+          return;
+        const changed = changedInputs(s.doc, candidate);
         const doc = validateProject(
           {
             ...(command === "resize"
               ? reconcileOpenings(s.doc, candidate)
               : candidate),
-            adjustments: {
-              ...candidate.adjustments,
-              grout: candidate.adjustments.grout
-                .map((a) => ({
-                  ...a,
-                  wallIds: a.wallIds.filter((id) =>
-                    candidate.model.walls.some((w) => w.id === id),
-                  ),
-                }))
-                .filter((a) => a.wallIds.length),
-              channels: candidate.adjustments.channels.filter((a) =>
-                candidate.model.walls.some((w) => w.id === a.wallId),
-              ),
-              junctions: candidate.adjustments.junctions
-                .map((a) => {
-                  const wallIds = a.wallIds.filter((id) =>
-                    candidate.model.walls.some((w) => w.id === id),
-                  );
-                  const applicable =
-                    wallIds.length === a.wallIds.length &&
-                    signature(
-                      candidate.model.walls.filter((w) =>
-                        wallIds.includes(w.id),
+            adjustments: !changed
+              ? candidate.adjustments
+              : {
+                  ...candidate.adjustments,
+                  grout: candidate.adjustments.grout
+                    .map((a) => ({
+                      ...a,
+                      wallIds: a.wallIds.filter((id) =>
+                        candidate.model.walls.some((w) => w.id === id),
                       ),
-                    ) === a.signature;
-                  return {
-                    ...a,
-                    wallIds,
-                    binding: applicable ? a.binding : ("pending" as const),
-                  };
-                })
-                .filter((a) => a.wallIds.length),
-            },
-            generated: s.doc.generated,
-            generationState: changedInputs(s.doc, candidate)
+                    }))
+                    .filter((a) => a.wallIds.length),
+                  channels: candidate.adjustments.channels.filter((a) =>
+                    candidate.model.walls.some((w) => w.id === a.wallId),
+                  ),
+                  junctions: candidate.adjustments.junctions
+                    .map((a) => {
+                      const wallIds = a.wallIds.filter((id) =>
+                        candidate.model.walls.some((w) => w.id === id),
+                      );
+                      const applicable =
+                        wallIds.length === a.wallIds.length &&
+                        signature(
+                          candidate.model.walls.filter((w) =>
+                            wallIds.includes(w.id),
+                          ),
+                        ) === a.signature;
+                      const geometryChanged =
+                        wallIds.length !== a.wallIds.length ||
+                        wallIds.some(
+                          (id) =>
+                            s.doc!.model.walls.find((w) => w.id === id)
+                              ?.height !==
+                            candidate.model.walls.find((w) => w.id === id)
+                              ?.height,
+                        ) ||
+                        signature(
+                          s.doc!.model.walls.filter((w) =>
+                            a.wallIds.includes(w.id),
+                          ),
+                        ) !==
+                          signature(
+                            candidate.model.walls.filter((w) =>
+                              wallIds.includes(w.id),
+                            ),
+                          );
+                      return {
+                        ...a,
+                        wallIds,
+                        binding:
+                          !geometryChanged || applicable
+                            ? a.binding
+                            : ("pending" as const),
+                      };
+                    })
+                    .filter((a) => a.wallIds.length),
+                },
+            generated: changed ? null : s.doc.generated,
+            generationState: changed
               ? { status: "outdated", diagnostics: [] }
               : s.doc.generationState,
             metadata: {
               ...candidate.metadata,
-              appVersion: "0.7.0",
+              appVersion: "0.8.0",
               updatedAt: new Date().toISOString(),
             },
           },
           false,
         );
+        const added = doc.model.floors.find(
+          (f) => !s.doc!.model.floors.some((old) => old.id === f.id),
+        );
+        const oldIndex = s.doc.model.floors.findIndex(
+          (f) => f.id === s.activeFloorId,
+        );
+        const active =
+          added?.id ??
+          (doc.model.floors.some((f) => f.id === s.activeFloorId)
+            ? s.activeFloorId
+            : (doc.model.floors[Math.max(0, oldIndex - 1)]?.id ??
+              doc.model.floors[0].id));
         set({
+          activeFloorId: active,
+          coursesByFloor: {
+            ...s.coursesByFloor,
+            ...(s.activeFloorId ? { [s.activeFloorId]: s.course } : {}),
+          },
+          ...(active !== s.activeFloorId
+            ? { select: null, course: s.coursesByFloor[active!] ?? 1 }
+            : {}),
           preview: null,
           pendingOpening: null,
           channelBand: null,
@@ -283,7 +383,7 @@ export const useStore = create<State>((set, get) => {
       if (next) {
         const doc = {
           ...next.doc,
-          generated: s.doc.generated,
+          generated: changedInputs(s.doc, next.doc) ? null : s.doc.generated,
           generationState: changedInputs(s.doc, next.doc)
             ? next.doc.generationState
             : s.doc.generationState,
@@ -292,10 +392,25 @@ export const useStore = create<State>((set, get) => {
             updatedAt: new Date().toISOString(),
           },
         };
+        const active = doc.model.floors.some((f) => f.id === s.activeFloorId)
+          ? s.activeFloorId
+          : doc.model.floors[0].id;
         set({
+          ...(active !== s.activeFloorId
+            ? {
+                ...inspection,
+                mode: s.mode,
+                course: s.coursesByFloor[active!] ?? 1,
+              }
+            : {}),
           preview: null,
           pendingOpening: null,
           doc,
+          activeFloorId: active,
+          coursesByFloor: {
+            ...s.coursesByFloor,
+            ...(s.activeFloorId ? { [s.activeFloorId]: s.course } : {}),
+          },
           history: next.history,
           select: null,
         });
@@ -308,3 +423,17 @@ export const useStore = create<State>((set, get) => {
     },
   };
 });
+
+export function editingProject(s: Pick<State, "doc" | "activeFloorId">) {
+  return s.doc
+    ? floorView(s.doc, s.activeFloorId ?? s.doc.model.floors[0].id)
+    : null;
+}
+export function useEditingProject() {
+  const doc = useStore((s) => s.doc),
+    activeFloorId = useStore((s) => s.activeFloorId);
+  return useMemo(
+    () => editingProject({ doc, activeFloorId }),
+    [doc, activeFloorId],
+  );
+}

@@ -6,7 +6,7 @@ import {
   defaultChannelLevels,
   defaultGroutSettings,
   type Opening,
-  type Project,
+  type LocalProject as Project,
 } from "../domain/project";
 import {
   modularOptions,
@@ -200,9 +200,9 @@ function OpeningForm({
                 field: "Base do vão",
                 n: base,
                 step: h,
-                origin: f.start - f.level,
-                min: f.start - f.level,
-                max: f.start + w.height - f.level - height,
+                origin: f.level - f.level,
+                min: f.level - f.level,
+                max: f.level + w.height - f.level - height,
               },
               {
                 field: "Altura do vão",
@@ -210,7 +210,7 @@ function OpeningForm({
                 step: h,
                 origin: 0,
                 min: h,
-                max: f.start + w.height - f.level - base,
+                max: f.level + w.height - f.level - base,
               },
             ];
             const suggestions = constraints
@@ -255,12 +255,12 @@ function OpeningForm({
               return "—";
             }
           })()}{" "}
-          cm · início da alvenaria: {display(f.start - f.level)} cm. Altura de
+          cm · início da alvenaria: {display(f.level - f.level)} cm. Altura de
           fiada: {display(h)} cm.
         </p>
         <p className={styles.note}>
-          Fiadas atingidas: {Math.floor((f.level + o.base - f.start) / h) + 1}–
-          {Math.ceil((f.level + o.base + o.height - f.start) / h)} · topo salvo{" "}
+          Fiadas atingidas: {Math.floor((f.level + o.base - f.level) / h) + 1}–
+          {Math.ceil((f.level + o.base + o.height - f.level) / h)} · topo salvo{" "}
           {display(o.base + o.height)} cm.
         </p>
         {!!options.length && (
@@ -324,12 +324,6 @@ function OpeningForm({
           Selecionar parede do vão
         </button>
       )}
-      {doc.generated?.convention === "nominal-v4" &&
-        !diagnostics.some((d) => d.code === "opening-elements-pending") && (
-          <p className={styles.note}>
-            Elementos sobre e sob vãos ainda não calculados nesta entrega.
-          </p>
-        )}
     </aside>
   );
 }
@@ -400,7 +394,7 @@ export function OpeningSettingsDialog({
             try {
               const base = cm(values["Base padrão de janela/vão"]),
                 top = cm(values["Topo padrão de aberturas"]),
-                origin = f.start - f.level;
+                origin = f.level - f.level;
               const openingChanged =
                 base !== doc.project.openingSettings.base ||
                 top !== doc.project.openingSettings.top;
@@ -456,8 +450,8 @@ export function OpeningSettingsDialog({
               const channelOpts = (channelsChanged ? channelLevels : [])
                 .filter(
                   (l) =>
-                    (f.level + l.top - f.start) % h ||
-                    f.level + l.top <= f.start,
+                    (f.level + l.top - f.level) % h ||
+                    f.level + l.top <= f.level,
                 )
                 .map((l) => ({
                   field: `Nível ${l.id}`,
@@ -512,7 +506,7 @@ export function OpeningSettingsDialog({
                     </p>
                     <p>
                       Altura de fiada: {display(h)} cm · origem vertical:{" "}
-                      {display(f.start - f.level)} cm.
+                      {display(f.level - f.level)} cm.
                     </p>
                   </SettingsHelp>
                 </div>
@@ -535,7 +529,7 @@ export function OpeningSettingsDialog({
                         t = cm(values["Topo padrão de aberturas"]);
                       const limit = (n: number) =>
                         Number.isInteger(n) ? String(n) : "fora da malha";
-                      return `Altura de janela/vão: ${display(t - b)} cm · limites de fiadas: ${limit((f.level + b - f.start) / h)} / ${limit((f.level + t - f.start) / h)}.`;
+                      return `Altura de janela/vão: ${display(t - b)} cm · limites de fiadas: ${limit((f.level + b - f.level) / h)} / ${limit((f.level + t - f.level) / h)}.`;
                     } catch {
                       return "Informe base e topo para consultar a altura resultante.";
                     }
@@ -584,7 +578,7 @@ export function OpeningSettingsDialog({
                   {levels.map((l, i) => {
                     let course = "—";
                     try {
-                      const n = (f.level + cm(l.value) - f.start) / h;
+                      const n = (f.level + cm(l.value) - f.level) / h;
                       course =
                         Number.isInteger(n) && n > 0
                           ? String(n)
@@ -793,6 +787,9 @@ export function Diagnostics({
 }) {
   const s = useStore(),
     doc = s.doc!;
+  const locate = (id: string | undefined) => {
+    if (id) s.switchFloor(id);
+  };
   return (
     <aside className={styles.properties} aria-label="Diagnósticos do projeto">
       <div className={styles.panelTitle}>
@@ -817,7 +814,8 @@ export function Diagnostics({
                 : d.category === "limit"
                   ? "Limite de processamento"
                   : "Pendência geométrica"}{" "}
-            · fiada {d.course}
+            · {doc.model.floors.find((f) => f.id === d.floorId)?.name} · fiada{" "}
+            {d.course}
             {d.lastCourse && d.lastCourse !== d.course
               ? `–${d.lastCourse}`
               : ""}
@@ -883,36 +881,43 @@ export function Diagnostics({
             )}
             <button
               disabled={s.busy}
-              onClick={() =>
+              onClick={() => {
+                locate(d.floorId);
                 s.inspect({
                   focus: { x: d.x, y: d.y },
                   preview: null,
                   diagnosticWalls: d.wallIds,
-                })
-              }
+                });
+              }}
             >
               Localizar
             </button>
             <button
               disabled={s.busy}
-              onClick={() =>
+              onClick={() => {
+                locate(d.floorId);
                 s.inspect({
                   mode: "course",
                   course: Math.min(
-                    Math.max(1, doc.generated?.courses.length ?? 1),
+                    Math.max(
+                      1,
+                      doc.generated?.floors.find((f) => f.floorId === d.floorId)
+                        ?.courses.length ?? 1,
+                    ),
                     d.course,
                   ),
                   focus: { x: d.x, y: d.y },
                   diagnosticWalls: d.wallIds,
                   preview: null,
-                })
-              }
+                });
+              }}
             >
               Ver fiada
             </button>
             <button
               disabled={s.busy}
               onClick={() => {
+                locate(d.floorId);
                 s.choose(d.openingIds?.[0] ?? d.wallIds[0] ?? null);
                 s.inspect({
                   mode: "plan",

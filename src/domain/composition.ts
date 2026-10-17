@@ -1,9 +1,9 @@
-import { bounds, type Project, type Wall } from "./project";
-import { openingBox, openingIssue, MAX_OPENINGS } from "./openings";
+import { bounds, type EditableProject as Project, type Wall } from "./project";
+import { openingBox, openingIssue } from "./openings";
 import { applyChannels, type ChannelBand } from "./channels";
 import { applyGrout, type GroutAxis } from "./grout";
-
 export type Diagnostic = {
+  floorId?: string;
   code: string;
   severity: "error" | "info";
   message: string;
@@ -18,9 +18,13 @@ export type Diagnostic = {
   adjustmentIds?: string[];
 };
 export type JunctionChoice = {
-  id?: string;
-  anchor?: { x: number; y: number };
-  binding?: "active" | "pending";
+  floorId: string;
+  id: string;
+  anchor: {
+    x: number;
+    y: number;
+  };
+  binding: "active" | "pending";
   componentId: string;
   signature: string;
   wallIds: string[];
@@ -42,27 +46,32 @@ export type Component = {
   wallIds: string[];
   x: number;
   y: number;
-  junctions: { x: number; y: number; kind: "L" | "T" | "cross" }[];
+  junctions: {
+    x: number;
+    y: number;
+    kind: "L" | "T" | "cross";
+  }[];
   alternative: boolean;
   phase: 0 | 1;
 };
 export type Composition = {
-  convention:
-    | "nominal-v1"
-    | "nominal-v2"
-    | "nominal-v3"
-    | "nominal-v4"
-    | "nominal-v5"
-    | "nominal-v6"
-    | "nominal-v7"
-    | "nominal-v8";
+  convention: "nominal-v9";
   channels?: ChannelBand[];
   grouts?: GroutAxis[];
-  courses: { number: number; bottom: number; top: number; pieces: Piece[] }[];
+  courses: {
+    number: number;
+    bottom: number;
+    top: number;
+    pieces: Piece[];
+  }[];
   components: Component[];
   diagnostics: Diagnostic[];
 };
-type Cell = { x: number; y: number; walls: Wall[] };
+type Cell = {
+  x: number;
+  y: number;
+  walls: Wall[];
+};
 const key = (x: number, y: number) => `${x},${y}`;
 const sort = (a: Cell, b: Cell) => a.y - b.y || a.x - b.x;
 const neighbors = (c: Cell, map: Map<string, Cell>) =>
@@ -74,9 +83,6 @@ const neighbors = (c: Cell, map: Map<string, Cell>) =>
   ]
     .map(([x, y]) => map.get(key(c.x + x, c.y + y)))
     .filter((c): c is Cell => !!c);
-export const MAX_CELLS = 20000;
-export const MAX_COURSES = 1000;
-export const MAX_PIECES = 100000;
 export const componentId = (ids: string[]) => [...ids].sort().join("|");
 export const signature = (walls: Wall[]) =>
   JSON.stringify(
@@ -160,131 +166,7 @@ function continuousPattern(
   const offset = (index % 2) ^ (route[index + 1].y === firstCorner.y ? 0 : 1);
   return pack(route, offset ^ phase);
 }
-// Legacy patterns retained solely to validate saved v1/v2 snapshots.
-function pattern(
-  cells: Cell[],
-  adjacent: (c: Cell) => Cell[],
-  phase: number,
-  openU: boolean,
-): Cell[][] | null {
-  if (
-    cells.every((c) => c.x === cells[0].x) ||
-    cells.every((c) => c.y === cells[0].y)
-  )
-    return pack(cells, phase);
-  const corners = cells.filter((c) => {
-    const ns = adjacent(c);
-    return ns.length === 2 && ns[0].x !== ns[1].x && ns[0].y !== ns[1].y;
-  });
-  const ends = cells.filter((c) => adjacent(c).length === 1);
-  if (
-    corners.length === 1 &&
-    ends.length === 2 &&
-    cells.every((c) => adjacent(c).length <= 2)
-  ) {
-    const c = corners[0];
-    const horizontal = cells
-      .filter((a) => a.y === c.y)
-      .sort((a, b) => Math.abs(a.x - c.x) - Math.abs(b.x - c.x));
-    const vertical = cells
-      .filter((a) => a.x === c.x)
-      .sort((a, b) => Math.abs(a.y - c.y) - Math.abs(b.y - c.y));
-    if (
-      horizontal.length < 2 ||
-      vertical.length < 2 ||
-      horizontal.length + vertical.length - 1 !== cells.length
-    )
-      return null;
-    return phase
-      ? [...pack(vertical, 0), ...pack(horizontal.slice(1), 0)]
-      : [...pack(horizontal, 0), ...pack(vertical.slice(1), 0)];
-  }
-  if (
-    openU &&
-    corners.length === 2 &&
-    ends.length === 2 &&
-    cells.every((c) => adjacent(c).length <= 2)
-  ) {
-    const [a, b] = corners;
-    const horizontal = a.y === b.y;
-    if (!horizontal && a.x !== b.x) return null;
-    const along = (c: Cell) => (horizontal ? c.x : c.y);
-    const across = (c: Cell) => (horizontal ? c.y : c.x);
-    const bridge = cells
-      .filter((c) => across(c) === across(a))
-      .sort((c, d) => along(c) - along(d));
-    const legs = [a, b].map((corner) =>
-      cells
-        .filter((c) => along(c) === along(corner))
-        .sort(
-          (c, d) =>
-            Math.abs(across(c) - across(corner)) -
-            Math.abs(across(d) - across(corner)),
-        ),
-    );
-    // Reserve a whole brick at each corner before filling the straight spans.
-    // Three bridge cells would make the two horizontal reservations collide.
-    if (
-      bridge.length < 4 ||
-      legs.some((leg) => leg.length < 2) ||
-      bridge[0] !== a ||
-      bridge.at(-1) !== b ||
-      Math.sign(across(legs[0][1]) - across(a)) !==
-        Math.sign(across(legs[1][1]) - across(b)) ||
-      bridge.length + legs[0].length + legs[1].length - 2 !== cells.length
-    )
-      return null;
-    return phase
-      ? [
-          ...pack(legs[0], 0),
-          ...pack(bridge.slice(1, -1), 0),
-          ...pack(legs[1], 0),
-        ]
-      : [
-          [bridge[0], bridge[1]],
-          ...pack(bridge.slice(2, -2), 0),
-          [bridge.at(-2)!, bridge.at(-1)!],
-          ...pack(legs[0].slice(1), 0),
-          ...pack(legs[1].slice(1), 0),
-        ];
-  }
-  if (corners.length === 4 && cells.every((c) => adjacent(c).length === 2)) {
-    const xs = cells.map((c) => c.x),
-      ys = cells.map((c) => c.y),
-      minX = Math.min(...xs),
-      maxX = Math.max(...xs),
-      minY = Math.min(...ys),
-      maxY = Math.max(...ys);
-    if (
-      cells.some(
-        (c) => c.x !== minX && c.x !== maxX && c.y !== minY && c.y !== maxY,
-      ) ||
-      cells.length !== 2 * (maxX - minX + maxY - minY)
-    )
-      return null;
-    const route = [cells[0]],
-      visited = new Set([cells[0]]);
-    let prev: Cell | undefined;
-    while (route.length < cells.length) {
-      const cur = route.at(-1)!;
-      const next = adjacent(cur)
-        .filter((n) => n !== prev)
-        .sort((a, b) => b.x - a.x || a.y - b.y)[0];
-      if (!next || visited.has(next)) return null;
-      prev = cur;
-      route.push(next);
-      visited.add(next);
-    }
-    const shifted = phase ? [...route.slice(1), route[0]] : route;
-    return pack(shifted, 0);
-  }
-  return null;
-}
-function tile(
-  cells: Cell[],
-  phase: number,
-  convention: Composition["convention"],
-): Cell[][] | null {
+function tile(cells: Cell[], phase: number): Cell[][] | null {
   const map = new Map(cells.map((c) => [key(c.x, c.y), c]));
   const cuts = new Set<string>();
   const edge = (a: Cell, b: Cell) =>
@@ -305,15 +187,7 @@ function tile(
     neighbors(c, map).filter((n) => !cuts.has(edge(c, n)));
   const result: Cell[][] = [];
   for (const group of groups(map, adjacent)) {
-    let p =
-      convention === "nominal-v3" ||
-      convention === "nominal-v4" ||
-      convention === "nominal-v5" ||
-      convention === "nominal-v6" ||
-      convention === "nominal-v7" ||
-      convention === "nominal-v8"
-        ? continuousPattern(group, adjacent, phase)
-        : pattern(group, adjacent, phase, convention === "nominal-v2");
+    let p = continuousPattern(group, adjacent, phase);
     // A T branch is paginated from its contact, including reversed branches.
     if (
       group.every((c) => c.x === group[0].x) ||
@@ -338,7 +212,10 @@ function tile(
 function tileCross(
   cells: Cell[],
   phase: number,
-): { pieces: Cell[][] | null; conflict?: Cell } {
+): {
+  pieces: Cell[][] | null;
+  conflict?: Cell;
+} {
   const map = new Map(cells.map((c) => [key(c.x, c.y), c])),
     cuts = new Set<string>(),
     keep = new Set<string>();
@@ -385,28 +262,16 @@ function tileCross(
   }
   return { pieces: result };
 }
-export function generate(
-  doc: Project,
-  convention: Composition["convention"] = "nominal-v8",
-): Composition {
+function composeFloor(doc: Project): Composition {
   const { width: m, height: h } = doc.project.base,
     floor = doc.model.floors[0];
   const result: Composition = {
-    convention,
+    convention: "nominal-v9",
     courses: [],
     components: [],
     diagnostics: [],
-    ...(convention === "nominal-v5" ||
-    convention === "nominal-v6" ||
-    convention === "nominal-v7" ||
-    convention === "nominal-v8"
-      ? { channels: [] }
-      : {}),
-    ...(convention === "nominal-v6" ||
-    convention === "nominal-v7" ||
-    convention === "nominal-v8"
-      ? { grouts: [] }
-      : {}),
+    ...{ channels: [] },
+    ...{ grouts: [] },
   };
   const error = (
     code: string,
@@ -420,7 +285,7 @@ export function generate(
     result.diagnostics.push({
       code,
       message:
-        convention === "nominal-v8" && severity === "error"
+        severity === "error"
           ? `Composição suspensa em ${new Set(wallIds).size} paredes conectadas: ${message}`
           : message,
       wallIds: [...wallIds].sort(),
@@ -428,16 +293,14 @@ export function generate(
       y,
       course,
       severity,
-      ...(convention === "nominal-v8"
-        ? {
-            category:
-              code === "limit"
-                ? ("limit" as const)
-                : code === "height"
-                  ? ("input" as const)
-                  : ("geometry" as const),
-          }
-        : {}),
+      ...{
+        category:
+          code === "limit"
+            ? ("limit" as const)
+            : code === "height"
+              ? ("input" as const)
+              : ("geometry" as const),
+      },
     });
   const total = Math.max(
     0,
@@ -445,23 +308,6 @@ export function generate(
       .filter((w) => w.height % h === 0)
       .map((w) => w.height / h),
   );
-  const estimated = doc.model.walls.reduce(
-    (s, w) => s + (Math.abs(w.b.x - w.a.x) + Math.abs(w.b.y - w.a.y)) / m,
-    0,
-  );
-  if (
-    estimated > MAX_CELLS ||
-    doc.model.openings.length > MAX_OPENINGS ||
-    total > MAX_COURSES ||
-    estimated * total > MAX_PIECES
-  ) {
-    error(
-      "limit",
-      "Limite de geração excedido (20 mil células, mil fiadas ou 100 mil células por todas as fiadas). O modelo foi preservado.",
-      doc.model.walls.map((w) => w.id),
-    );
-    return result;
-  }
   const map = new Map<string, Cell>();
   for (const w of doc.model.walls) {
     const b = bounds(w, m);
@@ -476,8 +322,8 @@ export function generate(
   for (let n = 1; n <= total; n++)
     result.courses.push({
       number: n,
-      bottom: floor.start + (n - 1) * h - floor.level,
-      top: floor.start + n * h - floor.level,
+      bottom: floor.level + (n - 1) * h - floor.level,
+      top: floor.level + n * h - floor.level,
       pieces: [],
     });
   const usedChoices = new Set<string>();
@@ -486,7 +332,7 @@ export function generate(
       ...new Map(cells.flatMap((c) => c.walls).map((w) => [w.id, w])).values(),
     ];
     const ids = walls.map((w) => w.id).sort(),
-      id = componentId(ids),
+      id = `${floor.id}:${componentId(ids)}`,
       sig = signature(walls);
     const comp: Component = {
       id,
@@ -514,7 +360,7 @@ export function generate(
     const hasCross = comp.junctions.some((j) => j.kind === "cross");
     if (
       comp.junctions.length > 1 &&
-      !(convention === "nominal-v8" && hasCross) &&
+      !hasCross &&
       new Set(walls.map((w) => w.height)).size > 1
     ) {
       error(
@@ -528,7 +374,7 @@ export function generate(
     }
     if (
       comp.junctions.some((j) => j.kind === "T") &&
-      !(convention === "nominal-v8" && hasCross) &&
+      !hasCross &&
       new Set(walls.map((w) => w.height)).size > 1
     ) {
       error(
@@ -561,9 +407,8 @@ export function generate(
       a.wallIds.some((w) => ids.includes(w)),
     );
     if (
-      (convention === "nominal-v7" || convention === "nominal-v8") &&
-      (related.some((a) => a.binding === "pending") ||
-        related.filter((a) => a.componentId === id).length > 1)
+      related.some((a) => a.binding === "pending") ||
+      related.filter((a) => a.componentId === id).length > 1
     ) {
       for (const a of related) {
         usedChoices.add(a.id!);
@@ -580,11 +425,7 @@ export function generate(
     }
     const choice = doc.adjustments.junctions.find((a) => a.componentId === id);
     if (choice) {
-      usedChoices.add(
-        convention === "nominal-v7" || convention === "nominal-v8"
-          ? choice.id!
-          : id,
-      );
+      usedChoices.add(choice.id!);
       comp.phase = choice.phase;
     }
     if (walls.some((w) => w.height % h)) {
@@ -613,25 +454,10 @@ export function generate(
       );
       continue;
     }
-    if (hasCross && convention !== "nominal-v8") {
-      const j = comp.junctions.find((j) => j.kind === "cross")!;
-      error(
-        "cross",
-        "Sem solução automática para encontro em cruz no M2.",
-        ids,
-        j.x,
-        j.y,
-      );
-      continue;
-    }
     if (
       choice &&
       (choice.signature !== sig ||
-        !comp.junctions.some(
-          (j) =>
-            j.kind === "L" ||
-            (convention === "nominal-v8" && j.kind === "cross"),
-        ))
+        !comp.junctions.some((j) => j.kind === "L" || j.kind === "cross"))
     ) {
       error(
         "adjustment",
@@ -642,16 +468,9 @@ export function generate(
       );
       continue;
     }
-    const openings =
-      convention === "nominal-v4" ||
-      convention === "nominal-v5" ||
-      convention === "nominal-v6" ||
-      convention === "nominal-v7" ||
-      convention === "nominal-v8"
-        ? doc.model.openings
-            .filter((o) => ids.includes(o.wallId))
-            .sort((a, b) => a.id.localeCompare(b.id))
-        : [];
+    const openings = doc.model.openings
+      .filter((o) => ids.includes(o.wallId))
+      .sort((a, b) => a.id.localeCompare(b.id));
     let invalidOpening = false;
     for (const o of openings) {
       const wall = walls.find((w) => w.id === o.wallId)!;
@@ -660,11 +479,8 @@ export function generate(
         openingIssue(doc, o) ??
         (cells.some(
           (c) =>
-            (convention === "nominal-v8"
-              ? c.walls.filter(
-                  (w) => floor.start + w.height > floor.level + o.base,
-                ).length > 1
-              : c.walls.length > 1) &&
+            c.walls.filter((w) => floor.level + w.height > floor.level + o.base)
+              .length > 1 &&
             c.x * m >= box.x &&
             c.x * m < box.x + box.width &&
             c.y * m >= box.y &&
@@ -677,29 +493,22 @@ export function generate(
             }
           : null);
       if (issue) invalidOpening = true;
-      if (
-        !issue &&
-        (convention === "nominal-v5" ||
-          convention === "nominal-v6" ||
-          convention === "nominal-v7" ||
-          convention === "nominal-v8")
-      )
-        continue;
+      if (!issue) continue;
       error(
         issue?.code ?? "opening-elements-pending",
         issue?.message ??
           "Elementos sobre e sob vãos ainda não calculados nesta entrega.",
-        convention === "nominal-v8" && issue ? ids : [wall.id],
+        issue ? ids : [wall.id],
         box.x,
         box.y,
-        Math.max(1, Math.floor((floor.level + o.base - floor.start) / h) + 1),
+        Math.max(1, Math.floor((floor.level + o.base - floor.level) / h) + 1),
         issue ? "error" : "info",
       );
       Object.assign(result.diagnostics.at(-1)!, {
         openingIds: [o.id],
         lastCourse: Math.max(
           1,
-          Math.ceil((floor.level + o.base + o.height - floor.start) / h),
+          Math.ceil((floor.level + o.base + o.height - floor.level) / h),
         ),
         category: issue ? "geometry" : "limit",
       });
@@ -716,14 +525,12 @@ export function generate(
         continue;
       }
       const phase = ((n - 1) % 2) ^ comp.phase;
-      const current: ReturnType<typeof tileCross> =
-        convention === "nominal-v8" && hasCross
-          ? tileCross(active, phase)
-          : { pieces: tile(active, phase, convention) };
-      const other: ReturnType<typeof tileCross> =
-        convention === "nominal-v8" && hasCross
-          ? tileCross(active, 1 - phase)
-          : { pieces: tile(active, 1 - phase, convention) };
+      const current: ReturnType<typeof tileCross> = hasCross
+        ? tileCross(active, phase)
+        : { pieces: tile(active, phase) };
+      const other: ReturnType<typeof tileCross> = hasCross
+        ? tileCross(active, 1 - phase)
+        : { pieces: tile(active, 1 - phase) };
       const pieces = current.pieces;
       if (!pieces || !other.pieces) {
         error(
@@ -747,7 +554,7 @@ export function generate(
       }
       const removed = new Set<string>();
       for (const o of openings) {
-        const bottom = floor.start + (n - 1) * h,
+        const bottom = floor.level + (n - 1) * h,
           B = floor.level + o.base;
         if (bottom >= B + o.height || bottom + h <= B) continue;
         const b = openingBox(
@@ -798,11 +605,10 @@ export function generate(
     }
     if (failed) continue;
     comp.alternative = comp.junctions.some(
-      (j) =>
-        j.kind === "L" || (convention === "nominal-v8" && j.kind === "cross"),
+      (j) => j.kind === "L" || j.kind === "cross",
     );
     courses.forEach((pieces, i) => result.courses[i].pieces.push(...pieces));
-    if (hasCross && convention === "nominal-v8") {
+    if (hasCross) {
       const j = comp.junctions.find((j) => j.kind === "cross")!;
       error(
         "cross-connection",
@@ -837,13 +643,7 @@ export function generate(
       );
   }
   for (const a of doc.adjustments.junctions)
-    if (
-      !usedChoices.has(
-        convention === "nominal-v7" || convention === "nominal-v8"
-          ? a.id!
-          : a.componentId,
-      )
-    ) {
+    if (!usedChoices.has(a.id!)) {
       error(
         "adjustment",
         "Encontro alterado: retorne ao automático para resolver a escolha pendente.",
@@ -851,19 +651,83 @@ export function generate(
         a.anchor?.x ?? 0,
         a.anchor?.y ?? 0,
       );
-      if (convention === "nominal-v7" || convention === "nominal-v8")
-        result.diagnostics.at(-1)!.adjustmentIds = [a.id!];
+      result.diagnostics.at(-1)!.adjustmentIds = [a.id!];
     }
-  if (
-    convention === "nominal-v5" ||
-    convention === "nominal-v6" ||
-    convention === "nominal-v7" ||
-    convention === "nominal-v8"
-  )
-    applyChannels(doc, result);
-  return convention === "nominal-v6" ||
-    convention === "nominal-v7" ||
-    convention === "nominal-v8"
-    ? applyGrout(doc, result)
-    : result;
+  applyChannels(doc, result);
+  return applyGrout(doc, result);
+}
+export type FloorComposition = Omit<Composition, "convention"> & {
+  floorId: string;
+};
+export type ProjectComposition = {
+  convention: "nominal-v9";
+  floors: FloorComposition[];
+  diagnostics: Diagnostic[];
+};
+export function floorView(
+  doc: Project,
+  floorId: string,
+): import("./project").LocalProject {
+  const floor = doc.model.floors.find((f) => f.id === floorId);
+  if (!floor) throw new Error("Pavimento ausente.");
+  const walls = doc.model.walls.filter((w) => w.floorId === floorId);
+  const wallIds = new Set(walls.map((w) => w.id));
+  const generated =
+    doc.generated && "floors" in doc.generated
+      ? (() => {
+          const f = doc.generated.floors.find((f) => f.floorId === floorId);
+          return f ? { ...f, convention: "nominal-v9" as const } : null;
+        })()
+      : doc.generated;
+  return {
+    ...doc,
+    viewFloorId: floorId,
+    model: {
+      ...doc.model,
+      floors: [floor],
+      walls,
+      openings: doc.model.openings.filter((o) => wallIds.has(o.wallId)),
+    },
+    adjustments: {
+      junctions: doc.adjustments.junctions.filter((a) => a.floorId === floorId),
+      channels: doc.adjustments.channels.filter((a) => a.floorId === floorId),
+      grout: doc.adjustments.grout.filter((a) => a.floorId === floorId),
+    },
+    generated,
+  };
+}
+export function generateFloor(
+  doc: Project,
+  floorId = doc.model.floors[0].id,
+): Composition & {
+  floorId: string;
+} {
+  const local = floorView(doc, floorId);
+  const result = composeFloor(local);
+  for (const row of result.courses)
+    for (const p of row.pieces) p.id = `${floorId}:${p.id}`;
+  for (const b of result.channels ?? []) b.id = `${floorId}:${b.id}`;
+  for (const a of result.grouts ?? []) a.id = `${floorId}:${a.id}`;
+  for (const d of result.diagnostics) d.floorId = floorId;
+  return { ...result, floorId };
+}
+export function generate(doc: Project): ProjectComposition {
+  const floors = [...doc.model.floors]
+    .sort((a, b) => a.level - b.level)
+    .map((f) => {
+      const result = generateFloor(doc, f.id);
+      return {
+        floorId: result.floorId,
+        courses: result.courses,
+        components: result.components,
+        channels: result.channels,
+        grouts: result.grouts,
+        diagnostics: result.diagnostics,
+      };
+    });
+  return {
+    convention: "nominal-v9",
+    floors,
+    diagnostics: floors.flatMap((f) => f.diagnostics),
+  };
 }

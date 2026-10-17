@@ -6,7 +6,6 @@ import {
   makeWall,
   type Project,
 } from "../../src/domain/project";
-import { generate } from "../../src/domain/composition";
 import { putOpening } from "../../src/domain/openings";
 const base = { length: 2500, width: 1250, height: 700 };
 function frame() {
@@ -75,11 +74,11 @@ test("M3.5 EX-53 seis paredes visíveis, prévia cancelar/confirmar, histórico 
   await load(page, frame());
   await fiada(page);
   const before = await exported(page);
-  expect(before.schemaVersion).toBe(7);
-  expect(before.generated!.convention).toBe("nominal-v8");
-  expect(before.generated!.courses.map((c) => c.pieces.length)).toEqual([
-    36, 37, 36,
-  ]);
+  expect(before.schemaVersion).toBe(8);
+  expect(before.generated!.convention).toBe("nominal-v9");
+  expect(
+    before.generated!.floors[0].courses.map((c) => c.pieces.length),
+  ).toEqual([36, 37, 36]);
   await page.getByRole("button", { name: /Conjunto 1.*cruz/ }).click();
   await page.getByRole("button", { name: "Prévia da alternativa B" }).click();
   await expect(
@@ -93,13 +92,15 @@ test("M3.5 EX-53 seis paredes visíveis, prévia cancelar/confirmar, histórico 
   await page.screenshot({ path: ".tools/m35-preview.png" });
   await page.getByRole("button", { name: "Confirmar alternativa" }).click();
   const chosen = await exported(page);
-  expect(chosen.generated!.courses.map((c) => c.pieces.length)).toEqual([
-    37, 36, 37,
-  ]);
+  expect(
+    chosen.generated!.floors[0].courses.map((c) => c.pieces.length),
+  ).toEqual([37, 36, 37]);
   expect(chosen.adjustments.junctions[0].binding).toBe("active");
   await page.getByRole("button", { name: "Desfazer", exact: true }).click();
   expect(
-    (await exported(page)).generated!.courses.map((c) => c.pieces.length),
+    (await exported(page)).generated!.floors[0].courses.map(
+      (c) => c.pieces.length,
+    ),
   ).toEqual([36, 37, 36]);
   await page.getByRole("button", { name: "Refazer", exact: true }).click();
   expect((await exported(page)).adjustments).toEqual(chosen.adjustments);
@@ -111,34 +112,6 @@ test("M3.5 EX-53 seis paredes visíveis, prévia cancelar/confirmar, histórico 
   await page.screenshot({ path: ".tools/m35-frame.png" });
   await load(page, chosen);
   expect((await exported(page)).adjustments).toEqual(chosen.adjustments);
-});
-test("M3.5 migra cruz bloqueada de M3.4 e rejeita snapshot adulterado", async ({
-  page,
-}) => {
-  const d = frame(),
-    g = generate(d, "nominal-v7"),
-    old = {
-      ...d,
-      schemaVersion: 6,
-      generated: g,
-      generationState: { status: "current", diagnostics: g.diagnostics },
-    };
-  expect(g.courses[0].pieces).toEqual([]);
-  await load(page, old);
-  await expect(page.getByRole("alert")).toContainText("suporte à cruz");
-  const migrated = await exported(page);
-  expect(migrated.model).toEqual(d.model);
-  expect(migrated.project.groutSettings).toEqual(defaultGroutSettings(false));
-  expect(migrated.generated!.courses[0].pieces).toHaveLength(36);
-  const bad = structuredClone(old);
-  bad.generated.diagnostics[0].message = "adulterado";
-  await page.getByTestId("import-file").setInputFiles({
-    name: "adulterado.ecovit",
-    mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify(bad)),
-  });
-  await expect(page.getByRole("alert")).toContainText("inconsistente");
-  expect(await exported(page)).toEqual(migrated);
 });
 test("M3.5 cruz sem L oferece alternativa e cruza → reta sem reiniciar fase", async ({
   page,
@@ -172,10 +145,10 @@ test("M3.5 cruz sem L oferece alternativa e cruza → reta sem reiniciar fase", 
   ).toBeEnabled();
   await fiada(page, 3);
   const r = await exported(page);
-  expect(r.generated!.courses[2].pieces).toHaveLength(4);
-  expect(r.generated!.courses[2].pieces.find((p) => p.kind === "half")!.x).toBe(
-    3750,
-  );
+  expect(r.generated!.floors[0].courses[2].pieces).toHaveLength(4);
+  expect(
+    r.generated!.floors[0].courses[2].pieces.find((p) => p.kind === "half")!.x,
+  ).toBe(3750);
   await page.screenshot({ path: ".tools/m35-height.png" });
   d.model.openings = [
     {
@@ -191,12 +164,12 @@ test("M3.5 cruz sem L oferece alternativa e cruza → reta sem reiniciar fase", 
   await load(page, d);
   await fiada(page, 3);
   const opened = await exported(page);
-  expect(opened.generated!.courses[2].pieces).toHaveLength(4);
+  expect(opened.generated!.floors[0].courses[2].pieces).toHaveLength(4);
   expect(
     opened.generated!.diagnostics.some((a) => a.severity === "error"),
   ).toBe(false);
   expect(
-    opened.generated!.courses[2].pieces.some(
+    opened.generated!.floors[0].courses[2].pieces.some(
       (p) => p.x <= 0 && p.x + p.width > 0,
     ),
   ).toBe(false);
@@ -221,18 +194,20 @@ test("M3.5 EX-55 elementos associados e falha de gravação preservam trabalho",
   await fiada(page, 16);
   const before = await exported(page);
   expect(
-    before.generated!.courses[15].pieces.reduce(
+    before.generated!.floors[0].courses[15].pieces.reduce(
       (s, p) => s + (p.width * p.height) / 1250 ** 2,
       0,
     ),
   ).toBe(68);
   expect(
-    before.generated!.grouts!.filter((a) => a.x === 10000 && a.y === 5000),
+    before.generated!.floors[0].grouts!.filter(
+      (a) => a.x === 10000 && a.y === 5000,
+    ),
   ).toHaveLength(1);
   await page
     .getByLabel("Selecionar faixa de canaleta")
     .selectOption(
-      before.generated!.channels!.find(
+      before.generated!.floors[0].channels!.find(
         (b) => b.wallId === d.model.walls[0].id && b.course === 16,
       )!.id,
     );
@@ -250,7 +225,9 @@ test("M3.5 EX-55 elementos associados e falha de gravação preservam trabalho",
     .click();
   await expect(page.getByRole("status")).toContainText("Não salvo");
   const after = await exported(page);
-  expect(after.generated!.grouts).toEqual(before.generated!.grouts);
+  expect(after.generated!.floors[0].grouts).toEqual(
+    before.generated!.floors[0].grouts,
+  );
   expect(after.adjustments.channels).toHaveLength(1);
   await page.evaluate(() => {
     (window as unknown as { restorePut: () => void }).restorePut();
@@ -304,7 +281,9 @@ test("M3.5 diagnóstico real informa alcance, mantém independente e localiza", 
   await expect(
     page.getByText(/Composição suspensa em 3 paredes conectadas/),
   ).toBeVisible();
-  expect((await exported(page)).generated!.courses[0].pieces).toHaveLength(4);
+  expect(
+    (await exported(page)).generated!.floors[0].courses[0].pieces,
+  ).toHaveLength(4);
   await page
     .getByRole("button", { name: "Diagnósticos (1)", exact: true })
     .click();
@@ -329,7 +308,7 @@ test("M3.5 carga de vinte contornos com cruz preserva posições e contagens", a
   const start = Date.now();
   await load(page, d);
   const elapsed = Date.now() - start,
-    g = (await exported(page)).generated!;
+    g = (await exported(page)).generated!.floors[0];
   expect(g.components).toHaveLength(20);
   expect(g.courses.reduce((s, c) => s + c.pieces.length, 0)).toBe(29200);
   expect(g.courses[0].pieces).toHaveLength(720);

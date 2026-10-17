@@ -1,19 +1,18 @@
-import { describe, expect, it } from "vitest";
 import {
-  createProject,
-  makeWall,
+  createLocalProject as createProject,
   type Project,
-  type Opening,
-} from "../src/domain/project";
-import { generate, type Piece } from "../src/domain/composition";
-import {
-  isChannel,
+  generate,
   restoreBand,
   suppressBand,
-  validateChannelLevels,
-} from "../src/domain/channels";
-import { parseFile, importedCopy } from "../src/persistence/files";
-import { putOpening } from "../src/domain/openings";
+  parseFile,
+  importedCopy,
+  putOpening,
+} from "./floor-support";
+import { describe, expect, it } from "vitest";
+import { makeWall, type Opening } from "../src/domain/project";
+import { type Piece } from "../src/domain/composition";
+import { isChannel } from "../src/domain/channels";
+
 function fixture(m = 1250, h = 700, vertical = false, side: 1 | -1 = 1) {
   const d = createProject("Canaletas", { length: 2 * m, width: m, height: h });
   d.project.channelLevels = [];
@@ -184,41 +183,6 @@ describe("M3.2 canaletas nominais", () => {
     g = generate(d);
     expect(g.courses[15].pieces.some(isChannel)).toBe(false);
   });
-  it("cota absoluta preservada e ajuste pendente após mudar início; pode restaurar", () => {
-    let d = fixture();
-    d = suppressBand(d, d.model.walls[0].id, 11200);
-    d.model.floors[0].start = 1000;
-    d.model.floors[0].level = 1000;
-    const g = generate(d);
-    expect(
-      g.diagnostics.some((x) => x.code === "adjustment-target-missing"),
-    ).toBe(true);
-    expect(d.adjustments.channels[0].top).toBe(11200);
-    expect(parseFile(JSON.stringify(current(d))).adjustments.channels).toEqual(
-      d.adjustments.channels,
-    );
-    d = restoreBand(d, d.model.walls[0].id, 11200);
-    expect(
-      generate(d).diagnostics.some(
-        (x) => x.code === "adjustment-target-missing",
-      ),
-    ).toBe(false);
-  });
-  it("nível incompatível preserva alvenaria e fica não aplicado; alternativa depende de piso/início", () => {
-    const d = fixture();
-    d.project.channelLevels = [{ id: crypto.randomUUID(), top: 11200 }];
-    d.model.floors[0].level = 1000;
-    d.model.floors[0].start = 1200;
-    expect(() => validateChannelLevels(d)).toThrow("fiada");
-    let g = generate(d);
-    expect(g.channels).toEqual([]);
-    expect(g.diagnostics[0].code).toBe("channel-level-off-grid");
-    expect(g.courses[0].pieces).toHaveLength(16);
-    d.project.channelLevels[0].top = 10700;
-    g = generate(d);
-    expect(g.diagnostics).toEqual([]);
-    expect(g.channels![0].course).toBe(15);
-  });
   it("nível fora da altura de uma parede não acrescenta material", () => {
     const d = fixture();
     d.model.walls[0].height = 2100;
@@ -315,6 +279,7 @@ describe("M3.2 canaletas nominais", () => {
         ...d.adjustments,
         channels: [
           {
+            floorId: d.model.floors[0].id,
             id: crypto.randomUUID(),
             wallId: crypto.randomUUID(),
             top: 9800,
@@ -324,34 +289,6 @@ describe("M3.2 canaletas nominais", () => {
       },
     };
     expect(() => parseFile(JSON.stringify(orphan))).toThrow("referência");
-  });
-  it("migra snapshot M3.1 pela convenção original, sem níveis globais adicionados", () => {
-    let d = fixture();
-    d = putOpening(d, window(d));
-    const {
-      channelLevels: _levels,
-      groutSettings: _grout,
-      ...project
-    } = d.project;
-    void _levels;
-    void _grout;
-    const g = generate(d, "nominal-v4"),
-      old = {
-        ...d,
-        schemaVersion: 3,
-        project,
-        generated: g,
-        generationState: { status: "current", diagnostics: g.diagnostics },
-      };
-    const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(7);
-    expect(migrated.project.channelLevels).toEqual([]);
-    expect(migrated.model).toEqual(d.model);
-    expect(migrated.generationState.status).toBe("outdated");
-    expect(generate(migrated).channels!.map((b) => b.course)).toEqual([14, 31]);
-    const bad = structuredClone(old);
-    bad.generated.courses[0].pieces[0].x++;
-    expect(() => parseFile(JSON.stringify(bad))).toThrow("inconsistente");
   });
   it("limites e duplicatas são recusados sem truncamento", () => {
     const d = fixture();

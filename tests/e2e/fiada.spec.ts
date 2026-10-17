@@ -16,7 +16,10 @@ test("M2 carga nominal de 42 mil peças", async ({ page }, info) => {
   await expect(page.getByLabel("Número da fiada")).toHaveAttribute("max", "40");
   const result = await exported(page);
   expect(
-    result.generated!.courses.reduce((n, c) => n + c.pieces.length, 0),
+    result.generated!.floors[0].courses.reduce(
+      (n, c) => n + c.pieces.length,
+      0,
+    ),
   ).toBe(42000);
   console.log(
     `M2 carga ${info.project.name}: importação/migração, geração e salvamento de 42.000 peças em ${elapsed} ms (inclui abertura da página).`,
@@ -44,22 +47,11 @@ function wall(
   );
 }
 async function load(page: Page, d: Project) {
-  const {
-    openingSettings: _settings,
-    channelLevels: _levels,
-    groutSettings: _grout,
-    ...legacyProject
-  } = d.project;
-  void _settings;
-  void _levels;
-  void _grout;
   await page.goto("/");
   await page.getByTestId("import-file").setInputFiles({
     name: "m1.ecovit",
     mimeType: "application/json",
-    buffer: Buffer.from(
-      JSON.stringify({ ...d, project: legacyProject, schemaVersion: 1 }),
-    ),
+    buffer: Buffer.from(JSON.stringify(d)),
   });
   await expect(page.getByRole("status")).toContainText("Salvo");
 }
@@ -70,55 +62,6 @@ async function exported(page: Page) {
     await readFile((await (await pending).path())!, "utf8"),
   ) as Project;
 }
-test("M2 migra M1, navega, mantém câmera, transporta resultado e recusa adulteração", async ({
-  page,
-  browser,
-}) => {
-  const d = fixture("Reta M2");
-  wall(d, [0, 0], [8, 0]);
-  await load(page, d);
-  const current = await exported(page);
-  expect(current.schemaVersion).toBe(7);
-  expect(current.model).toEqual(d.model);
-  expect(current.generated!.courses[1].pieces).toHaveLength(5);
-  const camera = await page.getByTestId("drawing").getAttribute("data-camera");
-  await page.getByRole("button", { name: "Fiada", exact: true }).click();
-  await page.getByRole("button", { name: "Próxima fiada" }).click();
-  await expect(page.getByLabel("Número da fiada")).toHaveValue("2");
-  await expect(page.getByText("7–14 cm em relação ao piso")).toBeVisible();
-  await page.getByLabel("Fiada de referência").selectOption("previous");
-  await page.getByRole("button", { name: "Planta", exact: true }).click();
-  await page.getByRole("button", { name: "Fiada", exact: true }).click();
-  expect(await page.getByTestId("drawing").getAttribute("data-camera")).toBe(
-    camera,
-  );
-  await expect(page.getByLabel("Número da fiada")).toHaveValue("2");
-  expect((await exported(page)).generated).toEqual(current.generated);
-  await page.getByLabel("Número da fiada").fill("3");
-  await expect(
-    page.getByRole("button", { name: "Próxima fiada" }),
-  ).toBeDisabled();
-  const context = await browser.newContext(),
-    other = await context.newPage();
-  await other.goto("/");
-  await other.getByTestId("import-file").setInputFiles({
-    name: "m2.ecovit",
-    mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify(current)),
-  });
-  await expect(other.getByRole("status")).toContainText("Salvo");
-  expect((await exported(other)).generated).toEqual(current.generated);
-  await context.close();
-  const bad = structuredClone(current);
-  bad.generated!.courses[0].pieces[0].x++;
-  await page.getByTestId("import-file").setInputFiles({
-    name: "adulterado.ecovit",
-    mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify(bad)),
-  });
-  await expect(page.getByRole("alert")).toContainText("inconsistente");
-  expect((await exported(page)).model).toEqual(d.model);
-});
 test("M2 L: prévia, escolha na primeira fiada, histórico e reabertura", async ({
   page,
 }) => {
@@ -185,8 +128,12 @@ test("M2 T, cruz, anel e altura menor; revisão visual", async ({
     ),
   ).toBeVisible();
   const saved = await exported(page);
-  expect(saved.generated!.courses[0].pieces).toHaveLength(54 + 6 + 3 + 4);
-  expect(saved.generated!.courses[2].pieces).toHaveLength(54 + 6 + 2 + 4);
+  expect(saved.generated!.floors[0].courses[0].pieces).toHaveLength(
+    54 + 6 + 3 + 4,
+  );
+  expect(saved.generated!.floors[0].courses[2].pieces).toHaveLength(
+    54 + 6 + 2 + 4,
+  );
   await page.getByRole("button", { name: "Projetos", exact: true }).click();
   await page.getByRole("button", { name: /Composição M2/ }).click();
   await expect(page.getByRole("status")).toContainText("Salvo");
@@ -222,21 +169,25 @@ test("M2 altura incompatível oferece alternativas e não altera silenciosamente
   expect((await exported(page)).model.walls[0].height).toBe(2100);
   await page.getByRole("button", { name: "14 cm", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Salvo");
-  expect((await exported(page)).generated!.courses).toHaveLength(2);
+  expect((await exported(page)).generated!.floors[0].courses).toHaveLength(2);
 });
 
 for (const snapshot of ["legacy", "v2"])
-  test(`U real ${snapshot}: importar, compor, alternar e reabrir sem alterar paredes`, async ({
+  test(`U referência ${snapshot}: geometria no formato atual, alternativa e reabertura`, async ({
     page,
   }) => {
     const old = JSON.parse(
       await readFile(`tests/fixtures/open-u-${snapshot}.ecovit`, "utf8"),
     ) as Project;
-    await page.goto("/");
-    await page
-      .getByTestId("import-file")
-      .setInputFiles(`tests/fixtures/open-u-${snapshot}.ecovit`);
-    await expect(page.getByRole("status")).toContainText("Salvo");
+    // Reuse only the reference drawing, not its obsolete file contract.
+    const reference = fixture(old.project.name);
+    reference.project.base = old.project.base;
+    reference.project.channelLevels = [];
+    reference.model.walls = old.model.walls.map((w) => ({
+      ...w,
+      floorId: reference.model.floors[0].id,
+    }));
+    await load(page, reference);
     await page.getByRole("button", { name: "Fiada", exact: true }).click();
     await expect(
       page.getByText("Geometria nominal verificada", { exact: true }),
@@ -247,15 +198,17 @@ for (const snapshot of ["legacy", "v2"])
       ),
     ).toBeVisible();
     let d = await exported(page);
-    expect(d.model).toEqual(old.model);
-    expect(d.generated!.convention).toBe("nominal-v8");
+    expect(d.model).toEqual(reference.model);
+    expect(d.generated!.convention).toBe("nominal-v9");
     expect(
       d
-        .generated!.courses[0].pieces.filter((p) => p.kind === "half")
+        .generated!.floors[0].courses[0].pieces.filter((p) => p.kind === "half")
         .map((p) => [p.x, p.y]),
     ).toEqual([[52500, 22500]]);
-    expect(d.generated!.courses).toHaveLength(40);
-    expect(d.generated!.courses.every((c) => c.pieces.length > 0)).toBe(true);
+    expect(d.generated!.floors[0].courses).toHaveLength(40);
+    expect(
+      d.generated!.floors[0].courses.every((c) => c.pieces.length > 0),
+    ).toBe(true);
     await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
     await page.screenshot({
       path: `test-results/open-u-first-${snapshot}-${test.info().project.name}.png`,

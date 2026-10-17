@@ -14,6 +14,7 @@ export const listProjects = async () =>
   (await projects.orderBy("updatedAt").reverse().toArray()).map((row) => ({
     id: row.id,
     name: row.doc.project.name,
+    compatible: row.doc.schemaVersion === 8,
     updatedAt: row.updatedAt,
     walls: row.doc.model.walls.length,
   }));

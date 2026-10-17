@@ -1,6 +1,6 @@
 # Ecovit
 
-Editor local de plantas com paredes ortogonais, malha de meio tijolo e composição nominal de fiadas. Aplicativo 0.7.0, arquivo versão 7 e composição nominal-v8.
+Editor local de plantas com paredes ortogonais, malha de meio tijolo e composição nominal de fiadas. Aplicativo 0.8.0, arquivo versão 8 e composição nominal-v9.
 
 | Marco | Funcionalidade | Estado |
 |---|---|---|
@@ -11,10 +11,13 @@ Editor local de plantas com paredes ortogonais, malha de meio tijolo e composiç
 | M3.3 | Grautes automáticos e ajustes individuais | Implementado e aceito |
 | M3.4 | Continuidade/união e movimento com dependentes | Implementado e aceito |
 | M3.5 | Cruz nominal integrada a contorno/divisórias | Implementado e aceito |
-| M4 | Lajes e até três pavimentos | Previsto |
+| M4.1 | Até quatro pavimentos independentes com cota única modular | Implementado; teste e aceite manual pendentes |
+| M4.2/M4.3 | Lajes e comparação visual entre pavimentos | Previstos |
 | M5 | Quantitativos e duplicação de projetos | Previsto |
 
-O aplicativo trabalha com um pavimento. A composição é nominal, sem dimensionamento estrutural ou comprovação de passagem física em furos/canais. Requisitos e limites no [PRD](docs/Ecovit-PRD.md); verificações e aceites no [plano](docs/Ecovit-Plano-Implementacao.md). O aceite específico das revisões de apresentação está pendente, conforme Plano §11.
+O aplicativo trabalha com um a quatro pavimentos independentes. A composição é nominal, sem dimensionamento estrutural ou comprovação de passagem física em furos/canais. Requisitos e limites no [PRD](docs/Ecovit-PRD.md); verificações e aceites no [plano](docs/Ecovit-Plano-Implementacao.md). O aceite específico das revisões de apresentação está pendente, conforme Plano §11.
+
+Durante o MVP, cada marco pode adotar novo formato sem compatibilidade com marcos anteriores. M4.1 aceita somente envelope 8/nominal-v9; arquivos e registros locais anteriores são incompatíveis, sem migração. Os registros antigos permanecem na lista identificados como incompatíveis; crie um novo projeto.
 
 ## Abrir nesta máquina
 
@@ -49,11 +52,11 @@ O endereço padrão é **http://127.0.0.1:5173/**. Projetos salvos em outra orig
 6. Alterne para Fiada para navegar, consultar o intervalo de altura e sobrepor uma fiada adjacente. Selecione um conjunto com alternativa disponível, como L ou cruz, na primeira fiada, para visualizar e confirmar outra fase; a prévia destaca os cantos afetados. Diagnósticos podem ser clicados para localizar o problema.
 7. Aguarde a indicação “Salvo no navegador”. Baixe uma cópia regularmente: dados locais podem ser apagados pelo navegador. Carregar arquivo cria uma cópia de projeto, sem substituir o original salvo.
 
-As propriedades verticais começam com piso e início da alvenaria em 0 cm, e altura de novas paredes em 280 cm. O passo nominal adotado é a altura-base (7 cm resulta em 40 fiadas para 280 cm); não representa junta ou encaixe físico de um fabricante. Furos representam somente eixos. O T usa principal contínua e ramal encostado. A cruz nominal alterna continuidade horizontal/vertical, compondo também contorno e divisórias conectados; a ligação entre paredes não é dimensionada. Combinações sem padrão completo recebem diagnóstico: o conjunto afetado fica sem peças em Fiada, com a Planta preservada.
+O térreo começa na cota 0 cm, com altura de novas paredes em 280 cm. No seletor Pavimento, crie, duplique ou exclua andares; edite nome, cota e altura padrão no painel. Cotas podem ser negativas, são distintas e múltiplas da altura-base. Todas as paredes de um pavimento começam na sua cota, e as fiadas reiniciam em 1. Trocar de andar preserva câmera e última fiada local, limpando seleção e gestos. Para altura-base personalizada incompatível com 280 cm, escolha uma altura modular explicitamente. A altura inicial escolhida fica gravada no projeto e é sugerida para pavimentos novos, mesmo após editar ou remover o térreo. O passo nominal adotado é a altura-base (7 cm resulta em 40 fiadas para 280 cm); não representa junta ou encaixe físico de um fabricante. Furos representam somente eixos. O T usa principal contínua e ramal encostado. A cruz nominal alterna continuidade horizontal/vertical, compondo também contorno e divisórias conectados; a ligação entre paredes não é dimensionada. Combinações sem padrão completo recebem diagnóstico: o conjunto afetado fica sem peças em Fiada, com a Planta preservada.
 
 Pontas livres e contornos abertos são permitidos. Retas conectadas, L, U e ciclos sem ramificações após o tratamento dos encontros usam paginação contínua: inteiros pareiam células consecutivas, cantos seguem a paridade do percurso e meios ficam nas extremidades quando necessários. Não há obrigação de orientar todos os cantos igualmente nem mínimo de quatro módulos para a ponte de um U. Reservas incompatíveis entre encontros próximos, sobreposições e transições de altura sem padrão continuam diagnosticadas; cruz → reta conforme altura é suportada.
 
-O arquivo vigente usa envelope versão 7 e composição `nominal-v8`. O contrato legado de M3.4 é v6/nominal-v7. Snapshots anteriores são validados pela convenção original antes da migração e marcados desatualizados para recálculo. Modelo, IDs, escolhas de encontros e supressões permanecem. Em somente leitura, o resultado antigo é preservado sem calcular/salvar; uma migração de cruz antes bloqueada informa a atualização após salvamento bem-sucedido. Arquivos atuais não são compatíveis com versões anteriores do aplicativo. Projetos anteriores a M3.3 iniciam com categorias automáticas de graute desligadas; para ativar, marcar categorias ou Restaurar padrões de graute e Aplicar. Níveis globais de canaleta existentes em M3.2 são preservados; legados anteriores iniciam sem globais, com faixas locais conforme CT-09. A versão do documento é diferente da convenção de composição.
+O arquivo vigente usa envelope versão 8 e composição `nominal-v9`. O download usa JSON compacto; se o resultado calculado ultrapassar o limite de 50 MiB do arquivo, a cópia conserva todos os desenhos, configurações e ajustes e reconstrói o resultado ao abrir, com aviso. A composição nesta aba permanece intacta. Snapshots atuais são conferidos por recomputação antes de abrir; adulteração é recusada. Em outra aba, somente leitura permite conferir o snapshot sem atualizar ou salvar. Configurações são comuns, mas paredes, vãos e ajustes são independentes por pavimento. Lajes e sobreposição de andares permanecem para M4.2/M4.3.
 
 ## Testar edição de M3.4
 
@@ -61,7 +64,7 @@ Desenhe duas paredes compatíveis separadas e preencha o intervalo: a prévia e 
 
 Supressões de canaleta herdadas de uma união mostram limites do trecho e são restauradas individualmente; remover uma nova faixa continua abrangendo a parede inteira. Graute manual compartilhado conserva a intenção na parede que fica e cria uma cópia na movida. Escolhas de encontros invalidadas ficam pendentes na Fiada, com ação Descartar escolha de encontro. Confirme esses casos pelo roteiro do plano §8.
 
-Arquivos antigos são validados antes da migração, sem unir suas paredes automaticamente. Aplicativos sem suporte ao envelope vigente rejeitam o arquivo; conserve uma cópia de segurança. O arquivo original importado não é modificado. Categorias de graute/configurações já existentes são preservadas.
+Arquivos anteriores a M4.1 são recusados sem conversão. Aplicativos sem suporte ao envelope vigente rejeitam o arquivo; conserve uma cópia de segurança. O arquivo original importado não é modificado. Categorias de graute/configurações já existentes são preservadas.
 
 ## Testar grautes de M3.3
 
@@ -71,7 +74,7 @@ Na Fiada, ativar Graute. Passe sobre um furo: + adiciona; − remove um eixo pre
 
 ## Testar canaletas de M3.2
 
-Em Configurações, grupo Canaletas, adicionar/remover níveis e consultar topo/fiada. Aplicar confirma uma operação; Cancelar preserva o projeto; Restaurar padrões recupera 112/224 cm sem apagar supressões. Novos projetos recebem esses níveis; projetos migrados permitem ativá-los explicitamente.
+Em Configurações, grupo Canaletas, adicionar/remover níveis e consultar topo/fiada. Aplicar confirma uma operação; Cancelar preserva o projeto; Restaurar padrões recupera 112/224 cm sem apagar supressões. Novos projetos recebem esses níveis; sua referência é local a cada pavimento.
 
 Na Fiada, clicar numa canaleta ou usar Selecionar faixa. A prévia verde mostra todos os trechos da parede naquela fiada. Remover faixa de canaleta devolve tijolos comuns; Restaurar faixa suprimida recupera a composição automática. Desfazer/refazer, reabrir e transportar por `.ecovit` preservam os ajustes. Canais são esquemáticos. Roteiro detalhado e resultados reais no plano §7.
 

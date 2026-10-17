@@ -3,7 +3,7 @@ import {
   length,
   LIMIT,
   type Opening,
-  type Project,
+  type EditableProject as Project,
   type Wall,
   type Point,
 } from "./project";
@@ -30,7 +30,7 @@ export function openingIssue(
     return { code: "opening-wall-missing", message: "Parede do vão ausente." };
   const m = doc.project.base.width,
     h = doc.project.base.height,
-    f = doc.model.floors[0];
+    f = doc.model.floors.find((f) => f.id === w.floorId)!;
   const B = f.level + o.base,
     T = B + o.height;
   if (
@@ -47,15 +47,15 @@ export function openingIssue(
   if (
     o.offset < 0 ||
     o.offset + o.width > length(w) ||
-    B < f.start ||
-    T > f.start + w.height
+    B < f.level ||
+    T > f.level + w.height
   )
     return {
       code: "opening-outside-wall",
       message:
         "Vão fora dos limites da parede. Edite o vão ou a parede; sua posição foi preservada.",
     };
-  if (o.offset % m || o.width % m || (B - f.start) % h || (T - f.start) % h)
+  if (o.offset % m || o.width % m || (B - f.level) % h || (T - f.level) % h)
     return {
       code: "opening-off-grid",
       message:
@@ -90,7 +90,7 @@ export function openingIssue(
   }
   return null;
 }
-export function putOpening(doc: Project, opening: Opening): Project {
+export function putOpening<T extends Project>(doc: T, opening: Opening): T {
   const issue = openingIssue(doc, opening);
   if (issue) throw new Error(issue.message);
   const exists = doc.model.openings.some((o) => o.id === opening.id);
@@ -106,7 +106,7 @@ export function putOpening(doc: Project, opening: Opening): Project {
     },
   };
 }
-export function reconcileOpenings(previous: Project, next: Project): Project {
+export function reconcileOpenings<T extends Project>(previous: T, next: T): T {
   return {
     ...next,
     model: {
@@ -127,7 +127,7 @@ export function reconcileOpenings(previous: Project, next: Project): Project {
     },
   };
 }
-export function removeElement(doc: Project, id: string): Project {
+export function removeElement<T extends Project>(doc: T, id: string): T {
   return {
     ...doc,
     model: {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { generate } from "../domain/composition";
+import { generateFloor } from "../domain/composition";
 import { display } from "../domain/project";
-import { useStore } from "../state/store";
+import { useStore, useEditingProject } from "../state/store";
 import styles from "../ui/App.module.css";
 import { Icon } from "../ui/Icon";
 import { restoreSuppression, suppressBand } from "../domain/channels";
@@ -9,17 +9,23 @@ import { GroutPanel } from "./Grout";
 
 export function FiadaToolbar() {
   const s = useStore(),
-    doc = s.doc!,
+    doc = useEditingProject()!,
     total = doc.generated?.courses.length ?? 0;
   useEffect(() => {
-    if (s.course > Math.max(1, total))
+    if (doc.generated && s.course > Math.max(1, total)) {
       s.inspect({ course: Math.max(1, total) });
+      s.notify(
+        total > 0
+          ? `A fiada anterior deixou de existir. Selecionada a fiada ${total}.`
+          : "Este pavimento não tem fiadas disponíveis.",
+      );
+    }
     if (
       (s.ghost === "previous" && s.course <= 1) ||
       (s.ghost === "next" && s.course >= total)
     )
       s.inspect({ ghost: "none" });
-  }, [s, total]);
+  }, [s, total, doc.generated]);
   const active = doc.generated?.courses[s.course - 1];
   useEffect(() => {
     if (
@@ -56,7 +62,7 @@ export function FiadaToolbar() {
       >
         Fiada
       </button>
-      {s.mode === "course" && (
+      {s.mode === "course" && total > 0 && (
         <>
           <button
             aria-label="Fiada anterior"
@@ -144,6 +150,9 @@ export function FiadaToolbar() {
           </button>
         </>
       )}
+      {s.mode === "course" && !doc.model.walls.length && (
+        <span>Este pavimento não tem paredes</span>
+      )}
       <span>
         {s.busy
           ? "Processando…"
@@ -166,7 +175,7 @@ export function FiadaToolbar() {
 export function FiadaPanel() {
   const [collapsed, setCollapsed] = useState(false);
   const s = useStore(),
-    doc = s.doc!,
+    doc = useEditingProject()!,
     generated = doc.generated;
   const opening = doc.model.openings.find((o) => o.id === s.select);
   const component = generated?.components.find((c) => c.id === s.component);
@@ -188,6 +197,7 @@ export function FiadaPanel() {
           ),
           {
             id: crypto.randomUUID(),
+            floorId: doc.viewFloorId,
             anchor: { x: component.x, y: component.y },
             binding: "active" as const,
             componentId: component.id,
@@ -347,7 +357,7 @@ export function FiadaPanel() {
                 disabled={blocked}
                 onClick={() => {
                   try {
-                    s.inspect({ preview: generate(candidate()) });
+                    s.inspect({ preview: generateFloor(candidate()) });
                   } catch (e) {
                     s.notify(String(e));
                   }
@@ -436,21 +446,28 @@ export function FiadaPanel() {
         <button
           className={styles.diagnostic}
           key={i}
-          onClick={() =>
+          disabled={s.busy}
+          onClick={() => {
+            if (d.floorId) s.switchFloor(d.floorId);
             s.inspect({
               course: Math.min(
-                Math.max(1, generated?.courses.length ?? 1),
+                Math.max(
+                  1,
+                  s.doc?.generated?.floors.find((f) => f.floorId === d.floorId)
+                    ?.courses.length ?? 1,
+                ),
                 d.course,
               ),
               focus: { x: d.x, y: d.y },
               diagnosticWalls: d.wallIds,
               preview: null,
-            })
-          }
+            });
+          }}
         >
           <strong>
-            {d.severity === "error" ? "Pendência" : "Informação"} · Térreo ·
-            fiada {d.course}
+            {d.severity === "error" ? "Pendência" : "Informação"} ·{" "}
+            {s.doc?.model.floors.find((f) => f.id === d.floorId)?.name} · fiada{" "}
+            {d.course}
           </strong>
           <span>{d.message}</span>
         </button>

@@ -24,13 +24,11 @@ async function load(page: Page, vertical?: boolean) {
       )!,
     ];
   await page.goto("/");
-  await page
-    .getByTestId("import-file")
-    .setInputFiles({
-      name: "cursor.ecovit",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(d)),
-    });
+  await page.getByTestId("import-file").setInputFiles({
+    name: "cursor.ecovit",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(d)),
+  });
   await expect(page.getByRole("status")).toContainText("Salvo");
 }
 async function point(page: Page, x: number, y: number) {

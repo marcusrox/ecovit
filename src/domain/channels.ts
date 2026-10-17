@@ -1,4 +1,10 @@
-import { bounds, LIMIT, type Project, type Wall, type Point } from "./project";
+import {
+  bounds,
+  LIMIT,
+  type EditableProject as Project,
+  type Wall,
+  type Point,
+} from "./project";
 import type { Composition, Piece } from "./composition";
 import { openingBox } from "./openings";
 export const MAX_CHANNEL_LEVELS = 100;
@@ -8,18 +14,20 @@ export type ChannelBand = {
   wallId: string;
   top: number;
   course: number;
-  cells: (Point & { origins: string[] })[];
+  cells: (Point & {
+    origins: string[];
+  })[];
 };
 export const channelBandId = (wallId: string, top: number) =>
   `${wallId}:${top}`;
 export const isChannel = (p: Piece) =>
   p.kind === "channel" || p.kind === "half-channel";
 const key = (x: number, y: number) => `${x},${y}`;
-export function suppressBand(
-  doc: Project,
+export function suppressBand<T extends Project>(
+  doc: T,
   wallId: string,
   top: number,
-): Project {
+): T {
   if (!doc.model.walls.some((w) => w.id === wallId))
     throw new Error("Parede da faixa ausente.");
   if (
@@ -36,16 +44,22 @@ export function suppressBand(
       ...doc.adjustments,
       channels: [
         ...doc.adjustments.channels,
-        { id: crypto.randomUUID(), wallId, top, scope: { kind: "wall" } },
+        {
+          id: crypto.randomUUID(),
+          floorId: doc.model.walls.find((w) => w.id === wallId)!.floorId,
+          wallId,
+          top,
+          scope: { kind: "wall" },
+        },
       ],
     },
   };
 }
-export function restoreBand(
-  doc: Project,
+export function restoreBand<T extends Project>(
+  doc: T,
   wallId: string,
   top: number,
-): Project {
+): T {
   return {
     ...doc,
     adjustments: {
@@ -56,7 +70,7 @@ export function restoreBand(
     },
   };
 }
-export function restoreSuppression(doc: Project, id: string): Project {
+export function restoreSuppression<T extends Project>(doc: T, id: string): T {
   return {
     ...doc,
     adjustments: {
@@ -75,8 +89,8 @@ export function validateChannelLevels(doc: Project) {
     if (
       !Number.isSafeInteger(l.top) ||
       Math.abs(l.top) > LIMIT ||
-      f.level + l.top <= f.start ||
-      (f.level + l.top - f.start) % h
+      f.level + l.top <= f.level ||
+      (f.level + l.top - f.level) % h
     )
       throw new Error(
         "O topo de canaleta deve coincidir com uma fiada acima do início da alvenaria.",
@@ -86,7 +100,10 @@ export function validateChannelLevels(doc: Project) {
     seen.add(l.top);
   }
 }
-type Cell = Point & { walls: string[]; origins: Set<string> };
+type Cell = Point & {
+  walls: string[];
+  origins: Set<string>;
+};
 function occupied(w: Wall, p: Point, m: number, n: number, h: number) {
   const b = bounds(w, m);
   return (
@@ -125,7 +142,7 @@ export function applyChannels(doc: Project, result: Composition): Composition {
     (a, b) => a.top - b.top || a.id.localeCompare(b.id),
   );
   for (const l of levels)
-    if (f.level + l.top <= f.start || (f.level + l.top - f.start) % h)
+    if (f.level + l.top <= f.level || (f.level + l.top - f.level) % h)
       result.diagnostics.push({
         code: "channel-level-off-grid",
         severity: "error",
@@ -134,7 +151,7 @@ export function applyChannels(doc: Project, result: Composition): Composition {
           "Nível de canaleta fora dos limites de fiada. Ajuste a cota nas configurações; o nível foi preservado e não aplicado.",
         wallIds: doc.model.walls.map((w) => w.id).sort(),
         levelIds: [l.id],
-        course: Math.max(1, Math.ceil((f.level + l.top - f.start) / h)),
+        course: Math.max(1, Math.ceil((f.level + l.top - f.level) / h)),
         x: 0,
         y: 0,
       });
@@ -144,12 +161,10 @@ export function applyChannels(doc: Project, result: Composition): Composition {
     const w = wallMap.get(a.wallId);
     if (
       !w ||
-      (a.top - f.start) % h ||
-      a.top <= f.start ||
-      a.top > f.start + w.height ||
-      ((result.convention === "nominal-v7" ||
-        result.convention === "nominal-v8") &&
-        a.scope?.kind === "range" &&
+      (a.top - f.level) % h ||
+      a.top <= f.level ||
+      a.top > f.level + w.height ||
+      (a.scope?.kind === "range" &&
         (a.scope.from < (w.a.y === w.b.y ? bounds(w, m).x : bounds(w, m).y) ||
           a.scope.to >
             (w.a.y === w.b.y
@@ -165,7 +180,7 @@ export function applyChannels(doc: Project, result: Composition): Composition {
           "Supressão de canaleta sem fiada válida na parede. Ajuste preservado, não aplicado; restaure ou corrija a geometria.",
         wallIds: w ? [w.id] : [],
         adjustmentIds: [a.id],
-        course: Math.max(1, Math.ceil((a.top - f.start) / h)),
+        course: Math.max(1, Math.ceil((a.top - f.level) / h)),
         x: b.x,
         y: b.y,
       });
@@ -198,7 +213,7 @@ export function applyChannels(doc: Project, result: Composition): Composition {
       }
     };
     for (const l of levels)
-      if (f.level + l.top === top && (top - f.start) % h === 0 && top > f.start)
+      if (f.level + l.top === top && (top - f.level) % h === 0 && top > f.level)
         for (const w of doc.model.walls)
           if (w.height >= n * h) demand(w, -LIMIT, LIMIT, `level:${l.id}`);
     for (const o of doc.model.openings) {
@@ -208,29 +223,20 @@ export function applyChannels(doc: Project, result: Composition): Composition {
         T = B + o.height,
         b = openingBox(o, w, m),
         start = w.a.y === w.b.y ? b.x : b.y;
-      if (top === T + h && T + h <= f.start + w.height)
+      if (top === T + h && T + h <= f.level + w.height)
         demand(w, start - m, start + o.width + m, `opening-top:${o.id}`);
-      if (top === B && B - h >= f.start)
+      if (top === B && B - h >= f.level)
         demand(w, start - m, start + o.width + m, `opening-bottom:${o.id}`);
     }
-    const suppressedWalls = new Set(
-      doc.adjustments.channels
-        .filter((a) => a.top === top)
-        .map((a) => a.wallId),
-    );
     for (const c of cells.values()) {
-      const suppressed =
-        result.convention === "nominal-v7" || result.convention === "nominal-v8"
-          ? doc.adjustments.channels.some((a) => {
-              const w = wallMap.get(a.wallId);
-              if (!w || a.top !== top || !c.walls.includes(w.id)) return false;
-              const s = w.a.y === w.b.y ? c.x : c.y;
-              return (
-                a.scope?.kind !== "range" ||
-                (s >= a.scope.from && s < a.scope.to)
-              );
-            })
-          : c.walls.some((id) => suppressedWalls.has(id));
+      const suppressed = doc.adjustments.channels.some((a) => {
+        const w = wallMap.get(a.wallId);
+        if (!w || a.top !== top || !c.walls.includes(w.id)) return false;
+        const s = w.a.y === w.b.y ? c.x : c.y;
+        return (
+          a.scope?.kind !== "range" || (s >= a.scope.from && s < a.scope.to)
+        );
+      });
       if (suppressed) c.origins.clear();
     }
     const bands = new Map<string, ChannelBand>();

@@ -1,7 +1,12 @@
+import {
+  createLocalProject as createProject,
+  importedCopy,
+  parseFile,
+  root,
+} from "./floor-support";
 import { describe, it, expect } from "vitest";
 import {
   cm,
-  createProject,
   makeWall,
   resizeWall,
   resizeLength,
@@ -11,12 +16,7 @@ import {
   travel,
   validateBase,
 } from "../src/domain/project";
-import {
-  importedCopy,
-  parseFile,
-  readFile,
-  MAX_FILE,
-} from "../src/persistence/files";
+import { readFile, MAX_FILE } from "../src/persistence/files";
 const base = { length: 2500, width: 1250, height: 700 };
 const project = () => createProject("Casa", base);
 describe("precisão e malha", () => {
@@ -156,7 +156,7 @@ describe("documento e histórico", () => {
     expect(() => parseFile("not json")).toThrow();
   });
   it("desfaz/refaz sem alterar IDs e limita a 50 operações", () => {
-    const a = project(),
+    const a = root(project()),
       b = { ...a, project: { ...a.project, name: "Novo" } };
     const h = remember({ past: [], future: [] }, a);
     const undo = travel(h, b)!;

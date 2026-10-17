@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { useStore } from "../state/store";
+import { useStore, useEditingProject } from "../state/store";
 import { display } from "../domain/project";
 import {
   activeGrout,
@@ -12,7 +12,7 @@ import styles from "../ui/App.module.css";
 
 export function GroutPanel() {
   const s = useStore(),
-    d = s.doc!,
+    d = useEditingProject()!,
     m = d.project.base.width;
   const cells = useMemo(
     () => (d.generated ? courseCells(d, d.generated, s.course) : []),

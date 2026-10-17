@@ -1,12 +1,12 @@
-import { describe, it, expect } from "vitest";
-import { generate } from "../src/domain/composition";
 import {
-  createProject,
-  makeWall,
-  remember,
+  generate,
+  createLocalProject as createProject,
   type Project,
-} from "../src/domain/project";
-import { parseFile, validateProject } from "../src/persistence/files";
+} from "./floor-support";
+import { describe, it, expect } from "vitest";
+
+import { makeWall } from "../src/domain/project";
+
 const base = { length: 2500, width: 1250, height: 700 };
 function doc() {
   return createProject("M2", base);
@@ -136,6 +136,10 @@ describe("M2 composição nominal", () => {
     const c = g.components[0];
     d.adjustments.junctions = [
       {
+        floorId: d.model.floors[0].id,
+        id: crypto.randomUUID(),
+        anchor: { x: 0, y: 0 },
+        binding: "active",
         componentId: c.id,
         signature: c.signature,
         wallIds: c.wallIds,
@@ -170,8 +174,8 @@ describe("M2 composição nominal", () => {
     wall(d, [0, -1], [0, 2]);
     wall(d, [10, 0], [18, 0]);
     const g = generate(d, "nominal-v7");
-    expect(g.diagnostics.some((x) => x.code === "cross")).toBe(true);
-    expect(counts(g, 0)).toEqual([4, 0]);
+    expect(g.diagnostics.some((x) => x.code === "cross-connection")).toBe(true);
+    expect(g.courses[0].pieces.filter((p) => p.x >= 12500)).toHaveLength(4);
     d.model.walls.push({ ...d.model.walls[2], id: crypto.randomUUID() });
     expect(generate(d).diagnostics.some((x) => x.code === "overlap")).toBe(
       true,
@@ -189,12 +193,11 @@ describe("M2 composição nominal", () => {
     expect(generate(d).diagnostics[0].code).toBe("height");
     expect(d.model.walls[0].height).toBe(2000);
     d.model.walls[0].height = 2100;
-    d.model.floors[0].start = 1200;
-    d.model.floors[0].level = 1000;
+    d.model.floors[0].level = 1400;
     expect(generate(d).courses.map((c) => [c.bottom, c.top])).toEqual([
-      [200, 900],
-      [900, 1600],
-      [1600, 2300],
+      [0, 700],
+      [700, 1400],
+      [1400, 2100],
     ]);
   });
   it.each([700, 1400])("EX-15/16: término em %i mantém fase", (height) => {
@@ -240,11 +243,13 @@ describe("M2 composição nominal", () => {
     d.model.walls = d.model.walls.map((w) => ({ ...w, a: w.b, b: w.a }));
     expect(generate(d)).toEqual(a);
   });
-  it("limites são verificados antes de expandir células", () => {
+  it("M4.1 não bloqueia geração pelo antigo teto de mil fiadas", () => {
     const d = doc();
-    wall(d, [0, 0], [30000, 0]);
-    expect(generate(d).diagnostics[0].code).toBe("limit");
-    expect(generate(d).courses).toEqual([]);
+    wall(d, [0, 0], [2, 0], 1001 * 700);
+    const g = generate(d);
+    expect(g.diagnostics.some((a) => a.code === "limit")).toBe(false);
+    expect(g.courses).toHaveLength(1001);
+    expect(g.courses[1000].pieces).toHaveLength(1);
   });
   it("ajuste incompatível não é aplicado silenciosamente", () => {
     const d = l(),
@@ -252,6 +257,10 @@ describe("M2 composição nominal", () => {
       c = g.components[0];
     d.adjustments.junctions = [
       {
+        floorId: d.model.floors[0].id,
+        id: crypto.randomUUID(),
+        anchor: { x: 0, y: 0 },
+        binding: "active",
         componentId: c.id,
         signature: c.signature,
         wallIds: c.wallIds,
@@ -260,27 +269,5 @@ describe("M2 composição nominal", () => {
     ];
     d.model.walls[0].b.x += 1250;
     expect(generate(d).diagnostics[0].code).toBe("adjustment");
-  });
-  it("migração v1, arquivo v2, adulteração e histórico sem composição", () => {
-    const d = l();
-    const {
-      openingSettings: _settings,
-      channelLevels: _levels,
-      groutSettings: _grout,
-      ...legacyProject
-    } = d.project;
-    void _settings;
-    void _levels;
-    void _grout;
-    const v1 = { ...d, project: legacyProject, schemaVersion: 1 };
-    expect(parseFile(JSON.stringify(v1)).model).toEqual(d.model);
-    const g = generate(d);
-    d.generated = g;
-    d.generationState = { status: "current", diagnostics: g.diagnostics };
-    expect(parseFile(JSON.stringify(d))).toEqual(d);
-    expect(remember({ past: [], future: [] }, d).past[0].generated).toBe(null);
-    const bad = structuredClone(d);
-    bad.generated!.courses[0].pieces[0].x++;
-    expect(() => validateProject(bad)).toThrow("inconsistente");
   });
 });

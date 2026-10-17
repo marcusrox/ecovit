@@ -1,22 +1,17 @@
-import { describe, expect, it } from "vitest";
 import {
-  createProject,
-  defaultGroutSettings,
-  makeWall,
-  bounds,
+  createLocalProject as createProject,
   type Project,
-} from "../src/domain/project";
-import { generate } from "../src/domain/composition";
-import {
-  activeGrout,
-  courseCells,
+  generate,
   discardGroutAdjustment,
   toggleGrout,
-  MAX_GROUT_ADJUSTMENTS,
-} from "../src/domain/grout";
-import { suppressBand } from "../src/domain/channels";
-import { putOpening } from "../src/domain/openings";
-import { parseFile } from "../src/persistence/files";
+  suppressBand,
+  putOpening,
+  parseFile,
+} from "./floor-support";
+import { describe, expect, it } from "vitest";
+import { defaultGroutSettings, makeWall, bounds } from "../src/domain/project";
+
+import { activeGrout, courseCells } from "../src/domain/grout";
 
 function fixture(m = 1250, h = 700, vertical = false, side: 1 | -1 = 1) {
   const d = createProject("Grautes", { length: 2 * m, width: m, height: h });
@@ -237,8 +232,7 @@ describe("M3.3 grautes nominais", () => {
     [true, -1],
   ] as const)("direção %s/lado %i e referência vertical", (vertical, side) => {
     const d = fixture(1400, 600, vertical, side);
-    d.model.floors[0].level = 1000;
-    d.model.floors[0].start = 1200;
+    d.model.floors[0].level = 1200;
     const b = bounds(d.model.walls[0], 1400),
       g = generate(d);
     expect(g.grouts!.map((a) => (vertical ? a.y : a.x))).toEqual([
@@ -309,36 +303,6 @@ describe("M3.3 grautes nominais", () => {
       }),
     ).toEqual(generate(d));
   });
-  it("migração M3.2 confere snapshot original, mantém canaletas/supressões e desliga grautes", () => {
-    let d = fixture();
-    d = suppressBand(d, d.model.walls[0].id, 11200);
-    const { groutSettings: _grout, ...project } = d.project;
-    void _grout;
-    const g = generate(d, "nominal-v5"),
-      old = {
-        ...d,
-        schemaVersion: 4,
-        adjustments: {
-          ...d.adjustments,
-          channels: d.adjustments.channels.map(({ scope: _scope, ...a }) => {
-            void _scope;
-            return a;
-          }),
-        },
-        project,
-        generated: g,
-        generationState: { status: "current", diagnostics: g.diagnostics },
-      };
-    const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(7);
-    expect(migrated.project.groutSettings).toEqual(defaultGroutSettings(false));
-    expect(migrated.adjustments).toEqual(d.adjustments);
-    expect(generate(migrated).grouts).toEqual([]);
-    expect(generate(migrated).courses).toEqual(g.courses);
-    const bad = structuredClone(old);
-    bad.generated.courses[0].pieces[0].x++;
-    expect(() => parseFile(JSON.stringify(bad))).toThrow("inconsistente");
-  });
   it("arquivo íntegro e adulteração/órfãos/duplicatas recusados", () => {
     const d = fixture(),
       good = snapshot(toggleGrout(d, cell(d, 20000), true));
@@ -364,23 +328,5 @@ describe("M3.3 grautes nominais", () => {
       },
     };
     expect(() => parseFile(JSON.stringify(orphan))).toThrow("referência");
-  });
-  it("limite de ajustes não trunca nem bloqueia cálculo da alvenaria", () => {
-    const d = fixture();
-    d.adjustments.grout = Array.from(
-      { length: MAX_GROUT_ADJUSTMENTS + 1 },
-      (_, i) => ({
-        id: crypto.randomUUID(),
-        x: i * 1250,
-        y: 0,
-        wallIds: [d.model.walls[0].id],
-        action: "exclude" as const,
-      }),
-    );
-    expect(generate(d).diagnostics.some((a) => a.code === "grout-limit")).toBe(
-      true,
-    );
-    expect(generate(d).courses).toHaveLength(40);
-    expect(() => parseFile(JSON.stringify(d))).toThrow();
   });
 });

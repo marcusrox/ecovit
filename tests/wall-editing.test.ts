@@ -1,18 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
 import {
-  createProject,
-  makeWall,
+  createLocalProject as createProject,
   type Project,
-  type Wall,
-  type Point,
-  LIMIT,
-} from "../src/domain/project";
+  generate,
+  putOpening,
+  suppressBand,
+  restoreSuppression,
+  toggleGrout,
+  parseFile,
+} from "./floor-support";
+import { describe, expect, it, vi } from "vitest";
+import { makeWall, type Wall, type Point, LIMIT } from "../src/domain/project";
 import { createContinuation, moveWall } from "../src/domain/wall-editing";
-import { generate } from "../src/domain/composition";
-import { putOpening } from "../src/domain/openings";
-import { suppressBand, restoreSuppression } from "../src/domain/channels";
-import { toggleGrout } from "../src/domain/grout";
-import { parseFile } from "../src/persistence/files";
 
 function fixture(m = 1250) {
   const d = createProject("M3.4", { length: m * 2, width: m, height: 700 });
@@ -184,9 +182,19 @@ describe("M3.4 continuidade e movimento", () => {
         b = wall(d, { x: 0, y: 0 }, { x: 0, y: 10000 });
       d.model.walls = [a, b];
       const id = crypto.randomUUID();
-      d.adjustments.grout = [{ id, x: 0, y: 0, wallIds: [a.id, b.id], action }];
+      d.adjustments.grout = [
+        {
+          floorId: d.model.floors[0].id,
+          id,
+          x: 0,
+          y: 0,
+          wallIds: [a.id, b.id],
+          action,
+        },
+      ];
       const moved = moveWall(d, a.id, { x: 2500, y: 5000 }).doc;
       expect(moved.adjustments.grout[0]).toEqual({
+        floorId: d.model.floors[0].id,
         id,
         x: 0,
         y: 0,
@@ -194,6 +202,7 @@ describe("M3.4 continuidade e movimento", () => {
         action,
       });
       expect(moved.adjustments.grout[1]).toMatchObject({
+        floorId: d.model.floors[0].id,
         x: 2500,
         y: 5000,
         wallIds: [a.id],
@@ -264,6 +273,7 @@ describe("M3.4 continuidade e movimento", () => {
     d.model.walls = [a];
     d.adjustments.grout = [
       {
+        floorId: d.model.floors[0].id,
         id: crypto.randomUUID(),
         x: 10000,
         y: 0,
@@ -271,6 +281,7 @@ describe("M3.4 continuidade e movimento", () => {
         action: "exclude",
       },
       {
+        floorId: d.model.floors[0].id,
         id: crypto.randomUUID(),
         x: 10000,
         y: 0,
@@ -298,6 +309,7 @@ describe("M3.4 continuidade e movimento", () => {
       id = crypto.randomUUID();
     d.adjustments.junctions = [
       {
+        floorId: d.model.floors[0].id,
         id,
         anchor: { x: c.x, y: c.y },
         binding: "active",
@@ -340,6 +352,7 @@ describe("M3.4 continuidade e movimento", () => {
     d.model.walls = [a, b];
     d.adjustments.grout = [
       {
+        floorId: d.model.floors[0].id,
         id: crypto.randomUUID(),
         x: 0,
         y: 0,
@@ -364,28 +377,7 @@ describe("M3.4 continuidade e movimento", () => {
     expect(JSON.stringify(d)).toBe(before);
     spy.mockRestore();
   });
-  it("v5 confere snapshot antes de migrar sem ativar flags nem normalizar paredes", () => {
-    const d = fixture(),
-      a = wall(d, { x: 0, y: 0 }, { x: 10000, y: 0 }),
-      b = wall(d, { x: 10000, y: 0 }, { x: 20000, y: 0 });
-    d.model.walls = [a, b];
-    const g = generate(d, "nominal-v6"),
-      old = {
-        ...d,
-        schemaVersion: 5,
-        generated: g,
-        generationState: { status: "current", diagnostics: g.diagnostics },
-      };
-    const migrated = parseFile(JSON.stringify(old));
-    expect(migrated.schemaVersion).toBe(7);
-    expect(migrated.model.walls).toEqual([a, b]);
-    expect(migrated.generationState.status).toBe("outdated");
-    expect(migrated.project.groutSettings).toEqual(d.project.groutSettings);
-    const bad = structuredClone(old);
-    bad.generated.courses[0].pieces[0].width++;
-    expect(() => parseFile(JSON.stringify(bad))).toThrow("inconsistente");
-  });
-  it("arquivo v6 recusa alcance não modular, ID duplicado e referência órfã", () => {
+  it("arquivo v8 recusa alcance não modular, ID duplicado e referência órfã", () => {
     let d = fixture();
     d.model.walls = [wall(d, { x: 0, y: 0 }, { x: 40000, y: 0 })];
     d = suppressBand(d, d.model.walls[0].id, 11200);
@@ -394,7 +386,7 @@ describe("M3.4 continuidade e movimento", () => {
     expect(() => parseFile(JSON.stringify(bad))).toThrow("malha");
     bad.adjustments.channels[0].scope = { kind: "wall" };
     bad.adjustments.channels.push({ ...bad.adjustments.channels[0] });
-    expect(() => parseFile(JSON.stringify(bad))).toThrow("duplicada");
+    expect(() => parseFile(JSON.stringify(bad))).toThrow("duplicad");
     bad.adjustments.channels.pop();
     bad.adjustments.channels[0].wallId = crypto.randomUUID();
     expect(() => parseFile(JSON.stringify(bad))).toThrow("referência");

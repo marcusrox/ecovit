@@ -76,7 +76,10 @@ test("M3.1 carga com 100 portas e 40 fiadas preserva contagem", async ({
   const elapsed = Date.now() - start;
   const result = await exported(page);
   expect(
-    result.generated!.courses.reduce((sum, c) => sum + c.pieces.length, 0),
+    result.generated!.floors[0].courses.reduce(
+      (sum, c) => sum + c.pieces.length,
+      0,
+    ),
   ).toBe(31200);
   expect(
     result.generated!.diagnostics.filter((d) => d.severity === "error"),
@@ -130,8 +133,8 @@ test("M3.1 três tipos, corpo, duas alças, campos, excluir/desfazer e transport
     "window",
     "opening",
   ]);
-  expect(initial.schemaVersion).toBe(7);
-  expect(initial.generated!.convention).toBe("nominal-v8");
+  expect(initial.schemaVersion).toBe(8);
+  expect(initial.generated!.convention).toBe("nominal-v9");
   await page
     .getByRole("button", { name: "Selecionar", exact: false })
     .first()
@@ -222,7 +225,9 @@ test("M3.1 empilhados identificados na Planta, contato recusado e edição na Fi
   await page.getByRole("button", { name: "Cancelar edição" }).click();
   await page.getByRole("button", { name: "Fiada", exact: true }).click();
   await page.getByLabel("Número da fiada").fill("16");
-  expect((await exported(page)).generated!.courses[15].pieces).toHaveLength(17);
+  expect(
+    (await exported(page)).generated!.floors[0].courses[15].pieces,
+  ).toHaveLength(17);
   await page.getByLabel("Número da fiada").fill("17");
   await click(page, 15000, 625);
   await page
@@ -274,7 +279,9 @@ test("M3.1 encurtar parede conserva vão pendente, diagnóstico localiza e desfa
   await page.getByLabel("Comprimento", { exact: true }).press("Enter");
   const pending = await exported(page);
   expect(pending.model.openings[0].offset).toBe(10000);
-  expect(pending.generated!.courses.every((c) => !c.pieces.length)).toBe(true);
+  expect(
+    pending.generated!.floors[0].courses.every((c) => !c.pieces.length),
+  ).toBe(true);
   await page.getByRole("button", { name: /Diagnósticos \(/ }).click();
   await expect(page.getByLabel("Diagnósticos do projeto")).toContainText(
     "fora dos limites",
@@ -304,11 +311,15 @@ test("M3.1 encurtar parede conserva vão pendente, diagnóstico localiza e desfa
 test("M3.1 defaults incompatíveis em base de 6 cm exigem escolha antes de inserir", async ({
   page,
 }) => {
-  const d = createProject("Altura 6", {
-    length: 2800,
-    width: 1400,
-    height: 600,
-  });
+  const d = createProject(
+    "Altura 6",
+    {
+      length: 2800,
+      width: 1400,
+      height: 600,
+    },
+    24000,
+  );
   d.model.walls = [
     makeWall(
       { x: 0, y: 0 },

@@ -1,3 +1,5 @@
+import { FloorControls } from "./Floors";
+import { editFloor } from "../domain/floors";
 import { FiadaPanel, FiadaToolbar } from "../editor/Fiada";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "../editor/Canvas";
@@ -13,12 +15,12 @@ import {
   display,
   length,
   resizeLength,
-  type Project,
+  type LocalProject as Project,
   type Tool,
 } from "../domain/project";
 import { download, importedCopy, readFile } from "../persistence/files";
 import { listProjects, loadProject } from "../persistence/database";
-import { useStore } from "../state/store";
+import { useStore, useEditingProject } from "../state/store";
 import styles from "../ui/App.module.css";
 import { Icon } from "../ui/Icon";
 
@@ -94,7 +96,7 @@ function Numeric({
                   [
                     Math.floor(n / module) * module,
                     Math.ceil(n / module) * module,
-                  ].filter((n) => n > 0),
+                  ].filter((n) => !positive || n > 0),
                 );
                 setText(display(value));
                 return;
@@ -142,11 +144,16 @@ function Properties({ doc }: { doc: Project }) {
     [alternatives, setAlternatives] = useState<number[]>([]),
     [collapsed, setCollapsed] = useState(false);
   useEffect(() => setAlternatives([]), [selected]);
-  const updateFloor = (key: "level" | "start" | "defaultHeight", n: number) =>
-    void useStore.getState().commit({
-      ...doc,
-      model: { ...doc.model, floors: [{ ...floor, [key]: n }] },
-    });
+  const updateFloor = (key: "level" | "defaultHeight", n: number) => {
+    const root = useStore.getState().doc!;
+    try {
+      void useStore
+        .getState()
+        .commit(editFloor(root, floor.id, { [key]: n }), "floor");
+    } catch (e) {
+      useStore.getState().notify((e as Error).message);
+    }
+  };
   const setLength = (n: number) => {
     if (!wall) return;
     const module = doc.project.base.width;
@@ -186,7 +193,7 @@ function Properties({ doc }: { doc: Project }) {
   return (
     <aside className={styles.properties} aria-label="Propriedades">
       <div className={styles.panelTitle}>
-        <span>{wall ? "PAREDE SELECIONADA" : "PROPRIEDADES DO TÉRREO"}</span>
+        <span>{wall ? "PAREDE SELECIONADA" : "PROPRIEDADES DO PAVIMENTO"}</span>
         <button
           aria-label="Recolher propriedades"
           className={styles.iconButton}
@@ -287,19 +294,37 @@ function Properties({ doc }: { doc: Project }) {
         </>
       ) : (
         <>
-          <h2>Térreo</h2>
+          <h2>{floor.name}</h2>
+          <label className={styles.field}>
+            Nome do pavimento
+            <input
+              aria-label="Nome do pavimento"
+              key={floor.id + floor.name}
+              defaultValue={floor.name}
+              maxLength={100}
+              disabled={disabled}
+              onBlur={(e) => {
+                try {
+                  void useStore.getState().commit(
+                    editFloor(useStore.getState().doc!, floor.id, {
+                      name: e.target.value,
+                    }),
+                    "floor",
+                  );
+                } catch (err) {
+                  useStore.getState().notify((err as Error).message);
+                  e.target.value = floor.name;
+                }
+              }}
+            />
+          </label>
           <p className={styles.muted}>Referências verticais do desenho</p>
           <Numeric
-            label="Cota do piso"
+            label="Cota do pavimento"
+            module={doc.project.base.height}
             value={floor.level}
             disabled={disabled}
             commit={(n) => updateFloor("level", n)}
-          />
-          <Numeric
-            label="Início da alvenaria"
-            value={floor.start}
-            disabled={disabled}
-            commit={(n) => updateFloor("start", n)}
           />
           <Numeric
             module={doc.project.base.height}
@@ -351,6 +376,7 @@ export default function App() {
   const groutMode = useStore((s) => s.groutMode);
   const selected = useStore((s) => s.select),
     pendingOpening = useStore((s) => s.pendingOpening);
+  const editingDoc = useEditingProject();
   const doc = useStore((s) => s.doc),
     busy = useStore((s) => s.busy),
     readonly = useStore((s) => s.readonly),
@@ -369,6 +395,7 @@ export default function App() {
     [preset, setPreset] = useState("25"),
     [dimensions, setDimensions] = useState(["25", "12,5", "7"]),
     [formError, setFormError] = useState(""),
+    [initialHeight, setInitialHeight] = useState("280"),
     [importing, setImporting] = useState(false),
     [editorName, setEditorName] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -533,7 +560,18 @@ export default function App() {
               <button
                 className={`${styles.primary} ${styles.iconText}`}
                 disabled={busy || importing}
-                onClick={() => download(doc)}
+                onClick={() => {
+                  try {
+                    if (download(doc))
+                      useStore
+                        .getState()
+                        .notify(
+                          "Projeto baixado com todos os desenhos, configurações e ajustes. Para caber no arquivo, o resultado calculado será reconstruído ao abrir; o projeto nesta aba permanece atualizado.",
+                        );
+                  } catch (e) {
+                    useStore.getState().notify((e as Error).message);
+                  }
+                }}
               >
                 <Icon name="download" /> Baixar projeto
               </button>
@@ -577,6 +615,7 @@ export default function App() {
       {doc ? (
         <>
           <div className={styles.editorControls}>
+            <FloorControls />
             <div className={styles.toolbar}>
               <div className={styles.tools}>
                 <button
@@ -694,9 +733,9 @@ export default function App() {
             ) : mode === "plan" ? (
               pendingOpening ||
               doc.model.openings.some((o) => o.id === selected) ? (
-                <OpeningProperties doc={doc} />
+                <OpeningProperties doc={editingDoc!} />
               ) : (
-                <Properties doc={doc} />
+                <Properties key={editingDoc!.viewFloorId} doc={editingDoc!} />
               )
             ) : (
               <FiadaPanel />
@@ -707,8 +746,8 @@ export default function App() {
               Diagnósticos ({doc.generationState.diagnostics.length})
             </button>
             <span className={styles.moduleLabel}>
-              Térreo · Módulo <b>{display(doc.project.base.width)} cm</b> · Face
-              externa
+              {editingDoc!.model.floors[0].name} · Módulo{" "}
+              <b>{display(doc.project.base.width)} cm</b> · Face externa
             </span>
             <span>
               {doc.model.walls.length}{" "}
@@ -800,6 +839,11 @@ export default function App() {
                     </span>
                     <span className={styles.projectInfo}>
                       <strong>{p.name}</strong>
+                      {!p.compatible && (
+                        <small>
+                          Formato incompatível — crie um novo projeto
+                        </small>
+                      )}
                       <small>
                         {p.walls} {p.walls === 1 ? "parede" : "paredes"} ·
                         Atualizado em{" "}
@@ -850,11 +894,15 @@ export default function App() {
                 e.preventDefault();
                 try {
                   const [l, w, h] = dimensions.map(cm);
-                  const d = createProject(name, {
-                    length: l,
-                    width: w,
-                    height: h,
-                  });
+                  const d = createProject(
+                    name,
+                    {
+                      length: l,
+                      width: w,
+                      height: h,
+                    },
+                    28000 % h === 0 ? 28000 : cm(initialHeight),
+                  );
                   void useStore.getState().open(d, true);
                   setCreating(false);
                   setTool("wall");
@@ -915,6 +963,39 @@ export default function App() {
                   ))}
                 </div>
               )}
+              {preset === "custom" &&
+                (() => {
+                  try {
+                    const h = cm(dimensions[2]);
+                    if (h <= 0 || 28000 % h === 0) return null;
+                    return (
+                      <label className={styles.field}>
+                        Altura inicial das paredes (cm)
+                        <input
+                          aria-label="Altura inicial das paredes"
+                          value={initialHeight}
+                          onChange={(e) => setInitialHeight(e.target.value)}
+                        />
+                        <span>
+                          Escolha uma altura modular:{" "}
+                          {[Math.floor(28000 / h) * h, Math.ceil(28000 / h) * h]
+                            .filter((v) => v > 0)
+                            .map((v) => (
+                              <button
+                                type="button"
+                                key={v}
+                                onClick={() => setInitialHeight(display(v))}
+                              >
+                                {display(v)} cm
+                              </button>
+                            ))}
+                        </span>
+                      </label>
+                    );
+                  } catch {
+                    return null;
+                  }
+                })()}
               <div className={styles.infoBox}>
                 O comprimento é sempre o dobro da largura. O tamanho-base será o
                 mesmo em todo o projeto.
@@ -936,7 +1017,10 @@ export default function App() {
         </div>
       )}
       {settings && doc && (
-        <OpeningSettingsDialog doc={doc} close={() => setSettings(false)} />
+        <OpeningSettingsDialog
+          doc={editingDoc!}
+          close={() => setSettings(false)}
+        />
       )}
     </div>
   );

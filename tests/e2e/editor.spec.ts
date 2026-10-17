@@ -142,7 +142,7 @@ test("M1 arquivo inválido preserva trabalho; falha de escrita permite download 
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify({ ...original, schemaVersion: 999 })),
   });
-  await expect(page.getByRole("alert")).toContainText("suportados");
+  await expect(page.getByRole("alert")).toContainText("incompatível");
   await page.evaluate(() => {
     IDBObjectStore.prototype.put = function () {
       throw new DOMException("Teste de armazenamento", "QuotaExceededError");

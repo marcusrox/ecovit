@@ -1394,3 +1394,23 @@ button.iconButton {
     width: 208px;
   }
 }
+
+.floorControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--line, #ddd);
+}
+.floorControls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.floorControls select {
+  max-width: 260px;
+}
+.floorControls .modal label {
+  display: grid;
+}

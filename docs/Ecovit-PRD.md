@@ -1,16 +1,18 @@
 # Ecovit — Documento de requisitos do produto (PRD)
 
-**Versão documental:** 0.15
-**Estado do produto:** M1, M2 e M3.1–M3.5 implementados e aceitos. M4 e M5 previstos.
+**Versão documental:** 0.21
+**Estado do produto:** M1, M2 e M3.1–M3.5 implementados e aceitos. M4.1 implementado, aguardando teste e aceite manual; M4.2/M4.3 e M5 previstos.
 **Plataforma:** aplicação web em português brasileiro para computadores com mouse e teclado.
 
-Este documento define o comportamento do produto. O [plano incremental](Ecovit-Plano-Implementacao.md) separa o alcance implementado de cada marco e os requisitos previstos. Uma funcionalidade especificada para M4 ou M5 não está disponível no aplicativo.
+Este documento define o comportamento do produto. O [plano incremental](Ecovit-Plano-Implementacao.md) separa o alcance implementado de cada marco e os requisitos previstos. Lajes (M4.2), comparação entre pavimentos (M4.3) e quantitativos (M5) permanecem indisponíveis.
+
+Durante o MVP, cada marco pode adotar um novo contrato de dados sem compatibilidade com formatos de marcos anteriores. Não há obrigação de criar ou manter migrações, conversores ou geradores exclusivamente para essa compatibilidade. M4.1 aplica essa quebra: arquivos e documentos locais anteriores são incompatíveis, sem conversão. As referências legadas nas seções de marcos anteriores descrevem contratos históricos, sem leitores ou geradores antigos no aplicativo vigente.
 
 ## 1. Visão do produto
 
 O Ecovit é uma aplicação web para projetar plantas baixas de construções com tijolos ecológicos de solo-cimento. Seu diferencial será transformar a intenção arquitetônica em uma distribuição verificável das peças de cada fiada, respeitando a modulação do sistema escolhido, os encontros entre paredes, os vãos e os elementos em canaletas.
 
-O aplicativo é 2D e representa a altura das paredes por fiadas. O alcance implementado usa um pavimento; M4 prevê até três pavimentos. Visualização 3D está fora da primeira versão; o modelo de dados mantém coordenadas e relações independentes do renderizador.
+O aplicativo é 2D e representa a altura das paredes por fiadas. O alcance implementado usa de um a quatro pavimentos independentes. Visualização 3D está fora da primeira versão; o modelo de dados mantém coordenadas e relações independentes do renderizador.
 
 O produto produz desenhos; quantitativos pertencem a M5 (previsto). O M3 representa geometria nominal de vãos, canaletas e grautes, sem verificar dimensões físicas internas de furos/canais, dimensionar apoios, cargas ou armaduras. Compatibilidade modular e ausência de colisões não significam comprovação da capacidade estrutural da construção.
 
@@ -25,7 +27,7 @@ O produto produz desenhos; quantitativos pertencem a M5 (previsto). O M3 represe
 - Atenção prioritária às dimensões predefinidas e à modulação dos tijolos.
 - Representação de elementos estruturais com tijolos canaletas.
 - Geração automática de encontros de paredes segundo práticas construtivas adequadas.
-- Suporte a até três pavimentos.
+- Suporte a até quatro pavimentos.
 - Dois tamanhos iniciais de tijolo (comprimento × largura × altura): 25 × 12,5 × 7 cm e 30 × 15 × 7 cm, além de dimensões configuráveis pelo usuário.
 - Público principal: arquitetos e autoconstrutores.
 - Entregas incrementais no aplicativo, com critérios e estado por marco no plano.
@@ -35,9 +37,9 @@ O produto produz desenhos; quantitativos pertencem a M5 (previsto). O M3 represe
 - Paredes exclusivamente horizontais e verticais.
 - Um único tamanho-base para toda a construção, definido no início do projeto.
 - Dimensões personalizadas com comprimento igual ao dobro da largura; altura configurável.
-- Até três pavimentos no total: térreo e dois superiores.
+- Até quatro pavimentos no total, ordenados por cota, inclusive negativa, sem classificação de piso ou cobertura.
 - Automação de composição e posicionamento estrutural, sem cálculos de cargas, resistência ou armaduras.
-- Encontros editáveis somente na primeira fiada do pavimento, com efeito em toda a altura correspondente até o limite superior da alvenaria definido no RF-13.
+- Encontros editáveis somente na primeira fiada do pavimento, com efeito em toda a altura correspondente até o topo definido pela altura de cada parede.
 - Salvamento no navegador e arquivo nativo para baixar e carregar, sem login.
 - Formato nativo preparado para armazenamento futuro em banco de dados.
 - Única exportação inicial: arquivo nativo para reabrir o projeto.
@@ -64,7 +66,7 @@ O Ecovit deverá:
 
 ### Indicadores propostos
 
-- Todo projeto marcado como geometricamente válido terá zero colisões e zero regiões de parede sem solução de peças.
+- Todo projeto marcado como geometricamente válido terá zero colisões na composição de peças e zero regiões de parede sem solução em cada pavimento, dentro do alcance das validações implementadas. Não se verifica colisão ou apoio entre pavimentos distintos.
 - A regeneração preservará as escolhas de encontros e ajustes compatíveis do usuário.
 - Quantitativos exibidos corresponderão às peças geradas no estado atual do projeto.
 - Um usuário do público escolhido deverá conseguir criar uma planta simples, inserir vãos, gerar fiadas e localizar uma incompatibilidade sem assistência. O tempo-alvo será definido em teste de usabilidade.
@@ -76,12 +78,12 @@ O Ecovit deverá:
 - Criar, nomear, salvar, reabrir e duplicar projetos.
 - Definir o tamanho-base do tijolo e receber automaticamente o catálogo padrão suportado derivado dele.
 - Editor 2D com paredes ortogonais, cotas, portas e janelas.
-- Até três pavimentos no total (térreo + dois superiores), com níveis e alturas independentes.
+- Até quatro pavimentos no total (térreo + até três superiores), com níveis e alturas independentes.
 - Geração e inspeção de todas as fiadas, inclusive fiadas especiais.
-- Encontros em L, T e cruz definidos automaticamente e ajustáveis pelo usuário, com propagação da amarração nas fiadas acima até o limite superior da alvenaria definido no RF-13.
+- Encontros em L, T e cruz definidos automaticamente e ajustáveis pelo usuário, com propagação da amarração nas fiadas acima até o topo definido pela altura de cada parede.
 - Canaletas, cintas, vergas e contravergas como elementos posicionados automaticamente e que podem ser ajustados pelo usuário.
 - Grauteamentos e vigas de canaletas propostos automaticamente conforme as convenções nominais documentadas no caderno técnico.
-- Lajes de piso ou cobertura com contorno e espessura definidos pelo usuário.
+- Lajes com contorno e espessura definidos pelo usuário e topo na cota do próprio pavimento.
 - Reservas verticais para reforços/graute e verificação do alinhamento dos furos.
 - Ajustes contextuais de encontros, grauteamentos e canaletas, sem edição ou bloqueio de tijolos individuais.
 - Diagnósticos e quantitativos para consulta no aplicativo; download e carregamento do arquivo nativo.
@@ -97,7 +99,7 @@ O Ecovit deverá:
 - Exportações PDF, SVG e CSV; importação/exportação CAD ou BIM, incluindo DWG, DXF e IFC. Podem ser acrescentadas posteriormente.
 - Aprovação automática por normas ou legislação municipal.
 
-O limite de três pavimentos é uma capacidade de modelagem do aplicativo. A viabilidade de uma edificação concreta dependerá de projeto e análise técnica próprios.
+O limite de quatro pavimentos é uma capacidade de modelagem do aplicativo. A viabilidade de uma edificação concreta dependerá de projeto e análise técnica próprios.
 
 ## 5. Jornada principal
 
@@ -108,15 +110,15 @@ O limite de três pavimentos é uma capacidade de modelagem do aplicativo. A via
 5. Alternar para Fiada e navegar pela distribuição gerada, inspecionando encontros, peças, furos e canaletas.
 6. Criar lajes, definir suas espessuras e revisar canaletas, cintas, elementos sobre e sob vãos e grauteamentos posicionados automaticamente.
 7. Aguardar o recálculo automático após cada alteração confirmada e resolver apenas as incompatibilidades indicadas.
-8. Revisar todos os pavimentos e os alinhamentos entre eles.
+8. Revisar todos os pavimentos e comparar visualmente os andares por sobreposição de referência.
 9. Conferir o salvamento automático no navegador ou baixar o documento atual para backup e reabertura.
 
 ## 6. Requisitos funcionais
 
 | Requisitos | Alcance implementado | Parte prevista |
 |---|---|---|
-| RF-01/02/03/04/05/06/07/09/10 | Editor e composição nominal de M1–M3.5 em um pavimento | Integração com pavimentos/lajes de M4; preparação/consumo de peças somente com procedimento documentado |
-| RF-08/13 | Propriedades do térreo (parte de RF-08) | Múltiplos pavimentos, lajes e coordenação em M4 |
+| RF-01/02/03/04/05/06/07/09/10 | Editor e composição nominal de M1–M4.1 por pavimento | Lajes e comparação visual em M4.2/M4.3; preparação/consumo de peças somente com procedimento documentado |
+| RF-08/13 | Gestão de até quatro pavimentos, cota única e composição isolada (RF-08/M4.1) | Lajes e comparação visual em M4.2/M4.3 |
 | RF-11/12 | Arquivo nativo, salvamento local, reabertura e transporte | Quantitativos e duplicação de projetos em M5 |
 
 ### RF-01 — Catálogo automático a partir do tijolo-base
@@ -175,15 +177,19 @@ O motor verificará o fechamento das paredes conectadas, usando inteiros, meios,
 
 O modo Fiada exibe a distribuição real de peças da fiada selecionada, com contornos individuais, furos, orientação e tipos. Inteiro, meio tijolo, canaleta, meia canaleta e peça especial deverão ser distinguíveis por representação geométrica, símbolos e cores. A legenda será compacta e recolhível.
 
-Um controle mostra **Fiada atual / total**, com anterior, próxima e escolha direta pelo número. Mostrar também o intervalo de altura em relação ao piso, usando o passo vertical efetivo. Nos extremos, anterior/próxima fica indisponível. Quando paredes tiverem alturas diferentes, cada trecho deixa de apresentar peças ao atingir seu término, sem prolongamento artificial.
+Um controle mostra **Fiada atual / total**, com anterior, próxima e escolha direta pelo número. Mostrar também o intervalo de altura em relação à referência vertical do pavimento, usando o passo vertical efetivo; em M4, essa referência será sua cota única. Nos extremos, anterior/próxima fica indisponível. Quando paredes tiverem alturas diferentes, cada trecho deixa de apresentar peças ao atingir seu término, sem prolongamento artificial.
 
 Ao mudar de fiada, manter pavimento, zoom e posição do canvas. Ao trocar de pavimento, recuperar sua última fiada válida. Ao entrar em Fiada pela primeira vez, iniciar na primeira fiada; visitas seguintes recuperarão a última seleção válida. Se a altura mudar e a fiada anterior deixar de existir, selecionar a última válida e informar a mudança.
+
+Em M4, trocar de pavimento mantém zoom e posição do canvas, limpa a seleção e cancela gestos e prévias transitórios, sem confirmar alterações. A última fiada é lembrada por pavimento durante a sessão. A sobreposição de outro pavimento está disponível somente em Planta e não aparece em Fiada; a sobreposição de fiada adjacente do próprio pavimento mantém seu comportamento existente.
+
+Em M4, um pavimento sem paredes pode ser aberto em Fiada com a mensagem “Este pavimento não tem paredes”. Não criar fiada fictícia; navegação de fiadas e ajustes construtivos ficam indisponíveis nesse estado. A sobreposição de outro pavimento é somente referência visual e não recebe cliques de edição.
 
 É possível sobrepor a fiada anterior ou seguinte com transparência, apenas como referência visual. Essa camada não recebe cliques de edição. Vãos deverão aparecer somente onde a faixa vertical da fiada interceptar a abertura. Nas fiadas de canaletas, mostrar os canais, conexões e peças modificadas realmente gerados, incluindo cintas, vergas e contravergas.
 
 O modo Fiada permite ajustar grauteamentos e encontros, e selecionar elementos em canaletas para ajustes previstos no RF-07. Criar ou alterar a geometria arquitetônica de paredes e vãos será feito em Planta; em Fiada, a seleção poderá oferecer ação compacta “Editar na Planta”, preservando a localização.
 
-**Grauteamento:** uma ferramenta contextual permite selecionar posições de furos, adicionar ou remover graute por clique no furo nominal correspondente. Cada ajuste afeta todo o trecho vertical do pavimento, desde a referência de início da alvenaria até seu limite superior definido no RF-13, independentemente da fiada usada para iniciar a edição. A prévia mostra o destino, os limites verticais e as interrupções antes de confirmar. Portas, janelas e demais vãos serão respeitados: não haverá graute no espaço vazio de uma abertura. O motor divide o trecho em intervalos de alvenaria aplicáveis e atualiza todas as fiadas correspondentes. Uma retomada acima de um vão é representada como intervalo separado, sem indicar continuidade física através da abertura. No M3, verificar apenas existência de alvenaria e alinhamento dos eixos nominais; não verificar passagem física nem gerar pendência por dimensão interna desconhecida. O ajuste não atravessa automaticamente a laje para outro pavimento.
+**Grauteamento:** uma ferramenta contextual permite selecionar posições de furos, adicionar ou remover graute por clique no furo nominal correspondente. Cada ajuste afeta todo o trecho vertical do pavimento, desde o início da alvenaria até o topo das paredes associadas, independentemente da fiada usada para iniciar a edição. A prévia mostra o destino, os limites verticais e as interrupções antes de confirmar. Portas, janelas e demais vãos serão respeitados: não haverá graute no espaço vazio de uma abertura. O motor divide o trecho em intervalos de alvenaria aplicáveis e atualiza todas as fiadas correspondentes. Uma retomada acima de um vão é representada como intervalo separado, sem indicar continuidade física através da abertura. No M3, verificar apenas existência de alvenaria e alinhamento dos eixos nominais; não verificar passagem física nem gerar pendência por dimensão interna desconhecida. O ajuste fica restrito ao pavimento de suas paredes, independentemente da existência de laje.
 
 **Encontros:** selecionar o encontro realça sua região e oferece alternativas gráficas. A edição estará disponível somente na primeira fiada, conforme RF-05. Em outra fiada, mostrar “Altere o encontro na primeira fiada” com ação para navegar até ela. A alternativa terá prévia antes de confirmar; a confirmação propagará a amarração até o limite superior da alvenaria e atualizará as peças e elementos relacionados.
 
@@ -199,9 +205,9 @@ O Ecovit reconhece encontros em L, T e cruz e define automaticamente uma composi
 
 O usuário pode selecionar cada encontro, visualizar alternativas e alterar sua forma de composição. Não haverá seleção de conjuntos de regras, identificação de regras por encontro ou controle de versões de regras.
 
-O encontro só poderá ser alterado quando a primeira fiada do pavimento estiver selecionada. A composição escolhida será aplicada desde essa fiada a toda a altura correspondente, com alternância e amarração necessárias, até o limite superior da alvenaria definido no RF-13. Nas demais fiadas, o encontro poderá ser inspecionado, mas sua edição fica indisponível, com orientação para acessar a primeira fiada. Não haverá alteração parcial iniciada em fiadas intermediárias.
+O encontro só poderá ser alterado quando a primeira fiada do pavimento estiver selecionada. A composição escolhida será aplicada desde essa fiada a toda a altura correspondente, com alternância e amarração necessárias, até o topo definido pela altura de cada parede. Nas demais fiadas, o encontro poderá ser inspecionado, mas sua edição fica indisponível, com orientação para acessar a primeira fiada. Não haverá alteração parcial iniciada em fiadas intermediárias.
 
-O motor recalculará as paredes participantes e os elementos associados. A composição escolhida será preservada durante regenerações quando continuar aplicável. A propagação não atravessará automaticamente a laje para alterar outro pavimento.
+O motor recalculará as paredes participantes e os elementos associados. A composição escolhida será preservada durante regenerações quando continuar aplicável. A propagação fica restrita ao próprio pavimento, independentemente da existência de laje.
 
 **Aceite:** editar só é possível na primeira fiada; a escolha atualiza toda a altura com amarração correspondente, sem sobreposições ou propagação para outros pavimentos; desfazer restaura a escolha anterior.
 
@@ -211,9 +217,9 @@ Portas, janelas e vãos serão adicionados como elementos arrastáveis com o mou
 
 Cada elemento poderá ser selecionado, reposicionado com o mouse e ter sua largura alterada respeitando a malha modular. A representação atualizará a interrupção dos tijolos nas fiadas afetadas, preservando a identificação gráfica do elemento.
 
-As propriedades editáveis incluirão largura, **altura** e **base**. Base é a distância vertical entre o piso de referência do pavimento e o início inferior do elemento. O topo corresponde à base mais a altura. Para portas, a base inicial será zero; para janelas e demais vãos, será configurável.
+As propriedades editáveis incluirão largura, **altura** e **base**. Base é a distância vertical entre a referência do pavimento e o início inferior do elemento. Em M4, essa referência será a cota única do pavimento; o contrato implementado de M3 usa o piso, conforme §14. O topo corresponde à base mais a altura. Para portas, a base inicial será zero; para janelas e demais vãos, será configurável.
 
-Ao informar altura ou base, o Ecovit validará sua compatibilidade com os limites das fiadas, considerando o passo vertical efetivo e a referência de início da alvenaria em relação ao piso. A base e o topo deverão coincidir com limites realizáveis das fiadas. Valores incompatíveis mostrarão alternativas antes da confirmação, sem arredondamento silencioso.
+Ao informar altura ou base, o Ecovit validará sua compatibilidade com os limites das fiadas, considerando o passo vertical efetivo e a referência vertical aplicável ao contrato. Em M4, tanto os vãos quanto as fiadas partem da cota única do pavimento. A base e o topo deverão coincidir com limites realizáveis das fiadas. Valores incompatíveis mostrarão alternativas antes da confirmação, sem arredondamento silencioso.
 
 Os campos principais serão largura e altura do vão bruto de alvenaria e sua base. Dimensão da esquadria e folgas de instalação, quando informadas, ficarão em opções adicionais, sem alterar automaticamente o vão bruto. Posicionar automaticamente vergas e contravergas aplicáveis e atualizar os elementos associados quando posição, largura, base ou altura forem alteradas.
 
@@ -231,49 +237,61 @@ As faixas de canaletas percorrem a parede no nível escolhido, respeitando abert
 
 Graute automático obedece às opções habilitadas e ao intervalo máximo configurado. Em Fiada, um furo com graute é preenchido em cor escura; no hover, furo vazio mostra + e furo grauteado mostra −. Clique adiciona/remove o eixo vertical em toda a extensão de alvenaria correspondente no pavimento, descontando aberturas. Esses sinais também têm identificação textual acessível. Não criar graute apenas na fiada clicada.
 
-Em M4 (previsto), cada pavimento terá seus próprios grautes, posicionados automaticamente conforme o padrão configurado e a geometria daquele pavimento. Inclusões e exclusões individuais serão válidas somente no pavimento correspondente; ajustar um graute não alterará os grautes de outro andar, mesmo quando os eixos coincidirem nas coordenadas horizontais. O padrão comum do projeto não compartilha ajustes individuais entre pavimentos. A geração e os ajustes respeitarão a alvenaria e os limites verticais de cada pavimento, sem propagação automática para outro andar. Este comportamento de múltiplos pavimentos ainda não está implementado.
+Em M4.1, cada pavimento tem seus próprios grautes, posicionados automaticamente conforme o padrão configurado e a geometria daquele pavimento. Inclusões e exclusões individuais serão válidas somente no pavimento correspondente; ajustar um graute não alterará os grautes de outro andar, mesmo quando os eixos coincidirem nas coordenadas horizontais. O padrão comum do projeto não compartilha ajustes individuais entre pavimentos. A geração e os ajustes respeitarão a alvenaria e os limites verticais de cada pavimento, sem propagação automática para outro andar. Este isolamento está implementado em M4.1.
 
 Permitir remover canaletas somente na Fiada onde aparecem; renderizar canaletas com canal longitudinal distinto de tijolos comuns, não apenas outra cor. Não mostrar suas peças na Planta. Preservar remoções e adições após qualquer recálculo, inclusive alteração das configurações. A automação é ponto de partida: supressões manuais prevalecem sobre a reposição automática, sem diagnóstico estrutural de ausência.
 
 **Aceite:** configurações persistidas; faixas e grautes automáticos gerados pelas regras nominais documentadas; clique +/− afeta todo eixo respeitando vãos; remoção de canaleta afeta somente o alcance indicado na prévia; nenhuma escolha reaparece silenciosamente; desenho distinto por tipo de peça.
 
-### RF-13 — Lajes de piso e cobertura
+### RF-13 — Lajes
 
-**Marco:** M4, previsto e não implementado.
+**Marco:** M4.2, previsto e não implementado.
 
-Permitir criar lajes por contorno ortogonal simples, sem auto-interseções, associado a pavimento e cota, com espessura definida pelo usuário. Será possível editar contorno, nível, espessura e aberturas, também ortogonais simples e contidas na laje. No M4, permitir no máximo uma laje por pavimento, cadastrada como fechamento do pavimento inferior; ela poderá servir de piso ao superior ou de cobertura quando não houver outro andar. Múltiplas lajes em níveis distintos no mesmo pavimento ficam para evolução futura.
+Permitir criar uma laje por pavimento, com contorno ortogonal simples, sem auto-interseções, e espessura positiva definida pelo usuário. Será possível editar contorno, espessura e aberturas, também ortogonais simples. Vértices do contorno e das aberturas seguem a malha horizontal de meio tijolo do projeto. Aberturas retiram efetivamente área da laje, devem ficar estritamente internas ao contorno e não podem tocar ou sobrepor umas às outras nem tocar a borda externa. Não são desenhos de referência. A laje pertence ao pavimento em que é desenhada e independe da existência de paredes nele. Não haverá classificação ou comportamento distinto de piso e cobertura.
 
-A mesma ferramenta atenderá lajes de piso e de cobertura. A finalidade poderá ser indicada como informação. A cota será sempre a da face superior; a face inferior será essa cota menos a espessura. A espessura será armazenada apenas na laje, sem campo duplicado no pavimento.
+Desenhar contorno e aberturas por vértices na malha, com prévia ortogonal entre pontos e fechamento explícito do polígono. Escape cancela o desenho ou edição em andamento sem alterar o documento. Criar ou editar usa prévia antes de confirmar. Mover a laje transporta todas as suas aberturas pela mesma translação horizontal. Uma edição que deixe abertura fora do contorno ou viole as regras de validade não é confirmada; preservar o estado anterior e indicar o impedimento, sem apagar, deslocar ou reduzir aberturas automaticamente. Permitir excluir uma abertura sem excluir a laje; excluir a laje remove suas aberturas, preservando paredes e demais elementos. Operações confirmadas são desfazíveis. As alças e os gestos de edição de bordas serão detalhados em M4.2, preservando ortogonalidade e modulação.
 
-Cada parede terá altura inicial herdada do padrão do pavimento e editável. Seu topo solicitado será a referência de início da alvenaria mais essa altura. Quando uma laje de fechamento associada cobrir o trecho, seu limite superior será o menor entre esse topo e a face inferior da laje. Sem laje de fechamento, valerá o topo solicitado. Limites incompatíveis com fiadas são sinalizados com alternativas, sem cortes ou arredondamentos silenciosos. Grauteamentos e encontros respeitarão a alvenaria existente em cada trecho. Não haverá modelagem de telhados: a altura da parede será suficiente para representar seu término.
+A face superior coincide sempre com a cota do próprio pavimento; a espessura cresce para baixo. A face inferior é a cota do pavimento menos a espessura. Não há edição independente de cota da laje. A espessura será armazenada apenas nela, sem campo duplicado no pavimento. Por exemplo, no térreo de cota 0 cm, uma laje de 21 cm ocupa de −21 a 0 cm; em um pavimento de cota 280 cm, ocupa de 259 a 280 cm.
 
-Lajes aparecerão como camada 2D e participarão da coordenação de paredes, cintas e grauteamentos. Serão limites para a propagação dos encontros quando encerrarem o trecho de parede. Sua criação não criará outro pavimento automaticamente.
+Todas as paredes começam na cota de seu pavimento, com ou sem laje. Cada parede terá altura inicial herdada do padrão do pavimento e editável; seu topo é a cota do pavimento mais essa altura. A laje não limita, recorta ou altera automaticamente a altura ou a composição de paredes de qualquer pavimento. Alturas de parede incompatíveis com fiadas completas continuam sujeitas à validação modular, sem cortes ou arredondamentos silenciosos. Grauteamentos e encontros respeitam a alvenaria definida pelas paredes e pelos vãos.
 
-Em M4 (previsto), preservar a altura solicitada de cada parede e limitar somente sua composição nos trechos cobertos pela laje. Em trechos fora do contorno ou sob aberturas da laje, manter o topo solicitado. A mesma parede poderá ter limites efetivos diferentes ao longo de sua extensão. Se o limite não comportar fiadas completas, apresentar alternativas para decisão do usuário, sem cortes ou arredondamentos silenciosos. Essa definição é nominal e não determina apoio ou dimensionamento estrutural.
+Lajes aparecerão como camada 2D para comparação visual. Não detectar ou diagnosticar colisões, apoio ou interseções entre elementos de pavimentos distintos: não verificar se uma parede está sobre outra ou se um volume invade outro andar. Não gerar avisos porque paredes ou grautes de pavimentos diferentes não coincidem. Essas relações não impedem a edição nem alteram o estado de validade geométrica. Todas as validações existentes no sistema continuam aplicadas a cada pavimento isoladamente, incluindo colisões na composição, cobertura de células, modulação, encontros, vãos, canaletas e ajustes. Contornos e aberturas de lajes obedecem à sua própria validade geométrica; não se acrescenta um verificador volumétrico de lajes neste marco. A criação ou alteração de uma laje não cria pavimentos, não desloca paredes e não propõe atualização das cotas de outros pavimentos. Alterar sua espessura mantém a face superior e move somente a face inferior.
 
-Após alterar a cota ou espessura da laje, propor a atualização das cotas do pavimento superior afetadas pela mudança, explicitando valores anteriores e propostos; aplicar essas alterações somente após confirmação. Até essa confirmação, conservar as cotas existentes e informar eventuais conflitos. Não presumir deslocamento automático em cascata de outros pavimentos ou substituição de cotas personalizadas; os detalhes da proposta serão definidos no incremento correspondente.
+Para representar uma laje acima das paredes, inclusive uma cobertura, o usuário cria um pavimento na cota desejada e desenha a laje nele. Pode deixar esse pavimento sem paredes. Todos os pavimentos seguem as mesmas regras, independentemente do uso atribuído pelo usuário. Não haverá modelagem de telhados.
 
-**Aceite:** alterar a espessura atualiza as cotas das faces e evidencia conflitos nos elementos dependentes; a laje delimita a propagação associada. Dimensionamento resistente e armaduras da laje ficam fora desta entrega.
+**Aceite:** criar laje com ou sem paredes mantém sua face superior na cota do pavimento; alterar a espessura move somente a face inferior; contorno e aberturas respeitam a malha e as regras de validade; aberturas retiram área somente da laje; edição inválida mantém o estado anterior; sobreposições com paredes não recortam a composição nem geram diagnóstico. Dimensionamento resistente e armaduras da laje ficam fora desta entrega.
 
-### RF-08 — Até três pavimentos
+### RF-08 — Até quatro pavimentos
 
-**Marco:** propriedades do térreo implementadas em M1; múltiplos pavimentos previstos em M4.
+**Marco:** propriedades do térreo implementadas em M1; gestão de até quatro pavimentos e composição isolada implementadas em M4.1, com teste e aceite manual pendentes. Lajes pertencem a M4.2 e sobreposição visual entre pavimentos a M4.3.
 
-O projeto começará com um térreo e propriedades iniciais visíveis e editáveis, sem exigir cadastro prévio de todos os níveis. Adicionar, renomear, duplicar e remover pavimentos até o limite de três. Cada pavimento terá cota de piso acabado, referência de início da alvenaria e altura padrão para novas paredes. Alterar o padrão não modificará silenciosamente paredes existentes. A espessura pertencerá exclusivamente à laje associada.
+O projeto começará com um térreo e propriedades iniciais visíveis e editáveis, sem exigir cadastro prévio de todos os níveis. Adicionar, renomear, duplicar e remover pavimentos até o limite de quatro, sem distinção de piso ou cobertura. Cada pavimento terá uma cota única, especificada pelo usuário ao criá-lo, e altura padrão para novas paredes. Essa cota define o início de todas as suas paredes e a face superior de sua laje, quando existir. Não haverá campos separados de piso acabado e início da alvenaria no comportamento de M4. Alterar a altura padrão não modificará paredes existentes.
 
-Compartilhar origem e coordenadas horizontais. Permitir sobreposição do pavimento adjacente para comparar paredes, vãos, aberturas de laje e reservas verticais. Duplicar um pavimento criará elementos independentes com novos identificadores.
+Criar pavimento vazio apresenta a mesma altura padrão usada na criação do projeto, editável antes de confirmar e compatível com a altura-base do tijolo. Se o valor inicial não for modular para a base escolhida, exigir escolha explícita entre alternativas compatíveis, sem arredondamento silencioso. Não herdar a altura de outro pavimento. A duplicação conserva a altura padrão do pavimento de origem. A referência inicial escolhida pertence ao projeto e permanece após editar, copiar ou remover pavimentos; não muda ao editar a altura padrão de um andar.
 
-Em M4 (previsto), cada pavimento funciona como uma nova Planta, com seus elementos próprios; a numeração das fiadas reinicia em 1 a partir de sua referência de início da alvenaria, independentemente da cota global. Ao criar um pavimento superior, sugerir o início da alvenaria na face superior da laje de fechamento do inferior. Sem laje cadastrada, sugerir a referência de início da alvenaria inferior mais sua altura padrão de paredes. A sugestão será apresentada para conferência e edição antes de confirmar; não acrescentar espessuras presumidas de laje, contrapiso, revestimento ou outras camadas. A regra de sugestão não confunde início da alvenaria com cota de piso acabado, que permanece propriedade distinta.
+A referência de 280 cm corresponde a 40 fiadas para a altura usual de tijolo de 7 cm, sem exigir etapa adicional de compatibilização nesse caso. As alternativas acima se aplicam somente quando o usuário escolher uma altura-base personalizada incompatível.
 
-Desalinhamentos e interrupções serão informados para revisão, sem serem interpretados automaticamente como aprovação ou reprovação estrutural. Escadas e aberturas de laje poderão ser representadas por contornos de referência.
+Ordenar pavimentos por cota crescente, inclusive após edição de cota; pavimento adjacente é o imediatamente anterior ou posterior nessa ordem. Admitir cotas negativas e zero, sempre múltiplas da altura-base do tijolo. Não admitir dois pavimentos na mesma cota. Criação e edição validam essas condições antes de confirmar; valor fora da modulação apresenta alternativas explícitas, sem arredondamento silencioso. A contagem das fiadas permanece local a cada pavimento.
 
-**Aceite:** o quarto pavimento é impedido; alterar uma parede duplicada não modifica a original; um reforço marcado como contínuo entre pavimentos apresenta qualquer descontinuidade geométrica.
+Compartilhar origem e coordenadas horizontais. Somente em Planta, permitir uma sobreposição de referência por vez, escolhendo o pavimento imediatamente inferior ou superior na ordem das cotas. Mostrar sua Planta, incluindo paredes, vãos e laje com aberturas quando existirem, em aparência atenuada e com identificação do pavimento, distinta dos elementos ativos. A referência não recebe edição. A comparação não cria vínculos nem diagnósticos de alinhamento ou continuidade entre andares. Não haverá ferramenta para marcar reforços como contínuos entre pavimentos em M4.
+
+Duplicar um pavimento copia toda a intenção editável: altura padrão, paredes, vãos, laje e aberturas, escolhas de encontros, supressões e ajustes manuais, inclusive pendentes. Exigir cota de destino válida antes de confirmar. A cópia terá novos identificadores e referências internas remapeadas, preservando geometria horizontal, alturas e medidas relativas à cota do pavimento; ajustes com cotas absolutas acompanham a diferença entre as cotas de origem e destino. A duplicação dispara o fluxo normal de recálculo completo do projeto, incluindo a cópia, sem copiar peças geradas como intenção ou alterar a intenção do pavimento original. Em M4.1, lajes e suas aberturas ainda não existem; a duplicação desses elementos passa a valer em M4.2.
+
+Permitir remover qualquer pavimento, inclusive o térreo, desde que reste pelo menos um. Remover seus elementos e ajustes em uma única operação desfazível, preservando as cotas e elementos dos demais, sem reassociar lajes. Após excluir o ativo, selecionar o anterior na ordem de cotas ou, se não existir, o seguinte. Desfazer restaura os mesmos identificadores e relações. Não permitir duplicação ou criação além de quatro pavimentos.
+
+Em M4.1, cada pavimento funciona como uma nova Planta, com seus elementos próprios; a numeração das fiadas reinicia em 1 a partir da cota do pavimento, independentemente da cota global. Bases de vãos e níveis de canaletas são medidos em relação à mesma cota. Alterar a cota desloca verticalmente as paredes, seus vãos e elementos associados e a laje daquele pavimento, preservando alturas e medidas relativas; não altera as cotas dos demais pavimentos. Não há sugestão de cota derivada de lajes ou das alturas do pavimento inferior, nem acréscimo presumido de camadas. Um pavimento pode conter somente a laje, somente paredes ou ambos.
+
+**Aceite:** o quinto pavimento é impedido; cotas negativas são admitidas, cotas iguais ou fora da modulação não são confirmadas; a ordem acompanha a cota; todas as paredes começam na cota de seu pavimento, com ou sem laje; pavimento sem paredes pode conter laje e abrir Fiada em estado vazio; duplicação preserva intenção e independência; remoção preserva os demais pavimentos e não elimina o último; sobreposições e diferenças de alinhamento entre andares não geram diagnósticos; referências sobrepostas não recebem edição.
+
+**Recorte de M4.1:** criar pavimento vazio, renomear, alterar cota/altura padrão, duplicar, remover, alternar e editar paredes/vãos/ajustes nos pavimentos; na barra, Novo pavimento, Duplicar pavimento e Excluir pavimento usam botões compactos somente com ícones, com nomes acessíveis e dicas por mouse/foco de teclado; navegação de fiadas e diagnóstico local; histórico, salvamento e arquivo no novo contrato. Configurações de vãos, níveis de canaletas e padrão de graute continuam comuns ao projeto, aplicadas separadamente à geometria de cada pavimento; ajustes individuais não são compartilhados. Novo projeto abre o térreo em cota 0. Os formulários de pavimento mostram nome, cota e altura padrão antes de confirmar; nome não vazio de até 100 caracteres, sem exigir nomes únicos. Criar ou duplicar seleciona o novo pavimento; renomear preserva IDs e não dispara composição. Ao reabrir, selecionar o pavimento de menor cota e Planta; câmera e última fiada por pavimento são estado da sessão. Ações Localizar/Ver fiada/Editar na Planta de diagnósticos mudam para o pavimento do alvo antes de selecionar ou enquadrar. Critérios específicos em M4.1-A01–14 do plano; exemplos em EX-56–64 do caderno. Sem ferramenta de laje, sobreposição entre andares, quantitativos ou migração de arquivos anteriores nesse incremento.
 
 ### RF-09 — Edição simples e recálculo automático
 
 As peças são geradas pelo motor, sem substituição, orientação ou bloqueio manual de tijolos individuais. Na Planta, o usuário cria, exclui e altera o tamanho das paredes por ambas as extremidades, conforme RF-02. Em Fiada, permanecem apenas os ajustes de encontros, grauteamentos e canaletas definidos nos RF-04, RF-05 e RF-07.
 
 Após cada alteração geométrica ou construtiva confirmada, marcar o resultado como desatualizado e recalcular automaticamente o projeto inteiro, uma operação por vez. Alterações de nome, seleção e câmera não exigem cálculo. É aceitável aguardar o processamento com novas edições temporariamente indisponíveis; não há fila de edições ou botão de regeneração no fluxo normal. Preservar ajustes compatíveis. Ajustes incompatíveis permanecem registrados como pendentes, sem aplicação à composição, com ação para localizar e corrigir ou descartar o ajuste. Uma falha de cálculo mantém o modelo editável e permite tentar novamente.
+
+Em M4.1 não haverá orçamento ou teto de geração por quantidade de módulos, células, fiadas, peças, eixos ou intervalos derivados. Manter validações geométricas existentes e limites de integridade de arquivos/dados; falhas reais de processamento preservam a intenção. A análise de quantidades pelo usuário pertence aos quantitativos futuros de M5, sem criar controle de orçamento em M4.1.
 
 **Aceite:** ambas as extremidades permitem redimensionar paredes; alterações confirmadas recalculam automaticamente; ajustes incompatíveis não desaparecem silenciosamente; resultados desatualizados não são apresentados como atuais nem usados nos quantitativos.
 
@@ -299,17 +317,19 @@ Não estimar volume de graute nem quantidade de aço sem dados suficientes; essa
 
 ### RF-12 — Salvamento local, arquivo portátil e armazenamento futuro
 
+Durante o MVP, cada marco pode recusar formatos de marcos anteriores, sem migração ou conversão. Transporte e reabertura são garantidos dentro do contrato suportado pelo marco entregue. Em M4.1, arquivos e documentos locais anteriores são recusados com indicação de incompatibilidade e necessidade de criar novo projeto, sem exclusão automática dos dados antigos ou substituição do trabalho atual em memória. Não há obrigação de manter código exclusivamente para compatibilidade entre marcos do MVP.
+
 Salvar automaticamente no navegador, indicar o estado do salvamento e permitir baixar e carregar o arquivo nativo. Não haverá login ou dependência de servidor na primeira versão. Informar discretamente que os dados locais estão associados ao navegador/dispositivo e podem ser apagados; o arquivo baixado permite backup e transferência.
 
-Salvar o documento após cada alteração confirmada, antes do cálculo, com resultado marcado como desatualizado; salvar novamente após o cálculo terminar. Não salvar movimentos intermediários do mouse. Falha no cálculo não impede salvar o rascunho. Falha no armazenamento mantém o trabalho em memória e permite baixar o documento atual, mesmo que ainda não tenha sido salvo no navegador. Durante o processamento, o download aguarda o término da operação. O arquivo poderá conter a última composição disponível, explicitamente desatualizada, ou nenhuma composição se ainda não houve geração.
+Salvar o documento após cada alteração confirmada, antes do cálculo, com resultado marcado como desatualizado; salvar novamente após o cálculo terminar. Não salvar movimentos intermediários do mouse. Falha no cálculo não impede salvar o rascunho. Falha no armazenamento mantém o trabalho em memória e permite baixar o documento atual, mesmo que ainda não tenha sido salvo no navegador. Durante o processamento, o download aguarda o término da operação. Em M4.1, resultado desatualizado é ausente (`generated: null`, diagnósticos derivados vazios); resultado atual contém a composição completa dos pavimentos. O download usa JSON compacto. Se a composição fizer a cópia ultrapassar 50 MiB, baixar toda a intenção como documento desatualizado, sem resultado derivado, avisando que ele será reconstruído na abertura. O documento aberto permanece intacto; não limitar a geração nem descartar desenhos, configurações ou ajustes. A intenção editável deve caber nesse limite de transporte, validado antes de confirmar alterações.
 
-Adotar documento estruturado em JSON, com extensão proposta **.ecovit**, identificação do aplicativo e versão do formato. Versionar o formato é necessário para leitura e migração de arquivos; isso não implica versionamento de regras construtivas.
+Adotar documento estruturado em JSON, com extensão proposta **.ecovit**, identificação do aplicativo e versão do formato. Versionar o formato permite identificar contratos suportados e recusar incompatíveis; não obriga a migrar versões anteriores nem implica versionamento de regras construtivas.
 
 Armazenar identificadores estáveis para projeto e elementos, unidades, tamanho-base, origem modular, pavimentos, paredes, vãos, lajes, encontros escolhidos, elementos automáticos e ajustes manuais. Preservar a composição gerada necessária à reabertura fiel e o estado atualizado ou pendente. Relações entre elementos usarão identificadores, sem depender de objetos da interface ou caminhos locais.
 
 Separar o modelo do projeto das funções de armazenamento. A mesma estrutura deverá poder ser persistida futuramente em banco de dados, por documento ou mapeamento de entidades, sem redesenhar o modelo de domínio. Conta, sincronização e permissões de acesso serão tratadas somente nessa evolução.
 
-Validar arquivos carregados, preservar o original durante migrações e impedir que uma importação inválida sobrescreva o trabalho aberto.
+Validar arquivos carregados sem modificar o original e impedir que uma importação inválida sobrescreva o trabalho aberto. As migrações descritas nos contratos históricos de M1–M3.5 foram removidas de M4.1, que aceita somente o formato vigente.
 
 **Aceite:** recarregar recupera o último salvamento concluído; baixar e carregar em outro navegador preserva geometria, escolhas e ajustes; arquivo inválido mantém o trabalho existente; o formato pode ser lido independentemente da interface.
 
@@ -320,8 +340,8 @@ Validar arquivos carregados, preservar o original durante migrações e impedir 
 | Projeto | Metadados, unidades, origem modular e tamanho-base definido na criação |
 | Catálogo derivado | Peças e procedimentos de modificação gerados a partir do tijolo-base |
 | Encontro | Paredes participantes, composição definida na primeira fiada e limite superior |
-| Laje | Contorno, aberturas, cota e espessura |
-| Pavimento | Níveis, referências verticais e elementos arquitetônicos |
+| Laje | Pavimento, contorno, aberturas e espessura; cotas das faces derivadas |
+| Pavimento | Cota única, altura padrão para novas paredes e elementos arquitetônicos (M4.1 implementado; lajes em M4.2) |
 | Parede | Geometria de referência, espessura, altura e conexões |
 | Vão | Relação com parede e limites horizontais/verticais |
 | Elemento estrutural representado | Grauteamentos, vigas de canaletas, cintas, vergas e contravergas |
@@ -386,13 +406,13 @@ Observar confusão entre modos, ações acidentais, compreensão da modulação,
 - **Uso:** desktop primeiro, com mouse e teclado; consulta em telas menores poderá ser posterior. Interface em português e unidades métricas.
 - **Orientação:** criação guiada do projeto, explicações em contexto e mensagens compreensíveis para autoconstrutores; entrada numérica e ferramentas de precisão disponíveis para arquitetos.
 - **Desempenho proposto:** interação de seleção/zoom fluida fora do cálculo; geração completa em até 5 segundos como referência inicial de observação. O solicitante avaliará a espera aceitável no próprio aplicativo, sem prova técnica prévia. 
-- **Referência de carga proposta:** três pavimentos, 100 paredes por pavimento, até 50 fiadas por pavimento e 100 mil peças totais, em computador com 8 GB de RAM e navegador desktop atual. Essas são metas de teste, não limites arquitetônicos já demonstrados.
+- **Referência de carga proposta:** quatro pavimentos, 100 paredes por pavimento, até 50 fiadas por pavimento e 100 mil peças totais, em computador com 8 GB de RAM e navegador desktop atual. Essas são metas de teste, não limites arquitetônicos já demonstrados.
 - **Processamento:** uma operação por vez, com aviso de espera e edição temporariamente indisponível. Não exigir progresso percentual ou cancelamento durante o cálculo inicial. Ao terminar ou falhar, liberar os controles.
 - **Integridade:** salvamento, exportação e regeneração não poderão misturar revisões.
 - **Acessibilidade:** controles e diagnósticos utilizáveis por teclado; cores acompanhadas de símbolos ou texto.
 - **Segurança:** tratar arquivos importados como dados; limitar tamanho e validar estrutura; impedir execução de conteúdo importado.
 - **Compatibilidade proposta:** Chrome e Edge desktop; outros navegadores serão avaliados antes do lançamento.
-- **Evolução:** formato de arquivo com migrações quando necessárias e testes de regressão; sem controle de versões de regras construtivas como funcionalidade do produto.
+- **Evolução:** formato identificado e testes de regressão das funcionalidades preservadas; durante o MVP não há obrigação de compatibilizar formatos de marcos anteriores. Sem controle de versões de regras construtivas como funcionalidade do produto.
 
 ## 9. Pesquisa e especificação técnica do motor único
 
@@ -410,7 +430,7 @@ O caderno organiza os seguintes assuntos, identificando o alcance implementado e
 2. Encontros em L, T e cruz, com desenhos da primeira fiada e alternâncias superiores.
 3. Continuidade e posições propostas de grauteamentos, incluindo extremidades, encontros e regiões de vãos.
 4. Canaletas, vigas, cintas, vergas e contravergas, com critérios de posição, continuidade e apoios.
-5. Transições junto a lajes, cobertura e entre pavimentos.
+5. Geometria independente de lajes e pavimentos, edição modular e comparação visual entre andares.
 6. Diferenças entre recomendações encontradas, hipóteses adotadas e questões não resolvidas.
 7. Tradução das conclusões para decisões objetivas do algoritmo e exemplos de entrada/resultado esperado.
 
@@ -418,7 +438,7 @@ Não inventar valores de espaçamento ou apoios para preencher lacunas. Quando u
 
 ### Condições para ampliar o motor
 
-Cada ampliação do motor exige desenhos e casos de teste para os dois tamanhos iniciais e pelo menos uma base personalizada 2:1, critérios para o comportamento automático e lacunas explícitas. A cobertura de M2–M3.5 inclui recintos, encontros, vãos, canaletas e propagação desde a primeira fiada. Lajes e coordenação entre pavimentos dependem dos exemplos e contratos de M4.
+Cada ampliação do motor exige desenhos e casos de teste para os dois tamanhos iniciais e pelo menos uma base personalizada 2:1, critérios para o comportamento automático e lacunas explícitas. A cobertura de M2–M3.5 inclui recintos, encontros, vãos, canaletas e propagação desde a primeira fiada. Lajes e comparação visual entre pavimentos dependem dos exemplos e contratos de M4.
 
 A revisão técnica integra o desenvolvimento, sem exigir cadastro ou aprovação de regras pelos usuários. O caderno orienta implementação e testes; cálculo de cargas, resistência e armaduras está fora do produto.
 
@@ -438,7 +458,7 @@ O caderno técnico define convenções implementadas de M2–M3.5, evidências d
 | Troca Planta/Fiada | Mesmo projeto e enquadramento; ferramentas adequadas a cada modo |
 | Cancelar ou desfazer arraste | Sem peça residual; dependências revertidas como uma ação |
 | Navegar até fiada de canaletas | Canais e peças geradas representados corretamente |
-| Criar laje | Contorno e espessura editáveis, cotas e limites atualizados |
+| Criar laje | Topo na cota do próprio pavimento, espessura para baixo; paredes preservadas, inclusive sob aberturas |
 | Definir tamanho-base | Catálogo completo derivado; base única em toda a construção |
 | Personalizar dimensões | Proporção comprimento/largura 2:1 validada |
 | Gerar elementos estruturais | Grauteamentos e canaletas posicionados automaticamente e ajustáveis |
@@ -451,8 +471,11 @@ O caderno técnico define convenções implementadas de M2–M3.5, evidências d
 | Reserva vertical de reforço | Eixos nominais alinhados nos intervalos de alvenaria aplicáveis, sem comprovação de passagem física |
 | Ajustar graute em qualquer fiada | Todas as fiadas do trecho vertical são atualizadas, respeitando vãos |
 | Graute na posição de uma janela | Intervalos abaixo/acima separados, sem graute no vazio |
-| Incluir ou remover graute | Clique no eixo nominal afeta todos os seus intervalos de alvenaria no pavimento, respeitando aberturas e sem atravessar a laje; movimentação por arraste fora de M3 |
-| Três pavimentos | Origem comum, fiadas independentes e comparação entre níveis |
+| Incluir ou remover graute | Clique no eixo nominal afeta todos os seus intervalos de alvenaria no pavimento, respeitando aberturas e sem propagar para outro pavimento; movimentação por arraste fora de M3 |
+| Quatro pavimentos | Origem comum; cotas distintas, múltiplas da altura-base e ordenadas; fiadas independentes e comparação somente visual |
+| Pavimento sem paredes | Fiada exibe estado vazio, sem criar fiada fictícia |
+| Duplicar ou remover pavimento | Cópia independente da intenção editável; remoção desfazível preserva os demais e impede excluir o último |
+| Abrir arquivo anterior a M4 no aplicativo de M4 | Incompatibilidade informada, sem migração, apagamento automático ou perda do documento corrente |
 | Mudança após ajuste construtivo | Ajustes compatíveis preservados; incompatíveis pendentes com opção de corrigir ou descartar |
 | Salvar, reabrir e regenerar | Composição e ajustes preservados |
 | Baixar e carregar arquivo nativo | Geometria, ajustes, composição e pendências preservados |
@@ -463,7 +486,7 @@ O caderno técnico define convenções implementadas de M2–M3.5, evidências d
 | Criar projeto | Térreo aberto com propriedades editáveis, sem cadastro obrigatório de outros pavimentos |
 | Reabrir em outro navegador | Projeto recuperado pelo arquivo sem login |
 
-O conjunto de testes deverá incluir casos que precisam falhar, além de exemplos bem-sucedidos. O solicitante testará as funcionalidades diretamente no aplicativo após cada implementação, incluindo o uso de três pavimentos, e ajustará os rumos quando necessário. Não haverá prova técnica, prova de conceito ou protótipo separado.
+O conjunto de testes deverá incluir casos que precisam falhar, além de exemplos bem-sucedidos. O solicitante testará as funcionalidades diretamente no aplicativo após cada implementação, incluindo o uso de quatro pavimentos, e ajustará os rumos quando necessário. Não haverá prova técnica, prova de conceito ou protótipo separado.
 
 ## 11. Riscos e tratamento previsto
 
@@ -485,7 +508,7 @@ O conjunto de testes deverá incluir casos que precisam falhar, além de exemplo
 | Direção de paredes | Horizontais e verticais |
 | Tamanho-base | Único para toda a construção, definido no início |
 | Dimensões personalizadas | Comprimento igual ao dobro da largura; altura configurável |
-| Pavimentos | Até três: térreo e dois superiores |
+| Pavimentos | Até quatro: térreo e até três superiores |
 | Automação estrutural | Composição e posicionamento, sem cálculo de cargas, resistência ou armaduras |
 | Referência construtiva | Pesquisa e caderno técnico antes dos algoritmos do motor, conforme seção 9 |
 | Alteração de encontros | Somente na primeira fiada, aplicada a toda a altura até o limite superior da alvenaria |
@@ -504,11 +527,13 @@ As referências são páginas públicas. Não há avaliação prática do editor
 - [Tijolo Ponto Eco — Manual de Projeto com Tijolo Ecológico](https://tijolo.eco.br/manual_projeto_tijolo_ecologico/): apresenta, para seu exemplo de tijolo 30 × 15 × 7 cm, modulação de 15 cm; descreve a primeira fiada com posicionamento de elementos e recomenda projeto estrutural. A medida citada é específica desse exemplo, não requisito universal do Ecovit.
 - [Permaq — Tijolos](https://permaq.com.br/maquina/tijolos): a descrição pública localizada na pesquisa menciona diferentes tamanhos e tipos, incluindo meios e canaletas. Sem leitura integral ou desenho cotado confirmado, não fundamenta dimensões do catálogo.
 
-Os requisitos deste PRD distinguem alcance implementado e previsto por marco. A pesquisa pública não valida padrões executivos de encontros, detalhamento de armaduras ou viabilidade de edificações com três pavimentos.
+Os requisitos deste PRD distinguem alcance implementado e previsto por marco. A pesquisa pública não valida padrões executivos de encontros, detalhamento de armaduras ou viabilidade de edificações com quatro pavimentos.
 
 ## 14. M3 — Vãos, canaletas e grautes nominais
 
 **Estado:** M3.1, M3.2 e M3.3 implementados e aceitos. M3.1 cobre vãos e seus padrões; M3.2 cobre canaletas, níveis globais e supressões/restauração; M3.3 cobre grautes e seus controles. O alcance é nominal, com automação configurável e ajustes persistentes.
+
+As referências separadas de piso e início da alvenaria nesta seção descrevem o contrato histórico de M3 e a interpretação de seus arquivos. Em M4.1, RF-08 adota uma cota única para início das paredes, bases dos vãos e níveis de canaletas; os valores relativos dos padrões abaixo mantêm seus significados. Arquivos anteriores são incompatíveis e não são migrados para M4.1.
 
 Tela “Configurações do projeto”, acessível no editor, compacta, com grupos Vãos, Canaletas e Graute vertical; não há abas de armaduras, grampos ou idioma. Aplicar confirma uma única operação de histórico e recálculo; Cancelar não modifica nada. Restaurar padrões atua no grupo e só efetiva ao aplicar; não apaga ajustes manuais existentes.
 

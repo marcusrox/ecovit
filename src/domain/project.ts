@@ -1,4 +1,9 @@
-import type { Composition, Diagnostic, JunctionChoice } from "./composition";
+import type {
+  Composition,
+  ProjectComposition,
+  Diagnostic,
+  JunctionChoice,
+} from "./composition";
 export type Point = { x: number; y: number };
 export type Base = { length: number; width: number; height: number };
 export type Wall = {
@@ -21,6 +26,7 @@ export type Opening = {
 export type OpeningSettings = { base: number; top: number };
 export type ChannelLevel = { id: string; top: number };
 export type ChannelSuppression = {
+  floorId: string;
   id: string;
   wallId: string;
   top: number;
@@ -34,6 +40,7 @@ export type GroutSettings = {
   distance: number;
 };
 export type GroutAdjustment = Point & {
+  floorId: string;
   id: string;
   wallIds: string[];
   action: "include" | "exclude";
@@ -50,12 +57,13 @@ export const defaultChannelLevels = (): ChannelLevel[] =>
 export type Tool = "select" | "wall" | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 5 | 6 | 7;
+  schemaVersion: 8;
   project: {
     id: string;
     name: string;
     units: "0.1mm";
     base: Base;
+    initialWallHeight?: number;
     origin: Point;
     openingSettings: OpeningSettings;
     channelLevels: ChannelLevel[];
@@ -66,7 +74,6 @@ export type Project = {
       id: string;
       name: string;
       level: number;
-      start: number;
       defaultHeight: number;
     }[];
     walls: Wall[];
@@ -78,7 +85,7 @@ export type Project = {
     grout: GroutAdjustment[];
     channels: ChannelSuppression[];
   };
-  generated: Composition | null;
+  generated: ProjectComposition | null;
   generationState: {
     status: "outdated" | "current";
     diagnostics: Diagnostic[];
@@ -116,19 +123,33 @@ export function validateBase(base: Base) {
   if (base.length !== base.width * 2)
     throw new Error("O comprimento deve ser o dobro da largura.");
 }
-export function createProject(name: string, base: Base): Project {
+export function createProject(
+  name: string,
+  base: Base,
+  defaultHeight = 28000,
+): Project {
   validateBase(base);
+  if (
+    !Number.isSafeInteger(defaultHeight) ||
+    defaultHeight <= 0 ||
+    defaultHeight > LIMIT ||
+    defaultHeight % base.height
+  )
+    throw new Error(
+      "Escolha uma altura inicial de paredes compatível com a altura do tijolo.",
+    );
   if (!name.trim() || name.trim().length > 100)
     throw new Error("Informe um nome com até 100 caracteres.");
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 7,
+    schemaVersion: 8,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
       units: "0.1mm",
       base,
+      initialWallHeight: defaultHeight,
       origin: { x: 0, y: 0 },
       openingSettings: { base: 11200, top: 21700 },
       channelLevels: defaultChannelLevels(),
@@ -140,8 +161,7 @@ export function createProject(name: string, base: Base): Project {
           id: crypto.randomUUID(),
           name: "Térreo",
           level: 0,
-          start: 0,
-          defaultHeight: 28000,
+          defaultHeight,
         },
       ],
       walls: [],
@@ -151,7 +171,7 @@ export function createProject(name: string, base: Base): Project {
     adjustments: { junctions: [], grout: [], channels: [] },
     generated: null,
     generationState: { status: "outdated", diagnostics: [] },
-    metadata: { createdAt: now, updatedAt: now, appVersion: "0.7.0" },
+    metadata: { createdAt: now, updatedAt: now, appVersion: "0.8.0" },
   };
 }
 export const snap = (n: number, module: number) =>
@@ -281,6 +301,12 @@ export function connection(
   }
   return best;
 }
+// A floor view is transient; persistence accepts only the complete Project.
+export type LocalProject = Omit<Project, "generated"> & {
+  viewFloorId: string;
+  generated: Composition | null;
+};
+export type EditableProject = Project | LocalProject;
 export type History = { past: Project[]; future: Project[] };
 export const remember = (h: History, doc: Project): History => ({
   past: [...h.past, withoutResult(doc)].slice(-50),

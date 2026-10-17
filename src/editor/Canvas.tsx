@@ -31,7 +31,7 @@ import {
   openingDrawRange,
   wallDraw,
 } from "../domain/drawing";
-import { useStore } from "../state/store";
+import { useStore, useEditingProject } from "../state/store";
 import styles from "../ui/App.module.css";
 import { Icon } from "../ui/Icon";
 import { isChannel } from "../domain/channels";
@@ -74,7 +74,7 @@ export function Canvas({
     compositionPreview = useStore((s) => s.preview),
     selectedComponent = useStore((s) => s.component),
     focus = useStore((s) => s.focus);
-  const doc = useStore((s) => s.doc)!,
+  const doc = useEditingProject()!,
     selected = useStore((s) => s.select),
     busy = useStore((s) => s.busy),
     readonly = useStore((s) => s.readonly);
@@ -154,8 +154,8 @@ export function Canvas({
           p.y >= b.y - t &&
           p.y <= b.y + b.height + t &&
           (!onlyCourse ||
-            (f.start + (course - 1) * h < f.level + o.base + o.height &&
-              f.start + course * h > f.level + o.base))
+            (f.level + (course - 1) * h < f.level + o.base + o.height &&
+              f.level + course * h > f.level + o.base))
         );
       })
       .reverse();
@@ -168,6 +168,14 @@ export function Canvas({
     setOpeningPreview(null);
     setGroutHover(null);
   };
+  useEffect(() => {
+    cancel();
+    setHover(null);
+    setChoices([]);
+    setOpeningChoices([]);
+    setHostWallId(null);
+    setChannelChoices([]);
+  }, [doc.viewFloorId]);
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
       const r = entries[0].contentRect;
@@ -1203,9 +1211,9 @@ export function Canvas({
                   if (
                     mode === "course" &&
                     !(
-                      f.start + (course - 1) * h <
+                      f.level + (course - 1) * h <
                         f.level + o.base + o.height &&
-                      f.start + course * h > f.level + o.base
+                      f.level + course * h > f.level + o.base
                     )
                   )
                     continue;

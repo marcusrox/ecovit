@@ -4,15 +4,15 @@ import {
   LIMIT,
   snapPoint,
   type Point,
-  type Project,
+  type EditableProject as Project,
   type Wall,
 } from "./project";
 import { wallAxis, wallStart } from "./openings";
 import { componentId, signature } from "./composition";
 import { MAX_GROUT_ADJUSTMENTS } from "./grout";
 
-export type WallEdit = {
-  doc: Project;
+export type WallEdit<T extends Project = Project> = {
+  doc: T;
   selectedId: string;
   participants: string[];
   message: string;
@@ -71,12 +71,12 @@ function checkGeometry(doc: Project) {
 }
 
 /** Geometry-only planning: no generation or persistent UUIDs while dragging. */
-function consolidate(
-  input: Project,
+function consolidate<T extends Project>(
+  input: T,
   candidate: Wall,
   moving: boolean,
   materialize: boolean,
-): WallEdit {
+): WallEdit<T> {
   const m = input.project.base.width;
   const others = input.model.walls.filter((w) => w.id !== candidate.id);
   const direct = others.filter(
@@ -180,14 +180,16 @@ function consolidate(
     return {
       ...a,
       wallIds,
-      componentId: unchanged ? componentId(wallIds) : a.componentId,
+      componentId: unchanged
+        ? `${a.floorId}:${componentId(wallIds)}`
+        : a.componentId,
       signature: unchanged
         ? signature(walls.filter((w) => wallIds.includes(w.id)))
         : a.signature,
       binding: unchanged ? ("active" as const) : ("pending" as const),
     };
   });
-  const doc: Project = {
+  const doc: T = {
     ...input,
     model: { ...input.model, walls, openings },
     adjustments: {
@@ -204,19 +206,19 @@ function consolidate(
   return { doc, selectedId, participants: existing.map((w) => w.id), message };
 }
 
-export function createContinuation(
-  doc: Project,
+export function createContinuation<T extends Project>(
+  doc: T,
   wall: Wall,
   materialize = true,
-): WallEdit {
+): WallEdit<T> {
   return consolidate(doc, { ...wall, id: "preview-wall" }, false, materialize);
 }
-export function moveWall(
-  doc: Project,
+export function moveWall<T extends Project>(
+  doc: T,
   id: string,
   delta: Point,
   materialize = true,
-): WallEdit {
+): WallEdit<T> {
   const w = doc.model.walls.find((w) => w.id === id);
   if (!w) throw new Error("Parede não encontrada.");
   delta = snapPoint(delta, doc.project.base.width);
@@ -229,7 +231,7 @@ export function moveWall(
     throw new Error(
       "Limite de ajustes de graute atingido; movimento cancelado.",
     );
-  const translated: Project = {
+  const translated: T = {
     ...doc,
     model: {
       ...doc.model,
