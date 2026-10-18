@@ -133,8 +133,8 @@ test("M3.1 três tipos, corpo, duas alças, campos, excluir/desfazer e transport
     "window",
     "opening",
   ]);
-  expect(initial.schemaVersion).toBe(8);
-  expect(initial.generated!.convention).toBe("nominal-v9");
+  expect(initial.schemaVersion).toBe(9);
+  expect(initial.generated!.convention).toBe("nominal-v10");
   await page
     .getByRole("button", { name: "Selecionar", exact: false })
     .first()

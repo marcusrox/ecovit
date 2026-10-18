@@ -1,8 +1,16 @@
 import { FloorControls } from "./Floors";
+import {
+  resolveFloorReference,
+  type FloorReference,
+} from "../domain/floor-reference";
+import { Quantities } from "./Quantities";
+import { DuplicateProjectDialog } from "./DuplicateProject";
+import { DeleteProjectDialog } from "./DeleteProject";
 import { editFloor } from "../domain/floors";
 import { FiadaPanel, FiadaToolbar } from "../editor/Fiada";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "../editor/Canvas";
+import { SlabProperties, deleteSlabSelection } from "../editor/Slabs";
 import {
   OpeningProperties,
   OpeningSettingsDialog,
@@ -134,6 +142,8 @@ function Numeric({
   );
 }
 function Properties({ doc }: { doc: Project }) {
+  const root = useStore((s) => s.doc)!;
+  const floorReference = useStore((s) => s.floorReference);
   const selected = useStore((s) => s.select),
     busy = useStore((s) => s.busy),
     readonly = useStore((s) => s.readonly);
@@ -318,6 +328,39 @@ function Properties({ doc }: { doc: Project }) {
               }}
             />
           </label>
+          {root.model.floors.length > 1 && (
+            <label className={styles.field}>
+              Referência de pavimento
+              <select
+                aria-label="Comparar pavimento"
+                title="Comparar pavimento"
+                disabled={busy}
+                value={floorReference}
+                onChange={(e) =>
+                  useStore.getState().inspect({
+                    floorReference: e.target.value as FloorReference,
+                  })
+                }
+              >
+                <option value="none">Sem referência</option>
+                {(["below", "above"] as const).map((direction) => {
+                  const neighbor = resolveFloorReference(
+                    root,
+                    doc.viewFloorId,
+                    direction,
+                  );
+                  return (
+                    neighbor && (
+                      <option key={direction} value={direction}>
+                        {direction === "below" ? "Inferior" : "Superior"} —{" "}
+                        {neighbor.name} · {display(neighbor.level)} cm
+                      </option>
+                    )
+                  );
+                })}
+              </select>
+            </label>
+          )}
           <p className={styles.muted}>Referências verticais do desenho</p>
           <Numeric
             label="Cota do pavimento"
@@ -376,6 +419,7 @@ export default function App() {
   const groutMode = useStore((s) => s.groutMode);
   const selected = useStore((s) => s.select),
     pendingOpening = useStore((s) => s.pendingOpening);
+  const slabEditing = useStore((s) => s.slabEditing);
   const editingDoc = useEditingProject();
   const doc = useStore((s) => s.doc),
     busy = useStore((s) => s.busy),
@@ -398,7 +442,25 @@ export default function App() {
     [initialHeight, setInitialHeight] = useState("280"),
     [importing, setImporting] = useState(false),
     [editorName, setEditorName] = useState("");
+  const [duplicating, setDuplicating] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const input = useRef<HTMLInputElement>(null);
+  const deleteTrigger = useRef<HTMLButtonElement>(null);
+  const [fadingProjects, setFadingProjects] = useState<string[]>([]);
+  const [incompatibleProject, setIncompatibleProject] = useState<string | null>(
+    null,
+  );
+  useEffect(() => {
+    if (incompatibleProject)
+      document
+        .getElementById(`project-compatibility-${incompatibleProject}`)
+        ?.scrollIntoView({ block: "nearest" });
+  }, [incompatibleProject]);
+  const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(
+    null,
+  );
   const changeTool = useCallback((t: Tool) => setTool(t), []);
   useEffect(() => {
     if (!doc) {
@@ -415,6 +477,18 @@ export default function App() {
   }, [doc]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
+      if (document.querySelector("dialog[open]")) {
+        if (
+          !(e.target as HTMLElement).closest(
+            "input,textarea,select,[contenteditable]",
+          ) &&
+          (e.key === "Delete" ||
+            ((e.ctrlKey || e.metaKey) &&
+              ["z", "y"].includes(e.key.toLowerCase())))
+        )
+          e.preventDefault();
+        return;
+      }
       if (
         (e.target as HTMLElement).closest(
           "input,textarea,select,[contenteditable]",
@@ -436,7 +510,9 @@ export default function App() {
         s.select
       ) {
         e.preventDefault();
+        if (s.slabDraft || s.slabEditing) return;
         if (s.pendingOpening) s.inspect({ pendingOpening: null });
+        else if (deleteSlabSelection()) return;
         else void s.commit(removeElement(s.doc, s.select));
         s.choose(null);
       }
@@ -490,26 +566,60 @@ export default function App() {
         <Brand />
         {doc ? (
           <>
+            <button
+              className={`${styles.projectsReturn} ${styles.iconText}`}
+              title="Voltar à lista de projetos"
+              disabled={busy || importing}
+              onClick={() => {
+                if (
+                  saved === "error" &&
+                  !window.confirm(
+                    "O trabalho não foi salvo. Baixe uma cópia antes de sair. Continuar?",
+                  )
+                )
+                  return;
+                useStore.getState().close();
+              }}
+            >
+              <Icon name="back" /> Projetos
+            </button>
             <div className={styles.divider} />
-            <input
-              className={styles.projectName}
-              aria-label="Nome do projeto"
-              disabled={busy || readonly}
-              value={editorName}
-              maxLength={100}
-              onChange={(e) => setEditorName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") e.currentTarget.blur();
-              }}
-              onBlur={() => {
-                if (editorName.trim() && editorName.trim() !== doc.project.name)
-                  void useStore.getState().commit({
-                    ...doc,
-                    project: { ...doc.project, name: editorName.trim() },
-                  });
-                else setEditorName(doc.project.name);
-              }}
-            />
+            <div className={styles.projectIdentity}>
+              <input
+                className={styles.projectName}
+                aria-label="Nome do projeto"
+                disabled={busy || readonly}
+                value={editorName}
+                maxLength={100}
+                onChange={(e) => setEditorName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                }}
+                onBlur={() => {
+                  if (
+                    editorName.trim() &&
+                    editorName.trim() !== doc.project.name
+                  )
+                    void useStore.getState().commit({
+                      ...doc,
+                      project: { ...doc.project, name: editorName.trim() },
+                    });
+                  else setEditorName(doc.project.name);
+                }}
+              />
+              <button
+                disabled={busy || readonly}
+                // Let the dialog focus commit the name after this click opens it.
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setSettings(true)}
+                className={styles.iconButton}
+                aria-label="Configurações"
+                title="Configurações do projeto"
+                data-tooltip="Configurações do projeto"
+              >
+                <Icon name="settings" />
+              </button>
+            </div>
             <span
               className={`${styles.saveStatus} ${saved === "error" ? styles.errorText : ""}`}
               role="status"
@@ -535,30 +645,26 @@ export default function App() {
                     : "Salvo no navegador"}
             </span>
             <div className={styles.headerActions}>
-              <button
-                disabled={busy || importing}
-                onClick={() => {
-                  if (
-                    saved === "error" &&
-                    !window.confirm(
-                      "O trabalho não foi salvo. Baixe uma cópia antes de sair. Continuar?",
-                    )
-                  )
-                    return;
-                  useStore.getState().close();
-                }}
-              >
-                Projetos
-              </button>
+              <Quantities
+                key={doc.project.id}
+                doc={doc}
+                diagnostics={() => setDiagnostics(true)}
+              />
               <button
                 disabled={busy || importing}
                 onClick={() => input.current?.click()}
-                className={styles.iconText}
+                className={`${styles.iconButton} ${styles.fileAction}`}
+                aria-label="Carregar arquivo"
+                title="Carregar arquivo .ecovit"
+                data-tooltip="Carregar arquivo .ecovit"
               >
-                <Icon name="upload" /> Carregar arquivo
+                <Icon name="upload" />
               </button>
               <button
-                className={`${styles.primary} ${styles.iconText}`}
+                className={`${styles.iconButton} ${styles.fileAction}`}
+                aria-label="Baixar projeto"
+                title="Baixar projeto .ecovit"
+                data-tooltip="Baixar projeto .ecovit"
                 disabled={busy || importing}
                 onClick={() => {
                   try {
@@ -573,7 +679,7 @@ export default function App() {
                   }
                 }}
               >
-                <Icon name="download" /> Baixar projeto
+                <Icon name="download" />
               </button>
             </div>
           </>
@@ -645,6 +751,23 @@ export default function App() {
                   <Icon name="wall" /> Parede
                 </button>
                 <span className={styles.divider} />
+                {mode === "plan" && (
+                  <button
+                    aria-pressed={tool === "slab"}
+                    className={`${styles.iconText} ${tool === "slab" ? styles.active : ""}`}
+                    disabled={
+                      busy || readonly || !!editingDoc?.model.slabs.length
+                    }
+                    title={
+                      editingDoc?.model.slabs.length
+                        ? "Este pavimento já tem uma laje"
+                        : "Desenhar laje"
+                    }
+                    onClick={() => setTool("slab")}
+                  >
+                    <Icon name="slab" /> Laje
+                  </button>
+                )}
                 {mode === "plan" &&
                   (["door", "window", "opening"] as const).map((kind) => (
                     <button
@@ -661,36 +784,63 @@ export default function App() {
                       {openingLabel[kind]}
                     </button>
                   ))}
-                <button
-                  disabled={busy || readonly}
-                  onClick={() => setSettings(true)}
-                  className={styles.iconText}
-                >
-                  <Icon name="settings" /> Configurações
-                </button>
                 {mode === "plan" &&
-                  tool === "select" &&
-                  doc.model.openings.length > 0 && (
+                  (!!editingDoc!.model.slabs.length ||
+                    !!editingDoc!.model.openings.length) && (
                     <select
-                      aria-label="Selecionar vão por teclado"
+                      aria-label="Selecionar elemento"
                       disabled={busy}
                       value={
-                        doc.model.openings.some((o) => o.id === selected)
+                        editingDoc!.model.openings.some(
+                          (o) => o.id === selected,
+                        ) ||
+                        editingDoc!.model.slabs.some(
+                          (s) =>
+                            s.id === selected ||
+                            s.openings.some((o) => o.id === selected),
+                        )
                           ? selected!
                           : ""
                       }
-                      onChange={(e) =>
-                        useStore.getState().choose(e.target.value || null)
-                      }
+                      onChange={(e) => {
+                        useStore.getState().inspect({
+                          slabDraft: null,
+                          slabEditing: false,
+                          pendingOpening: null,
+                        });
+                        setTool("select");
+                        useStore.getState().choose(e.target.value || null);
+                      }}
                     >
-                      <option value="">Selecionar vão…</option>
-                      {doc.model.openings.map((o, i) => (
-                        <option key={o.id} value={o.id}>
-                          {i + 1} · {openingLabel[o.kind]} · base{" "}
-                          {display(o.base)} / topo {display(o.base + o.height)}{" "}
-                          cm
-                        </option>
-                      ))}
+                      <option value="">Selecionar elemento…</option>
+                      {!!editingDoc!.model.slabs.length && (
+                        <optgroup label="Laje">
+                          {editingDoc!.model.slabs.flatMap((s) => [
+                            <option key={s.id} value={s.id}>
+                              Laje · {editingDoc!.model.floors[0].name}
+                            </option>,
+                            ...s.openings.map((o, i) => (
+                              <option key={o.id} value={o.id}>
+                                Abertura {i + 1} · Laje
+                              </option>
+                            )),
+                          ])}
+                        </optgroup>
+                      )}
+                      {!!editingDoc!.model.openings.length && (
+                        <optgroup label="Vãos de parede">
+                          {editingDoc!.model.openings.map((o, i) => (
+                            <option key={o.id} value={o.id}>
+                              {openingLabel[o.kind]} {i + 1} · Parede{" "}
+                              {editingDoc!.model.walls.findIndex(
+                                (w) => w.id === o.wallId,
+                              ) + 1}{" "}
+                              · base {display(o.base)} / topo{" "}
+                              {display(o.base + o.height)} cm
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
                     </select>
                   )}
                 <button
@@ -698,7 +848,9 @@ export default function App() {
                   className={styles.iconButton}
                   data-tooltip="Desfazer (Ctrl+Z)"
                   title="Desfazer (Ctrl+Z)"
-                  disabled={busy || readonly || !history.past.length}
+                  disabled={
+                    busy || readonly || (!history.past.length && !slabEditing)
+                  }
                   onClick={() => void useStore.getState().undo()}
                 >
                   <Icon name="undo" />
@@ -731,8 +883,18 @@ export default function App() {
                 settings={() => setSettings(true)}
               />
             ) : mode === "plan" ? (
-              pendingOpening ||
-              doc.model.openings.some((o) => o.id === selected) ? (
+              editingDoc!.model.slabs.some(
+                (s) =>
+                  s.id === selected ||
+                  s.openings.some((o) => o.id === selected),
+              ) ? (
+                <SlabProperties
+                  key={`${editingDoc!.viewFloorId}-${tool}-${selected}`}
+                  doc={editingDoc!}
+                  setTool={changeTool}
+                />
+              ) : pendingOpening ||
+                doc.model.openings.some((o) => o.id === selected) ? (
                 <OpeningProperties doc={editingDoc!} />
               ) : (
                 <Properties key={editingDoc!.viewFloorId} doc={editingDoc!} />
@@ -746,7 +908,13 @@ export default function App() {
               Diagnósticos ({doc.generationState.diagnostics.length})
             </button>
             <span className={styles.moduleLabel}>
-              {editingDoc!.model.floors[0].name} · Módulo{" "}
+              <span
+                className={styles.footerFloorName}
+                title={editingDoc!.model.floors[0].name}
+              >
+                {editingDoc!.model.floors[0].name}
+              </span>
+              {" · Módulo "}
               <b>{display(doc.project.base.width)} cm</b> · Face externa
             </span>
             <span>
@@ -824,36 +992,106 @@ export default function App() {
                 </div>
               ) : (
                 projects.map((p) => (
-                  <button
-                    disabled={busy}
+                  <div
+                    className={`${styles.projectSlot} ${fadingProjects.includes(p.id) ? styles.projectRowExiting : ""}`}
                     key={p.id}
-                    className={styles.projectCard}
-                    onClick={() =>
-                      void loadProject(p.id)
-                        .then((d) => useStore.getState().open(d))
-                        .catch((e) => useStore.getState().notify(e.message))
-                    }
+                    inert={fadingProjects.includes(p.id)}
+                    onAnimationEnd={(event) => {
+                      if (
+                        event.target !== event.currentTarget ||
+                        !fadingProjects.includes(p.id)
+                      )
+                        return;
+                      setProjects((current) =>
+                        current.filter((project) => project.id !== p.id),
+                      );
+                      setFadingProjects((current) =>
+                        current.filter((id) => id !== p.id),
+                      );
+                    }}
                   >
-                    <span className={styles.projectIcon} aria-hidden="true">
-                      <Icon name="plan" size="card" />
-                    </span>
-                    <span className={styles.projectInfo}>
-                      <strong>{p.name}</strong>
-                      {!p.compatible && (
-                        <small>
-                          Formato incompatível — crie um novo projeto
-                        </small>
-                      )}
-                      <small>
-                        {p.walls} {p.walls === 1 ? "parede" : "paredes"} ·
-                        Atualizado em{" "}
-                        {new Date(p.updatedAt).toLocaleDateString("pt-BR")}
-                      </small>
-                    </span>
-                    <span aria-hidden="true">
-                      <Icon name="next" />
-                    </span>
-                  </button>
+                    <div className={styles.projectRow}>
+                      <button
+                        disabled={busy}
+                        key={p.id}
+                        className={styles.projectCard}
+                        aria-expanded={
+                          !p.compatible
+                            ? incompatibleProject === p.id
+                            : undefined
+                        }
+                        aria-describedby={
+                          !p.compatible && incompatibleProject === p.id
+                            ? `project-compatibility-${p.id}`
+                            : undefined
+                        }
+                        onClick={() => {
+                          if (!p.compatible) {
+                            setIncompatibleProject(p.id);
+                            return;
+                          }
+                          void loadProject(p.id)
+                            .then((d) => useStore.getState().open(d))
+                            .catch((e) =>
+                              useStore.getState().notify(e.message),
+                            );
+                        }}
+                      >
+                        <span className={styles.projectIcon} aria-hidden="true">
+                          <Icon name="plan" size="card" />
+                        </span>
+                        <span className={styles.projectInfo}>
+                          <strong title={p.name}>{p.name}</strong>
+                          <small>
+                            {!p.compatible && (
+                              <span>Formato incompatível · </span>
+                            )}
+                            {p.walls} {p.walls === 1 ? "parede" : "paredes"} ·
+                            Atualizado em{" "}
+                            {new Date(p.updatedAt).toLocaleDateString("pt-BR")}
+                          </small>
+                          {!p.compatible && incompatibleProject === p.id && (
+                            <small
+                              id={`project-compatibility-${p.id}`}
+                              role="status"
+                              className={styles.projectCompatibilityMessage}
+                            >
+                              Este projeto usa um formato antigo e não pode ser
+                              aberto nesta versão. Arquivos de marcos anteriores
+                              não são convertidos. Crie um novo projeto.
+                            </small>
+                          )}
+                        </span>
+                      </button>
+                      <div className={styles.projectActions}>
+                        <button
+                          className={styles.iconButton}
+                          aria-label="Duplicar"
+                          data-tooltip="Duplicar"
+                          disabled={busy || !!duplicating || !p.compatible}
+                          title="Duplicar o último estado salvo"
+                          onClick={() =>
+                            setDuplicating({ id: p.id, name: p.name })
+                          }
+                        >
+                          <Icon name="copy" />
+                        </button>
+                        <button
+                          className={`${styles.iconButton} ${styles.deleteProject}`}
+                          aria-label="Excluir"
+                          title="Excluir projeto"
+                          data-tooltip="Excluir"
+                          disabled={busy}
+                          onClick={(event) => {
+                            deleteTrigger.current = event.currentTarget;
+                            setDeleting({ id: p.id, name: p.name });
+                          }}
+                        >
+                          <Icon name="delete" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ))
               )}
             </section>
@@ -1015,6 +1253,35 @@ export default function App() {
             </form>
           </section>
         </div>
+      )}
+      {duplicating && (
+        <DuplicateProjectDialog
+          source={duplicating}
+          close={() => setDuplicating(null)}
+          saved={() => {
+            setDuplicating(null);
+            void listProjects()
+              .then(setProjects)
+              .catch(() =>
+                useStore
+                  .getState()
+                  .notify(
+                    "Cópia salva. Não foi possível atualizar a lista; reabra Projetos.",
+                  ),
+              );
+          }}
+        />
+      )}
+      {deleting && (
+        <DeleteProjectDialog
+          source={deleting}
+          trigger={deleteTrigger.current}
+          close={() => setDeleting(null)}
+          deleted={() => {
+            setFadingProjects((current) => [...current, deleting.id]);
+            setDeleting(null);
+          }}
+        />
       )}
       {settings && doc && (
         <OpeningSettingsDialog

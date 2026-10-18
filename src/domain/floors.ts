@@ -5,6 +5,7 @@ import {
   type LocalProject,
 } from "./project";
 import { componentId, signature } from "./composition";
+import { validateSlab } from "./slabs";
 
 export type Floor = Project["model"]["floors"][number];
 export function validateFloor(doc: Project, floor: Floor) {
@@ -54,6 +55,8 @@ export function editFloor(
   };
   validateFloor(doc, next);
   const delta = next.level - previous.level;
+  for (const slab of doc.model.slabs.filter((s) => s.floorId === floorId))
+    validateSlab(slab, doc.project.base.width, next.level);
   const channels = doc.adjustments.channels.map((a) => {
     if (a.floorId !== floorId) return a;
     const top = a.top + delta;
@@ -70,6 +73,15 @@ export function editFloor(
       ...doc.model,
       floors: sorted(
         doc.model.floors.map((f) => (f.id === floorId ? next : f)),
+      ),
+      slabs: [...doc.model.slabs].sort(
+        (a, b) =>
+          (a.floorId === floorId
+            ? next.level
+            : doc.model.floors.find((f) => f.id === a.floorId)!.level) -
+          (b.floorId === floorId
+            ? next.level
+            : doc.model.floors.find((f) => f.id === b.floorId)!.level),
       ),
     },
     adjustments: { ...doc.adjustments, channels },
@@ -89,6 +101,7 @@ export function removeFloor(doc: Project, floorId: string): Project {
       floors: doc.model.floors.filter((f) => f.id !== floorId),
       walls,
       openings: doc.model.openings.filter((o) => ids.has(o.wallId)),
+      slabs: doc.model.slabs.filter((s) => s.floorId !== floorId),
     },
     adjustments: {
       junctions: doc.adjustments.junctions.filter((a) => a.floorId !== floorId),
@@ -140,6 +153,26 @@ export function duplicateFloor(
     ...added,
     model: {
       ...added.model,
+      slabs: [
+        ...doc.model.slabs,
+        ...doc.model.slabs
+          .filter((s) => s.floorId === floorId)
+          .map((s) => ({
+            ...s,
+            id: crypto.randomUUID(),
+            floorId: target.id,
+            contour: s.contour.map((p) => ({ ...p })),
+            openings: s.openings.map((o) => ({
+              ...o,
+              id: crypto.randomUUID(),
+              contour: o.contour.map((p) => ({ ...p })),
+            })),
+          })),
+      ].sort(
+        (a, b) =>
+          added.model.floors.findIndex((f) => f.id === a.floorId) -
+          added.model.floors.findIndex((f) => f.id === b.floorId),
+      ),
       walls: [...doc.model.walls, ...walls],
       openings: [
         ...doc.model.openings,
@@ -194,6 +227,12 @@ export function duplicateFloor(
     Object.values(result.adjustments).some((a) => a.length > 10000)
   )
     throw new Error("A cópia excede o limite de registros do documento.");
+  for (const slab of result.model.slabs)
+    validateSlab(
+      slab,
+      result.project.base.width,
+      result.model.floors.find((f) => f.id === slab.floorId)!.level,
+    );
   return result;
 }
 
@@ -215,6 +254,18 @@ export function mergeFloorView(
       ...root.model,
       floors: sorted(
         root.model.floors.map((f) => (f.id === id ? local.model.floors[0] : f)),
+      ),
+      slabs: [
+        ...root.model.slabs.filter((s) => s.floorId !== id),
+        ...local.model.slabs,
+      ].sort(
+        (a, b) =>
+          (a.floorId === id
+            ? local.model.floors[0].level
+            : root.model.floors.find((f) => f.id === a.floorId)!.level) -
+          (b.floorId === id
+            ? local.model.floors[0].level
+            : root.model.floors.find((f) => f.id === b.floorId)!.level),
       ),
       walls: [
         ...root.model.walls.filter((w) => w.floorId !== id),

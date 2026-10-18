@@ -1,5 +1,5 @@
 // Single-floor views for the existing geometry regression cases. Persistence
-// still exercises the real envelope 8 reader; no legacy reader is supplied.
+// still exercises the real envelope 9 reader; no legacy reader is supplied.
 import {
   createProject,
   type Base,
@@ -41,7 +41,7 @@ export function root(
     ...data,
     generated: output
       ? {
-          convention: "nominal-v9",
+          convention: "nominal-v10",
           floors: [{ ...output, floorId: viewFloorId }],
           diagnostics: output.diagnostics,
         }

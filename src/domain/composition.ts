@@ -55,7 +55,7 @@ export type Component = {
   phase: 0 | 1;
 };
 export type Composition = {
-  convention: "nominal-v9";
+  convention: "nominal-v10";
   channels?: ChannelBand[];
   grouts?: GroutAxis[];
   courses: {
@@ -83,6 +83,25 @@ const neighbors = (c: Cell, map: Map<string, Cell>) =>
   ]
     .map(([x, y]) => map.get(key(c.x + x, c.y + y)))
     .filter((c): c is Cell => !!c);
+const activeCells = (cells: Cell[], height: number): Cell[] =>
+  cells
+    .map((c) => ({ ...c, walls: c.walls.filter((w) => w.height > height) }))
+    .filter((c) => c.walls.length);
+function junctions(cells: Cell[]): Component["junctions"] {
+  const map = new Map(cells.map((c) => [key(c.x, c.y), c]));
+  return cells.flatMap((c) => {
+    const ns = neighbors(c, map);
+    const kind =
+      ns.length === 4
+        ? "cross"
+        : ns.length === 3
+          ? "T"
+          : ns.length === 2 && ns[0].x !== ns[1].x && ns[0].y !== ns[1].y
+            ? "L"
+            : null;
+    return kind ? [{ x: c.x, y: c.y, kind }] : [];
+  });
+}
 export const componentId = (ids: string[]) => [...ids].sort().join("|");
 export const signature = (walls: Wall[]) =>
   JSON.stringify(
@@ -266,7 +285,7 @@ function composeFloor(doc: Project): Composition {
   const { width: m, height: h } = doc.project.base,
     floor = doc.model.floors[0];
   const result: Composition = {
-    convention: "nominal-v9",
+    convention: "nominal-v10",
     courses: [],
     components: [],
     diagnostics: [],
@@ -344,48 +363,19 @@ function composeFloor(doc: Project): Composition {
       alternative: false,
       phase: 0,
     };
-    for (const c of cells) {
-      const ns = neighbors(c, map);
-      const kind =
-        ns.length === 4
-          ? "cross"
-          : ns.length === 3
-            ? "T"
-            : ns.length === 2 && ns[0].x !== ns[1].x && ns[0].y !== ns[1].y
-              ? "L"
-              : null;
-      if (kind) comp.junctions.push({ x: c.x * m, y: c.y * m, kind });
+    const seenJunctions = new Set<string>();
+    for (const height of [0, ...new Set(walls.map((w) => w.height))].sort(
+      (a, b) => a - b,
+    )) {
+      for (const j of junctions(activeCells(cells, height))) {
+        const id = `${key(j.x, j.y)}:${j.kind}`;
+        if (seenJunctions.has(id)) continue;
+        seenJunctions.add(id);
+        comp.junctions.push({ x: j.x * m, y: j.y * m, kind: j.kind });
+      }
     }
     result.components.push(comp);
     const hasCross = comp.junctions.some((j) => j.kind === "cross");
-    if (
-      comp.junctions.length > 1 &&
-      !hasCross &&
-      new Set(walls.map((w) => w.height)).size > 1
-    ) {
-      error(
-        "unsupported",
-        "Transição de alturas fora do padrão L simples suportado.",
-        ids,
-        comp.x,
-        comp.y,
-      );
-      continue;
-    }
-    if (
-      comp.junctions.some((j) => j.kind === "T") &&
-      !hasCross &&
-      new Set(walls.map((w) => w.height)).size > 1
-    ) {
-      error(
-        "unsupported",
-        "Transição de alturas em T ainda sem solução automática.",
-        ids,
-        comp.x,
-        comp.y,
-      );
-      continue;
-    }
     if (
       !comp.junctions.length &&
       cells.some(
@@ -517,18 +507,17 @@ function composeFloor(doc: Project): Composition {
     const courses: Piece[][] = [];
     let failed = false;
     for (let n = 1; n <= total; n++) {
-      const active = cells.filter((c) =>
-        c.walls.some((w) => w.height >= n * h),
-      );
+      const active = activeCells(cells, (n - 1) * h);
       if (!active.length) {
         courses.push([]);
         continue;
       }
       const phase = ((n - 1) % 2) ^ comp.phase;
-      const current: ReturnType<typeof tileCross> = hasCross
+      const activeCross = junctions(active).some((j) => j.kind === "cross");
+      const current: ReturnType<typeof tileCross> = activeCross
         ? tileCross(active, phase)
         : { pieces: tile(active, phase) };
-      const other: ReturnType<typeof tileCross> = hasCross
+      const other: ReturnType<typeof tileCross> = activeCross
         ? tileCross(active, 1 - phase)
         : { pieces: tile(active, 1 - phase) };
       const pieces = current.pieces;
@@ -660,7 +649,7 @@ export type FloorComposition = Omit<Composition, "convention"> & {
   floorId: string;
 };
 export type ProjectComposition = {
-  convention: "nominal-v9";
+  convention: "nominal-v10";
   floors: FloorComposition[];
   diagnostics: Diagnostic[];
 };
@@ -676,7 +665,7 @@ export function floorView(
     doc.generated && "floors" in doc.generated
       ? (() => {
           const f = doc.generated.floors.find((f) => f.floorId === floorId);
-          return f ? { ...f, convention: "nominal-v9" as const } : null;
+          return f ? { ...f, convention: "nominal-v10" as const } : null;
         })()
       : doc.generated;
   return {
@@ -687,6 +676,7 @@ export function floorView(
       floors: [floor],
       walls,
       openings: doc.model.openings.filter((o) => wallIds.has(o.wallId)),
+      slabs: doc.model.slabs.filter((s) => s.floorId === floorId),
     },
     adjustments: {
       junctions: doc.adjustments.junctions.filter((a) => a.floorId === floorId),
@@ -726,7 +716,7 @@ export function generate(doc: Project): ProjectComposition {
       };
     });
   return {
-    convention: "nominal-v9",
+    convention: "nominal-v10",
     floors,
     diagnostics: floors.flatMap((f) => f.diagnostics),
   };

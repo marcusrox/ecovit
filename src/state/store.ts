@@ -12,6 +12,7 @@ import {
   type Project,
   type Opening,
   type EditableProject,
+  type Point,
 } from "../domain/project";
 import {
   acquireProject,
@@ -22,6 +23,10 @@ import { validateProject } from "../persistence/files";
 import { mergeFloorView } from "../domain/floors";
 import { useMemo } from "react";
 import { reconcileOpenings } from "../domain/openings";
+import {
+  resolveFloorReference,
+  type FloorReference,
+} from "../domain/floor-reference";
 let release: (() => void) | null = null;
 const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
@@ -55,9 +60,19 @@ const changedInputs = (previous: Project, next: Project) =>
     next.project.groutSettings,
   ]);
 type Inspection = {
+  slabDraft: {
+    tool?: "select" | "slab";
+    slabId?: string;
+    openingId?: string;
+    points: Point[];
+    closed: boolean;
+    thickness: string;
+  } | null;
+  slabEditing: boolean;
   mode: "plan" | "course";
   course: number;
   ghost: "none" | "previous" | "next";
+  floorReference: FloorReference;
   component: string | null;
   preview: Composition | null;
   focus: { x: number; y: number } | null;
@@ -68,9 +83,12 @@ type Inspection = {
   diagnosticWalls: string[];
 };
 const inspection: Inspection = {
+  slabDraft: null,
+  slabEditing: false,
   mode: "plan",
   course: 1,
   ghost: "none",
+  floorReference: "none",
   component: null,
   preview: null,
   focus: null,
@@ -85,6 +103,7 @@ type State = Inspection & {
   doc: Project | null;
   activeFloorId: string | null;
   coursesByFloor: Record<string, number>;
+  floorReferencesByFloor: Record<string, FloorReference>;
   switchFloor: (id: string) => void;
   history: History;
   busy: boolean;
@@ -96,7 +115,7 @@ type State = Inspection & {
   close: () => void;
   commit: (
     doc: EditableProject,
-    command?: "resize" | "move" | "create/merge" | "floor",
+    command?: "resize" | "move" | "create/merge" | "floor" | "slab",
   ) => Promise<void>;
   undo: (redo?: boolean) => Promise<void>;
   notify: (message: string) => void;
@@ -105,7 +124,7 @@ type State = Inspection & {
 };
 export const useStore = create<State>((set, get) => {
   async function persist(doc: Project) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.8.0" } };
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.11.0" } };
     set({ doc });
     set({ busy: true, saved: "saving" });
     let saveFailed = false;
@@ -169,17 +188,55 @@ export const useStore = create<State>((set, get) => {
       set({ busy: false });
     }
   }
+  function referenceState(doc: Project, active: string | null, s: State) {
+    const floorReferencesByFloor = Object.fromEntries(
+      doc.model.floors.map((floor) => {
+        const direction = s.floorReferencesByFloor[floor.id] ?? "none";
+        return [
+          floor.id,
+          resolveFloorReference(doc, floor.id, direction) ? direction : "none",
+        ];
+      }),
+    ) as Record<string, FloorReference>;
+    return {
+      floorReferencesByFloor,
+      floorReference:
+        s.mode === "plan" && active
+          ? (floorReferencesByFloor[active] ?? "none")
+          : ("none" as FloorReference),
+    };
+  }
   return {
     ...inspection,
     inspect: (change) =>
-      set({
-        ...change,
-        ...(change.mode === "plan"
-          ? { groutMode: false, groutCell: null }
-          : {}),
+      set((s) => {
+        const direction = s.busy
+          ? s.floorReference
+          : (change.floorReference ?? s.floorReference);
+        const floorReference =
+          (change.mode ?? s.mode) === "plan" &&
+          s.doc &&
+          resolveFloorReference(s.doc, s.activeFloorId, direction)
+            ? direction
+            : "none";
+        return {
+          floorReferencesByFloor: {
+            ...s.floorReferencesByFloor,
+            ...(s.activeFloorId ? { [s.activeFloorId]: floorReference } : {}),
+          },
+          ...(change.mode && change.mode !== s.mode
+            ? { slabDraft: null, slabEditing: false }
+            : {}),
+          ...change,
+          floorReference,
+          ...(change.mode === "plan"
+            ? { groutMode: false, groutCell: null }
+            : {}),
+        };
       }),
     activeFloorId: null,
     coursesByFloor: {},
+    floorReferencesByFloor: {},
     switchFloor: (id) => {
       const s = get();
       if (
@@ -192,6 +249,7 @@ export const useStore = create<State>((set, get) => {
         ...inspection,
         mode: s.mode,
         activeFloorId: id,
+        ...referenceState(s.doc, id, s),
         coursesByFloor: {
           ...s.coursesByFloor,
           ...(s.activeFloorId ? { [s.activeFloorId]: s.course } : {}),
@@ -208,16 +266,38 @@ export const useStore = create<State>((set, get) => {
     message: "",
     select: null,
     notify: (message) => set({ message }),
-    choose: (select) => set({ select, diagnosticWalls: [] }),
+    choose: (select) =>
+      set((s) => ({
+        select,
+        diagnosticWalls: [],
+        ...(select !== s.select ? { slabDraft: null, slabEditing: false } : {}),
+      })),
     open: async (requested, fresh = false) => {
       if (get().busy) return;
       set({ busy: true, message: "" });
       let nextRelease: (() => void) | null = null;
       try {
         nextRelease = await acquireProject(requested.project.id);
-        const doc = fresh
+        let doc = fresh
           ? validateProject(requested)
           : await loadProject(requested.project.id);
+        let calculationMessage = "";
+        // A read-only tab may update disposable results in memory, never the shared record.
+        if (!nextRelease && doc.generationState.status === "outdated") {
+          try {
+            const generated = generate(doc);
+            doc = {
+              ...doc,
+              generated,
+              generationState: {
+                status: "current",
+                diagnostics: generated.diagnostics,
+              },
+            };
+          } catch (e) {
+            calculationMessage = `Cálculo não concluído: ${e instanceof Error ? e.message : String(e)}. O desenho foi preservado; baixe uma cópia ou reabra para tentar novamente.`;
+          }
+        }
         release?.();
         release = nextRelease;
         set({
@@ -225,12 +305,13 @@ export const useStore = create<State>((set, get) => {
           doc,
           activeFloorId: doc.model.floors[0].id,
           coursesByFloor: {},
+          floorReferencesByFloor: {},
           readonly: !release,
           history: { past: [], future: [] },
           select: null,
           saved: "saved",
           message: !release
-            ? "Este projeto está aberto em outra aba. Feche a outra aba e reabra este projeto para editar."
+            ? `Este projeto está aberto em outra aba. Feche a outra aba e reabra este projeto para editar.${calculationMessage ? ` ${calculationMessage}` : ""}`
             : "",
         });
         if (release && (fresh || doc.generationState.status === "outdated"))
@@ -248,6 +329,8 @@ export const useStore = create<State>((set, get) => {
       release = null;
       set({
         doc: null,
+        floorReference: "none",
+        floorReferencesByFloor: {},
         select: null,
         readonly: false,
         history: { past: [], future: [] },
@@ -258,6 +341,20 @@ export const useStore = create<State>((set, get) => {
       if (s.busy || s.readonly || !s.doc) return;
       try {
         candidate = mergeFloorView(s.doc, candidate);
+        if (
+          command === "slab" &&
+          [...candidate.model.slabs, ...s.doc.model.slabs].some(
+            (slab) =>
+              slab.floorId !== s.activeFloorId &&
+              JSON.stringify(
+                candidate.model.slabs.find((a) => a.id === slab.id),
+              ) !==
+                JSON.stringify(
+                  s.doc!.model.slabs.find((a) => a.id === slab.id),
+                ),
+          )
+        )
+          throw new Error("Edite a laje somente no pavimento ativo.");
         if (
           JSON.stringify(candidate.project) === JSON.stringify(s.doc.project) &&
           JSON.stringify(candidate.model) === JSON.stringify(s.doc.model) &&
@@ -334,7 +431,7 @@ export const useStore = create<State>((set, get) => {
               : s.doc.generationState,
             metadata: {
               ...candidate.metadata,
-              appVersion: "0.8.0",
+              appVersion: "0.11.0",
               updatedAt: new Date().toISOString(),
             },
           },
@@ -354,12 +451,18 @@ export const useStore = create<State>((set, get) => {
               doc.model.floors[0].id));
         set({
           activeFloorId: active,
+          ...referenceState(doc, active, s),
           coursesByFloor: {
             ...s.coursesByFloor,
             ...(s.activeFloorId ? { [s.activeFloorId]: s.course } : {}),
           },
           ...(active !== s.activeFloorId
-            ? { select: null, course: s.coursesByFloor[active!] ?? 1 }
+            ? {
+                select: null,
+                course: s.coursesByFloor[active!] ?? 1,
+                slabDraft: null,
+                slabEditing: false,
+              }
             : {}),
           preview: null,
           pendingOpening: null,
@@ -379,6 +482,10 @@ export const useStore = create<State>((set, get) => {
     undo: async (redo = false) => {
       const s = get();
       if (!s.doc || s.busy || s.readonly) return;
+      if (s.slabDraft || s.slabEditing) {
+        set({ slabDraft: null, slabEditing: false });
+        return;
+      }
       const next = travel(s.history, s.doc, redo);
       if (next) {
         const doc = {
@@ -407,6 +514,7 @@ export const useStore = create<State>((set, get) => {
           pendingOpening: null,
           doc,
           activeFloorId: active,
+          ...referenceState(doc, active, s),
           coursesByFloor: {
             ...s.coursesByFloor,
             ...(s.activeFloorId ? { [s.activeFloorId]: s.course } : {}),

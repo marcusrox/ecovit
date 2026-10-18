@@ -173,6 +173,21 @@ button.iconButton {
   align-items: center;
   gap: 10px;
 }
+.projectsReturn {
+  flex: none;
+}
+.fileAction {
+  flex: none;
+  border: 0;
+  background: transparent;
+}
+.header .fileAction[data-tooltip]::after {
+  top: calc(100% + 7px);
+  bottom: auto;
+  left: auto;
+  right: 0;
+  transform: none;
+}
 .primary {
   background: #234e3b !important;
   color: #fff !important;
@@ -194,6 +209,19 @@ button.iconButton {
   width: 220px;
   font-weight: 600;
   font-size: 15px;
+}
+.projectIdentity {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.projectIdentity .iconButton {
+  flex: none;
+}
+.projectIdentity .iconButton[data-tooltip]::after {
+  bottom: auto;
+  top: calc(100% + 7px);
 }
 .saveStatus {
   display: inline-flex;
@@ -340,7 +368,7 @@ button.iconButton {
 }
 .projectList {
   display: grid;
-  gap: 12px;
+  align-content: start;
   min-width: 0;
 }
 .empty {
@@ -373,11 +401,11 @@ button.iconButton {
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 106px;
+  min-height: 78px;
   text-align: left;
-  padding: 20px 24px;
-  gap: 18px;
-  border-color: #dce1d5;
+  padding: 14px 16px;
+  gap: 14px;
+  border: 0;
   border-radius: 12px;
   background: #fffefb;
   box-shadow: 0 2px 4px #253c3003;
@@ -403,12 +431,14 @@ button.iconButton {
   display: block;
   font-size: 16px;
   font-weight: 600;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .projectCard small {
   display: block;
   color: #63705e;
-  margin-top: 7px;
+  margin-top: 4px;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -475,7 +505,7 @@ button.iconButton {
     max-width: calc(100% - 48px);
   }
   .projectCard {
-    padding: 16px;
+    padding: 14px 16px;
     gap: 12px;
   }
   .listHeading h2 {
@@ -575,6 +605,17 @@ button.iconButton {
   align-items: center;
   justify-content: space-between;
   pointer-events: none;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.editorApp .floorReferenceBadge {
+  color: #3c6c89;
+  border-style: dashed;
+}
+.canvasTop > .pill {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .canvasTop button {
   pointer-events: auto;
@@ -1353,6 +1394,14 @@ button.iconButton {
 .editorApp .moduleLabel {
   font-size: 10px;
   gap: 5px;
+  min-width: 0;
+}
+.footerFloorName {
+  min-width: 0;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .editorApp .canvasTop {
   top: 10px;
@@ -1384,7 +1433,8 @@ button.iconButton {
   .editorApp .header {
     gap: 8px;
   }
-  .editorApp .headerActions button {
+  .editorApp .headerActions button,
+  .editorApp .projectsReturn {
     font-size: 11px;
   }
   .editorApp .projectName {
@@ -1413,4 +1463,260 @@ button.iconButton {
 }
 .floorControls .modal label {
   display: grid;
+}
+.slabActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+.slabActions .iconButton[data-tooltip]::after {
+  left: 0;
+  transform: none;
+}
+.slabDraft {
+  position: absolute;
+  left: 12px;
+  bottom: 60px;
+  max-width: min(460px, calc(100% - 24px));
+  max-height: 48%;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid #b3c3b9;
+  border-radius: 8px;
+  background: #fffffff5;
+  box-shadow: 0 3px 16px #253d3120;
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+.slabDraft label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.slabDraft input {
+  width: 90px;
+}
+.slabDraft p,
+.slabError {
+  color: #9c332a;
+}
+.slabError {
+  position: absolute;
+  left: 12px;
+  bottom: 60px;
+  max-width: calc(100% - 24px);
+  padding: 8px;
+  background: #fff5ef;
+  border: 1px solid #c88175;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.projectSlot {
+  display: grid;
+  grid-template-rows: 1fr;
+  padding-bottom: 8px;
+  min-width: 0;
+}
+.projectSlot:last-child {
+  padding-bottom: 0;
+}
+.projectRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid #dce1d5;
+  border-radius: 12px;
+  background: #fffefb;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.projectRow:is(:hover, :focus-within) {
+  border-color: #a5b496;
+}
+.projectCard:focus-visible {
+  outline-offset: -3px;
+}
+.projectRow .projectCard {
+  flex: 1;
+  min-width: 0;
+}
+.projectRowExiting {
+  animation: projectFadeOut 280ms ease-out forwards;
+  pointer-events: none;
+}
+@keyframes projectFadeOut {
+  from {
+    opacity: 1;
+    grid-template-rows: 1fr;
+  }
+  to {
+    opacity: 0;
+    grid-template-rows: 0fr;
+    padding-bottom: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .projectRowExiting {
+    animation-duration: 1ms;
+  }
+}
+.projectActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  padding-right: 16px;
+  opacity: 0;
+}
+.projectRow:is(:hover, :focus-within) .projectActions {
+  opacity: 1;
+}
+.projectActions .iconButton[data-tooltip]::after {
+  left: auto;
+  right: calc(100% + 6px);
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+}
+@media (hover: none) {
+  .projectActions {
+    opacity: 1;
+  }
+}
+.deleteProject {
+  color: #a65444;
+  border-color: #eadfd8;
+  background: #fcf8f5;
+}
+.deleteActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.projectRow .projectInfo {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.projectInfo .projectCompatibilityMessage {
+  display: block;
+  margin-top: 8px;
+  color: #8b5424;
+  line-height: 1.5;
+}
+.copyDialog {
+  position: fixed;
+  inset: 0;
+  height: fit-content;
+  max-width: calc(100% - 32px);
+  margin: auto;
+  border: 1px solid #b6c4b4;
+  color: inherit;
+}
+.copyDialog p {
+  overflow-wrap: anywhere;
+}
+.copyDialog .primary {
+  width: auto;
+  margin: 0;
+}
+.copyDialog::backdrop {
+  background: #14291d66;
+}
+.quantityScreen {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  border: 0;
+  padding: 24px 32px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  overflow: auto;
+  background: #fffefb;
+  color: #183e34;
+}
+.quantityScreen::backdrop {
+  background: #fffefb;
+}
+.quantityScreen h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+.quantityScreen h2 {
+  margin: 24px 0 12px;
+  font-size: 18px;
+}
+.quantityScreen p {
+  overflow-wrap: anywhere;
+}
+.quantityHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+}
+.quantityHeader > div {
+  min-width: 0;
+}
+.quantityHeader p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.quantityHeader button {
+  flex-shrink: 0;
+}
+.quantityLoss {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.quantityLoss input {
+  width: 100px;
+}
+.quantityLoss select {
+  max-width: min(100%, 500px);
+}
+.quantityTable {
+  overflow: auto;
+  max-height: 45vh;
+  border: 1px solid #dce1d5;
+  border-radius: 6px;
+  margin: 12px 0;
+}
+.quantityTable table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+  font-variant-numeric: tabular-nums;
+}
+.quantityTable th,
+.quantityTable td {
+  padding: 10px 14px;
+  text-align: right;
+  border-bottom: 1px solid #dce1d5;
+  white-space: nowrap;
+}
+.quantityTable th:first-child {
+  text-align: left;
+}
+.quantityTable caption {
+  text-align: left;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+.quantityTable thead th {
+  position: sticky;
+  top: 0;
+  background: #eef3e9;
+}
+.quantityTable tfoot {
+  background: #eef3e9;
 }

@@ -1,6 +1,6 @@
 # Ecovit
 
-Editor local de plantas com paredes ortogonais, malha de meio tijolo e composição nominal de fiadas. Aplicativo 0.8.0, arquivo versão 8 e composição nominal-v9.
+Editor local de plantas com paredes ortogonais, malha de meio tijolo e composição nominal de fiadas. Aplicativo 0.11.0, arquivo versão 9 e composição nominal-v10.
 
 | Marco | Funcionalidade | Estado |
 |---|---|---|
@@ -11,13 +11,16 @@ Editor local de plantas com paredes ortogonais, malha de meio tijolo e composiç
 | M3.3 | Grautes automáticos e ajustes individuais | Implementado e aceito |
 | M3.4 | Continuidade/união e movimento com dependentes | Implementado e aceito |
 | M3.5 | Cruz nominal integrada a contorno/divisórias | Implementado e aceito |
-| M4.1 | Até quatro pavimentos independentes com cota única modular | Implementado; teste e aceite manual pendentes |
-| M4.2/M4.3 | Lajes e comparação visual entre pavimentos | Previstos |
-| M5 | Quantitativos e duplicação de projetos | Previsto |
+| M4.1 | Até quatro pavimentos independentes com cota única modular | Implementado e aceito pelo solicitante |
+| M4.2 | Lajes ortogonais, aberturas, alças e redesenho | Implementado e aceito pelo solicitante |
+| M4.3 | Comparação visual entre pavimentos | Implementado e aceito pelo solicitante |
+| M5 | Quantitativos e duplicação de projetos | [Implementado e aceito; verificações no plano §12](docs/Ecovit-Plano-Implementacao.md#12-m5--consulta-e-conclusão-da-primeira-versão) |
 
 O aplicativo trabalha com um a quatro pavimentos independentes. A composição é nominal, sem dimensionamento estrutural ou comprovação de passagem física em furos/canais. Requisitos e limites no [PRD](docs/Ecovit-PRD.md); verificações e aceites no [plano](docs/Ecovit-Plano-Implementacao.md). O aceite específico das revisões de apresentação está pendente, conforme Plano §11.
 
-Durante o MVP, cada marco pode adotar novo formato sem compatibilidade com marcos anteriores. M4.1 aceita somente envelope 8/nominal-v9; arquivos e registros locais anteriores são incompatíveis, sem migração. Os registros antigos permanecem na lista identificados como incompatíveis; crie um novo projeto.
+Em Planta, o campo Referência de pavimento em Propriedades do pavimento na lateral (sem elemento selecionado) mostra um vizinho inferior/superior como referência tracejada, sem edição ou encaixe. Enquadrar considera as duas plantas; cada pavimento lembra sua direção durante a sessão ao alternar entre eles. Entrar em Fiada limpa a escolha do ativo; reabrir o projeto limpa todas. Essa preferência é apenas da sessão, sem alterar arquivo ou cálculo.
+
+Durante o MVP, cada marco pode adotar novo formato sem compatibilidade com marcos anteriores. O aplicativo vigente aceita envelope 9 e calcula com nominal-v10; resultados nominal-v9 no mesmo envelope são atualizados automaticamente, preservando desenhos e ajustes. Outros envelopes, inclusive o de M4.1, continuam incompatíveis, sem migração do modelo. Registros de envelopes incompatíveis permanecem na lista identificados; nesse caso, crie um novo projeto.
 
 ## Abrir nesta máquina
 
@@ -56,7 +59,11 @@ O térreo começa na cota 0 cm, com altura de novas paredes em 280 cm. No seleto
 
 Pontas livres e contornos abertos são permitidos. Retas conectadas, L, U e ciclos sem ramificações após o tratamento dos encontros usam paginação contínua: inteiros pareiam células consecutivas, cantos seguem a paridade do percurso e meios ficam nas extremidades quando necessários. Não há obrigação de orientar todos os cantos igualmente nem mínimo de quatro módulos para a ponte de um U. Reservas incompatíveis entre encontros próximos, sobreposições e transições de altura sem padrão continuam diagnosticadas; cruz → reta conforme altura é suportada.
 
-O arquivo vigente usa envelope versão 8 e composição `nominal-v9`. O download usa JSON compacto; se o resultado calculado ultrapassar o limite de 50 MiB do arquivo, a cópia conserva todos os desenhos, configurações e ajustes e reconstrói o resultado ao abrir, com aviso. A composição nesta aba permanece intacta. Snapshots atuais são conferidos por recomputação antes de abrir; adulteração é recusada. Em outra aba, somente leitura permite conferir o snapshot sem atualizar ou salvar. Configurações são comuns, mas paredes, vãos e ajustes são independentes por pavimento. Lajes e sobreposição de andares permanecem para M4.2/M4.3.
+O arquivo vigente usa envelope versão 9 e composição `nominal-v10`; resultados `nominal-v9` do mesmo envelope são descartados e recalculados ao abrir. O download usa JSON compacto; se o resultado calculado ultrapassar o limite de 50 MiB do arquivo, a cópia conserva todos os desenhos, configurações e ajustes e reconstrói o resultado ao abrir, com aviso. A composição nesta aba permanece intacta. Snapshots atuais são conferidos por recomputação antes de abrir; adulteração é recusada. Em outra aba, somente leitura atualiza resultados antigos apenas em memória, sem salvar no registro compartilhado. Configurações são comuns, mas paredes, vãos e ajustes são independentes por pavimento. Lajes e aberturas são independentes das paredes; sobreposição de andares permanece para M4.3.
+
+## Testar lajes de M4.2
+
+Em Planta, escolha Laje, clique nos vértices e feche pelo primeiro ponto ou por Fechar contorno. Informe espessura positiva e confirme a prévia. Selecione a laje para adicionar aberturas, editar espessura ou redesenhar. Arraste o corpo para mover a laje com seus vazios; selecione uma abertura para movê-la isoladamente. As alças deslocam arestas perpendicularmente na malha; Redesenhar contorno permite acrescentar ou retirar cantos. Contatos, sobreposições ou abertura fora da laje impedem a confirmação integralmente. Escape cancela; Desfazer durante prévia cancela primeiro a prévia. Há até uma laje por pavimento, com topo na cota do andar e espessura para baixo; paredes e composição permanecem independentes. Roteiro completo e verificações no plano §10.2.
 
 ## Testar edição de M3.4
 
@@ -64,7 +71,7 @@ Desenhe duas paredes compatíveis separadas e preencha o intervalo: a prévia e 
 
 Supressões de canaleta herdadas de uma união mostram limites do trecho e são restauradas individualmente; remover uma nova faixa continua abrangendo a parede inteira. Graute manual compartilhado conserva a intenção na parede que fica e cria uma cópia na movida. Escolhas de encontros invalidadas ficam pendentes na Fiada, com ação Descartar escolha de encontro. Confirme esses casos pelo roteiro do plano §8.
 
-Arquivos anteriores a M4.1 são recusados sem conversão. Aplicativos sem suporte ao envelope vigente rejeitam o arquivo; conserve uma cópia de segurança. O arquivo original importado não é modificado. Categorias de graute/configurações já existentes são preservadas.
+Arquivos anteriores a M4.2, inclusive envelope 8 de M4.1, são recusados sem conversão. Aplicativos sem suporte ao envelope vigente rejeitam o arquivo; conserve uma cópia de segurança. O arquivo original importado não é modificado. Categorias de graute/configurações já existentes são preservadas.
 
 ## Testar grautes de M3.3
 
@@ -83,6 +90,12 @@ Na Fiada, clicar numa canaleta ou usar Selecionar faixa. A prévia verde mostra 
 Em Planta, escolha Porta, Janela ou Vão e arraste sobre uma parede. Selecionar permite mover o corpo, redimensionar pelas duas alças ou editar posição/largura/base/altura e usar Aplicar vão. Medidas incompatíveis oferecem alternativas explícitas; Cancelar edição preserva o documento. Delete ou Excluir vão remove a abertura e pode ser desfeito. A seleção de empilhados identifica tipo/base/topo; há também um seletor acessível por teclado. Configurações expõe apenas padrões de vãos, com Aplicar/Cancelar/Restaurar; alterações não modificam aberturas existentes.
 
 Na Fiada, abertura aparece somente na altura atingida; clicar fora da ferramenta Graute oferece Editar na Planta. Diagnósticos no rodapé permite localizar, ver fiada e editar o elemento. Encurtar parede mantém a posição do vão, sinalizando os que não couberem. Uma fiada de alvenaria entre empilhados é exigida e pode compartilhar as canaletas dos dois vãos. Grautes respeitam os intervalos de alvenaria restantes. O roteiro completo e as evidências estão no plano §7.
+
+## Quantitativos e cópias de projeto
+
+No projeto aberto, use **Quantitativos** para consultar peças por tipo, pavimento e fiada e informar perdas opcionais. O percentual vale para a sessão e não é salvo no arquivo. Voltar ao desenho conserva seu contexto confirmado.
+
+Na lista inicial, **Duplicar** cria outro projeto a partir do último estado salvo, com nome próprio e edições independentes. Escopo, verificações e roteiro manual de M5 no [plano §12](docs/Ecovit-Plano-Implementacao.md#12-m5--consulta-e-conclusão-da-primeira-versão).
 
 ## Verificações
 

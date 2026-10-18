@@ -5,6 +5,14 @@ import type {
   JunctionChoice,
 } from "./composition";
 export type Point = { x: number; y: number };
+export type SlabOpening = { id: string; contour: Point[] };
+export type Slab = {
+  id: string;
+  floorId: string;
+  thickness: number;
+  contour: Point[];
+  openings: SlabOpening[];
+};
 export type Base = { length: number; width: number; height: number };
 export type Wall = {
   id: string;
@@ -54,10 +62,10 @@ export const defaultGroutSettings = (enabled = true): GroutSettings => ({
 });
 export const defaultChannelLevels = (): ChannelLevel[] =>
   [11200, 22400].map((top) => ({ id: crypto.randomUUID(), top }));
-export type Tool = "select" | "wall" | Opening["kind"];
+export type Tool = "select" | "wall" | "slab" | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 8;
+  schemaVersion: 9;
   project: {
     id: string;
     name: string;
@@ -78,7 +86,7 @@ export type Project = {
     }[];
     walls: Wall[];
     openings: Opening[];
-    slabs: never[];
+    slabs: Slab[];
   };
   adjustments: {
     junctions: JunctionChoice[];
@@ -143,7 +151,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 8,
+    schemaVersion: 9,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -171,7 +179,7 @@ export function createProject(
     adjustments: { junctions: [], grout: [], channels: [] },
     generated: null,
     generationState: { status: "outdated", diagnostics: [] },
-    metadata: { createdAt: now, updatedAt: now, appVersion: "0.8.0" },
+    metadata: { createdAt: now, updatedAt: now, appVersion: "0.11.0" },
   };
 }
 export const snap = (n: number, module: number) =>

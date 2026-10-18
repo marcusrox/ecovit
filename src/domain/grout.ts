@@ -167,8 +167,45 @@ export function applyGrout(doc: Project, result: Composition): Composition {
   // Actual composed masonry defines both eligible markers and vertical spans.
   const cells = new Map<string, GroutAxis>();
   const byWall = new Map<string, Set<string>>();
+  const ends = settings.ends
+    ? doc.model.walls.flatMap((w) => {
+        const b = bounds(w, m);
+        return [
+          { x: b.x, y: b.y },
+          {
+            x: w.a.y === w.b.y ? b.x + b.width - m : b.x,
+            y: w.a.y === w.b.y ? b.y : b.y + b.height - m,
+          },
+        ].map((p) => ({ p, wallId: w.id }));
+      })
+    : [];
+  const freeEnds = new Map<string, { p: Point; wallId: string }>();
   for (const row of result.courses) {
-    for (const c of courseCells(doc, result, row.number)) {
+    const currentCells = courseCells(doc, result, row.number);
+    if (ends.length) {
+      const map = new Map(currentCells.map((c) => [groutId(c), c]));
+      for (const end of ends) {
+        const { p, wallId } = end,
+          cell = map.get(groutId(p));
+        if (!cell?.wallIds.includes(wallId) || cell.wallIds.length > 1)
+          continue;
+        if (
+          ![
+            [m, 0],
+            [-m, 0],
+            [0, m],
+            [0, -m],
+          ].some(([dx, dy]) =>
+            map
+              .get(groutId({ x: p.x + dx, y: p.y + dy }))
+              ?.wallIds.some((id) => id !== wallId),
+          )
+        ) {
+          freeEnds.set(`${groutId(p)}:${wallId}`, end);
+        }
+      }
+    }
+    for (const c of currentCells) {
       const id = groutId(c),
         axis = cells.get(id) ?? {
           id,
@@ -202,10 +239,9 @@ export function applyGrout(doc: Project, result: Composition): Composition {
     origins.add(origin);
     candidates.set(id, origins);
   };
-  const junctions = new Set<string>();
+
   for (const comp of result.components)
     for (const j of comp.junctions) {
-      junctions.add(groutId(j));
       if (settings.junctions) add(j, `junction:${j.kind}:${groutId(j)}`);
     }
   if (settings.openings)
@@ -227,36 +263,7 @@ export function applyGrout(doc: Project, result: Composition): Composition {
           add(p, `opening:${o.id}`);
       }
     }
-  if (settings.ends)
-    for (const w of doc.model.walls) {
-      const b = bounds(w, m),
-        horizontal = w.a.y === w.b.y;
-      for (const p of [
-        { x: b.x, y: b.y },
-        horizontal
-          ? { x: b.x + b.width - m, y: b.y }
-          : { x: b.x, y: b.y + b.height - m },
-      ]) {
-        const cell = cells.get(groutId(p));
-        if (
-          !cell?.wallIds.includes(w.id) ||
-          cell.wallIds.length > 1 ||
-          junctions.has(groutId(p))
-        )
-          continue;
-        const meets = [
-          [m, 0],
-          [-m, 0],
-          [0, m],
-          [0, -m],
-        ].some(([dx, dy]) =>
-          cells
-            .get(groutId({ x: p.x + dx, y: p.y + dy }))
-            ?.wallIds.some((id) => id !== w.id),
-        );
-        if (!meets) add(p, `end:${w.id}`);
-      }
-    }
+  for (const end of freeEnds.values()) add(end.p, `end:${end.wallId}`);
   const anchors = new Map<string, number[]>();
   for (const id of candidates.keys())
     for (const wallId of cells.get(id)!.wallIds) {

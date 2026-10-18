@@ -34,7 +34,14 @@ import {
 import { useStore, useEditingProject } from "../state/store";
 import styles from "../ui/App.module.css";
 import { Icon } from "../ui/Icon";
+import { useSlabCanvas } from "./Slabs";
 import { isChannel } from "../domain/channels";
+import {
+  floorPlanBounds,
+  resolveFloorReference,
+} from "../domain/floor-reference";
+import { FloorReferenceLayer } from "./FloorReference";
+import { drawOpeningSymbol } from "./opening-symbol";
 import {
   activeGrout,
   courseCells,
@@ -78,6 +85,16 @@ export function Canvas({
     selected = useStore((s) => s.select),
     busy = useStore((s) => s.busy),
     readonly = useStore((s) => s.readonly);
+  const project = useStore((s) => s.doc)!,
+    floorReference = useStore((s) => s.floorReference),
+    reference =
+      mode === "plan"
+        ? resolveFloorReference(project, doc.viewFloorId, floorReference)
+        : undefined,
+    referenceEmpty =
+      !reference ||
+      (!project.model.walls.some((w) => w.floorId === reference.id) &&
+        !project.model.slabs.some((s) => s.floorId === reference.id));
   const host = useRef<HTMLDivElement>(null),
     gesture = useRef<Gesture | null>(null),
     space = useRef(false);
@@ -104,6 +121,7 @@ export function Canvas({
   >(null);
   const module = doc.project.base.width,
     walls = doc.model.walls;
+  const slabs = useSlabCanvas(doc, tool, setTool, camera);
   const output = compositionPreview ?? doc.generated;
   const markers = useMemo(
     () => (output && mode === "course" ? courseCells(doc, output, course) : []),
@@ -189,6 +207,7 @@ export function Canvas({
       cancel();
     };
     const down = (e: KeyboardEvent) => {
+      if (document.querySelector("dialog[open]")) return;
       if ((e.target as HTMLElement).closest("input, textarea, select, button"))
         return;
       if (e.code === "Space") {
@@ -207,6 +226,7 @@ export function Canvas({
       }
     };
     const up = (e: KeyboardEvent) => {
+      if (document.querySelector("dialog[open]")) return;
       if (e.code === "Space") {
         space.current = false;
         setSpaceHeld(false);
@@ -404,15 +424,21 @@ export function Canvas({
     setCamera({ scale, x: point.x - w.x * scale, y: point.y - w.y * scale });
   };
   const fit = () => {
-    if (!walls.length) {
+    const box = floorPlanBounds(
+      project,
+      [doc.viewFloorId, ...(reference ? [reference.id] : [])],
+      mode === "plan",
+    );
+    if (!box) {
+      // Keep the existing Fiada behavior for a floor containing only a slab.
+      if (mode === "course" && doc.model.slabs.length) return;
       setCamera({ x: 120, y: 100, scale: 0.012 });
       return;
     }
-    const boxes = walls.map((w) => bounds(w, module)),
-      minX = Math.min(...boxes.map((b) => b.x)),
-      minY = Math.min(...boxes.map((b) => b.y)),
-      maxX = Math.max(...boxes.map((b) => b.x + b.width)),
-      maxY = Math.max(...boxes.map((b) => b.y + b.height));
+    const minX = box.x,
+      minY = box.y,
+      maxX = box.x + box.width,
+      maxY = box.y + box.height;
     const scale = Math.max(
       0.0015,
       Math.min(
@@ -602,6 +628,7 @@ export function Canvas({
           }
           if (readonly) return;
           useStore.getState().inspect({ pendingOpening: null });
+          if (slabs.down(p)) return;
           if (activeOpening && tool === "select") {
             const w = walls.find((w) => w.id === activeOpening.wallId)!,
               b = openingBox(activeOpening, w, module);
@@ -631,7 +658,7 @@ export function Canvas({
                 return;
               }
           }
-          if (tool !== "wall" && tool !== "select") {
+          if (tool !== "wall" && tool !== "select" && tool !== "slab") {
             const hits = hitWalls(walls, p, module, 3 / camera.scale);
             const w =
               hits.find((w) => w.id === hostWallId) ??
@@ -690,7 +717,17 @@ export function Canvas({
             return;
           }
           const hits = hitWalls(walls, p, module, 3 / camera.scale);
-          const openings = openingHits(p);
+          const bodyTarget = slabs.bodyTarget();
+          const forcedWall = hits.find((w) => w.id === bodyTarget);
+          const openingCandidates = openingHits(p);
+          const forcedOpening = openingCandidates.find(
+            (o) => o.id === bodyTarget,
+          );
+          const openings = forcedWall
+            ? []
+            : forcedOpening
+              ? [forcedOpening]
+              : openingCandidates;
           if (openings.length) {
             useStore.getState().choose(openings[0].id);
             if (openings.length > 1) setOpeningChoices(openings);
@@ -707,7 +744,7 @@ export function Canvas({
             }
             return;
           }
-          const chosen = hits.find((w) => w.id === hostWallId);
+          const chosen = forcedWall ?? hits.find((w) => w.id === hostWallId);
           useStore.getState().choose(chosen?.id ?? hits[0]?.id ?? null);
           if (hits.length > 1 && !chosen) setChoices(hits);
           else if (chosen ?? hits[0]) {
@@ -723,12 +760,29 @@ export function Canvas({
         onAuxClick={(e) => {
           if (e.button === 1) e.preventDefault();
         }}
+        onLostPointerCapture={() => {
+          cancel();
+          slabs.cancel();
+        }}
         onMouseMove={(e) => {
           setMouseScreen(pointer(e.clientX, e.clientY));
+          if (
+            gesture.current?.type !== "pan" &&
+            slabs.move(world(pointer(e.clientX, e.clientY)))
+          )
+            return;
           if (gesture.current?.type !== "pan")
             update(pointer(e.clientX, e.clientY));
         }}
         onMouseUp={(e) => {
+          if (
+            e.button === 0 &&
+            gesture.current?.type !== "pan" &&
+            slabs.up(world(pointer(e.clientX, e.clientY)))
+          ) {
+            cancel();
+            return;
+          }
           const g = gesture.current;
           if (e.button !== (g?.type === "pan" ? g.button : 0)) return;
           if (g && g.type !== "pan" && !busy && !readonly) {
@@ -872,6 +926,14 @@ export function Canvas({
           }}
         >
           <Layer listening={false}>{grid}</Layer>
+          {reference && (
+            <FloorReferenceLayer
+              doc={project}
+              floorId={reference.id}
+              camera={camera}
+            />
+          )}
+          {slabs.before}
           <Layer listening={false}>
             {mode === "plan" &&
               rendered.map((w, i) => {
@@ -1233,26 +1295,15 @@ export function Canvas({
                   ctx.fillRect(x, y, width, height);
                   ctx.setLineDash(o.kind === "opening" ? [4, 3] : []);
                   ctx.strokeRect(x, y, width, height);
-                  if (o.kind === "window") {
-                    ctx.beginPath();
-                    if (w.a.y === w.b.y) {
-                      ctx.moveTo(x, y + height / 3);
-                      ctx.lineTo(x + width, y + height / 3);
-                      ctx.moveTo(x, y + (2 * height) / 3);
-                      ctx.lineTo(x + width, y + (2 * height) / 3);
-                    } else {
-                      ctx.moveTo(x + width / 3, y);
-                      ctx.lineTo(x + width / 3, y + height);
-                      ctx.moveTo(x + (2 * width) / 3, y);
-                      ctx.lineTo(x + (2 * width) / 3, y + height);
-                    }
-                    ctx.stroke();
-                  } else if (o.kind === "door") {
-                    ctx.beginPath();
-                    ctx.moveTo(x, y);
-                    ctx.lineTo(x + width, y + height);
-                    ctx.stroke();
-                  }
+                  drawOpeningSymbol(
+                    ctx,
+                    o.kind,
+                    w.a.y === w.b.y,
+                    x,
+                    y,
+                    width,
+                    height,
+                  );
                   ctx.setLineDash([]);
                   ctx.fillStyle = "#234b40";
                   ctx.font = "11px sans-serif";
@@ -1336,28 +1387,44 @@ export function Canvas({
               />
             </Layer>
           )}
+          {slabs.after}
         </Stage>
       </div>
-      {!walls.length && !preview && (
-        <div className={styles.canvasHint}>
-          <span>SEU PROJETO COMEÇA AQUI</span>
-          <h2>Trace a primeira parede.</h2>
-          <p>
-            Escolha Parede e arraste sobre a malha.
-            <br />
-            As medidas se ajustam ao módulo do tijolo.
-          </p>
-        </div>
-      )}
+      {slabs.controls}
+      {!walls.length &&
+        !doc.model.slabs.length &&
+        referenceEmpty &&
+        tool !== "slab" &&
+        !preview && (
+          <div className={styles.canvasHint}>
+            <span>SEU PROJETO COMEÇA AQUI</span>
+            <h2>Trace a primeira parede.</h2>
+            <p>
+              Escolha Parede e arraste sobre a malha.
+              <br />
+              As medidas se ajustam ao módulo do tijolo.
+            </p>
+          </div>
+        )}
       <div className={styles.canvasTop}>
         <span className={styles.pill}>
-          TÉRREO <span> / </span>{" "}
+          {doc.model.floors[0].name} <span> / </span>{" "}
           {mode === "plan"
             ? "PLANTA"
             : compositionPreview
               ? "FIADA · PRÉVIA"
               : "FIADA"}
         </span>
+        {reference && (
+          <span
+            className={`${styles.pill} ${styles.floorReferenceBadge}`}
+            data-testid="floor-reference-label"
+          >
+            Referência: {floorReference === "below" ? "Inferior" : "Superior"} ·{" "}
+            {reference.name} · {display(reference.level)} cm
+            {referenceEmpty ? " · sem elementos" : ""}
+          </span>
+        )}
         {mode === "plan" && tool === "wall" && (
           <button
             disabled={busy || readonly}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { validateSlab } from "../domain/slabs";
 import {
   LIMIT,
   bounds,
@@ -17,7 +18,6 @@ const integer = z.number().int().min(-LIMIT).max(LIMIT);
 const positive = integer.refine((n) => n > 0);
 const point = z.object({ x: integer, y: integer }).strict();
 const id = z.string().uuid();
-const empty = z.array(z.never()).max(0);
 const diagnostic = z
   .object({
     floorId: id,
@@ -128,7 +128,7 @@ const scope = z.discriminatedUnion("kind", [
 ]);
 const generated = z
   .object({
-    convention: z.literal("nominal-v9"),
+    convention: z.enum(["nominal-v9", "nominal-v10"]),
     floors: z.array(composition).min(1).max(4),
     diagnostics: z.array(diagnostic),
   })
@@ -136,7 +136,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(8),
+    schemaVersion: z.literal(9),
     project: z
       .object({
         id,
@@ -206,7 +206,21 @@ const schema = z
               .strict(),
           )
           .max(MAX_OPENINGS),
-        slabs: empty,
+        slabs: z
+          .array(
+            z
+              .object({
+                id,
+                floorId: id,
+                thickness: positive,
+                contour: z.array(point).min(4),
+                openings: z.array(
+                  z.object({ id, contour: z.array(point).min(4) }).strict(),
+                ),
+              })
+              .strict(),
+          )
+          .max(4),
       })
       .strict(),
     adjustments: z
@@ -279,7 +293,7 @@ export function validateProject(
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 8
+    value.schemaVersion !== 9
   )
     throw new Error(
       "Formato incompatível. Crie um novo projeto; arquivos de marcos anteriores não são convertidos.",
@@ -287,7 +301,16 @@ export function validateProject(
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");
-  const doc = parsed.data as Project;
+  // Old results are disposable; never weaken validation of the drawing or of v10 snapshots.
+  const doc = (
+    parsed.data.generated?.convention === "nominal-v9"
+      ? {
+          ...parsed.data,
+          generated: null,
+          generationState: { status: "outdated", diagnostics: [] },
+        }
+      : parsed.data
+  ) as Project;
   validateBase(doc.project.base);
   const m = doc.project.base.width,
     h = doc.project.base.height;
@@ -317,6 +340,19 @@ export function validateProject(
     checked([f.level + f.defaultHeight]);
   }
   const walls = new Map(doc.model.walls.map((w) => [w.id, w]));
+  const slabFloors = new Set<string>();
+  let lastSlabFloor = -1;
+  for (const slab of doc.model.slabs) {
+    take(slab.id);
+    const floor = floors.get(slab.floorId);
+    const index = doc.model.floors.findIndex((f) => f.id === slab.floorId);
+    if (!floor || slabFloors.has(slab.floorId) || index <= lastSlabFloor)
+      throw new Error("Laje com pavimento ausente, repetido ou fora de ordem.");
+    slabFloors.add(slab.floorId);
+    lastSlabFloor = index;
+    slab.openings.forEach((o) => take(o.id));
+    validateSlab(slab, m, floor.level);
+  }
   for (const w of doc.model.walls) {
     take(w.id);
     const f = floors.get(w.floorId);

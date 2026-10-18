@@ -1,6 +1,89 @@
 import { test, expect } from "@playwright/test";
 import { createProject, makeWall } from "../../src/domain/project";
 
+test("Configurações do projeto ficam junto ao nome, com ícone e dicas acessíveis", async ({
+  page,
+}, info) => {
+  await page.goto("/");
+  await page.getByTestId("import-file").setInputFiles({
+    name: "header.ecovit",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify(
+        createProject("Projeto com nome comprido", {
+          length: 2500,
+          width: 1250,
+          height: 700,
+        }),
+      ),
+    ),
+  });
+  await expect(page.getByRole("status")).toContainText("Salvo");
+  const button = page.getByRole("button", {
+    name: "Configurações",
+    exact: true,
+  });
+  await expect(button).toHaveCount(1);
+  await expect(
+    page
+      .locator("header")
+      .getByRole("button", { name: "Configurações", exact: true }),
+  ).toBeVisible();
+  await expect(button).toHaveText("");
+  await expect(button).toHaveAttribute("title", "Configurações do projeto");
+  for (const [width, height] of [
+    [1366, 768],
+    [1280, 720],
+    [900, 680],
+  ]) {
+    await page.setViewportSize({ width, height });
+    const name = (await page
+      .getByLabel("Nome do projeto", { exact: true })
+      .boundingBox())!;
+    const box = (await button.boundingBox())!;
+    const icon = (await button.locator("svg").boundingBox())!;
+    expect(
+      Math.abs(name.y + name.height / 2 - box.y - box.height / 2),
+    ).toBeLessThanOrEqual(1);
+    expect(box.x - name.x - name.width).toBeGreaterThanOrEqual(0);
+    expect(box.x - name.x - name.width).toBeLessThanOrEqual(6);
+    expect(
+      Math.abs(icon.x + icon.width / 2 - box.x - box.width / 2),
+    ).toBeLessThanOrEqual(1);
+    expect(
+      Math.abs(icon.y + icon.height / 2 - box.y - box.height / 2),
+    ).toBeLessThanOrEqual(1);
+    await page.getByLabel("Nome do projeto", { exact: true }).focus();
+    await page.keyboard.press("Tab");
+    await expect(button).toBeFocused();
+    expect(
+      await button.evaluate((el) => getComputedStyle(el, "::after").display),
+    ).toBe("block");
+    await page.screenshot({
+      path: `.tools/settings-header-${info.project.name}-${width}.png`,
+    });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Cancelar", exact: true })
+    .click();
+  await page
+    .getByLabel("Nome do projeto", { exact: true })
+    .fill("Projeto renomeado");
+  await button.click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByLabel("Nome do projeto", { exact: true })).toHaveValue(
+    "Projeto renomeado",
+  );
+});
+
 test("Configurações cabem na tela, ajuda por teclado e muitos níveis mantêm ações acessíveis", async ({
   page,
 }, info) => {
@@ -173,7 +256,20 @@ test("Lucide mantém rótulos, estados, foco e navegação nas superfícies do a
       .locator("button:has(> svg)")
       .evaluateAll((controls) =>
         controls
-          .filter((el) => el.scrollWidth > el.clientWidth + 1)
+          .filter((el) => {
+            const box = el.getBoundingClientRect();
+            // Tooltips intentionally extend beyond the button; inspect its content.
+            return [...el.childNodes].some((node) => {
+              if (node.nodeType === Node.TEXT_NODE && !node.textContent?.trim())
+                return false;
+              const range = document.createRange();
+              range.selectNode(node);
+              return [...range.getClientRects()].some(
+                (rect) =>
+                  rect.left < box.left - 1 || rect.right > box.right + 1,
+              );
+            });
+          })
           .map((el) => el.textContent),
       );
     expect(overflow).toEqual([]);
