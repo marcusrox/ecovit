@@ -4,19 +4,19 @@
 
 Registro consolidado da entrega. Versões e verificações referem-se ao marco; o comportamento e os formatos vigentes são definidos nas referências por assunto. Aceite global não atribui resultado individual a roteiros manuais.
 
-**Estado: implementado e aceito pelo solicitante, incluindo a criação por dois cliques.** Origem: BL-03. Requisito: PRD RF-15, com integração aos fluxos RF-02/08/09/11/12/14; contratos: Arquitetura §25. Os aceites anteriores, inclusive M6, permanecem preservados.
+**Estado: implementado e aceito pelo solicitante, incluindo a criação por dois cliques.** Origem: BL-03. Requisito: PRD RF-15, com integração aos fluxos RF-02/08/09/11/12/14; contratos: [Medidas e imagens](../arquitetura/Medidas-e-Imagens.md#medidas-independentes). Os aceites anteriores, inclusive M6, permanecem preservados.
 
 ## 14.1. Alcance e definições fechadas
 
 Elemento Medida independente por pavimento, com segmento livre entre dois pontos e rótulo de distância em cm. Criação por dois cliques (início e fim), atração inicial/final aos alvos geométricos do ativo, prioridade de extremidades/vértices sobre linhas, indicação visual e suspensão temporária com Alt. Sem vínculo permanente: alterações dos elementos usados como referência não alteram medidas confirmadas.
 
-Edição em Planta por seleção, movimento do corpo e alças das pontas; histórico, exclusão, salvamento, arquivo e cópias integrados. Texto centralizado legível, com até duas casas decimais e tamanho visual constante; opção Medidas em Preferências do Ecovit oculta somente o rótulo. Composição e quantitativos não consideram medidas, e editar apenas esses elementos não recalcula o motor. Comportamento pertence ao RF-15, dados/precisão/atração/persistência à Arquitetura §25; os critérios abaixo verificam esses contratos sem substituí-los.
+Edição em Planta por seleção, movimento do corpo e alças das pontas; histórico, exclusão, salvamento, arquivo e cópias integrados. Texto centralizado legível, com até duas casas decimais e tamanho visual constante; opção Medidas em Preferências do Ecovit oculta somente o rótulo. Composição e quantitativos não consideram medidas, e editar apenas esses elementos não recalcula o motor. Comportamento pertence ao RF-15, dados/precisão/atração/persistência à [Medidas e imagens](../arquitetura/Medidas-e-Imagens.md#medidas-independentes); os critérios abaixo verificam esses contratos sem substituí-los.
 
-Não há pendência de definição de produto neste recorte. M7 usa aplicativo 0.12.0, envelope 10 com leitura de 9 e atração visual de 9 px, conforme Arquitetura §25. Fora do marco: edição numérica de comprimento/ângulo, medidas encadeadas, linhas auxiliares de cota, rótulo personalizado/reposicionável, vínculos automáticos, medidas em 3D/Fiada/referências e outros itens do backlog.
+Não há pendência de definição de produto neste recorte. M7 usa aplicativo 0.12.0, envelope 10 com leitura de 9 e atração visual de 9 px, conforme [Medidas e imagens](../arquitetura/Medidas-e-Imagens.md#medidas-independentes). Fora do marco: edição numérica de comprimento/ângulo, medidas encadeadas, linhas auxiliares de cota, rótulo personalizado/reposicionável, vínculos automáticos, medidas em 3D/Fiada/referências e outros itens do backlog.
 
 ## 14.2. Tarefas
 
-- [x] M7-T01: consolidar escopo aprovado, RF-15, Arquitetura §25 e critérios deste marco.
+- [x] M7-T01: consolidar escopo aprovado, RF-15, [Medidas e imagens](../arquitetura/Medidas-e-Imagens.md#medidas-independentes) e critérios deste marco.
 - [x] M7-T02: definir a evolução do contrato/versão de arquivo conforme a política vigente, acrescentar dados e validação das medidas e integrar histórico, pavimentos e cópias.
 - [x] M7-T03: implementar ferramenta, geometria livre, atração inicial/final, Alt, seleção, alças, movimento e cancelamentos no próprio editor.
 - [x] M7-T04: integrar salvamento sem recálculo construtivo, preservação de resultados, transporte íntegro, reabertura e somente leitura.
@@ -41,7 +41,7 @@ Critérios da entrega; verificações do Codex e teste manual do solicitante sã
 | M7-A10 | Salvamento local, reabertura, download/importação e duplicação de projeto preservam medidas; edição da cópia não altera origem. Arquivos inválidos, coordenadas/precisão/referências inválidas e versões incompatíveis são recusados sem substituir trabalho aberto, segundo o contrato definido na implementação. |
 | M7-A11 | Medidas pertencem ao pavimento ativo; duplicar pavimento copia XY com IDs próprios, remover exclui suas medidas e histórico restaura. Fiada e referência de outro pavimento não as desenham; enquadrar inclui extremos, mesmo quando só houver medidas. |
 | M7-A12 | Somente leitura impede edição de medidas e preserva consulta/navegação; bloqueios entre abas, falhas de salvamento e recuperação por download permanecem íntegros. |
-| M7-A13 | Regressões de M1–M6 pertinentes preservadas: desenho modular construtivo, prioridades/alças, navegação, cancelamentos, arquivos, pavimentos, preferências e status único do canvas; iconografia e apresentação conforme Arquitetura §2.1 nas três resoluções de referência. |
+| M7-A13 | Regressões de M1–M6 pertinentes preservadas: desenho modular construtivo, prioridades/alças, navegação, cancelamentos, arquivos, pavimentos, preferências e status único do canvas; iconografia e apresentação conforme [Interface e iconografia](../arquitetura/Interface-e-Iconografia.md#iconografia) nas três resoluções de referência. |
 
 ## 14.4. Andamento, verificações e limites
 

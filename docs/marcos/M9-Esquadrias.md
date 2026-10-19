@@ -4,7 +4,7 @@
 
 Registro consolidado da entrega. Versões e verificações referem-se ao marco; o comportamento e os formatos vigentes são definidos nas referências por assunto. Aceite global não atribui resultado individual a roteiros manuais.
 
-**Estado: implementado, verificado pelo Codex e aceito pelo solicitante.** Origem BL-08; RF-06, Arquitetura §27, CT-17/EX-95–99. Aceite funcional global na [M9 §16.4](M9-Esquadrias.md#164-aceite-do-solicitante), separado das verificações do Codex.
+**Estado: implementado, verificado pelo Codex e aceito pelo solicitante.** Origem BL-08; RF-06, [Elementos construtivos](../arquitetura/Elementos-Construtivos.md#vãos-e-aparência-de-esquadrias), CT-17/EX-95–99. Aceite funcional global na [M9 §16.4](M9-Esquadrias.md#164-aceite-do-solicitante), separado das verificações do Codex.
 
 ## 16.1. Alcance
 
@@ -33,7 +33,7 @@ Nove variantes: portas de giro simples/duplo, correr simples/central e basculant
 
 **Limites:** símbolos esquemáticos sem simulação, colisões ou declaração normativa; projeção basculante não informa altura/curso físico. Quantitativos permanecem de peças da composição, sem esquadrias. Projeções não viram alvos de seleção/atração; selecionar pelo vão ou pela lista de elementos. Rótulos podem sobrepor símbolos em desenhos densos; a preferência permite ocultá-los. Envelope 12 pode ser recusado por aplicativos anteriores. Aceites dos marcos anteriores preservados; aceite funcional global do M9 registrado na [M9 §16.4](M9-Esquadrias.md#164-aceite-do-solicitante), sem alterar estes limites.
 
-**Integridade da sessão e bloqueios — RF-12/Arquitetura §9:** abertura repetida do mesmo projeto editável a partir do registro salvo conserva documento/histórico e trava; inicialização explícita reutiliza a trava própria e preserva a sessão anterior em caso de validação inválida. Descarte do store no hot reload impede novas alterações naquela instância, aguarda operação em andamento e libera a trava antes da substituição. Voltar à lista não mantém bloqueio de edição. O solicitante confirmou o funcionamento após a correção, conforme o aceite global deste marco.
+**Integridade da sessão e bloqueios — RF-12/[Persistência e compatibilidade](../arquitetura/Persistencia-e-Compatibilidade.md#formato-e-leitores-vigentes):** abertura repetida do mesmo projeto editável a partir do registro salvo conserva documento/histórico e trava; inicialização explícita reutiliza a trava própria e preserva a sessão anterior em caso de validação inválida. Descarte do store no hot reload impede novas alterações naquela instância, aguarda operação em andamento e libera a trava antes da substituição. Voltar à lista não mantém bloqueio de edição. O solicitante confirmou o funcionamento após a correção, conforme o aceite global deste marco.
 
 ## 16.4. Aceite do solicitante
 

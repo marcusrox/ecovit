@@ -4,19 +4,19 @@
 
 Registro consolidado da entrega. Versões e verificações referem-se ao marco; o comportamento e os formatos vigentes são definidos nas referências por assunto. Aceite global não atribui resultado individual a roteiros manuais.
 
-**Estado: implementado, verificado pelo Codex e aceito pelo solicitante.** Origem: BL-02. Requisito: PRD RF-16; contratos: Arquitetura §26. Os marcos anteriores, inclusive o aceite de M7 com criação por dois cliques, permanecem preservados. BL-01 não integra esta entrega.
+**Estado: implementado, verificado pelo Codex e aceito pelo solicitante.** Origem: BL-02. Requisito: PRD RF-16; contratos: [Medidas e imagens](../arquitetura/Medidas-e-Imagens.md#imagem-de-referência). Os marcos anteriores, inclusive o aceite de M7 com criação por dois cliques, permanecem preservados. BL-01 não integra esta entrega.
 
 ## 15.1. Escopo aprovado
 
 Uma imagem PNG/JPEG por pavimento como fundo em Planta do ativo, abaixo da malha e elementos. Acesso em Propriedades do pavimento, com botões/textos compactos e controles revelados conforme a operação; sem ocupar grande área do canvas nem criar barra permanente. Calibrar por dois cliques livres sobre um trecho conhecido e distância real em cm; preservar proporção, marcar pontos e mostrar prévia, sem criar uma Medida. Permitir posição livre e ângulo com prévia no modo Ajustar, além de recalibração com primeiro ponto fixo. Imagem inicialmente visível a 40% de opacidade, com controle de 0 a 100% e Mostrar imagem independente.
 
-Concluir/Cancelar para inclusão, ajuste e substituição; cancelamento mantém a referência anterior. Fora de Ajustar, imagem não captura gestos do desenho. Salvar conteúdo e ajustes no projeto/.ecovit, integrar histórico/cópias/pavimentos, sem alterar composição nem chamar motor. Limites individuais aprovados: 10 MiB e 16 megapixels, com validação do limite total de 50 MiB do arquivo; nenhuma redução silenciosa de qualidade. O comportamento completo pertence ao RF-16, e os contratos à Arquitetura §26.
+Concluir/Cancelar para inclusão, ajuste e substituição; cancelamento mantém a referência anterior. Fora de Ajustar, imagem não captura gestos do desenho. Salvar conteúdo e ajustes no projeto/.ecovit, integrar histórico/cópias/pavimentos, sem alterar composição nem chamar motor. Limites individuais aprovados: 10 MiB e 16 megapixels, com validação do limite total de 50 MiB do arquivo; nenhuma redução silenciosa de qualidade. O comportamento completo pertence ao RF-16, e os contratos à [Medidas e imagens](../arquitetura/Medidas-e-Imagens.md#imagem-de-referência).
 
 Fora do marco: múltiplas imagens no mesmo pavimento, PDF/outros formatos, imagens como objetos (BL-01), correção de perspectiva, recorte/tratamento, deformação por eixo, reconhecimento/vetorização, desenho automático, alvos de atração derivados dos pixels, exibição em Fiada ou na referência de outro pavimento. A imagem é apoio visual; calibração não comprova precisão física de uma foto/digitalização. Sem novo serviço, biblioteca ou algoritmo construtivo previsto.
 
 ## 15.2. Tarefas
 
-- [x] **M8-T01:** consolidar escopo aprovado, RF-16, Arquitetura §26 e critérios deste marco, incluindo a exigência de interface compacta.
+- [x] **M8-T01:** consolidar escopo aprovado, RF-16, [Medidas e imagens](../arquitetura/Medidas-e-Imagens.md#imagem-de-referência) e critérios deste marco, incluindo a exigência de interface compacta.
 - [x] **M8-T02:** consolidar contrato de dados, evolução do envelope e leitura de versões anteriores conforme a política vigente; integrar validação de conteúdo/tamanho, imagem incorporada, cópias, pavimentos e arquivo.
 - [x] **M8-T03:** implementar inclusão/substituição, calibração por dois cliques/distância, transformação uniforme, posição/rotação, prévia e Concluir/Cancelar no editor existente.
 - [x] **M8-T04:** integrar seção compacta em Propriedades do pavimento, opacidade/visibilidade, remoção, ajuda curta e iconografia/acessibilidade conforme §2.1 da Arquitetura.

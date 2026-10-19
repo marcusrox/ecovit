@@ -8,7 +8,7 @@ Registro consolidado da entrega. Versões e verificações referem-se ao marco; 
 
 ## Alcance e referências
 
-PRD §14, Arquitetura §15 e CT-07–10/EX-21–35 definem vãos, padrões, canaletas e grautes. M3.1 cobre inserção/edição de aberturas e seus padrões; M3.2 cobre níveis globais e faixas locais, supressões e restauração; M3.3 cobre categorias/distância de graute e inclusão/exclusão por eixo. Geometria nominal sem dimensionamento resistente ou verificação de passagem física.
+PRD §14, [Motor e diagnósticos](../arquitetura/Motor-e-Diagnosticos.md#canaletas-e-grautes) e CT-07–10/EX-21–35 definem vãos, padrões, canaletas e grautes. M3.1 cobre inserção/edição de aberturas e seus padrões; M3.2 cobre níveis globais e faixas locais, supressões e restauração; M3.3 cobre categorias/distância de graute e inclusão/exclusão por eixo. Geometria nominal sem dimensionamento resistente ou verificação de passagem física.
 
 | ID | Regra de escopo |
 |---|---|

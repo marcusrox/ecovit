@@ -256,7 +256,7 @@ Permitir remover canaletas somente na Fiada onde aparecem; renderizar canaletas 
 
 ### RF-13 — Lajes
 
-**Marco:** M4.2, implementado. Contratos na Arquitetura §20; convenção CT-13 e exemplos EX-65–74 no Caderno §11.2; tarefas, verificações, aceite e roteiro no [M4.2](marcos/M4.2-Lajes.md). D42-01 confirmada pelo solicitante: alças nas arestas e redesenho para acrescentar ou retirar cantos. Aceite global da funcionalidade registrado no [M4](marcos/M4-Lajes-e-Pavimentos.md).
+**Marco:** M4.2, implementado. Contratos na [Elementos construtivos](arquitetura/Elementos-Construtivos.md#lajes); convenção CT-13 e exemplos EX-65–74 no Caderno §11.2; tarefas, verificações, aceite e roteiro no [M4.2](marcos/M4.2-Lajes.md). D42-01 confirmada pelo solicitante: alças nas arestas e redesenho para acrescentar ou retirar cantos. Aceite global da funcionalidade registrado no [M4](marcos/M4-Lajes-e-Pavimentos.md).
 
 Permitir criar uma laje por pavimento, com contorno ortogonal simples, sem auto-interseções, e espessura positiva definida pelo usuário. Será possível editar contorno, espessura e aberturas, também ortogonais simples. Vértices do contorno e das aberturas seguem a malha horizontal de meio tijolo do projeto. Aberturas retiram efetivamente área da laje, devem ficar estritamente internas ao contorno e não podem tocar ou sobrepor umas às outras nem tocar a borda externa. Não são desenhos de referência. A laje pertence ao pavimento em que é desenhada e independe da existência de paredes nele. Não haverá classificação ou comportamento distinto de piso e cobertura.
 
@@ -314,7 +314,7 @@ Em M4.1, cada pavimento funciona como uma nova Planta, com seus elementos própr
 
 #### Comparação visual — M4.3 (implementado)
 
-Contratos na Arquitetura §22; CT-15/EX-80–85 no Caderno §11.4; tarefas, aceite e roteiro no [M4.3](marcos/M4.3-Comparacao-de-Pavimentos.md). Implementado no aplicativo 0.10.0; aceite global do solicitante registrado no [M4](marcos/M4-Lajes-e-Pavimentos.md). M5 permanece fora do recorte.
+Contratos na [Editor e interação](arquitetura/Editor-e-Interacao.md#comparação-visual-de-pavimentos); CT-15/EX-80–85 no Caderno §11.4; tarefas, aceite e roteiro no [M4.3](marcos/M4.3-Comparacao-de-Pavimentos.md). Implementado no aplicativo 0.10.0; aceite global do solicitante registrado no [M4](marcos/M4-Lajes-e-Pavimentos.md). M5 permanece fora do recorte.
 
 Em Planta, dentro de **Propriedades do pavimento** na lateral, oferecer o campo **Referência de pavimento**, com nome acessível **Comparar pavimento**, com **Sem referência** e os vizinhos disponíveis: **Inferior — nome · cota** e **Superior — nome · cota**, em centímetros. Identificar o controle por nome acessível, sem diálogo ou painel adicional. Mostrar somente com dois ou mais pavimentos e desabilitar durante processamento. O campo acompanha o painel do pavimento: não aparece na barra nem nos painéis de parede, vão ou laje. Recolher propriedades ou selecionar um elemento não desliga a referência; limpar a seleção e reabrir o painel permite alterá-la. Não listar o ativo, vizinhos inexistentes ou andares não adjacentes. Direção e cota distinguem nomes repetidos.
 
@@ -352,7 +352,7 @@ Mostrar de forma simples se o resultado está atualizado e se há pendências ge
 
 ### RF-11 — Quantitativos e arquivo nativo
 
-**Marco:** arquivo nativo implementado; quantitativos implementados em M5 no aplicativo 0.11.0 e aceitos pelo solicitante, conforme registro no [M5 §12.6](marcos/M5-Quantitativos-e-Projetos.md#126-andamento-limitações-e-aceite). Contratos na Arquitetura §23; CT-16/EX-86–94 no Caderno §12; tarefas, critérios e roteiro no [M5](marcos/M5-Quantitativos-e-Projetos.md).
+**Marco:** arquivo nativo implementado; quantitativos implementados em M5 no aplicativo 0.11.0 e aceitos pelo solicitante, conforme registro no [M5 §12.6](marcos/M5-Quantitativos-e-Projetos.md#126-andamento-limitações-e-aceite). Contratos na [Quantitativos](arquitetura/Quantitativos.md#projeção-de-consulta); CT-16/EX-86–94 no Caderno §12; tarefas, critérios e roteiro no [M5](marcos/M5-Quantitativos-e-Projetos.md).
 
 Contar peças por tipo, pavimento e fiada, sem duplicar peças dos encontros. Separar cortes e peças especiais. Para peças modificadas na obra, distinguir a peça-base consumida da peça resultante, evitando dupla contagem. Eventual margem de perdas será informada pelo usuário e separada da quantidade geométrica.
 
@@ -406,7 +406,7 @@ Confirmar cria e salva um novo projeto independente, atualiza a lista e permanec
 
 ### RF-14 — Preferências do Ecovit
 
-**Estado: M6 implementado e aceito pelo solicitante; registro no [M6](marcos/M6-Preferencias.md).** Origem: BL-07. Diálogo compacto denominado “Preferências do Ecovit”, separado de Configurações do projeto, com grupo “Visibilidade dos rótulos”. Acesso por botão com ícone de engrenagem ao lado do botão de configurações do projeto no cabeçalho, com nome acessível e dica “Preferências do Ecovit”. Preservar acesso e identificação dos dois controles, inclusive com nome de projeto longo e em telas menores; seguir a Arquitetura §2.1. O botão existente mantém seu ícone de ajustes.
+**Estado: M6 implementado e aceito pelo solicitante; registro no [M6](marcos/M6-Preferencias.md).** Origem: BL-07. Diálogo compacto denominado “Preferências do Ecovit”, separado de Configurações do projeto, com grupo “Visibilidade dos rótulos”. Acesso por botão com ícone de engrenagem ao lado do botão de configurações do projeto no cabeçalho, com nome acessível e dica “Preferências do Ecovit”. Preservar acesso e identificação dos dois controles, inclusive com nome de projeto longo e em telas menores; seguir a [Interface e iconografia](arquitetura/Interface-e-Iconografia.md#iconografia). O botão existente mantém seu ícone de ajustes.
 
 Quatro caixas de seleção independentes — Portas, Janelas, Vãos e Paredes — iniciam marcadas. Para portas, janelas e vãos, cada controle abrange o rótulo inteiro de tipo/base/topo, sem opções por parte do texto. Para paredes, um único controle abrange os identificadores A/B das extremidades quando selecionadas e o novo rótulo permanente de comprimento e altura de cada parede confirmada no pavimento ativo em Planta. Ocultar um tipo não oculta os demais nem o desenho dos elementos.
 
@@ -418,7 +418,7 @@ Uma única preferência por tipo vale nos modos onde seus rótulos aparecem: os 
 
 M10 acrescenta o grupo Imagens dos mobiliários com a opção Suavização em qualidade alta, inicialmente ativada. A opção aplica-se imediatamente à redução e rotação dos mobiliários padrão e personalizados em Planta, inclusive em somente leitura, e persiste só neste navegador. Desativá-la mantém a suavização básica. A escolha não altera o projeto, seu histórico, resultado construtivo ou arquivo .ecovit.
 
-M7 acrescenta a quinta opção Medidas, com o mesmo alcance local, conforme RF-15. As preferências de apresentação podem ser alteradas também com projeto em somente leitura. Não alteram geometria, composição, quantitativos, configurações construtivas, histórico ou intenção salva do projeto. Definições e critérios no [M6](marcos/M6-Preferencias.md); contratos técnicos previstos na Arquitetura §24.
+M7 acrescenta a quinta opção Medidas, com o mesmo alcance local, conforme RF-15. As preferências de apresentação podem ser alteradas também com projeto em somente leitura. Não alteram geometria, composição, quantitativos, configurações construtivas, histórico ou intenção salva do projeto. Definições e critérios no [M6](marcos/M6-Preferencias.md); contratos técnicos previstos na [Interface e iconografia](arquitetura/Interface-e-Iconografia.md#preferências-de-apresentação).
 
 ### RF-15 — Medidas independentes
 
@@ -434,13 +434,13 @@ M7 acrescenta a quinta opção Medidas, com o mesmo alcance local, conforme RF-1
 
 **Persistência e integração:** medidas pertencem ao pavimento, são salvas no navegador e no `.ecovit`, preservadas na reabertura, importação e duplicação do projeto. Duplicar pavimento copia suas medidas com identidades próprias; remover pavimento remove também suas medidas, com restauração por histórico. Medidas aparecem e são editadas somente em Planta, não em Fiada nem na referência de outro pavimento. Não alteram paredes, vãos, lajes, composição, diagnósticos construtivos ou quantitativos, nem disparam recálculo construtivo apenas por sua edição. Enquadrar considera suas extremidades, inclusive em pavimento com somente medidas.
 
-**Fora do recorte:** edição numérica de comprimento/ângulo, medidas encadeadas, linhas auxiliares de cota, rótulo personalizado ou reposicionável, vínculos automáticos com elementos e medição em 3D. A geometria livre da Medida não libera desenho não modular para paredes, vãos ou lajes. Escopo e aceite no [M7](marcos/M7-Medidas.md); dados, precisão e interação na Arquitetura §25. M7 grava envelope 10 e lê envelope 9 acrescentando medidas vazias; arquivos de origem preservados, sem suporte a envelopes 1–8 ou versões desconhecidas. A convenção nominal-v10 permanece inalterada.
+**Fora do recorte:** edição numérica de comprimento/ângulo, medidas encadeadas, linhas auxiliares de cota, rótulo personalizado ou reposicionável, vínculos automáticos com elementos e medição em 3D. A geometria livre da Medida não libera desenho não modular para paredes, vãos ou lajes. Escopo e aceite no [M7](marcos/M7-Medidas.md); dados, precisão e interação na [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#medidas-independentes). M7 grava envelope 10 e lê envelope 9 acrescentando medidas vazias; arquivos de origem preservados, sem suporte a envelopes 1–8 ou versões desconhecidas. A convenção nominal-v10 permanece inalterada.
 
 ### RF-16 — Imagem de referência por pavimento
 
 **Estado: implementado em M8 e aceito pelo solicitante; verificações e registro do aceite no [M8](marcos/M8-Imagem-de-Referencia.md).** Origem: BL-02. Cada pavimento pode ter uma única imagem de referência, abaixo da malha e dos elementos, somente em Planta do pavimento ativo. Ela acompanha zoom/navegação e serve de apoio visual ao desenho. Enquadrar inclui a referência visível do ativo, inclusive durante a prévia; imagens ocultas e de outro pavimento não ampliam esse enquadramento. Não gera composição, quantitativos, diagnóstico construtivo ou atração às linhas da imagem. Não aparece em Fiada nem como referência de outro pavimento. BL-01, imagens como objetos do projeto, permanece fora deste recorte.
 
-**Acesso e apresentação compacta:** seção “Imagem de referência” em Propriedades do pavimento. Sem imagem, oferecer Adicionar imagem. Com imagem, mostrar controles curtos de visibilidade e Opacidade, ação Ajustar e acesso compacto a Substituir/Remover; revelar campos de ajuste apenas durante a operação. Não acrescentar uma barra permanente de ferramentas nem um painel grande sobre o canvas. Usar ícones do catálogo central com nomes acessíveis/dicas e textos breves, mantendo foco, legibilidade e área de clique conforme a Arquitetura §2.1. Orientações da etapa ativa ficam na faixa operacional do canvas; explicações gerais em Como usar o editor. Compactação não pode esconder erros, unidade ou ações Concluir/Cancelar.
+**Acesso e apresentação compacta:** seção “Imagem de referência” em Propriedades do pavimento. Sem imagem, oferecer Adicionar imagem. Com imagem, mostrar controles curtos de visibilidade e Opacidade, ação Ajustar e acesso compacto a Substituir/Remover; revelar campos de ajuste apenas durante a operação. Não acrescentar uma barra permanente de ferramentas nem um painel grande sobre o canvas. Usar ícones do catálogo central com nomes acessíveis/dicas e textos breves, mantendo foco, legibilidade e área de clique conforme a [Interface e iconografia](arquitetura/Interface-e-Iconografia.md#iconografia). Orientações da etapa ativa ficam na faixa operacional do canvas; explicações gerais em Como usar o editor. Compactação não pode esconder erros, unidade ou ações Concluir/Cancelar.
 
 **Inclusão e escala:** aceitar PNG/JPEG locais. Exibir a imagem enquadrada como prévia, ainda sem escala real confirmada. Orientar “Marque dois pontos” de uma distância conhecida: primeiro clique fixa o início e segundo fixa o fim, sem botão pressionado, com marcação e prévia. Os pontos são livres sobre a imagem, sem atração à malha/geometria. Informar a distância real em cm, positiva e finita; pontos coincidentes não permitem calibrar. Ajustar a escala uniformemente, preservando a proporção: por exemplo, dois pontos que representam 400 cm devem ficar separados por 400 cm no desenho. Não criar elemento Medida nem alterar as medidas existentes. Exigir calibração válida antes de Concluir a inclusão. Recomendar trecho longo e identificável na ajuda. Depois de calibrar, permitir posicionar e rotacionar a prévia antes de concluir.
 
@@ -450,11 +450,11 @@ M7 acrescenta a quinta opção Medidas, com o mesmo alcance local, conforme RF-1
 
 **Substituição, remoção e integridade:** Substituir exige escolher, calibrar e posicionar a nova imagem; preservar a anterior até Concluir com candidato válido. Cancelamento, arquivo inválido ou falha de leitura não alteram a referência anterior. Remover retira somente a referência e pode ser desfeito. Imagem e ajustes são incorporados ao salvamento local e ao .ecovit, sem depender do arquivo original no computador, rede ou serviço externo. Duplicar projeto/pavimento preserva imagem e ajustes com edição independente; remover pavimento remove sua referência e desfazer restaura. Operações apenas na imagem não chamam o motor nem invalidam composição/quantitativos existentes. Somente leitura permite visualizar/navegar, sem alterar a referência.
 
-**Limites:** até 10 MiB (10 × 1024² bytes) por imagem e 16 megapixels (16.000.000 pixels decodificados), ambos inclusivos. Recusar conteúdo inválido ou excessivo com mensagem curta e causa, preservando o projeto e a imagem anterior. Conferir também o limite total vigente de 50 MiB do .ecovit, incluindo a codificação da imagem; não prometer que quatro imagens no limite individual cabem no arquivo. Sem redução silenciosa de resolução ou qualidade. A calibração uniforme não corrige perspectiva ou deformações de fotos/digitalizações. Fora de M8: PDF, outros formatos, recorte, tratamento de imagem, correção de perspectiva, múltiplas imagens no mesmo pavimento, reconhecimento/vetorização ou desenho automático. Contratos implementados na Arquitetura §26; tarefas, verificações e aceite no [M8](marcos/M8-Imagem-de-Referencia.md).
+**Limites:** até 10 MiB (10 × 1024² bytes) por imagem e 16 megapixels (16.000.000 pixels decodificados), ambos inclusivos. Recusar conteúdo inválido ou excessivo com mensagem curta e causa, preservando o projeto e a imagem anterior. Conferir também o limite total vigente de 50 MiB do .ecovit, incluindo a codificação da imagem; não prometer que quatro imagens no limite individual cabem no arquivo. Sem redução silenciosa de resolução ou qualidade. A calibração uniforme não corrige perspectiva ou deformações de fotos/digitalizações. Fora de M8: PDF, outros formatos, recorte, tratamento de imagem, correção de perspectiva, múltiplas imagens no mesmo pavimento, reconhecimento/vetorização ou desenho automático. Contratos implementados na [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#imagem-de-referência); tarefas, verificações e aceite no [M8](marcos/M8-Imagem-de-Referencia.md).
 
 ### RF-17 — Mobiliários
 
-**Estado: implementado em M10, verificado pelo Codex e aceito pelo solicitante.** Origem: BL-01. [M10](marcos/M10-Mobiliarios.md) reúne catálogo, tarefas, evidências e aceite; Arquitetura §28 define os contratos. Aplicativo 0.15.1, envelope 14 e composição nominal-v10.
+**Estado: implementado em M10, verificado pelo Codex e aceito pelo solicitante.** Origem: BL-01. [M10](marcos/M10-Mobiliarios.md) reúne catálogo, tarefas, evidências e aceite; [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) define os contratos. Aplicativo 0.15.1, envelope 14 e composição nominal-v10.
 
 **Biblioteca e inserção:** ferramenta Mobiliários em Planta abre catálogo integrado ao Ecovit com categorias, miniaturas, nomes e busca. O núcleo contém 40 opções nas oito categorias da tabela do [M10 §17.1](marcos/M10-Mobiliarios.md#171-alcance-e-catálogo-inicial). Escolher um item apresenta prévia junto ao cursor; clicar no canvas confirma uma ocorrência no pavimento ativo. Após confirmar, selecionar a ocorrência e retornar a Selecionar. Escape cancela. Abrir, buscar ou fechar o catálogo não altera o projeto. O acervo é distribuído com o aplicativo, sem exigir upload ou consulta a serviço externo de imagens durante a edição.
 
@@ -502,7 +502,7 @@ A identidade visual usa verde profundo, verde oliva e fundo areia, com fonte de 
 
 ### Iconografia consistente
 
-Ações e indicadores da interface atual e futura devem usar um único catálogo amplo, com traços uniformes, aparência refinada, contraste legível e alinhamento central. Mesma ação conserva símbolo e significado em todo o aplicativo. Ícones complementam rótulos; controles sem texto têm nome acessível e dica visual. Não misturar emoji ou caracteres de fonte com ícones de ação/status. Logotipo e desenhos técnicos do canvas preservam sua identidade e significado. Biblioteca, variantes, exceções e verificações são definidos na [Arquitetura §2.1](Ecovit-Arquitetura-Tecnica.md#21-padrão-de-iconografia). A interface usa Lucide React; verificações e aceite específico da apresentação constam no plano.
+Ações e indicadores da interface atual e futura devem usar um único catálogo amplo, com traços uniformes, aparência refinada, contraste legível e alinhamento central. Mesma ação conserva símbolo e significado em todo o aplicativo. Ícones complementam rótulos; controles sem texto têm nome acessível e dica visual. Não misturar emoji ou caracteres de fonte com ícones de ação/status. Logotipo e desenhos técnicos do canvas preservam sua identidade e significado. Biblioteca, variantes, exceções e verificações são definidos na [Interface e iconografia](arquitetura/Interface-e-Iconografia.md#iconografia). A interface usa Lucide React; verificações e aceite específico da apresentação constam no plano.
 
 ### Interface centrada no canvas
 
@@ -700,7 +700,7 @@ Restaurar padrões de configuração é diferente de restaurar ajustes automáti
 
 ### Padrões normativos de M3
 
-Esta tabela é a referência dos valores iniciais para novos projetos. Os efeitos de Aplicar, Cancelar e Restaurar e os campos configuráveis estão definidos acima; a inicialização de projetos legados está na [Arquitetura §15](Ecovit-Arquitetura-Tecnica.md#15-contratos-de-m3-nominal).
+Esta tabela é a referência dos valores iniciais para novos projetos. Os efeitos de Aplicar, Cancelar e Restaurar e os campos configuráveis estão definidos acima; a inicialização de projetos legados está na [Motor e diagnósticos](arquitetura/Motor-e-Diagnosticos.md#canaletas-e-grautes).
 
 | Parâmetro | Valor inicial | Efeito |
 |---|---|---|
@@ -735,7 +735,7 @@ Ajustes autorizados neste recorte: incluir/remover grautes e remover/restaurar c
 
 O [registro de M3.1–M3.3](marcos/M3-Vaos-Canaletas-Grautes.md) organiza a implementação por incremento e registra os resultados de M3.1/M3.2/M3.3. CT-09/10 e exemplos do [caderno, seção 8](Ecovit-Caderno-Tecnico.md) definem as convenções nominais; as fontes não constituem parâmetros estruturais do aplicativo. Na migração para M3.2, níveis globais iniciam vazios e sua ativação exige configuração explícita; as faixas locais de vãos existentes seguem CT-09 automaticamente. Na migração para M3.3, categorias automáticas de graute iniciam desligadas, ativadas explicitamente por configuração; níveis/supressões existentes são preservados. Canaletas e controles de graute aparecem somente na Fiada.
 
-As fórmulas, limites geométricos, paginação e exemplos são definidos em CT-07–10 do caderno; representação persistente, identidade dos ajustes e processamento estão na Arquitetura §15. Os critérios e evidências de cada incremento ficam no plano.
+As fórmulas, limites geométricos, paginação e exemplos são definidos em CT-07–10 do caderno; representação persistente, identidade dos ajustes e processamento estão na [Motor e diagnósticos](arquitetura/Motor-e-Diagnosticos.md#canaletas-e-grautes). Os critérios e evidências de cada incremento ficam no plano.
 
 ## 15. M3.4 — Edição no canvas
 
@@ -788,7 +788,7 @@ Portas, janelas e vãos verticais exibem o rótulo à esquerda, com leitura de b
 
 Se ajustes preservados coincidirem no mesmo eixo, qualquer exclusão aplicável prevalece sobre inclusões, independentemente da ordem dos registros. Adicionar/remover pelo furo define a ação explicitamente em todos os ajustes aplicáveis daquele eixo, conservando IDs e associações; não apagar ajustes pendentes na mesma coordenada. Descartar um ajuste continua agindo apenas pelo seu ID. Supressões de canaleta também são restauradas pelo ID escolhido; não restaurar todos os trechos da mesma parede/cota implicitamente.
 
-As regras geométricas e exemplos estão em CT-11/EX-36–48 do caderno; dados/migração na Arquitetura §16; tarefas, aceite e roteiro no [M3.4](marcos/M3.4-Edicao-no-Canvas.md). Sem nova regra resistente, divisão/rotação de paredes, edição de tijolos, lajes, pavimentos ou quantitativos.
+As regras geométricas e exemplos estão em CT-11/EX-36–48 do caderno; dados/migração na [Elementos construtivos](arquitetura/Elementos-Construtivos.md#paredes-e-dependentes); tarefas, aceite e roteiro no [M3.4](marcos/M3.4-Edicao-no-Canvas.md). Sem nova regra resistente, divisão/rotação de paredes, edição de tijolos, lajes, pavimentos ou quantitativos.
 
 ## 16. M3.5 — Composição nominal de encontros em cruz
 
@@ -802,4 +802,4 @@ Integrar vãos, canaletas e grautes pelos contratos existentes após compor a al
 
 Para conflito real de ocupação, alturas sem padrão, escolha pendente ou combinação de encontros incompatível, manter diagnóstico localizável e componente afetado sem composição; outros componentes continuam visíveis. Não usar o simples reconhecimento de cruz como erro. Informar a consequência: “Composição suspensa em N paredes conectadas: [motivo]”, destacando encontro e paredes afetadas. Snapshots antigos com cruz bloqueada permanecem validados pelo contrato original antes da migração; o editor atual não deve atribuir suporte ausente à modulação nem usar mensagem operacional dependente de “no M2”.
 
-CT-12/EX-51–55 define geometria/exemplos; Arquitetura §17 define processamento/migração; [M3.5](marcos/M3.5-Cruz-Nominal.md) define tarefas/aceite. Sem lajes, múltiplos pavimentos, quantitativos, aço, peças especiais ou validação estrutural.
+CT-12/EX-51–55 define geometria/exemplos; [Motor e diagnósticos](arquitetura/Motor-e-Diagnosticos.md#pipeline-de-células-e-encontros) define processamento/migração; [M3.5](marcos/M3.5-Cruz-Nominal.md) define tarefas/aceite. Sem lajes, múltiplos pavimentos, quantitativos, aço, peças especiais ou validação estrutural.

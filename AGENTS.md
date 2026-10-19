@@ -3,11 +3,11 @@
 ## Referências
 
 - [PRD](docs/Ecovit-PRD.md): comportamento do produto e limites de escopo.
-- [Arquitetura](docs/Ecovit-Arquitetura-Tecnica.md): stack, modelo, processamento e persistência.
+- [Arquitetura](docs/Ecovit-Arquitetura-Tecnica.md): visão geral e índice dos contratos de software por assunto em `docs/arquitetura/` (dados, editor, motor, estado, persistência e interface).
 - [Plano incremental](docs/Ecovit-Plano-Implementacao.md): índice, sequência e situação dos marcos; consulte o arquivo correspondente em [docs/marcos](docs/marcos) para escopo, tarefas, critérios, verificações, limitações e aceite.
 - [Caderno técnico](docs/Ecovit-Caderno-Tecnico.md): fontes, convenções nominais, exemplos e lacunas da composição. Consulte antes de implementar o motor; não trate hipóteses como medidas físicas verificadas.
 
-Consulte as seções pertinentes à alteração. Não duplique esses documentos em novas especificações. Instruções atuais do solicitante prevalecem; quando mudarem o comportamento acordado, atualize os documentos afetados. Não transforme uma ambiguidade em ampliação silenciosa do produto.
+Consulte o assunto pertinente da arquitetura e o arquivo do marco antes da alteração. O Caderno Técnico é a fonte das regras/convenções geométricas e construtivas, fontes, justificativas, exemplos e limites; a Arquitetura descreve sua representação e implementação em software. Uma decisão de programação não cria regra construtiva. Não duplique esses documentos em novas especificações. Instruções atuais do solicitante prevalecem; quando mudarem o comportamento acordado, atualize os documentos afetados. Não transforme uma ambiguidade em ampliação silenciosa do produto.
 
 ## Forma de trabalho
 
@@ -24,7 +24,7 @@ Consulte as seções pertinentes à alteração. Não duplique esses documentos 
 - Não mantenha cópias dessas regras neste arquivo. Ao alterar comportamento ou contrato técnico, atualize o documento responsável junto com a implementação e consolide o estado no arquivo do marco e no índice do plano. A documentação descreve o produto por assunto e marco, sem diário de decisões, datas de ajustes ou relatos de tentativas intermediárias. Preserve IDs e contratos legados necessários à compatibilidade de arquivos; distinga-os do comportamento vigente.
 - Distinga funcionalidade especificada de funcionalidade implementada e aprovada; não trate a existência de uma especificação como autorização para implementá-la.
 - Não introduza bibliotecas, serviços ou abstrações sem necessidade concreta da entrega e compatibilidade com a arquitetura.
-- Para mudanças de interface, consulte o padrão de iconografia na [Arquitetura §2.1](docs/Ecovit-Arquitetura-Tecnica.md#21-padrão-de-iconografia), incluindo a implementação e as verificações exigidas; mantenha as regras nesse documento.
+- Para mudanças de interface, consulte o padrão de iconografia na [Interface e iconografia](docs/arquitetura/Interface-e-Iconografia.md#iconografia), incluindo a implementação e as verificações exigidas; mantenha as regras no assunto Interface e iconografia.
 - Não invente regras construtivas, peças especiais, espaçamentos ou apoios. Consulte e registre a pesquisa no caderno técnico antes dos algoritmos correspondentes; não apresente convenções nominais como comprovação física ou aprovação estrutural.
 
 ## Validação

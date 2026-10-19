@@ -4,7 +4,7 @@
 
 ## Interface e iconografia
 
-**Implementado:** página inicial com cartões, estado vazio e orientação de backup; editor compacto centrado no canvas; Configurações no cabeçalho junto ao nome, com ícone, identificação acessível e dica. Abertura durante renomeação confirma o nome sem perder o clique. Grupos de configurações e explicações contextuais preservam espaço de desenho. Iconografia Lucide centralizada, estados, foco e dimensões conforme Arquitetura §2.1.
+**Implementado:** página inicial com cartões, estado vazio e orientação de backup; editor compacto centrado no canvas; Configurações no cabeçalho junto ao nome, com ícone, identificação acessível e dica. Abertura durante renomeação confirma o nome sem perder o clique. Grupos de configurações e explicações contextuais preservam espaço de desenho. Iconografia Lucide centralizada, estados, foco e dimensões conforme [Interface e iconografia](../arquitetura/Interface-e-Iconografia.md#iconografia).
 
 **Verificação do Codex:** tipos, lint e build aprovados nas entregas de apresentação. Chrome/Edge verificam configurações, foco/teclado, estados, nomes acessíveis e proteção dos imports de ícones; revisão visual em 1366×768, 1280×720 e 900×680. Não constitui auditoria completa de acessibilidade nem nova execução nesta reorganização.
 

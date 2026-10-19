@@ -14,4 +14,4 @@ Registro consolidado da entrega. Versões e verificações referem-se ao marco; 
 | M4.2 | Lajes e aberturas; extensão AH para alturas diferentes | [Lajes](M4.2-Lajes.md) |
 | M4.3 | Referência visual de pavimento adjacente | [Comparação](M4.3-Comparacao-de-Pavimentos.md) |
 
-Produto em PRD RF-07/08/13; contratos na Arquitetura §§18–22; convenções no Caderno §11. A leitura e gravação vigentes são definidas na arquitetura; os formatos de cada entrega abaixo são referências históricas, sem obrigação de manter geradores ou leitores antigos.
+Produto em PRD RF-07/08/13; contratos na [Elementos construtivos](../arquitetura/Elementos-Construtivos.md#pavimentos-e-registros-construtivos) a [Editor e interação](../arquitetura/Editor-e-Interacao.md#comparação-visual-de-pavimentos); convenções no Caderno §11. A leitura e gravação vigentes são definidas na arquitetura; os formatos de cada entrega abaixo são referências históricas, sem obrigação de manter geradores ou leitores antigos.

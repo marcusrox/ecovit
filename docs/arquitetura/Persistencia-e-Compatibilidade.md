@@ -1,0 +1,65 @@
+# Persistência e compatibilidade
+
+[Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md) · [Marcos](../Ecovit-Plano-Implementacao.md)
+
+Este documento descreve contratos de software vigentes. Regras geométricas/construtivas, justificativas, fontes e exemplos independentes pertencem ao Caderno Técnico; escopo e comportamento ao PRD; verificações executadas e aceites aos registros dos marcos.
+
+## Formato e leitores vigentes
+
+Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=14; leitura aceita somente envelopes 9–14. O envelope não versiona as regras construtivas: a composição vigente é nominal-v10. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; registros locais incompatíveis permanecem identificados sem exclusão automática. Não executar geradores nominal-v1–v8 nem manter migrações abandonadas.
+
+| Envelope lido | Normalização em memória para 14 |
+|---|---|
+| 9 | Acrescentar measurements, referenceImages, imageElements e customImageAssets vazios |
+| 10 | Acrescentar referenceImages, imageElements e customImageAssets vazios |
+| 11–12 | Acrescentar imageElements e customImageAssets vazios |
+| 13 | Preservar ocorrências e recursos de mobiliário |
+| 14 | Validar diretamente o contrato vigente |
+
+Preservar a origem, IDs internos, ajustes e aparência genérica opcional das esquadrias; não inferir tipo físico. Recusar campos novos disfarçados como formato anterior, UUIDs duplicados, referências órfãs, combinações inválidas e dados desconhecidos. Normalização não deve modificar o objeto original nem o arquivo fonte. O formato 14 permite dimensões independentes de mobiliários; arquivos 13 preservam sua geometria. Detalhes dos tipos têm fonte nos documentos de elementos.
+
+## Envelope e validade
+
+Campos obrigatórios: format, schemaVersion, project, model, adjustments, generated, generationState e metadata. project contém identificação, unidades/base, origem, referência inicial opcional de altura e configurações comuns; model contém floors/walls/openings/slabs/measurements/referenceImages/imageElements/customImageAssets; adjustments contém junctions/channels/grout. Não persistir DOM/Konva, funções, câmera, histórico ou rascunhos. A versão física do banco IndexedDB é independente de schemaVersion.
+
+Validar com Zod e funções de domínio a estrutura estrita, relações, conteúdo de imagens, transformações e limites antes de substituir o projeto atual. Pendência geométrica íntegra pode ser transportada; laje inválida não é rascunho persistível. Um documento current exige resultado completo nominal-v10 por pavimento, diagnósticos agregados iguais aos do estado e conferência exata por recomputação, não apenas contagem de peças. Outdated exige generated=null e diagnósticos derivados vazios.
+
+## Atualização de cálculo e somente leitura
+
+Nos envelopes suportados, o schema aceita nominal-v9 apenas para descartar o resultado e diagnósticos derivados, conservando a intenção validada e devolvendo estado outdated. Não comparar esse snapshot ao motor atual nem executar um gerador legado. Com bloqueio de edição, a abertura recompõe e salva nominal-v10 sem criar histórico de conversão. Em somente leitura, essa atualização de cálculo anterior ocorre só em memória. Se o cálculo falhar, abrir a intenção íntegra com resultado ausente/desatualizado, manter navegação/download e informar falha e bloqueio; reabrir permite nova tentativa.
+
+Um documento já outdated, sem resultado anterior a atualizar, só é regenerado automaticamente com bloqueio de edição. Leitura bloqueada pode calcular para conferir um snapshot atual, sem substituir ou gravar o registro compartilhado. Resultado atual adulterado, intenção corrompida ou convenção desconhecida impedem abertura antes de substituir o trabalho. Snapshots atuais íntegros são preservados; o fluxo de atualização não altera IDs/ajustes ou arquivo original.
+
+## Armazenamento, falhas e sessão de edição
+
+IndexedDB, via Dexie, armazena registros de projetos com id, updatedAt e documento completo; nome e demais metadados pertencem ao documento. A interface e o motor não dependem da representação interna do banco. Referência: [Dexie e IndexedDB](https://dexie.org/docs).
+
+Salvar o documento inteiro em uma transação após cada alteração confirmada. Para alterações que exigem cálculo, salvar primeiro o modelo com resultado desatualizado e, após sucesso, salvar o documento com a nova composição. Aguardar cada escrita nesse fluxo único; não adicionar temporizadores, fila de salvamento ou persistência de movimentos do mouse. O indicador diferencia trabalho salvo, salvamento em andamento e falha, independentemente do estado do cálculo.
+
+Falhas de quota ou indisponibilidade manterão o documento em memória e oferecerão download após a operação. O download sempre usa a memória atual, sem exigir salvamento local bem-sucedido. Para impedir sobrescrita por outra aba, usar um único bloqueio exclusivo por projeto durante a edição; a segunda aba informa que o projeto já está aberto e não permite editá-lo. Não implementar sincronização ou mesclagem entre abas.
+
+Abertura repetida do projeto já editável no mesmo store a partir do registro salvo é idempotente: conservar documento em memória, histórico e bloqueio existente, sem disputar novamente o próprio Web Lock nem recarregar um registro salvo mais antigo. Inicialização explícita com fresh valida o documento solicitado reutilizando a trava própria, sem liberá-la se a validação falhar. Abertura em somente leitura pode tentar obter a trava novamente ao reabrir; não tomar uma trava de outro documento. Sair para a lista libera o bloqueio; recarregar encerra a página proprietária, mas não libera bloqueios de outras páginas ainda abertas.
+
+Em desenvolvimento, o descarte do módulo do store pelo hot reload do Vite marca aquela instância como inativa: impedir novas aberturas/gravações/undo/retry, aguardar a operação em andamento terminar e liberar seu Web Lock antes de carregar a substituta. Não liberar a trava enquanto uma gravação antiga ainda pode continuar. A rotina pertence ao ciclo do módulo e não ao componente React; desmontagem visual não encerra uma sessão de edição. Travas órfãs de módulos substituídos antes dessa rotina só são eliminadas ao encerrar/recarregar o documento proprietário no navegador.
+
+## Transporte e limites
+
+Transporte: `serializeFile` produz JSON compacto. Se o documento completo exceder 50 MiB por conter o resultado derivado, serializar `withoutResult(doc)` com toda a intenção, `generated: null` e diagnósticos vazios. Informar a reconstrução na abertura; não mudar a memória atual, seus ajustes ou resultado. Com bloqueio exclusivo, a abertura recompõe o projeto inteiro pelo fluxo normal. Resultado presente continua sujeito à verificação integral de snapshot; não ignorar adulteração. A intenção serializada sem resultado também deve caber em 50 MiB, verificada antes de confirmar mutações; esse é um limite de integridade/transporte da entrada, sem estimativa de peças ou bloqueio de geração. Arquivos JSON recebidos acima de 50 MiB continuam recusados; não introduzir compressão, biblioteca ou formato paralelo.
+
+Permanecem os limites de integridade/entrada: arquivo 50 MiB; 10 mil paredes, mil vãos, 100 níveis comuns, 10 mil escolhas de encontros, 10 mil supressões e 10 mil ajustes manuais de graute no projeto inteiro. Esses limites de registros de intenção não são estimativas de peças ou de custo de geração. Manter medidas representáveis e limites de coordenadas existentes (±100 milhões de unidades internas), validando também cotas globais derivadas e deltas antes de aplicar. Não truncar, descartar ajustes ou salvar candidato parcialmente transformado. Excesso dos limites estruturais/transformação recusa a operação sem mudar o documento. Falha real de execução preserva intenção e segue o estado desatualizado descrito acima; a retirada do orçamento não significa capacidade ilimitada ou garantia de tempo/memória.
+
+Até quatro pavimentos/lajes e quatro referências raster, 2.000 ocorrências de mobiliário e 200 recursos personalizados por projeto. Imagens: PNG/JPEG reais, até 10 MiB e 16 milhões de pixels por recurso; arquivo total de 50 MiB considera expansão base64. Revalidar e decodificar imagens antes de substituir o aberto; padrões são resolvidos pelo manifesto confiável e não são incorporados. Não há teto de peças, células, fiadas, eixos ou intervalos derivados: limites de intenção/transporte não são orçamento de geração. Isso não garante capacidade ilimitada ou tempo/memória.
+
+## Cópia de projeto
+
+Duplicação pertence à lista de projetos, não ao histórico de um documento. Ler um snapshot salvo inteiro, validá-lo pelo contrato existente (estrutura, referências, intenção e snapshot vigente; nominal-v9 é descartado conforme [Persistência e compatibilidade](Persistencia-e-Compatibilidade.md#atualização-de-cálculo-e-somente-leitura)) e criar cópia profunda com novo `project.id`, nome confirmado e `metadata.createdAt/updatedAt` novos, registrando a versão do aplicativo que grava. Preservar demais campos, inclusive IDs internos, origens de canaletas, referências/signatures de ajustes ativos/pendentes e cotas absolutas. Não remapear entidades internas: suas referências são locais ao documento, como em `importedCopy`; isso evita reinterpretar ajustes. Não transportar objetos mutáveis compartilhados, estado da store ou histórico.
+
+Snapshot atual nominal-v10 íntegro pode ser preservado; duplicação não força regeneração. Origem desatualizada ou nominal-v9 convertido mantém cópia sem resultado e sem diagnósticos derivados; sua abertura usa o recálculo normal. Pendências não impedem a cópia íntegra. Não usar serialização de backup que omite resultado por tamanho para copiar o registro IndexedDB; preservam-se os limites de integridade/entrada vigentes, sem criar limite de geração. Download continua usando a política existente de 50 MiB e recomposição.
+
+Persistir somente o novo registro, uma vez, e atualizar a lista após sucesso. Nome proposto respeita os 100 caracteres incluindo o sufixo. Validar também o candidato final, após definir nome e metadados: a intenção serializada deve continuar cabendo em 50 MiB. Essa segunda validação verifica estrutura/referências/limites sem repetir a recomposição do snapshot íntegro já conferido na leitura da origem. Excesso recusa a cópia inteira antes de reservar/gravar o novo registro, sem tocar a origem. Cancelamento, validação recusada e falha da transação não criam cartão de sucesso nem escrita parcial e não tocam a origem. Usar o bloqueio por novo ID no fluxo de gravação/abertura que dele necessitar; não solicitar bloqueio de edição da origem para uma leitura. A lista informa que duplica o último estado salvo, inclusive se a origem está aberta em outra aba; não ler estado de outra sessão nem restaurar automaticamente o projeto de origem. Criação/abertura/fechamento mantêm suas regras atuais de bloqueio. Testar falha de quota e independência após editar a cópia, incluindo ajustes pendentes e cálculos antigos.
+
+## Exclusão local
+
+O diálogo nativo de exclusão na lista oferece cancelamento, download de backup e confirmação explícita separada do download. Reusar `Icon` com delete/download e estilos de ações com texto; foco inicial em Cancelar e retorno explícito ao acionador ao cancelar, após desmontar o diálogo. Durante uma operação, bloquear ações repetidas e Escape. Ler o snapshot bruto salvo para backup, sem validar/converter o formato, usando o serializador/download existente; isso permite preservar registros incompatíveis. O download solicitado não comprova gravação no dispositivo e não dispara exclusão. Não criar novo contrato de arquivo. Para excluir, obter o Web Lock `ecovit:<id>` com `ifAvailable`; indisponibilidade impede a operação para evitar que outra aba recrie o registro via salvamento automático. Remover somente a chave escolhida no IndexedDB, liberar bloqueio em `finally` e, somente após sucesso, fechar o diálogo e aplicar fade out de 280 ms ao cartão, sincronizado com o fechamento de sua linha CSS Grid (1fr para 0fr) e do espaçamento inferior, antes de retirá-lo da lista/contador. A lista alinha o conteúdo ao topo para que os itens seguintes subam continuamente; a altura inicial acompanha o conteúdo sem valor fixo. Durante a saída, o cartão fica inerte; animationend conclui a remoção. Com prefers-reduced-motion, usar duração de 1 ms. Erros mantêm diálogo e registro disponíveis para nova tentativa. Exclusão não pertence ao histórico de edição.
+
+Implementação: src/persistence/files.ts, src/persistence/database.ts e src/state/store.ts. Tipos de intenção em src/domain/project.ts; leitores abandonados permanecem apenas no histórico do Git e nos registros das entregas.
