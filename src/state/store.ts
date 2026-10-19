@@ -1,3 +1,4 @@
+import { decodeReference, type ImageDraft } from "../domain/reference-image";
 import {
   generate,
   signature,
@@ -32,6 +33,8 @@ const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
     {
       ...previous.model,
+      measurements: undefined,
+      referenceImages: undefined,
       floors: previous.model.floors.map((f) => ({
         id: f.id,
         level: f.level,
@@ -47,6 +50,8 @@ const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
     {
       ...next.model,
+      measurements: undefined,
+      referenceImages: undefined,
       floors: next.model.floors.map((f) => ({
         id: f.id,
         level: f.level,
@@ -60,6 +65,9 @@ const changedInputs = (previous: Project, next: Project) =>
     next.project.groutSettings,
   ]);
 type Inspection = {
+  imageRequest: string | null;
+  imageDraft: ImageDraft | null;
+  imageOpacity: number | null;
   slabDraft: {
     tool?: "select" | "slab";
     slabId?: string;
@@ -83,6 +91,9 @@ type Inspection = {
   diagnosticWalls: string[];
 };
 const inspection: Inspection = {
+  imageDraft: null,
+  imageRequest: null,
+  imageOpacity: null,
   slabDraft: null,
   slabEditing: false,
   mode: "plan",
@@ -115,7 +126,14 @@ type State = Inspection & {
   close: () => void;
   commit: (
     doc: EditableProject,
-    command?: "resize" | "move" | "create/merge" | "floor" | "slab",
+    command?:
+      | "resize"
+      | "move"
+      | "create/merge"
+      | "floor"
+      | "slab"
+      | "measure"
+      | "image",
   ) => Promise<void>;
   undo: (redo?: boolean) => Promise<void>;
   notify: (message: string) => void;
@@ -123,8 +141,8 @@ type State = Inspection & {
   retry: () => Promise<void>;
 };
 export const useStore = create<State>((set, get) => {
-  async function persist(doc: Project) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.11.0" } };
+  async function persist(doc: Project, calculate = true) {
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.13.0" } };
     set({ doc });
     set({ busy: true, saved: "saving" });
     let saveFailed = false;
@@ -135,7 +153,7 @@ export const useStore = create<State>((set, get) => {
       } catch {
         saveFailed = true;
       }
-      if (doc.generationState.status === "outdated") {
+      if (calculate && doc.generationState.status === "outdated") {
         if (typeof requestAnimationFrame === "function")
           await new Promise<void>((resolve) =>
             requestAnimationFrame(() => setTimeout(resolve, 0)),
@@ -225,7 +243,13 @@ export const useStore = create<State>((set, get) => {
             ...(s.activeFloorId ? { [s.activeFloorId]: floorReference } : {}),
           },
           ...(change.mode && change.mode !== s.mode
-            ? { slabDraft: null, slabEditing: false }
+            ? {
+                slabDraft: null,
+                slabEditing: false,
+                imageDraft: null,
+                imageRequest: null,
+                imageOpacity: null,
+              }
             : {}),
           ...change,
           floorReference,
@@ -270,7 +294,14 @@ export const useStore = create<State>((set, get) => {
       set((s) => ({
         select,
         diagnosticWalls: [],
-        ...(select !== s.select ? { slabDraft: null, slabEditing: false } : {}),
+        ...(select !== s.select
+          ? {
+              slabDraft: null,
+              slabEditing: false,
+              imageDraft: null,
+              imageOpacity: null,
+            }
+          : {}),
       })),
     open: async (requested, fresh = false) => {
       if (get().busy) return;
@@ -281,6 +312,9 @@ export const useStore = create<State>((set, get) => {
         let doc = fresh
           ? validateProject(requested)
           : await loadProject(requested.project.id);
+        if (typeof Image !== "undefined")
+          for (const image of doc.model.referenceImages)
+            await decodeReference(image);
         let calculationMessage = "";
         // A read-only tab may update disposable results in memory, never the shared record.
         if (!nextRelease && doc.generationState.status === "outdated") {
@@ -329,6 +363,8 @@ export const useStore = create<State>((set, get) => {
       release = null;
       set({
         doc: null,
+        imageDraft: null,
+        imageRequest: null,
         floorReference: "none",
         floorReferencesByFloor: {},
         select: null,
@@ -340,7 +376,44 @@ export const useStore = create<State>((set, get) => {
       const s = get();
       if (s.busy || s.readonly || !s.doc) return;
       try {
+        if (s.imageDraft && command !== "image" && command !== "floor")
+          throw new Error("Conclua ou cancele o ajuste da imagem.");
         candidate = mergeFloorView(s.doc, candidate);
+        if (
+          command === "image" &&
+          [
+            ...candidate.model.referenceImages,
+            ...s.doc.model.referenceImages,
+          ].some(
+            (i) =>
+              i.floorId !== s.activeFloorId &&
+              JSON.stringify(
+                candidate.model.referenceImages.find(
+                  (x) => x.floorId === i.floorId,
+                ),
+              ) !==
+                JSON.stringify(
+                  s.doc!.model.referenceImages.find(
+                    (x) => x.floorId === i.floorId,
+                  ),
+                ),
+          )
+        )
+          throw new Error("Edite a imagem somente no pavimento ativo.");
+        if (
+          command === "measure" &&
+          [...candidate.model.measurements, ...s.doc.model.measurements].some(
+            (m) =>
+              m.floorId !== s.activeFloorId &&
+              JSON.stringify(
+                candidate.model.measurements.find((x) => x.id === m.id),
+              ) !==
+                JSON.stringify(
+                  s.doc!.model.measurements.find((x) => x.id === m.id),
+                ),
+          )
+        )
+          throw new Error("Edite medidas somente no pavimento ativo.");
         if (
           command === "slab" &&
           [...candidate.model.slabs, ...s.doc.model.slabs].some(
@@ -431,7 +504,7 @@ export const useStore = create<State>((set, get) => {
               : s.doc.generationState,
             metadata: {
               ...candidate.metadata,
-              appVersion: "0.11.0",
+              appVersion: "0.13.0",
               updatedAt: new Date().toISOString(),
             },
           },
@@ -471,10 +544,12 @@ export const useStore = create<State>((set, get) => {
           component: null,
           diagnosticWalls: [],
           doc,
+          imageDraft: null,
+          imageOpacity: null,
           history: remember(s.history, s.doc),
           message: "",
         });
-        await persist(doc);
+        await persist(doc, changed);
       } catch (e) {
         set({ message: e instanceof Error ? e.message : String(e) });
       }
@@ -482,6 +557,10 @@ export const useStore = create<State>((set, get) => {
     undo: async (redo = false) => {
       const s = get();
       if (!s.doc || s.busy || s.readonly) return;
+      if (s.imageDraft) {
+        set({ imageDraft: null });
+        return;
+      }
       if (s.slabDraft || s.slabEditing) {
         set({ slabDraft: null, slabEditing: false });
         return;
@@ -522,7 +601,7 @@ export const useStore = create<State>((set, get) => {
           history: next.history,
           select: null,
         });
-        await persist(doc);
+        await persist(doc, changedInputs(s.doc, next.doc));
       }
     },
     retry: async () => {

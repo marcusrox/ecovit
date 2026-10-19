@@ -170,7 +170,11 @@ it.each([false, true])(
     await useStore.getState().open(original, true);
     const s = useStore.getState();
     expect(s.readonly).toBe(readonly);
-    expect(s.doc!.model).toEqual(original.model);
+    expect(s.doc!.model).toEqual({
+      ...original.model,
+      measurements: [],
+      referenceImages: [],
+    });
     expect(s.doc!.adjustments).toEqual(original.adjustments);
     expect(s.doc!.generated!.convention).toBe("nominal-v10");
     expect(
@@ -199,7 +203,11 @@ it.each([false, true])(
     });
     await useStore.getState().open(original, true);
     const s = useStore.getState();
-    expect(s.doc?.model).toEqual(original.model);
+    expect(s.doc?.model).toEqual({
+      ...original.model,
+      measurements: [],
+      referenceImages: [],
+    });
     expect(s.doc?.adjustments).toEqual(original.adjustments);
     expect(s.doc?.generated).toBeNull();
     expect(s.doc?.generationState).toEqual({
@@ -210,7 +218,11 @@ it.each([false, true])(
     expect(s.busy).toBe(false);
     expect(s.history).toEqual({ past: [], future: [] });
     expect(s.message).toContain("Cálculo não concluído: Falha simulada");
-    expect(parseFile(serializeFile(s.doc!).text).model).toEqual(original.model);
+    expect(parseFile(serializeFile(s.doc!).text).model).toEqual({
+      ...original.model,
+      measurements: [],
+      referenceImages: [],
+    });
     if (readonly) {
       expect(save).not.toHaveBeenCalled();
       expect(s.message).toContain("outra aba");

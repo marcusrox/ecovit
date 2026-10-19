@@ -153,22 +153,6 @@ export function FiadaToolbar() {
       {s.mode === "course" && !doc.model.walls.length && (
         <span>Este pavimento não tem paredes</span>
       )}
-      <span>
-        {s.busy
-          ? "Processando…"
-          : doc.generationState.status === "outdated"
-            ? "Resultado desatualizado"
-            : doc.generationState.diagnostics.some(
-                  (d) => d.severity === "error",
-                )
-              ? "Atualizado · com pendências"
-              : "Geometria nominal verificada"}
-      </span>
-      {doc.generationState.status === "outdated" && (
-        <button disabled={s.busy || s.readonly} onClick={() => void s.retry()}>
-          Recalcular
-        </button>
-      )}
     </div>
   );
 }

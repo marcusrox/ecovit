@@ -26,7 +26,11 @@ test("CT-14 importa resultado antigo, preserva desenho, alturas e histórico ao 
   });
   const updated = await exported(page);
   expect(updated.generated!.convention).toBe("nominal-v10");
-  expect(updated.model).toEqual(original.model);
+  expect(updated.model).toEqual({
+    ...original.model,
+    measurements: [],
+    referenceImages: [],
+  });
   expect(updated.adjustments).toEqual(original.adjustments);
   expect(
     updated.generationState.diagnostics.filter((d) => d.severity === "error"),
@@ -47,7 +51,11 @@ test("CT-14 importa resultado antigo, preserva desenho, alturas e histórico ao 
     .first()
     .click();
   const reopened = await exported(page);
-  expect(reopened.model).toEqual(original.model);
+  expect(reopened.model).toEqual({
+    ...original.model,
+    measurements: [],
+    referenceImages: [],
+  });
   expect(reopened.generated).toEqual(updated.generated);
   const drawing = page.getByTestId("drawing"),
     box = (await drawing.boundingBox())!;
@@ -62,7 +70,11 @@ test("CT-14 importa resultado antigo, preserva desenho, alturas e histórico ao 
   expect(changed.model.walls[0].height).toBe(27300);
   expect(changed.model.slabs).toEqual(original.model.slabs);
   await page.getByRole("button", { name: "Desfazer", exact: true }).click();
-  expect((await exported(page)).model).toEqual(original.model);
+  expect((await exported(page)).model).toEqual({
+    ...original.model,
+    measurements: [],
+    referenceImages: [],
+  });
   await page.getByRole("button", { name: "Refazer", exact: true }).click();
   expect((await exported(page)).model.walls[0].height).toBe(27300);
   await page.getByRole("button", { name: "Desfazer", exact: true }).click();
@@ -125,7 +137,11 @@ for (const readonly of [false, true]) {
       .click();
     const updated = await exported(page, readonly);
     expect(updated.project.id).toBe(original.project.id);
-    expect(updated.model).toEqual(original.model);
+    expect(updated.model).toEqual({
+      ...original.model,
+      measurements: [],
+      referenceImages: [],
+    });
     expect(updated.generated!.convention).toBe("nominal-v10");
     expect(
       updated.generationState.diagnostics.filter((d) => d.severity === "error"),

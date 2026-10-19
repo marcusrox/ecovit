@@ -5,6 +5,21 @@ import type {
   JunctionChoice,
 } from "./composition";
 export type Point = { x: number; y: number };
+export type ReferenceImage = {
+  floorId: string;
+  name: string;
+  mime: "image/png" | "image/jpeg";
+  data: string;
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  scale: number;
+  angle: number;
+  opacity: number;
+  visible: boolean;
+};
+export type Measurement = { id: string; floorId: string; a: Point; b: Point };
 export type SlabOpening = { id: string; contour: Point[] };
 export type Slab = {
   id: string;
@@ -62,10 +77,10 @@ export const defaultGroutSettings = (enabled = true): GroutSettings => ({
 });
 export const defaultChannelLevels = (): ChannelLevel[] =>
   [11200, 22400].map((top) => ({ id: crypto.randomUUID(), top }));
-export type Tool = "select" | "wall" | "slab" | Opening["kind"];
+export type Tool = "select" | "wall" | "slab" | "measure" | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 9;
+  schemaVersion: 11;
   project: {
     id: string;
     name: string;
@@ -87,6 +102,8 @@ export type Project = {
     walls: Wall[];
     openings: Opening[];
     slabs: Slab[];
+    measurements: Measurement[];
+    referenceImages: ReferenceImage[];
   };
   adjustments: {
     junctions: JunctionChoice[];
@@ -151,7 +168,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 9,
+    schemaVersion: 11,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -175,11 +192,13 @@ export function createProject(
       walls: [],
       openings: [],
       slabs: [],
+      measurements: [],
+      referenceImages: [],
     },
     adjustments: { junctions: [], grout: [], channels: [] },
     generated: null,
     generationState: { status: "outdated", diagnostics: [] },
-    metadata: { createdAt: now, updatedAt: now, appVersion: "0.11.0" },
+    metadata: { createdAt: now, updatedAt: now, appVersion: "0.13.0" },
   };
 }
 export const snap = (n: number, module: number) =>

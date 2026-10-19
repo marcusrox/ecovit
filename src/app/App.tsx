@@ -1,4 +1,8 @@
+import { ReferenceImageProperties } from "../editor/ReferenceImage";
 import { FloorControls } from "./Floors";
+import { PreferencesDialog } from "./Preferences";
+import { MeasurementProperties } from "../editor/Measurements";
+import { measurementText } from "../domain/measurements";
 import {
   resolveFloorReference,
   type FloorReference,
@@ -142,6 +146,7 @@ function Numeric({
   );
 }
 function Properties({ doc }: { doc: Project }) {
+  const imageDraft = useStore((s) => s.imageDraft);
   const root = useStore((s) => s.doc)!;
   const floorReference = useStore((s) => s.floorReference);
   const selected = useStore((s) => s.select),
@@ -149,7 +154,7 @@ function Properties({ doc }: { doc: Project }) {
     readonly = useStore((s) => s.readonly);
   const wall = doc.model.walls.find((w) => w.id === selected),
     floor = doc.model.floors[0],
-    disabled = busy || readonly;
+    disabled = busy || readonly || !!imageDraft;
   const [end, setEnd] = useState<"a" | "b">("b"),
     [alternatives, setAlternatives] = useState<number[]>([]),
     [collapsed, setCollapsed] = useState(false);
@@ -361,6 +366,7 @@ function Properties({ doc }: { doc: Project }) {
               </select>
             </label>
           )}
+          <ReferenceImageProperties key={floor.id} />
           <p className={styles.muted}>Referências verticais do desenho</p>
           <Numeric
             label="Cota do pavimento"
@@ -394,9 +400,17 @@ function Properties({ doc }: { doc: Project }) {
       <details>
         <summary>Como usar o editor</summary>
         <p>
+          Imagem: marque um trecho longo de distância conhecida e informe seu
+          tamanho em cm. Ajustar libera posição e ângulo; Concluir salva. A
+          escala não corrige perspectiva.
+        </p>
+        <p>
+          Clique: selecionar. Arraste o corpo: mover. Arraste uma alça:
+          redimensionar.
+          <br />
           Roda do mouse: zoom.
           <br />
-          Espaço + arraste: navegar.
+          Botão do meio + arraste ou Espaço + arraste: navegar.
           <br />
           Esc: cancelar e selecionar.
           <br />
@@ -405,6 +419,9 @@ function Properties({ doc }: { doc: Project }) {
           Ctrl+Z: desfazer.
           <br />
           Ctrl+Y: refazer.
+          <br />
+          Medida: clique no ponto inicial e depois no ponto final. Alt suspende
+          a atração. Arraste o corpo para mover ou uma ponta para ajustar.
         </p>
         <p>
           A e B são o início e o final do desenho. A face externa tracejada
@@ -429,6 +446,7 @@ export default function App() {
     history = useStore((s) => s.history);
   const [tool, setTool] = useState<Tool>("select"),
     [settings, setSettings] = useState(false),
+    [preferences, setPreferences] = useState(false),
     [diagnostics, setDiagnostics] = useState(false),
     [side, setSide] = useState<1 | -1>(1),
     [creating, setCreating] = useState(false),
@@ -447,6 +465,14 @@ export default function App() {
     name: string;
   } | null>(null);
   const input = useRef<HTMLInputElement>(null);
+  const preferencesTrigger = useRef<HTMLButtonElement>(null);
+  const [returnPreferencesFocus, setReturnPreferencesFocus] = useState(false);
+  useEffect(() => {
+    if (returnPreferencesFocus && !busy) {
+      preferencesTrigger.current?.focus();
+      setReturnPreferencesFocus(false);
+    }
+  }, [returnPreferencesFocus, busy]);
   const deleteTrigger = useRef<HTMLButtonElement>(null);
   const [fadingProjects, setFadingProjects] = useState<string[]>([]);
   const [incompatibleProject, setIncompatibleProject] = useState<string | null>(
@@ -461,7 +487,12 @@ export default function App() {
   const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(
     null,
   );
-  const changeTool = useCallback((t: Tool) => setTool(t), []);
+  const changeTool = useCallback((t: Tool) => {
+    useStore
+      .getState()
+      .inspect({ imageDraft: null, imageOpacity: null, imageRequest: null });
+    setTool(t);
+  }, []);
   useEffect(() => {
     if (!doc) {
       void listProjects()
@@ -510,7 +541,7 @@ export default function App() {
         s.select
       ) {
         e.preventDefault();
-        if (s.slabDraft || s.slabEditing) return;
+        if (s.imageDraft || s.slabDraft || s.slabEditing) return;
         if (s.pendingOpening) s.inspect({ pendingOpening: null });
         else if (deleteSlabSelection()) return;
         else void s.commit(removeElement(s.doc, s.select));
@@ -618,6 +649,18 @@ export default function App() {
                 data-tooltip="Configurações do projeto"
               >
                 <Icon name="settings" />
+              </button>
+              <button
+                ref={preferencesTrigger}
+                disabled={busy}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setPreferences(true)}
+                className={styles.iconButton}
+                aria-label="Preferências do Ecovit"
+                title="Preferências do Ecovit"
+                data-tooltip="Preferências do Ecovit"
+              >
+                <Icon name="preferences" />
               </button>
             </div>
             <span
@@ -729,7 +772,7 @@ export default function App() {
                   aria-pressed={tool === "select" && !groutMode}
                   disabled={busy || readonly}
                   onClick={() => {
-                    setTool("select");
+                    changeTool("select");
                     useStore
                       .getState()
                       .inspect({ groutMode: false, groutCell: null });
@@ -745,7 +788,7 @@ export default function App() {
                     useStore
                       .getState()
                       .inspect({ mode: "plan", preview: null });
-                    setTool("wall");
+                    changeTool("wall");
                   }}
                 >
                   <Icon name="wall" /> Parede
@@ -763,7 +806,7 @@ export default function App() {
                         ? "Este pavimento já tem uma laje"
                         : "Desenhar laje"
                     }
-                    onClick={() => setTool("slab")}
+                    onClick={() => changeTool("slab")}
                   >
                     <Icon name="slab" /> Laje
                   </button>
@@ -777,15 +820,26 @@ export default function App() {
                       disabled={busy || readonly}
                       onClick={() => {
                         useStore.getState().inspect({ pendingOpening: null });
-                        setTool(kind);
+                        changeTool(kind);
                       }}
                     >
                       <Icon name={kind} />
                       {openingLabel[kind]}
                     </button>
                   ))}
+                {mode === "plan" && (
+                  <button
+                    className={`${styles.iconText} ${tool === "measure" ? styles.active : ""}`}
+                    aria-pressed={tool === "measure"}
+                    disabled={busy || readonly}
+                    onClick={() => changeTool("measure")}
+                  >
+                    <Icon name="measure" /> Medida
+                  </button>
+                )}
                 {mode === "plan" &&
                   (!!editingDoc!.model.slabs.length ||
+                    !!editingDoc!.model.measurements.length ||
                     !!editingDoc!.model.openings.length) && (
                     <select
                       aria-label="Selecionar elemento"
@@ -793,6 +847,9 @@ export default function App() {
                       value={
                         editingDoc!.model.openings.some(
                           (o) => o.id === selected,
+                        ) ||
+                        editingDoc!.model.measurements.some(
+                          (m) => m.id === selected,
                         ) ||
                         editingDoc!.model.slabs.some(
                           (s) =>
@@ -808,11 +865,20 @@ export default function App() {
                           slabEditing: false,
                           pendingOpening: null,
                         });
-                        setTool("select");
+                        changeTool("select");
                         useStore.getState().choose(e.target.value || null);
                       }}
                     >
                       <option value="">Selecionar elemento…</option>
+                      {!!editingDoc!.model.measurements.length && (
+                        <optgroup label="Medidas">
+                          {editingDoc!.model.measurements.map((m, i) => (
+                            <option key={m.id} value={m.id}>
+                              Medida {i + 1} · {measurementText(m)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
                       {!!editingDoc!.model.slabs.length && (
                         <optgroup label="Laje">
                           {editingDoc!.model.slabs.flatMap((s) => [
@@ -883,11 +949,13 @@ export default function App() {
                 settings={() => setSettings(true)}
               />
             ) : mode === "plan" ? (
-              editingDoc!.model.slabs.some(
-                (s) =>
-                  s.id === selected ||
-                  s.openings.some((o) => o.id === selected),
-              ) ? (
+              editingDoc!.model.measurements.some((m) => m.id === selected) ? (
+                <MeasurementProperties doc={editingDoc!} />
+              ) : editingDoc!.model.slabs.some(
+                  (s) =>
+                    s.id === selected ||
+                    s.openings.some((o) => o.id === selected),
+                ) ? (
                 <SlabProperties
                   key={`${editingDoc!.viewFloorId}-${tool}-${selected}`}
                   doc={editingDoc!}
@@ -921,15 +989,6 @@ export default function App() {
               {doc.model.walls.length}{" "}
               {doc.model.walls.length === 1 ? "parede" : "paredes"} · Planta em
               centímetros
-            </span>
-            <span>
-              {doc.generationState.status === "outdated"
-                ? "Composição desatualizada"
-                : doc.generationState.diagnostics.some(
-                      (d) => d.severity === "error",
-                    )
-                  ? "Composição atualizada · com pendências"
-                  : "Composição nominal atualizada"}
             </span>
           </footer>
         </>
@@ -1287,6 +1346,14 @@ export default function App() {
         <OpeningSettingsDialog
           doc={editingDoc!}
           close={() => setSettings(false)}
+        />
+      )}
+      {preferences && doc && (
+        <PreferencesDialog
+          close={() => {
+            setPreferences(false);
+            setReturnPreferencesFocus(true);
+          }}
         />
       )}
     </div>

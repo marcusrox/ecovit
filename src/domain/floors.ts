@@ -102,6 +102,10 @@ export function removeFloor(doc: Project, floorId: string): Project {
       walls,
       openings: doc.model.openings.filter((o) => ids.has(o.wallId)),
       slabs: doc.model.slabs.filter((s) => s.floorId !== floorId),
+      measurements: doc.model.measurements.filter((m) => m.floorId !== floorId),
+      referenceImages: doc.model.referenceImages.filter(
+        (m) => m.floorId !== floorId,
+      ),
     },
     adjustments: {
       junctions: doc.adjustments.junctions.filter((a) => a.floorId !== floorId),
@@ -174,6 +178,24 @@ export function duplicateFloor(
           added.model.floors.findIndex((f) => f.id === b.floorId),
       ),
       walls: [...doc.model.walls, ...walls],
+      referenceImages: [
+        ...doc.model.referenceImages,
+        ...doc.model.referenceImages
+          .filter((i) => i.floorId === floorId)
+          .map((i) => ({ ...i, floorId: target.id })),
+      ],
+      measurements: [
+        ...doc.model.measurements,
+        ...doc.model.measurements
+          .filter((m) => m.floorId === floorId)
+          .map((m) => ({
+            ...m,
+            id: crypto.randomUUID(),
+            floorId: target.id,
+            a: { ...m.a },
+            b: { ...m.b },
+          })),
+      ],
       openings: [
         ...doc.model.openings,
         ...doc.model.openings
@@ -270,6 +292,14 @@ export function mergeFloorView(
       walls: [
         ...root.model.walls.filter((w) => w.floorId !== id),
         ...local.model.walls,
+      ],
+      referenceImages: [
+        ...root.model.referenceImages.filter((i) => i.floorId !== id),
+        ...local.model.referenceImages,
+      ],
+      measurements: [
+        ...root.model.measurements.filter((m) => m.floorId !== id),
+        ...local.model.measurements,
       ],
       openings: [
         ...root.model.openings.filter((o) => !owned.has(o.wallId)),

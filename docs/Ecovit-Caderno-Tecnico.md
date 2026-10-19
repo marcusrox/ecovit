@@ -215,7 +215,7 @@ O [plano de M2](Ecovit-Plano-Implementacao.md), seção 5, define aceite, testes
 
 ## 7. M2 — Motor, persistência e limites
 
-**Alcance desta seção:** contrato histórico de composição de M2 e seu envelope versão 2; CT-14 amplia o suporte vigente a alturas diferentes. O aplicativo vigente usa envelope versão 9/nominal-v10 e inclui os contratos de M3.1–M4.2 nas seções seguintes. Transições de cruz por altura são definidas em CT-12.
+**Alcance desta seção:** contrato histórico de composição de M2 e seu envelope versão 2; CT-14 amplia o suporte vigente a alturas diferentes. O aplicativo vigente usa envelope versão 11/nominal-v10 (M8), com leitura de envelopes 9/10 conforme a Arquitetura §26, sem nova convenção construtiva e inclui os contratos de M3.1–M4.2 nas seções seguintes. Transições de cruz por altura são definidas em CT-12.
 
 - Motor em `src/domain/composition.ts`, sem dependências de interface. Padrões e recusas são cobertos por `tests/composition.test.ts`.
 - No aplicativo entregue até M3.5, limites defensivos: soma de comprimentos de paredes até 20 mil módulos, até mil fiadas e produto dessa soma pelo total de fiadas até 100 mil células. É uma estimativa conservadora anterior à alocação, contando sobreposições na soma. Não é promessa de 100 mil peças: cenário verificado de 42 mil peças no relatório. Exceder preserva o modelo e gera diagnóstico, sem truncamento. M4.1 remove esse controle de orçamento de geração, conforme §11.1.

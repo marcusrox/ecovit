@@ -18,10 +18,21 @@ export function floorPlanBounds(
   doc: EditableProject,
   floorIds: readonly string[],
   includeSlabs = true,
+  measureFloorId?: string,
 ) {
   const boxes = doc.model.walls
     .filter((w) => floorIds.includes(w.floorId))
     .map((w) => bounds(w, doc.project.base.width));
+  for (const m of doc.model.measurements.filter(
+    (m) => m.floorId === measureFloorId,
+  )) {
+    boxes.push({
+      x: Math.min(m.a.x, m.b.x),
+      y: Math.min(m.a.y, m.b.y),
+      width: Math.abs(m.b.x - m.a.x),
+      height: Math.abs(m.b.y - m.a.y),
+    });
+  }
   if (includeSlabs)
     for (const slab of doc.model.slabs.filter((s) =>
       floorIds.includes(s.floorId),

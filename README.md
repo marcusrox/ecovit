@@ -1,6 +1,6 @@
 # Ecovit
 
-Editor local de plantas com paredes ortogonais, malha de meio tijolo e composição nominal de fiadas. Aplicativo 0.11.0, arquivo versão 9 e composição nominal-v10.
+Editor local de plantas com paredes ortogonais, malha de meio tijolo, medidas independentes e composição nominal de fiadas. Aplicativo 0.13.0, arquivo versão 11 e composição nominal-v10.
 
 | Marco | Funcionalidade | Estado |
 |---|---|---|
@@ -15,12 +15,15 @@ Editor local de plantas com paredes ortogonais, malha de meio tijolo e composiç
 | M4.2 | Lajes ortogonais, aberturas, alças e redesenho | Implementado e aceito pelo solicitante |
 | M4.3 | Comparação visual entre pavimentos | Implementado e aceito pelo solicitante |
 | M5 | Quantitativos e duplicação de projetos | [Implementado e aceito; verificações no plano §12](docs/Ecovit-Plano-Implementacao.md#12-m5--consulta-e-conclusão-da-primeira-versão) |
+| M6 | Preferências, rótulos de paredes e status/ajuda do canvas | Implementado e aceito pelo solicitante; registro no plano §13 |
+| M7 | Medidas independentes em Planta | Implementado e aceito pelo solicitante; verificações e aceite no plano §14 |
+| M8 | Imagem de referência por pavimento, calibração e controles compactos | Implementado e aceito pelo solicitante; verificações e aceite no plano §15 |
 
 O aplicativo trabalha com um a quatro pavimentos independentes. A composição é nominal, sem dimensionamento estrutural ou comprovação de passagem física em furos/canais. Requisitos e limites no [PRD](docs/Ecovit-PRD.md); verificações e aceites no [plano](docs/Ecovit-Plano-Implementacao.md). O aceite específico das revisões de apresentação está pendente, conforme Plano §11.
 
 Em Planta, o campo Referência de pavimento em Propriedades do pavimento na lateral (sem elemento selecionado) mostra um vizinho inferior/superior como referência tracejada, sem edição ou encaixe. Enquadrar considera as duas plantas; cada pavimento lembra sua direção durante a sessão ao alternar entre eles. Entrar em Fiada limpa a escolha do ativo; reabrir o projeto limpa todas. Essa preferência é apenas da sessão, sem alterar arquivo ou cálculo.
 
-Durante o MVP, cada marco pode adotar novo formato sem compatibilidade com marcos anteriores. O aplicativo vigente aceita envelope 9 e calcula com nominal-v10; resultados nominal-v9 no mesmo envelope são atualizados automaticamente, preservando desenhos e ajustes. Outros envelopes, inclusive o de M4.1, continuam incompatíveis, sem migração do modelo. Registros de envelopes incompatíveis permanecem na lista identificados; nesse caso, crie um novo projeto.
+Durante o MVP, cada marco pode adotar novo formato sem compatibilidade com marcos anteriores. M8 grava envelope 11 e lê envelopes 9/10, acrescentando imagens vazias e, no envelope 9, medidas vazias, sem modificar o arquivo original. Resultados nominal-v9 são atualizados pelo cálculo nominal-v10, preservando desenhos e ajustes. Outros envelopes, inclusive o de M4.1, continuam incompatíveis. Registros incompatíveis permanecem na lista identificados; nesse caso, crie um novo projeto.
 
 ## Abrir nesta máquina
 
@@ -55,11 +58,21 @@ O endereço padrão é **http://127.0.0.1:5173/**. Projetos salvos em outra orig
 6. Alterne para Fiada para navegar, consultar o intervalo de altura e sobrepor uma fiada adjacente. Selecione um conjunto com alternativa disponível, como L ou cruz, na primeira fiada, para visualizar e confirmar outra fase; a prévia destaca os cantos afetados. Diagnósticos podem ser clicados para localizar o problema.
 7. Aguarde a indicação “Salvo no navegador”. Baixe uma cópia regularmente: dados locais podem ser apagados pelo navegador. Carregar arquivo cria uma cópia de projeto, sem substituir o original salvo.
 
+A engrenagem ao lado de Configurações do projeto abre Preferências do Ecovit. As quatro opções de rótulos são imediatas e ficam salvas neste navegador para todos os projetos; Paredes controla A/B e o texto de comprimento/altura em Planta. Essas preferências não entram no arquivo `.ecovit`. O estado da composição aparece no canto inferior esquerdo do canvas; instruções gerais estão em Como usar o editor, na lateral.
+
 O térreo começa na cota 0 cm, com altura de novas paredes em 280 cm. No seletor Pavimento, crie, duplique ou exclua andares; edite nome, cota e altura padrão no painel. Cotas podem ser negativas, são distintas e múltiplas da altura-base. Todas as paredes de um pavimento começam na sua cota, e as fiadas reiniciam em 1. Trocar de andar preserva câmera e última fiada local, limpando seleção e gestos. Para altura-base personalizada incompatível com 280 cm, escolha uma altura modular explicitamente. A altura inicial escolhida fica gravada no projeto e é sugerida para pavimentos novos, mesmo após editar ou remover o térreo. O passo nominal adotado é a altura-base (7 cm resulta em 40 fiadas para 280 cm); não representa junta ou encaixe físico de um fabricante. Furos representam somente eixos. O T usa principal contínua e ramal encostado. A cruz nominal alterna continuidade horizontal/vertical, compondo também contorno e divisórias conectados; a ligação entre paredes não é dimensionada. Combinações sem padrão completo recebem diagnóstico: o conjunto afetado fica sem peças em Fiada, com a Planta preservada.
 
 Pontas livres e contornos abertos são permitidos. Retas conectadas, L, U e ciclos sem ramificações após o tratamento dos encontros usam paginação contínua: inteiros pareiam células consecutivas, cantos seguem a paridade do percurso e meios ficam nas extremidades quando necessários. Não há obrigação de orientar todos os cantos igualmente nem mínimo de quatro módulos para a ponte de um U. Reservas incompatíveis entre encontros próximos, sobreposições e transições de altura sem padrão continuam diagnosticadas; cruz → reta conforme altura é suportada.
 
-O arquivo vigente usa envelope versão 9 e composição `nominal-v10`; resultados `nominal-v9` do mesmo envelope são descartados e recalculados ao abrir. O download usa JSON compacto; se o resultado calculado ultrapassar o limite de 50 MiB do arquivo, a cópia conserva todos os desenhos, configurações e ajustes e reconstrói o resultado ao abrir, com aviso. A composição nesta aba permanece intacta. Snapshots atuais são conferidos por recomputação antes de abrir; adulteração é recusada. Em outra aba, somente leitura atualiza resultados antigos apenas em memória, sem salvar no registro compartilhado. Configurações são comuns, mas paredes, vãos e ajustes são independentes por pavimento. Lajes e aberturas são independentes das paredes; sobreposição de andares permanece para M4.3.
+O arquivo vigente usa envelope versão 10 e composição `nominal-v10`, com leitura de envelope 9 conforme descrito acima. O download usa JSON compacto; se o resultado calculado ultrapassar o limite de 50 MiB do arquivo, a cópia conserva todos os desenhos, medidas, configurações e ajustes e reconstrói o resultado ao abrir, com aviso. A composição nesta aba permanece intacta. Snapshots atuais são conferidos por recomputação antes de abrir; adulteração é recusada. Em outra aba, somente leitura atualiza resultados antigos apenas em memória, sem salvar no registro compartilhado. Configurações são comuns, mas paredes, vãos, medidas e ajustes são independentes por pavimento. Lajes e aberturas são independentes das paredes.
+
+## Imagem de referência — M8
+
+Em Planta, sem elemento selecionado, use Adicionar imagem em Propriedades do pavimento. Aceita uma PNG/JPEG por pavimento, até 10 MiB e 16 megapixels. Marque dois pontos de um trecho conhecido e informe a distância em cm; Calibrar ajusta a proporção. Ajustar libera posição, ângulo e recalibração; Concluir salva, Cancelar preserva o anterior. Mostrar e Opacidade controlam o fundo sem atrapalhar o desenho. O menu compacto oferece Substituir/Remover. Imagem e ajustes viajam no .ecovit, com histórico e cópias independentes; o arquivo completo mantém limite de 50 MiB. Sem PDF, perspectiva, reconhecimento automático ou exibição em Fiada/referência de outro pavimento. Verificações e registro do aceite no plano §15.
+
+## Medidas independentes — M7
+
+Em Planta, escolha Medida, clique no ponto inicial e depois no ponto final, inclusive fora da malha e em diagonal. O alvo destacado indica atração a extremidades/vértices e linhas próximas; Alt suspende a atração. A medida permanece independente depois de confirmada. Em Selecionar, arraste o corpo para mover ou uma ponta para ajustar; Delete ou Excluir medida remove, com desfazer/refazer. A opção Medidas nas preferências controla apenas o rótulo. Segmentos pertencem ao pavimento, são salvos no arquivo e não entram na composição/quantitativos; não aparecem em Fiada ou na referência de outro pavimento. Roteiro de teste e limitações no plano §14.
 
 ## Testar lajes de M4.2
 

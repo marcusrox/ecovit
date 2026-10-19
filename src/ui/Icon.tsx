@@ -1,4 +1,6 @@
 import {
+  ImagePlus,
+  Ellipsis,
   ArrowLeft,
   ArrowRight,
   BrickWall,
@@ -21,6 +23,8 @@ import {
   Redo2,
   Scan,
   SlidersHorizontal,
+  Settings,
+  Ruler,
   SquareDashed,
   RectangleHorizontal,
   SquareSplitHorizontal,
@@ -34,6 +38,8 @@ import styles from "./App.module.css";
 
 // Semantic names remain stable across screens; only this module imports Lucide.
 const icons = {
+  image: ImagePlus,
+  more: Ellipsis,
   select: MousePointer2,
   wall: BrickWall,
   slab: RectangleHorizontal,
@@ -41,6 +47,8 @@ const icons = {
   window: SquareSplitHorizontal,
   opening: SquareDashed,
   settings: SlidersHorizontal,
+  preferences: Settings,
+  measure: Ruler,
   undo: Undo2,
   redo: Redo2,
   left: ChevronLeft,

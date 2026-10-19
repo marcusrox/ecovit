@@ -145,7 +145,11 @@ it.each([700, 1400])(
 it("EX-78/79: projeto real preserva desenho e compõe 40+2 fiadas", () => {
   const original = JSON.parse(legacyText),
     doc = parseFile(legacyText);
-  expect(doc.model).toEqual(original.model);
+  expect(doc.model).toEqual({
+    ...original.model,
+    measurements: [],
+    referenceImages: [],
+  });
   expect(doc.adjustments).toEqual(original.adjustments);
   expect(doc.generated).toBeNull();
   expect(doc.generationState).toEqual({ status: "outdated", diagnostics: [] });

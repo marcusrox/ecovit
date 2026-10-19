@@ -1,8 +1,8 @@
 # Ecovit — Arquitetura Técnica
 
-**Versão documental:** 1.23
-**Base funcional:** PRD Ecovit 0.30. M1–M3.5 implementados e aceitos; M4.1 implementado, revisado e aceito pelo solicitante; M4.2 implementado e aceito pelo solicitante na §20, com verificações no plano; M4.3 implementado e aceito pelo solicitante na §22; M5 implementado e aceito pelo solicitante na §23, com registro e verificações no plano.
-**Aplicativo:** 0.11.0; arquivo versão 9; composição nominal-v10 (CT-14).
+**Versão documental:** 1.27
+**Base funcional:** PRD Ecovit 0.34. M1–M3.5 implementados e aceitos; M4.1 implementado, revisado e aceito pelo solicitante; M4.2 implementado e aceito pelo solicitante na §20, com verificações no plano; M4.3 implementado e aceito pelo solicitante na §22; M5 implementado e aceito pelo solicitante na §23, com registro e verificações no plano. M6 implementado e aceito pelo solicitante na §24, com registro no plano. M7 implementado e aceito pelo solicitante na §25, com registro do aceite no plano. M8 implementado e aceito pelo solicitante na §26, com verificações e registro do aceite no Plano §15.
+**Aplicativo:** 0.13.0; arquivo versão 11, com leitura de versões 9/10; composição nominal-v10 (CT-14).
 
 As seções gerais descrevem a arquitetura do aplicativo. As seções de M3–M3.5 registram contratos históricos; M4.1 está implementado conforme §19, preservando as regras nominais locais. Lajes estão implementadas conforme §20; comparação visual de M4 está implementada conforme §22, com aceite global do solicitante registrado no Plano §10. Versões de formato e convenções nominais identificam contratos de dados, não etapas pendentes de desenvolvimento.
 
@@ -67,7 +67,7 @@ A escolha atende à necessidade concreta de catálogo amplo com linguagem visual
 
 #### Mapa semântico e verificação
 
-O mapa central relaciona ações a ícones: select→MousePointer2, wall→BrickWall, slab→RectangleHorizontal, door→DoorClosed, window→SquareSplitHorizontal, opening→SquareDashed, settings→SlidersHorizontal, undo/redo→Undo2/Redo2, left/right→ChevronLeft/ChevronRight, close→X, plus/minus→Plus/Minus, copy/delete→Copy/Trash2, apply→Check, redraw→Pencil, download/upload→Download/Upload, fit→Scan, info→Info, plan→PanelsTopLeft. Porta representa folha/batente, janela quadro dividido, vão contorno tracejado; símbolos são ferramentas, não detalhes construtivos.
+O mapa central relaciona ações a ícones: select→MousePointer2, wall→BrickWall, slab→RectangleHorizontal, door→DoorClosed, window→SquareSplitHorizontal, opening→SquareDashed, settings→SlidersHorizontal, preferences→Settings, measure→Ruler, image→ImagePlus, more→Ellipsis, undo/redo→Undo2/Redo2, left/right→ChevronLeft/ChevronRight, close→X, plus/minus→Plus/Minus, copy/delete→Copy/Trash2, apply→Check, redraw→Pencil, download/upload→Download/Upload, fit→Scan, info→Info, plan→PanelsTopLeft. Porta representa folha/batente, janela quadro dividido, vão contorno tracejado; símbolos são ferramentas, não detalhes construtivos.
 
 O mapa também inclui status saved/warning/saving/readonly→Check/TriangleAlert/LoaderCircle/LockKeyhole, next→ArrowRight e home→House. Estado vazio, abertura de cartão e orientação de backup usam o mesmo catálogo. Inverter lado conserva direções ↓/→/↑/← como indicação geométrica separada do texto da ação; +/− do graute e legendas técnicas permanecem desenhos/sinais do domínio. Handlers, nomes acessíveis, condições de exibição, atalhos, foco e histórico preservados. Não acrescentar ícone a todo botão de texto automaticamente; usar quando facilitar reconhecimento.
 
@@ -99,7 +99,7 @@ O domínio e o motor não importam React, Zustand, Konva ou Dexie. São funçõe
 
 ## 4. Fluxo principal
 
-1. Um gesto do mouse produz uma prévia transitória no editor.
+1. Um gesto do mouse produz uma prévia transitória no editor. Operações exclusivas em medidas seguem o salvamento sem recálculo da §25; os passos de cálculo abaixo aplicam-se aos insumos construtivos.
 2. Ao concluir, uma operação de domínio aplica a alteração modular ao projeto.
 3. A aplicação registra a alteração no histórico, marca o resultado como desatualizado e impede novas operações até terminar este fluxo.
 4. Salva o documento atual no IndexedDB; se a escrita falhar, informa a falha e continua com o documento em memória.
@@ -186,13 +186,13 @@ Zustand manterá o documento atual, resultado gerado e estado de interface em pa
 
 Desfazer/refazer usa histórico limitado de estados do modelo editável, com compartilhamento das partes não alteradas por atualizações imutáveis. Não armazenar todas as peças geradas em cada passo do histórico. O limite é de 50 operações.
 
-Cada gesto confirmado é uma operação; atualizações automáticas pertencem à mesma operação. Desfazer restaura entradas e escolhas e segue o mesmo fluxo sequencial de salvamento e recálculo. Reabrir arquivo não precisa restaurar o histórico da sessão anterior.
+Cada gesto confirmado é uma operação; atualizações automáticas pertencem à mesma operação. Desfazer restaura entradas e escolhas e segue o mesmo fluxo sequencial de salvamento, com recálculo apenas quando os insumos construtivos mudam; medidas seguem §25. Reabrir arquivo não precisa restaurar o histórico da sessão anterior.
 
 Não adicionar event sourcing ou persistência de cada movimento do mouse.
 
 ## 9. Persistência e arquivo .ecovit
 
-O formato vigente é envelope versão 9/composição nominal-v9, conforme §20, preservando o processamento de §19. Somente esse formato é aceito. Snapshots atuais são conferidos por recomputação completa antes de abrir; versões anteriores/futuras e adulteração são recusadas sem conversão. Em leitura bloqueada, o cálculo confere o snapshot, sem substituir ou atualizar o documento nem salvar. Registros locais incompatíveis permanecem identificados na lista, sem exclusão automática. A tabela abaixo registra a evolução histórica; não implica leitores antigos.
+O formato vigente é envelope versão 11/composição nominal-v10, conforme §26, com leitura de envelopes 9/10 normalizados para imagens vazias; envelope 9 também recebe medidas vazias. Snapshots atuais são conferidos por recomputação completa antes de abrir; envelopes 1–8, versões desconhecidas e adulteração são recusados. Resultados nominal-v9 são descartados e atualizados pelo cálculo vigente, conforme §21; em somente leitura, atualizações ficam em memória, sem gravar o registro. Registros locais incompatíveis permanecem identificados na lista, sem exclusão automática. A tabela abaixo registra a evolução histórica; não implica outros leitores antigos.
 
 | Marco | Envelope | Convenção de composição |
 |---|---|---|
@@ -204,7 +204,10 @@ O formato vigente é envelope versão 9/composição nominal-v9, conforme §20, 
 | M3.4 | 6 | nominal-v7 |
 | M3.5 | 7 | nominal-v8 |
 | M4.1 | 8 | nominal-v9 |
-| M4.2 (vigente) | 9 | nominal-v9 |
+| M4.2 | 9 | nominal-v9 |
+| Alturas diferentes/M5/M6 | 9 | nominal-v10 |
+| M7 | 10, com leitura de 9 | nominal-v10 |
+| M8 (vigente) | 11, com leitura de 9/10 | nominal-v10 |
 
 IndexedDB, via Dexie, armazena registros de projetos com id, updatedAt e documento completo; nome e demais metadados pertencem ao documento. A interface e o motor não dependem da representação interna do banco. Referência: [Dexie e IndexedDB](https://dexie.org/docs).
 
@@ -217,9 +220,9 @@ Falhas de quota ou indisponibilidade manterão o documento em memória e oferece
 JSON UTF-8 com extensão .ecovit:
 
 - format: identificador ecovit.
-- schemaVersion: 9 no contrato vigente de M4.2; contratos nas seções 19/20.
+- schemaVersion: 11 vigente em M8, com leitura de 9/10 conforme §26; versões 8/9 registram os contratos históricos das seções 19/20.
 - project: identificadores, nome, unidades e dimensões-base.
-- model: pavimentos, paredes, vãos, lajes e referências verticais.
+- model: pavimentos, paredes, vãos, lajes, medidas independentes e referências verticais.
 - adjustments: escolhas de encontros e ajustes de graute/canaletas.
 - generated: resultado completo agrupado por pavimento ou null quando desatualizado.
 - generationState: atualidade do resultado e diagnósticos.
@@ -698,3 +701,79 @@ Na lista, o estado React da sessão identifica o cartão incompatível cuja expl
 A borda/fundo do cartão pertence ao contêiner da linha; o botão de abertura/explicação e o grupo de ações são irmãos, sem botões aninhados nem handler de abertura no contêiner. Reusar Icon com copy/delete e variante iconButton, aria-label e dicas data-tooltip/title. Grupo horizontal à direita com espaço reservado, opacidade zero em repouso e visível por :hover/:focus-within do cartão; os botões permanecem na sequência de Tab e a chegada do foco revela o grupo. Em @media (hover: none), grupo sempre visível. As dicas abrem lateralmente para dentro do cartão, evitando corte pelo contêiner que suporta a saída animada. Foco do botão principal usa contorno interno. Preservar bloqueios, confirmação, backup, foco de retorno e animação de exclusão.
 
 Cartão comum de 80 px incluindo borda, com conteúdo principal de no mínimo 78 px e padding vertical de 14 px; intervalo entre slots de 8 px também fecha durante o fade out. Ícone de projeto conserva 48/24 px; Novo projeto conserva posição, dimensões e interação. Nome ocupa uma linha com reticências/title completo; metadados na linha seguinte e explicação de incompatibilidade com quebra natural. Sem novo ícone, versão de arquivo, cálculo ou persistência.
+
+## 24. Contratos de M6 — Preferências do Ecovit
+
+**Estado: implementado e aceito pelo solicitante.** Requisitos de produto: PRD RF-09/10/14 e §8; escopo, verificações e aceite: Plano §13. M6 é uma evolução de apresentação independente do encerramento de M5, sem mudança no motor ou no contrato de projeto.
+
+Preferências de apresentação permanecem separadas do documento de projeto e de suas configurações construtivas. `src/state/preferences.ts` mantém estado Zustand próprio e registro local no localStorage, chave `ecovit:preferences:v1`, com booleanos door/window/opening/wall, inicialmente true. Validar a leitura; ausência, conteúdo inválido ou falha de leitura usam padrões seguros, sem impedir abertura do aplicativo. Não criar tabela no banco de projetos, serviço, conta ou dependência. O estado em memória acompanha a aplicação, sem reinicializar ao trocar/fechar projeto; ler o registro na inicialização. Sincronização em tempo real entre abas não integra M6.
+
+Cada alteração atualiza apresentação e tenta persistir imediatamente. Capturar falhas de armazenamento e manter o valor em memória, com aviso acessível de que a preferência não foi salva para a próxima abertura; nova alteração pode tentar gravar novamente. Fechar/Escape não revertem valores. Não produzir histórico, recálculo, metadados de alteração ou gravação de projeto. Não incluir preferências no envelope `.ecovit` nem mudar sua versão. Liberar uso em somente leitura sem adquirir bloqueio de projeto.
+
+O diálogo compacto usa quatro checkboxes e Fechar, com foco inicial em controle interno e retorno ao acionador. O acesso segue a §2.1: acrescentar preferences→Settings (engrenagem Lucide) ao mapa central Icon, conservando settings→SlidersHorizontal para Configurações do projeto. Dicas por mouse/teclado abaixo do cabeçalho, nome acessível “Preferências do Ecovit”, alinhamento e área de clique conforme o padrão existente. Preservar a confirmação de renomeação em um clique ao abrir a área e evitar sobreposição com nomes longos.
+
+O controle atua somente nos rótulos definidos pelo RF-14. Em paredes, condicionar A/B e o novo rótulo ao mesmo booleano. Derivar comprimento por length(wall) e altura pelo campo height da parede, usando a formatação de medidas existente; não persistir texto, posição ou medidas duplicadas. Desenhar rótulos sem captura de eventos, associados à geometria confirmada/prévia de edição da parede ativa; atualizações de geometria e altura refletem no texto, sem cálculo construtivo. Usar orientação, âncora central e afastamento visual definidos no RF-14, com separação de textos sobrepostos sem alterar a geometria. Considerar os rótulos de aberturas no posicionamento para não sobrepor os dois tipos, sem prometer resolver layouts arbitrariamente densos. Excluir textos do enquadramento geométrico, como os demais rótulos.
+
+Preservar textos temporários de edição e avisos mesmo quando rótulos estiverem ocultos; não confundir identificadores A/B com as alças, que continuam disponíveis. Propriedades, listas de seleção e controles mantêm identificação. Portas/janelas/vãos respeitam o mesmo booleano em Planta/Fiada onde já renderizados; não acrescentar rótulos de paredes em Fiada ou em referências de outro pavimento. Nenhuma alteração de tipos do modelo, schema de projeto, envelope ou convenção nominal.
+
+### 24.1. Status e orientações do canvas
+
+Comportamento no PRD §8, “Status e orientações do canvas — M6”. `src/editor/CompositionStatus.tsx` concentra a apresentação do estado existente no canto inferior esquerdo do canvas, em Planta/Fiada e somente leitura. Derivar o texto com prioridade busy → resultado desatualizado → resultado atual com erros → resultado atual sem erros. Usar os quatro textos definidos no PRD, sem alterar a classificação de diagnósticos, a geração ou os bloqueios. Anunciar mudanças com aria-live=polite/aria-atomic, sem deslocar foco nem repetir o mesmo anúncio em outras áreas.
+
+Retirar o span de status da barra Planta/Fiada e o status duplicado do footer. Preservar Recalcular para resultado desatualizado e suas condições de habilitação, disponibilizando-o junto ao novo status; manter acesso a diagnósticos. Na faixa inferior do canvas, separar o status das orientações temporárias, com quebra/acomodação quando necessário, sem cobrir desenho em edição ou zoom. Eliminar a instrução genérica de seleção e o sufixo fixo de navegação; preservar instruções pertinentes à ferramenta/operação, medidas e indicação de somente leitura sem confundi-las com o estado da composição. Atualizar a ajuda “Como usar o editor” com os gestos transferidos, inclusive botão central e alternativa com Espaço. Nenhum desses estados pertence ao registro persistido de preferências nem pode ser ocultado pelos controles de rótulo.
+
+## 25. Contratos de M7 — Medidas independentes
+
+**Estado: implementado e aceito pelo solicitante.** Produto em RF-15, escopo, verificações e aceite no Plano §14. Aplicativo 0.12.0, envelope 10 com leitura de 9, sem alteração da convenção nominal-v10.
+
+### 25.1. Dados e precisão
+
+A coleção model.measurements armazena medidas com UUID próprio, floorId e pontos a/b; não usar Wall, Opening ou objeto Konva para representar a medida. Pontos usam as mesmas unidades internas inteiras de 0,1 mm e limites de coordenadas existentes, sem snap obrigatório à malha ou restrição de ângulo. Recusar pontos coincidentes, valores não finitos, precisão inválida e referência a pavimento inexistente. Calcular o comprimento pela distância euclidiana entre os pontos, sem usar a função de comprimento ortogonal de paredes; arredondar apenas o texto em cm para até duas casas decimais. Não persistir comprimento derivado, rótulo, posição do texto, identificador de alvo de atração ou vínculo com outros elementos. A medição é em XY; cotas de pavimento e alturas não entram nessa distância.
+
+Novos projetos e gravações usam envelope 10, exigindo model.measurements mesmo vazio. O leitor também aceita envelope 9 sem esse campo, acrescentando [] e normalizando a versão em memória antes da validação integral; campo de medidas disfarçado como versão 9 é recusado. Esta evolução aditiva não executa motor legado nem converte envelopes 1–8. Arquivo de origem é preservado; registro local é atualizado apenas com bloqueio de edição. A lista reconhece 9/10 como formatos suportados. Validação inclui UUIDs únicos no documento, pavimento existente, pontos inteiros dentro dos limites e segmento não nulo, independentemente da composição. Campos extras ou dados inválidos não são descartados silenciosamente. Medidas integram intenção, histórico, backup e cópia e continuam sujeitas ao limite de transporte de 50 MiB. A tabela física IndexedDB permanece inalterada. Resultados nominal-v9/v10 nos dois envelopes seguem a conferência/atualização da §21, sem mudar o motor.
+
+### 25.2. Atração e gestos
+
+Resolver alvos sobre a geometria confirmada do pavimento ativo. Gerar vértices/extremidades e segmentos a partir das faces das paredes, limites geométricos das aberturas de parede e contornos de lajes/aberturas; outras medidas oferecem suas extremidades, não sua linha como novo alvo. Excluir a própria medida durante edição, os textos/ícones, referências de pavimento, resultados de fiadas e a malha visual. A atração é geométrica e não introduz relações persistidas.
+
+Comparar distâncias em pixels, com raio de captura de 9 px constante em tela; converter ao espaço do projeto conforme a câmera. Dentro desse raio, priorizar vértices/extremidades e depois a projeção mais próxima nos segmentos finitos. Entre candidatos da mesma classe, escolher o mais próximo e desempatar de forma estável, sem depender da ordem de desenho. Normalizar a coordenada efetivada à precisão interna e apresentar esse mesmo ponto no alvo/prévia antes de confirmar. O raio é uma constante de interação visual, não regra construtiva. Alt suspende a atração ao posicionar qualquer ponta, inclusive durante ajuste; não acrescentar opção global de snap neste recorte.
+
+Integrar a ferramenta aos estados explícitos do canvas: criar por dois cliques (início e fim), selecionar, transladar corpo ou ajustar uma extremidade; a ponta oposta permanece fixa nesse ajuste. Translação preserva o vetor entre pontos e não aplica atração independente a uma ponta. Prévias não gravam nem calculam; cada gesto confirmado gera uma operação de histórico/salvamento. O início e a prévia entre cliques são transitórios, sem gravação/histórico, com navegação e zoom disponíveis; soltar o primeiro clique não confirma. Segundo ponto coincidente conserva o início para nova tentativa. Escape, perda de foco e clique fora cancelam a criação sem resíduos; na edição por arraste, soltura fora também cancela. Alças têm prioridade sobre novo desenho, e sobreposição com outros elementos oferece a seleção contextual existente; incluir medidas na seleção acessível do pavimento. Preservar navegação, atalhos, bloqueios durante processamento e somente leitura, sem capturar teclado em campos. O encaixe das ferramentas construtivas permanece inalterado.
+
+### 25.3. Renderização e preferências
+
+Em Planta, renderizar segmento e rótulo centralizado, com orientação da linha normalizada para leitura sem inversão, fonte e afastamento em pixels constantes. Linha é selecionável; rótulo não bloqueia o alvo geométrico. Alças são controles de edição, não parte permanente da linha. Enquadramento inclui os dois pontos das medidas confirmadas do ativo; texto e prévias não ampliam limites. Um pavimento com somente medidas tem geometria enquadrável, sem gerar fiadas fictícias. Não renderizar medidas em Fiada nem na camada de referência de outro pavimento.
+
+Expandir as preferências da §24 com o controle Medidas e booleano próprio, inicialmente true, preservando as quatro escolhas anteriores ao carregar o registro local existente. Campo novo ausente usa true, sem redefinir os demais. Ocultar rótulo mantém linha e alças; seleção não força reexibição. Comprimento de prévia e orientação operacional permanecem disponíveis durante o gesto: no corpo, exigir deslocamento de arraste antes de exibir o texto temporário, sem revelá-lo no simples pressionar/soltar. Persistência das preferências continua separada do projeto, com os tratamentos de falha de M6.
+
+O acesso à ferramenta usa texto Medida e ícone semântico measure no catálogo central, com pictograma Ruler da família Lucide e padrões/verificações da §2.1. Segmento, rótulo e alças são geometria do canvas, sem novos SVGs de interface. Atualizar Como usar o editor para criação, atração, Alt e edição, mantendo o status único de M6.
+
+### 25.4. Persistência sem recálculo construtivo
+
+Operações apenas em medidas salvam a intenção e atualizam histórico, preservando resultado/diagnósticos construtivos e sem chamar o motor. Excluir a coleção de medidas das comparações/assinaturas dos insumos construtivos, em vez de invalidar a composição por qualquer alteração do modelo. Mudanças simultâneas em insumos construtivos continuam seguindo o fluxo de recálculo existente. A validação de arquivo cobre medidas independentemente do snapshot de composição; não alterar a convenção nominal ou contagens por causa da nova coleção.
+
+Duplicação de projeto/importação preserva o desenho das medidas conforme o contrato usual de projetos independentes. Duplicação de pavimento copia os pontos XY sem alteração, criando identidades próprias e o floorId de destino; remoção do pavimento remove sua coleção, e histórico restaura IDs/coordenadas. Não copiar qualquer vínculo de atração, pois ele não existe. Alterações de parede/vão/laje ou exclusão desses elementos não reconciliam medidas nem criam pendências de vínculo. Manter travas entre abas, falhas de salvamento, download e recusa íntegra de arquivos. Sem nova biblioteca, serviço, indexador geométrico genérico ou algoritmo construtivo para esta entrega.
+
+## 26. Contratos de M8 — Imagem de referência por pavimento
+
+**Estado: implementado e aceito pelo solicitante; verificações e registro do aceite no Plano §15.** Produto: PRD RF-16; escopo, verificações e aceite: Plano §15. Aplicativo 0.13.0, envelope 11 com leitura de 9/10. Sem mudança da convenção nominal, biblioteca ou serviço novo.
+
+### 26.1. Dados, arquivo e validação
+
+A coleção model.referenceImages armazena referência associada ao floorId, com no máximo uma por pavimento. Campos: floorId, name, mime (image/png ou image/jpeg), data (bytes originais em base64), width/height em pixels, x/y na unidade mundial, scale em unidades mundiais por pixel, angle em graus (−360 a 360), opacity de 0 a 1 e visible booleano. JPEG considera orientação EXIF ao validar as dimensões de apresentação. Não persistir objetos DOM/Konva, URLs temporárias, caminhos locais ou pontos de uma Medida como contrato da imagem. Usar o sistema XY e a unidade mundial do editor; escala relaciona pixels da imagem a unidades do mundo, sem exigir encaixe modular. Transformações devem ser finitas, escala positiva, dimensões e extensão resultante dentro dos limites do editor. Posição e escala admitem valores finitos fracionários na transformação; não arredondar cada pixel à malha nem alterar os campos inteiros ou a precisão dos elementos construtivos.
+
+Validar conteúdo decodificável e tipo real, integridade CRC dos blocos PNG, limite individual de 10 × 1024² bytes e produto largura × altura até 16.000.000 pixels, antes de substituir estado confirmado. Não confiar apenas em extensão/MIME declarado. Conferir limite de 50 × 1024² bytes do arquivo completo, considerando a expansão da codificação e demais dados do projeto. Recusa não deve deixar a intenção impossível de baixar nem remover a imagem anterior. Sem reamostragem ou recompressão silenciosa. Revalidar o contrato ao importar; referência inválida não substitui documento aberto. Guardar o conteúdo com o projeto, sem armazenamento remoto ou dependência do arquivo original; liberar recursos temporários de decodificação/URLs quando não usados, sem perder os dados necessários a desfazer/refazer.
+
+Gravações novas exigem referenceImages, inclusive vazia. Leitura de 9/10 acrescenta [] em memória antes da validação integral, e de 9 acrescenta measurements:[]; rejeitar esses campos disfarçados como versão anterior. Não converter envelopes 1–8/desconhecidos nem alterar arquivo de origem. Registros locais só são gravados com bloqueio de edição; snapshots nominal-v9 continuam descartáveis conforme §21. Inspecionar assinatura/estrutura/dimensões e confirmar decodificação no navegador antes de abrir/substituir o documento ou incorporar imagem importada. A validação síncrona de domínio confere estrutura, dados e transformações; o carregamento no aplicativo acrescenta a decodificação real. O limite da intenção serializada inclui o base64; resultado derivado pode ser omitido do download pelo contrato existente de 50 MiB, sem perder imagem/intenção.
+
+### 26.2. Calibração, prévia e renderização
+
+Manter estados transitórios explícitos de inclusão/substituição, primeiro ponto, segundo ponto/distância e ajuste, separados da referência confirmada e da ferramenta Medida. Converter os cliques da tela para coordenadas da imagem pela transformação inversa, considerando câmera e rotação. Seja d a distância entre os pontos em pixels e D a distância informada em unidades do mundo: a escala uniforme é D/d. Rejeitar d nulo, D não positivo, valores não finitos ou extensão fora dos limites. Na recalibração, recompor a translação para conservar a posição mundial do primeiro ponto; manter proporção e rotação. Não criar vínculo com geometria nem registrar pontos de calibração como medidas do modelo.
+
+Imagem em camada abaixo da malha e geometria, sem hit-testing fora de Ajustar. Dentro da operação, permitir arraste livre e rotação por campo, conservar navegação e orientação da etapa atual; não mover paredes, vãos, lajes ou medidas. O enquadramento inicial da prévia torna a imagem acessível mesmo com pavimento vazio, sem atribuir escala real antes da calibração. Prévias não salvam, calculam nem historicizam. Concluir válido confirma uma operação; Cancelar e mudança de contexto descartam integralmente o candidato. Substituição mantém a imagem confirmada disponível para restauração até confirmar a nova. Enquadrar considera a imagem visível do ativo junto da geometria existente, incluindo prévia; imagem oculta não amplia os limites. Somente Planta do ativo renderiza a referência; não incluir imagem de outro pavimento na comparação nem em Fiada.
+
+### 26.3. Integração e interface compacta
+
+Imagem e ajustes pertencem à intenção do projeto; visibilidade/opacidade não vão ao registro global de preferências. Integrar cópia de projeto, cópia/remoção de pavimento, merge do pavimento ativo, arquivo, travas entre abas, recuperação de gravação e histórico. Cópias não compartilham estado mutável de edição. Excluir referência e transformação das assinaturas de insumos construtivos, preservando resultados/diagnósticos mesmo se já desatualizados; operações exclusivamente na imagem não chamam o motor. Uma confirmação de ajuste e um gesto completo de opacidade geram cada qual uma operação de histórico/salvamento, sem reencodar os bytes em cada movimento de prévia.
+
+Usar seção compacta em Propriedades do pavimento: controles essenciais no estado normal, campos de ângulo/escala e Concluir/Cancelar somente na edição. Ações secundárias podem usar menu compacto; não acrescentar nova barra permanente, grandes instruções ou painel sobreposto ao canvas. Seguir integralmente a §2.1 para ícones centralizados, área de clique, nomes acessíveis, dicas e foco. Orientação operacional breve na faixa existente e ajuda estável em Como usar o editor. Validar legibilidade, teclado e ausência de sobreposição/rolagem horizontal em Chrome/Edge nas três resoluções de referência. Iconografia central acrescentada: image→ImagePlus e more→Ellipsis, do Lucide instalado. Implementação em src/domain/reference-image.ts e src/editor/ReferenceImage.tsx; estado transitório em Inspection do store, sem persistir o rascunho. Importação assíncrona é descartada ao mudar de contexto/ferramenta antes de terminar. Ajustar pode mostrar temporariamente imagem oculta sem alterar sua visibilidade confirmada; confirmação sem mudanças encerra sem histórico. Não altera os contratos construtivos anteriores.

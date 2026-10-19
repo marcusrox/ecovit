@@ -1,13 +1,13 @@
 # Ecovit — Plano incremental de implementação
 
 **Data:** 10 de outubro de 2026  
-**Atualização documental:** 18 de outubro de 2026\
-**Base:** [PRD 0.30](Ecovit-PRD.md) e [Arquitetura 1.23](Ecovit-Arquitetura-Tecnica.md)\
-**Estado:** M1, M2 e M3.1–M3.5 aprovados pelo solicitante; aceites globais de M3.4 e M3.5 recebidos em 14/10/2026. M4.1, M4.2 e M4.3 também aprovados pelo solicitante, conforme registro consolidado na seção 10. Relatórios e registros de aceite nas seções 7–10. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais. M5 implementado, revisado e aceito pelo solicitante; registro e verificações na seção 12.
+**Atualização documental:** 19 de outubro de 2026\
+**Base:** [PRD 0.34](Ecovit-PRD.md) e [Arquitetura 1.27](Ecovit-Arquitetura-Tecnica.md)\
+**Estado:** M1, M2 e M3.1–M3.5 aprovados pelo solicitante; aceites globais de M3.4 e M3.5 recebidos em 14/10/2026. M4.1, M4.2 e M4.3 também aprovados pelo solicitante, conforme registro consolidado na seção 10. Relatórios e registros de aceite nas seções 7–10. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais. M5 implementado, revisado e aceito pelo solicitante; registro e verificações na seção 12. M6 implementado, verificado pelo Codex e aceito pelo solicitante; registro na seção 13. M7 implementado e aceito pelo solicitante, incluindo a criação por dois cliques; verificações e registro do aceite na seção 14. M8 implementado e aceito pelo solicitante; verificações e registro do aceite na seção 15.
 
 ## 1. Como usar este plano
 
-Ideias para evoluções futuras estão no [backlog](Ecovit-Backlog.md), criado em 15/10/2026 com oito propostas do solicitante. Registro apenas documental, sem implementação, priorização ou alteração do escopo dos marcos. Verificação do Codex: revisão de consistência com o PRD e a arquitetura e `git diff --check`; testes do aplicativo não se aplicam. As ideias serão detalhadas quando suas entregas forem iniciadas; não há teste manual de funcionalidade nesta alteração.
+Ideias para evoluções futuras estão no [backlog](Ecovit-Backlog.md), com oito propostas do solicitante e estado por item quando definido. BL-06 está implementado; BL-07 foi implementado e aceito pelo solicitante no M6 (§13). BL-03 foi implementado e aceito pelo solicitante no M7 (§14). BL-02 implementado e aceito pelo solicitante no M8 (§15). Os demais itens continuam sem escopo de implementação aprovado. Aprovação de especificação não equivale a autorização para implementar nem a aceite funcional.
 
 Cada marco acrescenta uma funcionalidade testável ao aplicativo definitivo. M1 mantém sua especificação e relatório; M2 está detalhado na seção 5, M3.1–3.3 na seção 7, M3.4 na seção 8 e M3.5 na seção 9. M significa Marco e é a única sigla usada para essas etapas. Subdivisões usam ponto: M3.1 (Vãos), M3.2 (Canaletas), M3.3 (Grauteamentos), M3.4 (Evolução da edição no canvas) e M3.5 (Cruz nominal). Preservar IDs existentes; M3.4/M3.5 usam seus próprios prefixos de tarefa/aceite, sem renumerar entregas aceitas. RF, CT e EX continuam identificando requisitos, convenções técnicas e exemplos.
 
@@ -30,6 +30,9 @@ O PRD define comportamento; a arquitetura define contratos de dados/processament
 | M3.5 — Cruz nominal | Cruz integrada a L/T/contorno, fases e elementos associados | RF-04/05/07/09/10/12; CT-12 | Implementado e aceito |
 | M4 — Lajes e múltiplos pavimentos | Cota única modular, lajes independentes, até quatro pavimentos e comparação visual | RF-08/13 e integração com RF-04/05/07 | M4.1, M4.2 e M4.3 implementados, revisados e aceitos pelo solicitante; registro e verificações nas §§10–10.3 |
 | M5 — Consulta e conclusão da primeira versão | Quantitativos, duplicação de projetos e cenários restantes | RF-10/11/12 e cenários do PRD | Implementado, revisado e aceito pelo solicitante em 0.11.0; registro e verificações na §12 |
+| M6 — Preferências do Ecovit | Preferências de rótulos, comprimento/altura das paredes e reorganização do status/ajuda do canvas | BL-07; RF-09/10/14 | Implementado e aceito pelo solicitante; registro e verificações na §13 |
+| M7 — Medidas independentes | Segmentos de medição livres em Planta, atração geométrica e persistência por pavimento | BL-03; RF-15, integração com RF-02/08/09/11/12/14 | Implementado e aceito pelo solicitante; verificações e aceite na §14 |
+| M8 — Imagem de referência por pavimento | Uma imagem de fundo calibrada, posição/rotação, opacidade e interface compacta | BL-02; RF-16, integração com RF-02/08/09/11/12 | Implementado e aceito pelo solicitante; verificações e aceite na §15 |
 
 Persistência, integridade e verificação acompanham cada entrega. M4 depende da composição de M3 e acrescenta pavimentos independentes e comparação visual, com quebra de compatibilidade dos documentos anteriores; M5 depende de M4. A divisão de M4 em incrementos está na seção 10.
 
@@ -833,3 +836,209 @@ O solicitante inicia `./Start-Ecovit.ps1 -Task dev` e usa seu navegador habitual
 **Verificação do Codex:** tipos, lint, build e `git diff --check` aprovados; build com avisos conhecidos de anotações do Zod e bundle acima de 500 kB. Vinte regressões aprovadas em Chrome/Edge nos arquivos settings.spec.ts e quantities.spec.ts, excluindo cargas: navegação/configurações, ícones/estados/foco, quantitativos e duplicação/transporte, incluindo download após falha de gravação. Verificação interativa adicional em ambos os navegadores com sessões isoladas na porta 5174: ordem dos controles, ausência de sobreposição/rolagem horizontal e centralização dos ícones em 1366×768, 1280×720 e 900×680; dicas por Tab, download de `.ecovit` íntegro, upload pelo ícone e confirmação de saída com erro tanto cancelada quanto aceita. A aparência padrão de Projetos, igual à de Quantitativos inclusive na tipografia em larguras menores, foi revalidada com tipos/lint/build e seis regressões de cabeçalho/ícones/foco em settings.spec.ts (Chrome/Edge), com capturas nas três resoluções `.tools/settings-header-<navegador>-<largura>.png`. O uso do estilo compartilhado elimina preenchimento, borda reforçada e sombra específicos; posição, texto, seta e handlers preservados. Capturas `.tools/header-navigation-<navegador>-<largura>.png`. Sem nova dependência ou mudança de contrato/motor; suíte integral de domínio não reexecutada neste recorte.
 
 **Limitações e teste manual do solicitante:** nomes acessíveis preservam Carregar arquivo/Baixar projeto e as dicas identificam o formato, mas essas duas ações não têm texto visível em repouso. Aceite pendente: conferir destaque e posição de Projetos, dicas e foco dos dois ícones, carregar/baixar arquivo e voltar à lista, verificando que Quantitativos permanece como antes. Nenhum desses passos foi declarado executado pelo solicitante.
+
+## 13. M6 — Preferências do Ecovit
+
+**Estado:** implementado e aceito pelo solicitante. Origem: BL-07 e reorganização do status/ajuda aprovada pelo solicitante; requisitos: PRD RF-09/10/14 e §8; contratos técnicos: Arquitetura §24. Marco próprio por acrescentar preferências e ajustes de apresentação do aplicativo, separado das entregas concluídas de M5. Aprovação das definições não constitui aceite funcional.
+
+### 13.1. Alcance definido
+
+Nova área “Preferências do Ecovit”, com acesso por ícone ao lado de Configurações do projeto no cabeçalho. Visibilidade independente dos rótulos de portas, janelas, vãos e paredes; Paredes controla A/B e novo rótulo permanente de comprimento/altura em Planta. O comportamento do produto pertence ao RF-14; regras de implementação e iconografia permanecem na arquitetura. Nenhum outro item do backlog integra M6, inclusive o elemento Medida do BL-03.
+
+Inclui também concentrar o status no canto inferior esquerdo do canvas, removendo as apresentações junto de Planta/Fiada e no rodapé; substituir a mensagem de sucesso por “Composição nominal atualizada”. Transferir instruções gerais de seleção/movimento/redimensionamento/navegação para “Como usar o editor”, mantendo orientações operacionais temporárias, avisos e acesso a Recalcular/diagnósticos. Comportamento no PRD §8 e implementação na Arquitetura §24.1; não se trata de nova opção das preferências.
+
+### 13.2. Definições fechadas
+
+Definições de produto consolidadas no RF-14: quatro controles por tipo, inicialmente visíveis; rótulo inteiro para aberturas; A/B e comprimento/altura para paredes; aplicação imediata e Fechar; persistência no navegador para todos os projetos; falha de gravação mantém escolha na sessão com aviso. Seleção não reexibe texto oculto, propriedades e informações temporárias continuam disponíveis. Preferência comum aos modos onde os textos aparecem, com o novo rótulo de parede somente em Planta, sem novos textos na referência de pavimento. Sem pendências de definição de produto para este recorte.
+
+Detalhes do rótulo de parede (medida externa A/B, altura própria, formato, orientação e atualização) no RF-14; armazenamento, separação do documento e ícones na Arquitetura §24.
+
+### 13.3. Tarefas
+
+- [x] M6-T01: fechar as definições e consolidar RF-14, Arquitetura §24 e critérios deste marco.
+- [x] M6-T02: implementar área, acesso, persistência e controles de visibilidade por tipo, incluindo o rótulo de comprimento/altura das paredes.
+- [x] M6-T03: verificar os fluxos afetados, corrigir falhas e consolidar alcance, resultados, limitações e roteiro manual do solicitante.
+- [x] M6-T04: reorganizar status e orientações do canvas e atualizar a ajuda, conforme PRD §8 e Arquitetura §24.1.
+
+### 13.4. Critérios de aceite
+
+Critérios da entrega; verificação do Codex e teste manual do solicitante são registrados separadamente na §13.5.
+
+| ID | Resultado verificável |
+|---|---|
+| M6-A01 | Diálogo compacto “Preferências do Ecovit”, grupo “Visibilidade dos rótulos”, engrenagem ao lado do ícone de ajustes existente, nome acessível, dica, teclado e retorno de foco; renomeação em andamento preservada. |
+| M6-A02 | Portas/Janelas/Vãos/Paredes têm checkboxes independentes; aberturas ocultam o rótulo inteiro, Paredes oculta A/B e comprimento/altura. Desenho, alças e demais tipos preservados; reexibir restaura os textos. |
+| M6-A03 | Alterar preferências não altera geometria, composição, quantitativos, intenção salva, arquivo `.ecovit` ou histórico do projeto. |
+| M6-A04 | Todos visíveis sem preferências salvas; alteração imediata, Fechar/Escape sem reversão, escolha preservada ao trocar projeto e recarregar no mesmo navegador, independente do arquivo importado. |
+| M6-A05 | Cabeçalho e área legíveis nas resoluções de referência da Arquitetura §2.1, inclusive com nome longo; iconografia consistente e fluxos existentes de configurações/navegação preservados. |
+| M6-A06 | Parede confirmada em Planta exibe comprimento externo A/B e altura própria em cm, com orientação/posição do RF-14; medidas corretas em paredes horizontais/verticais, sentido invertido, alturas distintas e com vãos, sem descontar aberturas. |
+| M6-A07 | Rótulo da parede acompanha movimento, redimensionamento, altura, desfazer/refazer e reabertura, sem entidade ou texto duplicado no arquivo; sem linhas/alças de cota ou novos rótulos em Fiada/referências. |
+| M6-A08 | Seleção não revela rótulo oculto; propriedades, medidas e informações temporárias de edição, avisos e orientações permanecem. Portas/janelas/vãos seguem preferência comum em Planta/Fiada onde já aparecem. |
+| M6-A09 | Falha de gravação mantém preferência em memória com aviso acessível; leitura ausente/inválida/falha usa padrões sem impedir uso. Preferências funcionam em somente leitura sem alterar registro ou bloqueio do projeto. |
+| M6-A10 | Status único no canto inferior esquerdo do canvas em Planta/Fiada, sem repetição junto aos modos ou no rodapé; prioridade Processando… → Resultado desatualizado → Atualizado · com pendências → Composição nominal atualizada, sem mostrar sucesso antigo durante processamento. |
+| M6-A11 | Ajuda contém clique para selecionar, arraste do corpo/alças e navegação com botão central ou Espaço; canvas sem instrução genérica fixa, mantendo orientações temporárias de desenho/graute, prévias, avisos e somente leitura. Status e zoom permanecem visíveis e acessíveis nas resoluções de referência. |
+| M6-A12 | Recalcular e diagnósticos continuam acessíveis, com bloqueios existentes; mudanças de status são anunciadas sem duplicação/foco forçado. Preferências de rótulos não ocultam status, avisos ou instruções operacionais. |
+
+### 13.5. Andamento, verificações e limites
+
+**Aceite global do solicitante:** M6 testado e aprovado por confirmação explícita nesta conversa, abrangendo preferências, rótulos de paredes e reorganização do status/ajuda do canvas. O aceite encerra a pendência funcional global do marco, preservando verificações do Codex e limitações abaixo, sem atribuir resultados individuais aos passos do roteiro manual. Não autoriza iniciar outros itens do backlog.
+
+**Verificação deste registro documental:** estados do README, backlog, PRD, arquitetura e plano alinhados; referências e `git diff --check` conferidos. Sem alteração de código ou nova execução de testes do aplicativo.
+
+**Alcance implementado — M6-T01/02/04:** preferências em diálogo nativo compacto, quatro controles imediatos e persistência local independente por navegador, padrões visíveis, validação de leitura e recuperação de falha de gravação com manutenção em memória e aviso. Engrenagem junto aos ajustes existentes, abertura durante renomeação e retorno de foco, inclusive somente leitura. Paredes exibem comprimento externo/altura própria em Planta, com texto de tamanho visual constante, orientação horizontal/vertical e separação entre rótulos; mesmo controle oculta A/B preservando alças. Aberturas mantêm desenho/alças ao ocultar seus rótulos. Status único na parte inferior do canvas com prioridade de processamento, resultado desatualizado, pendências e sucesso; Recalcular preservado, anúncios acessíveis e ajuda geral transferida para a lateral. Sem dependências novas, mudança de motor, modelo, envelope 9 ou convenção nominal-v10; preferências ausentes do documento/histórico e do arquivo.
+
+**Verificação do Codex:** tipos (`tsc --noEmit`), lint (`eslint .`) e build (`vite build`, após tipos) aprovados. Suíte completa de domínio/persistência: **301 testes em 21 arquivos**, com `vitest run --maxWorkers=1`, incluindo preferências com armazenamento inválido/inacessível, falha de gravação e nova tentativa. Navegador: **48 casos distintos aprovados em Chrome/Edge**, 24 por navegador, nos arquivos preferences.spec.ts, settings.spec.ts, editor.spec.ts, fiada.spec.ts e openings.spec.ts, excluindo os cenários de carga. O fluxo de estados/readonly/falha de preferência foi revalidado nos dois navegadores com acionamento real de Recalcular no novo local. Servidor próprio na porta 5174, sessões isoladas; nenhuma utilização da porta 5173 pelo Codex. Logs: `.tools/m6-unit.txt`, `.tools/m6-browser-final.txt`, `.tools/m6-recovery.txt` e `.tools/m6-build.txt`. Não é declaração de execução da suíte integral de navegador ou repetição das cargas anteriores.
+
+**Cobertura — M6-A01–12:** fluxos novos verificam quatro tipos independentemente, textos efetivamente desenhados no canvas, medidas literais de paredes horizontal/vertical invertida com alturas distintas e vãos, A/B, atualização de comprimento/altura/movimento por operação confirmada, desfazer/refazer, reabertura, seleção/propriedades, Planta/Fiada, aplicação imediata, persistência e igualdade do documento/histórico antes/depois das preferências. Estados ocupado/desatualizado/pendente/atual e readonly são injetados para conferir a interface; o recálculo final usa o fluxo real. Regressões cobrem gestos, cancelamentos, bloqueio real entre abas, arquivos, download após falha, aberturas, configurações e navegação. Atributos de anúncio acessível conferidos por código; sem auditoria com leitor de tela.
+
+**Apresentação:** capturas automatizadas de canvas e diálogo em 1366×768, 1280×720 e 900×680 nos dois navegadores; verificações de foco, centro do SVG (tolerância de 1 px), ordem dos controles e ausência de rolagem horizontal. Revisão visual das capturas por amostra em Chrome/Edge confirma separação dos rótulos, acesso às preferências e faixa inferior sem conflito com zoom. Referências locais `.tools/m6-canvas-<navegador>-<largura>.png` e `.tools/m6-preferences-<navegador>-<largura>.png`. Build: JavaScript 926,14 kB (288,84 kB gzip), com os avisos conhecidos não impeditivos de anotações do Zod e bundle acima de 500 kB. Referências documentais e `git diff --check` conferidos. Aceite global do solicitante registrado nesta seção; roteiro de referência na §13.6.
+
+**Limitações:** preferências locais ao navegador, sem sincronização de contas/dispositivos ou atualização em tempo real entre abas; sem novos tipos de rótulo além dos especificados, cotas vinculadas ou garantia de evitar toda sobreposição em desenhos densos. Limpar dados do navegador pode apagar as preferências; o arquivo do projeto não as transporta. Sem auditoria completa de acessibilidade ou nova garantia geral de desempenho.
+
+### 13.6. Roteiro manual do solicitante
+
+**Estado: aceite global recebido.** O solicitante informou que testou o M6 e aprovou a entrega. Resultados individuais dos passos não foram informados; o roteiro abaixo permanece como referência, sem atribuir execução ou resultado específico a cada passo. No servidor habitual da porta 5173:
+
+1. Abrir um projeto e acessar a engrenagem ao lado das configurações, inclusive durante renomeação. Conferir título, quatro opções, teclado, Fechar/Escape e retorno de foco.
+2. Alternar Portas/Janelas/Vãos/Paredes separadamente; conferir desaparecimento apenas dos textos correspondentes, A/B ocultos com Paredes e alças ainda disponíveis. Confirmar que selecionar não revela o rótulo oculto e as propriedades continuam acessíveis.
+3. Conferir comprimento/altura em paredes horizontais e verticais, com alturas diferentes e vãos. Mover, redimensionar, alterar altura, desfazer/refazer; conferir atualização do rótulo e medidas temporárias de edição.
+4. Trocar projeto e recarregar; conferir persistência das escolhas. Alternar Planta/Fiada e conferir ausência de novos rótulos de parede em Fiada ou na referência de outro pavimento.
+5. Conferir status somente no canto inferior esquerdo, sem duplicações no rodapé ou junto aos modos; durante edição observar Processando… e a conclusão. Conferir instruções gerais em Como usar o editor e orientações temporárias ao desenhar ou usar Graute.
+6. Conferir legibilidade do cabeçalho, diálogo e faixa inferior no monitor habitual; informar problemas e aceite funcional do M6. Falhas artificiais e estados injetados ficam nas verificações do Codex, sem exigir alterações nas configurações pessoais.
+
+## 14. M7 — Medidas independentes
+
+**Estado: implementado e aceito pelo solicitante, incluindo a criação por dois cliques.** Origem: BL-03. Requisito: PRD RF-15, com integração aos fluxos RF-02/08/09/11/12/14; contratos: Arquitetura §25. Os aceites anteriores, inclusive M6, permanecem preservados.
+
+### 14.1. Alcance e definições fechadas
+
+Elemento Medida independente por pavimento, com segmento livre entre dois pontos e rótulo de distância em cm. Criação por dois cliques (início e fim), atração inicial/final aos alvos geométricos do ativo, prioridade de extremidades/vértices sobre linhas, indicação visual e suspensão temporária com Alt. Sem vínculo permanente: alterações dos elementos usados como referência não alteram medidas confirmadas.
+
+Edição em Planta por seleção, movimento do corpo e alças das pontas; histórico, exclusão, salvamento, arquivo e cópias integrados. Texto centralizado legível, com até duas casas decimais e tamanho visual constante; opção Medidas em Preferências do Ecovit oculta somente o rótulo. Composição e quantitativos não consideram medidas, e editar apenas esses elementos não recalcula o motor. Comportamento pertence ao RF-15, dados/precisão/atração/persistência à Arquitetura §25; os critérios abaixo verificam esses contratos sem substituí-los.
+
+Não há pendência de definição de produto neste recorte. M7 usa aplicativo 0.12.0, envelope 10 com leitura de 9 e atração visual de 9 px, conforme Arquitetura §25. Fora do marco: edição numérica de comprimento/ângulo, medidas encadeadas, linhas auxiliares de cota, rótulo personalizado/reposicionável, vínculos automáticos, medidas em 3D/Fiada/referências e outros itens do backlog.
+
+### 14.2. Tarefas
+
+- [x] M7-T01: consolidar escopo aprovado, RF-15, Arquitetura §25 e critérios deste marco.
+- [x] M7-T02: definir a evolução do contrato/versão de arquivo conforme a política vigente, acrescentar dados e validação das medidas e integrar histórico, pavimentos e cópias.
+- [x] M7-T03: implementar ferramenta, geometria livre, atração inicial/final, Alt, seleção, alças, movimento e cancelamentos no próprio editor.
+- [x] M7-T04: integrar salvamento sem recálculo construtivo, preservação de resultados, transporte íntegro, reabertura e somente leitura.
+- [x] M7-T05: integrar rótulo, preferência Medidas com preservação das escolhas de M6, enquadramento, iconografia e ajuda.
+- [x] M7-T06: executar verificações pertinentes, corrigir falhas e consolidar alcance, evidências, limitações e roteiro manual do solicitante antes da entrega para teste.
+
+### 14.3. Critérios de aceite
+
+Critérios da entrega; verificações do Codex e teste manual do solicitante são registrados separadamente na §14.4.
+
+| ID | Resultado verificável |
+|---|---|
+| M7-A01 | Medida disponível em Planta com ícone/texto, estado ativo e ajuda identificáveis; criação por dois cliques em qualquer direção, inclusive diagonal e fora da malha, com prévia da distância e pontas confirmadas conforme indicadas. Soltar o primeiro clique mantém apenas a prévia, sem salvar/histórico; segundo ponto coincidente permite tentar novamente. |
+| M7-A02 | Início e fim atraídos aos alvos elegíveis do pavimento ativo, priorizando extremidades/vértices e depois o ponto próximo da linha; indicação visual, tolerância constante em pixels e escolha estável em empates. |
+| M7-A03 | Alt suspende atração na criação/ajuste das pontas; posicionamento livre fora da tolerância. Rótulos, ícones, malha, própria medida e referência de outro pavimento não viram alvos. |
+| M7-A04 | Selecionar distingue medidas e elementos sobrepostos; arraste do corpo conserva vetor/comprimento e arraste de alça mantém a outra ponta fixa, com atração. Pontas coincidentes não geram medida inválida; na criação, conservam o início para nova tentativa. Escape e perda de foco cancelam; clique fora na criação ou soltura fora na edição não deixam elemento inválido ou gesto preso. |
+| M7-A05 | Distância euclidiana correta em horizontal/vertical/diagonal, sentido invertido e coordenadas negativas; exemplo de diferenças de 300 cm e 400 cm exibe 500 cm. Arredondamento apenas na exibição em cm com até duas casas, sem alterar pontos. |
+| M7-A06 | Linha e texto centralizado acompanham câmera, zoom e edição com leitura sem inversão e tamanho visual constante; não há linhas auxiliares, campo de texto personalizado ou alça para reposicionar o rótulo. |
+| M7-A07 | Medidas em Preferências inicia visível e aplica imediatamente, oculta só o rótulo e preserva linha/alças/edição. Seleção não revela texto oculto; prévia/orientação necessária continua disponível. Carregar preferências anteriores conserva as quatro escolhas de M6. |
+| M7-A08 | Mover/redimensionar/unir/excluir parede, vão, laje ou outra referência não altera medidas confirmadas nem cria diagnóstico de vínculo. Encaixe de criação não persiste referência ao alvo. |
+| M7-A09 | Criar/editar/excluir corresponde a operação de histórico e salvamento; desfazer/refazer restaura IDs e pontos. Alterar apenas medidas não chama motor nem altera resultado/diagnósticos/quantitativos ou geometria construtiva. |
+| M7-A10 | Salvamento local, reabertura, download/importação e duplicação de projeto preservam medidas; edição da cópia não altera origem. Arquivos inválidos, coordenadas/precisão/referências inválidas e versões incompatíveis são recusados sem substituir trabalho aberto, segundo o contrato definido na implementação. |
+| M7-A11 | Medidas pertencem ao pavimento ativo; duplicar pavimento copia XY com IDs próprios, remover exclui suas medidas e histórico restaura. Fiada e referência de outro pavimento não as desenham; enquadrar inclui extremos, mesmo quando só houver medidas. |
+| M7-A12 | Somente leitura impede edição de medidas e preserva consulta/navegação; bloqueios entre abas, falhas de salvamento e recuperação por download permanecem íntegros. |
+| M7-A13 | Regressões de M1–M6 pertinentes preservadas: desenho modular construtivo, prioridades/alças, navegação, cancelamentos, arquivos, pavimentos, preferências e status único do canvas; iconografia e apresentação conforme Arquitetura §2.1 nas três resoluções de referência. |
+
+### 14.4. Andamento, verificações e limites
+
+**Alcance implementado — M7-T01–05:** coleção independente por pavimento, criação livre/diagonal por dois cliques, sem manter o botão pressionado, prévia, atração geométrica em ambas as pontas, prioridade de vértices/extremidades e suspensão por Alt; seleção contextual e por lista, movimento do corpo, ajuste de alças, exclusão, cancelamentos e histórico. Rótulo em cm com até duas casas e tamanho visual constante, opção Medidas com preservação das preferências anteriores, geometria incluída no enquadramento apenas do ativo. Persistência, arquivo, cópias e pavimentos integrados; readonly consultável pela seleção acessível. Operações apenas em medidas salvam sem chamar motor, inclusive quando resultado já está desatualizado. Aplicativo 0.12.0, envelope 10 com leitura de 9 e coleção vazia adicionada, arquivo de origem preservado; convenção nominal-v10 inalterada. Sem biblioteca, serviço, regra construtiva ou vínculo persistido novo.
+
+**Verificação do Codex — código e domínio:** tipos (`tsc --noEmit`), lint (`eslint .`) e build (`vite build`, após tipos) aprovados. Suíte completa de domínio/persistência: **309 testes em 22 arquivos**, em `vitest run --maxWorkers=1`, incluindo o backup de 440 mil peças, integridade/transporte e os novos casos de medidas/preferências. Log `.tools/m7-unit-release.txt`. Build: JavaScript 937,32 kB (292,39 kB gzip), com os avisos conhecidos não impeditivos de anotações do Zod e bundle acima de 500 kB; log `.tools/m7-build-final.txt`. Sem nova dependência ou mudança de algoritmo/convenção construtiva.
+
+**Verificação do Codex — navegador/M7-A13:** **138 casos distintos aprovados em Chrome/Edge**, 69 por navegador, em dez arquivos de medidas, preferências, editor, configurações, quantitativos, paredes, pavimentos, lajes, comparação e alturas diferentes. Execução com servidor limpo próprio na porta 5174, sessões isoladas e código estável; log `.tools/m7-browser-release.txt`. Excluídos os cenários de carga/backup grande do navegador; o backup grande está coberto na suíte completa de domínio/persistência. Não é declaração de execução da suíte integral de navegador. Nenhum uso da porta 5173 pelo Codex. A seleção de casos cobre também leitura de envelope 9, atualização de resultado anterior e preservação do registro em somente leitura.
+
+**Verificação do Codex — criação por dois cliques/M7-A01/A03/A04/A07/A13:** oito fluxos de medidas aprovados em Chrome/Edge, incluindo início fixado sem gravação, prévia sem botão pressionado, ausência de confirmação ao soltar um arraste, segundo ponto coincidente com nova tentativa, zoom entre cliques, cancelamentos e criação após reativar a ferramenta; confirmação com uma única operação de histórico. Mantidos os casos de atração/Alt, corpo/alças, rótulo oculto, transporte, pavimentos, somente leitura e três resoluções. Log `.tools/m7-clicks-browser-recheck.txt`. Outras 26 regressões de editor/parede aprovadas em Chrome/Edge no log `.tools/m7-clicks-browser.txt`; os casos de medidas desse log foram substituídos pela revalidação acima, totalizando 34 casos distintos verificados neste ajuste. Tipos, lint, build e os dez testes de domínio de medidas/preferências aprovados; logs `.tools/m7-clicks-unit.txt` e `.tools/m7-clicks-build.txt`. Build JavaScript 937,63 kB (292,52 kB gzip), com os avisos conhecidos de Zod e tamanho de bundle. Servidor próprio na porta 5174; nenhum uso da porta 5173. Ajuda, PRD, arquitetura, backlog e roteiro manual atualizados para dois cliques. O teste da criação por dois cliques e o aceite global de M7 foram confirmados pelo solicitante, conforme §14.5.
+
+**Cobertura — M7-A01–12:** domínio verifica distância euclidiana 3–4–5, diagonal irracional e arredondamento apenas na exibição, projeção em segmentos finitos, prioridade de vértices, empate estável, tolerância em pixels/zoom, Alt, alvos de paredes/vãos/lajes/aberturas e isolamento por pavimento. Validação e transporte cobrem precisão, pontos coincidentes, referência inválida, UUID duplicado, envelope 9 normalizado sem alterar origem, cópias, remoção e merge de pavimento, medidas em enquadramento e preferências anteriores preservadas. Estado verifica ausência de chamadas ao motor ao salvar/desfazer/refazer medidas, tanto com resultado atual quanto desatualizado, falha de gravação com retenção em memória/download e bloqueio de outro pavimento/somente leitura. Os fluxos de navegador exercitam gestos reais de criação, movimento, alças, atração, Alt e cancelamento, comparação com o resultado anterior, seleção acessível, visibilidade do texto desenhado, exportação/reabertura, cópia de pavimento e bloqueio real entre abas.
+
+**Apresentação:** capturas de Medida, propriedades/alças e preferências nos tamanhos 1366×768, 1280×720 e 900×680, em Chrome/Edge, com verificações de alinhamento do ícone, foco, controles em tela e ausência de rolagem horizontal. Revisão visual por amostra confere linha diagonal, texto legível, nova opção nas preferências, ferramentas e status/zoom sem sobreposição. Referências locais `.tools/m7-<navegador>-<largura>.png` e `.tools/m7-preferences-<navegador>-<largura>.png`. A revisão não representa auditoria com leitor de tela nem nova garantia geral de tempo/memória. Roteiro manual separado na §14.5.
+
+**Limitações:** sem vínculos com geometria, medidas construtivas verificadas, cotas auxiliares ou visualização em Fiada/3D. A atração de 9 px é auxílio de interface, não precisão física; o rótulo arredondado não altera os pontos. Coordenadas continuam inteiras em 0,1 mm. Não há edição numérica de comprimento/ângulo, texto personalizado/reposicionável ou garantia de evitar toda sobreposição em desenhos densos. Preferência local ao navegador, sem sincronização entre contas/dispositivos. Somente envelopes 9/10 suportados; aplicativos anteriores podem recusar arquivos novos. Sem auditoria completa de acessibilidade ou nova garantia geral de desempenho.
+
+### 14.5. Aceite do solicitante e roteiro manual de referência
+
+**Aceite global do solicitante:** M7 aprovado por confirmação explícita nesta conversa, com teste da criação por dois cliques declarado pelo solicitante. O aceite abrange o marco implementado, incluindo esse comportamento, e encerra sua pendência global de aprovação. As verificações do Codex e as limitações permanecem registradas separadamente na §14.4. Não foram informados resultados individuais dos demais passos do roteiro; eles permanecem como referência, sem atribuição de execução. Os aceites anteriores permanecem preservados.
+
+Roteiro de referência para o servidor habitual da porta 5173:
+
+1. Em Planta, escolher Medida, clicar no início e soltar; mover o mouse sem botão pressionado e clicar no fim, inclusive diagonal e fora da malha. Conferir início marcado, prévia, comprimento em cm e repetição da ferramenta; soltar após arrastar não deve confirmar. Clicar no mesmo ponto mantém o início para nova tentativa. Conferir zoom entre cliques e cancelamentos por Escape, perda de foco e clique fora.
+2. Aproximar início/fim de faces de parede, extremidades, aberturas e lajes; conferir alvo antes de cada clique de criação ou de soltar uma alça em edição. Usar Alt para posicionar livremente, inclusive ao ajustar uma ponta.
+3. Selecionar pelo corpo e pela lista, mover e ajustar ambas as pontas; conferir que a outra ponta fica fixa no ajuste, que o corpo mantém comprimento e que seleção de sobrepostos permite distinguir elementos. Excluir, desfazer e refazer.
+4. Mover ou excluir uma parede usada como referência; conferir medida imóvel. Alternar pavimentos, duplicar/remover um pavimento com medidas e desfazer; conferir independência das cópias.
+5. Ocultar Medidas nas preferências e conferir linha/alças preservadas; reexibir. Enquadrar e usar zoom/navegação. Alternar Fiada ou referência de outro pavimento e conferir ausência dessas medidas.
+6. Salvar, reabrir e baixar/importar arquivo; conferir pontos e comprimentos. Abrir o mesmo projeto em outra aba para consulta somente leitura e conferir edição bloqueada. Falhas artificiais e inspeção de chamadas ao motor ficam nas verificações do Codex.
+7. Conferir legibilidade da ferramenta, rótulos e propriedades no monitor habitual; comunicar eventuais problemas.
+
+## 15. M8 — Imagem de referência por pavimento
+
+**Estado: implementado, verificado pelo Codex e aceito pelo solicitante.** Origem: BL-02. Requisito: PRD RF-16; contratos: Arquitetura §26. Os marcos anteriores, inclusive o aceite de M7 com criação por dois cliques, permanecem preservados. BL-01 não integra esta entrega.
+
+### 15.1. Escopo aprovado
+
+Uma imagem PNG/JPEG por pavimento como fundo em Planta do ativo, abaixo da malha e elementos. Acesso em Propriedades do pavimento, com botões/textos compactos e controles revelados conforme a operação; sem ocupar grande área do canvas nem criar barra permanente. Calibrar por dois cliques livres sobre um trecho conhecido e distância real em cm; preservar proporção, marcar pontos e mostrar prévia, sem criar uma Medida. Permitir posição livre e ângulo com prévia no modo Ajustar, além de recalibração com primeiro ponto fixo. Imagem inicialmente visível a 40% de opacidade, com controle de 0 a 100% e Mostrar imagem independente.
+
+Concluir/Cancelar para inclusão, ajuste e substituição; cancelamento mantém a referência anterior. Fora de Ajustar, imagem não captura gestos do desenho. Salvar conteúdo e ajustes no projeto/.ecovit, integrar histórico/cópias/pavimentos, sem alterar composição nem chamar motor. Limites individuais aprovados: 10 MiB e 16 megapixels, com validação do limite total de 50 MiB do arquivo; nenhuma redução silenciosa de qualidade. O comportamento completo pertence ao RF-16, e os contratos à Arquitetura §26.
+
+Fora do marco: múltiplas imagens no mesmo pavimento, PDF/outros formatos, imagens como objetos (BL-01), correção de perspectiva, recorte/tratamento, deformação por eixo, reconhecimento/vetorização, desenho automático, alvos de atração derivados dos pixels, exibição em Fiada ou na referência de outro pavimento. A imagem é apoio visual; calibração não comprova precisão física de uma foto/digitalização. Sem novo serviço, biblioteca ou algoritmo construtivo previsto.
+
+### 15.2. Tarefas
+
+- [x] **M8-T01:** consolidar escopo aprovado, RF-16, Arquitetura §26 e critérios deste marco, incluindo a exigência de interface compacta.
+- [x] **M8-T02:** consolidar contrato de dados, evolução do envelope e leitura de versões anteriores conforme a política vigente; integrar validação de conteúdo/tamanho, imagem incorporada, cópias, pavimentos e arquivo.
+- [x] **M8-T03:** implementar inclusão/substituição, calibração por dois cliques/distância, transformação uniforme, posição/rotação, prévia e Concluir/Cancelar no editor existente.
+- [x] **M8-T04:** integrar seção compacta em Propriedades do pavimento, opacidade/visibilidade, remoção, ajuda curta e iconografia/acessibilidade conforme §2.1 da Arquitetura.
+- [x] **M8-T05:** integrar salvamento/histórico sem recálculo construtivo, descarte de prévias ao mudar contexto, bloqueios de edição, falhas de gravação e recuperação por download.
+- [x] **M8-T06:** executar verificações pertinentes e corrigir falhas; consolidar alcance implementado, resultados reais, limitações e roteiro manual antes de entregar para teste, mantendo aceite do solicitante separado das verificações do Codex.
+
+### 15.3. Critérios de aceite
+
+| ID | Resultado verificável |
+|---|---|
+| M8-A01 | Propriedades do pavimento oferece Adicionar imagem e permite uma única referência PNG/JPEG por pavimento; outra inclusão usa Substituir, sem acumular imagens. |
+| M8-A02 | Primeiro/segundo clique marcam livremente um trecho da imagem sem arraste nem atração à geometria; distância conhecida em cm calibra proporcionalmente. Inclusão só conclui após escala válida; não cria elemento Medida. |
+| M8-A03 | Distância positiva finita e pontos distintos obrigatórios; caso conhecido de calibração corresponde à distância mundial informada. Recalibrar mantém o primeiro ponto fixo, inclusive com câmera/rotação diferentes; zoom/navegação não alteram a escala real. |
+| M8-A04 | Ajustar permite posição livre e ângulo com prévia, sem deformar proporção. Imagem não captura seleção/gestos construtivos fora da edição, e não modifica paredes, vãos, lajes ou medidas durante o ajuste. |
+| M8-A05 | Prévia de inclusão é acessível em pavimento vazio; Concluir confirma uma operação válida, Cancelar/mudar contexto preserva estado anterior sem histórico/salvamento parcial. Substituição mantém a imagem anterior até confirmar. |
+| M8-A06 | Imagem aparece abaixo da malha/elementos, acompanha a câmera, inicia visível a 40% e aceita opacidade 0–100%. Mostrar imagem preserva conteúdo e transformação; controles pertencem ao pavimento e persistem no projeto. Enquadrar inclui a imagem visível do ativo; ajustar uma imagem oculta conserva sua visibilidade ao concluir/cancelar, e confirmação sem mudanças apenas encerra. |
+| M8-A07 | Apenas a imagem do pavimento ativo aparece em Planta; Fiada e referência de outro pavimento não a renderizam. Medidas/atração/desenho modular existentes continuam funcionando sem novos alvos nos pixels. |
+| M8-A08 | PNG/JPEG inválido, outro formato, mais de 10 MiB, mais de 16 megapixels ou arquivo total acima de 50 MiB são recusados com causa e sem perda do projeto/imagem anterior. Limites inclusivos e expansão da codificação são considerados, sem redução silenciosa de qualidade. |
+| M8-A09 | Salvar/reabrir e baixar/importar preservam imagem, escala, posição, rotação, opacidade e visibilidade, sem acesso ao arquivo original. Duplicar projeto/pavimento produz edição independente; excluir pavimento e desfazer restauram sua referência. |
+| M8-A10 | Inclusão, ajuste, recalibração, substituição, remoção e mudança de visibilidade/opacidade são desfazíveis; prévias não geram operações, e gesto de opacidade gera uma única operação. Mudanças só de imagem preservam resultados/diagnósticos/quantitativos e não chamam motor, inclusive com composição já desatualizada. |
+| M8-A11 | Somente leitura e processamento impedem alteração; travas entre abas, falhas de gravação e download permanecem íntegros. Erros de carregamento/decodificação não substituem imagem confirmada nem trabalho aberto. |
+| M8-A12 | Controles/textos compactos, campos revelados apenas quando pertinentes, sem nova barra permanente ou grandes instruções sobre o canvas. Nomes acessíveis, dicas, teclado, foco, unidades e erros legíveis, sem reduzir área de clique exigida. Chrome/Edge em 1366×768, 1280×720 e 900×680 sem sobreposição de status/zoom nem rolagem horizontal. |
+
+### 15.4. Andamento, verificações e limites
+
+**Alcance implementado — M8-T01–05:** referência opcional única por pavimento em model.referenceImages; PNG/JPEG incorporado em base64, escala uniforme, posição/rotação, opacidade/visibilidade e enquadramento do ativo visível. Inclusão/substituição com dois cliques e distância real em cm, recalibração com primeiro ponto fixo, prévias transitórias e confirmação/cancelamento; ausência de captura fora de Ajustar. Interface compacta na lateral, ações secundárias em menu, campos apenas na etapa pertinente, orientações breves na faixa existente e ajuda estável. Imagem abaixo da malha/geometria, apenas em Planta do ativo. Histórico, cópias, remoção/merge de pavimento, persistência e transporte integrados; mudanças só de imagem não chamam motor nem invalidam resultados, inclusive desatualizados. Aplicativo 0.13.0/envelope 11 com leitura de 9/10 por normalização aditiva em memória e preservação da origem. Convenção nominal-v10 e regras construtivas inalteradas, sem nova dependência ou serviço.
+
+**Verificação do Codex — domínio/persistência:** 315 testes aprovados em 23 arquivos, com um caso pesado de backup de 440 mil peças excluído desta rodada (não reexecutado); log .tools/m8-unit.txt. Os 14 casos de medidas/imagem foram revalidados após os ajustes finais de integridade PNG, transformação e contrato estrito de versão, sem somá-los novamente ao total; log .tools/m8-unit-recheck.txt. Cobertura inclui os sete novos casos de M8, inclusive quatro imagens dentro do limite individual que ultrapassam 50 MiB após base64. Tipos e lint aprovados; logs .tools/m8-types.txt e .tools/m8-lint.txt.
+
+**Verificação do Codex — navegador/M8-A01–12:** 52 casos distintos aprovados em Chrome/Edge (26 por navegador), nos arquivos de editor, comparação de pavimentos, medidas, imagens e alturas diferentes/arquivos anteriores. As 46 regressões estão em .tools/m8-browser-final.txt; os seis fluxos de M8 foram revalidados com correção de integridade PNG e preservação da visibilidade/ajuste sem mudanças em .tools/m8-browser-recheck.txt, substituindo os resultados anteriores desses mesmos casos, sem duplicar contagem. PNG/JPEG reais, zoom na calibração, conteúdo corrompido, erro de distância, limite individual, substituição/cancelamento, opacidade/visibilidade, âncora, histórico, cópia, Fiada, arquivo e readonly exercitados. Servidor próprio na porta 5174 e sessões isoladas, sem iniciar, encerrar ou reiniciar a 5173. Não é declaração de execução de toda a suíte de navegador.
+
+**Build e revisão:** produção aprovada, JavaScript 953,84 kB (296,88 kB gzip), com os avisos conhecidos não impeditivos de anotação do Zod e bundle acima de 500 kB; log .tools/m8-build.txt. Capturas finais revisadas por amostra: ações Mostrar/Ajustar/menu na mesma linha no painel estreito, controles de ajuste legíveis e status/zoom separados. Revisão de consistência documental e git diff --check aprovados. Nenhum resultado acima representa teste manual ou aceite funcional do solicitante.
+
+**Cobertura e apresentação:** calibração euclidiana/âncora sob rotação, transformação inversa, limites de transformação, tipo/estrutura/dimensões de imagem, limite individual e expansão base64 no limite total, versões 9/10/11, associações por pavimento e recusa íntegra. Estado verifica histórico sem motor, resultado atual/desatualizado, falha de salvamento com retenção em memória/download e somente leitura. Navegador exercita PNG/JPEG reais, cliques e zoom, distância inválida/pontos coincidentes, posição/ângulo, recalibração/cancelamento, opacidade/visibilidade, substituição e conteúdo corrompido, arquivo, cópia de pavimento e bloqueio entre abas. Capturas normal/ajuste em Chrome/Edge nas resoluções 1366×768, 1280×720 e 900×680: .tools/m8-<navegador>-<largura>.png e .tools/m8-adjust-<navegador>-<largura>.png. Revisão visual por amostra e verificações de controles em tela/ausência de rolagem horizontal; não constitui auditoria completa com leitor de tela.
+
+**Limitações:** PNG/JPEG, uma imagem por pavimento, até 10 MiB e 16 megapixels, com limite adicional da intenção serializada de 50 MiB; quatro imagens no limite individual podem ultrapassar o total por causa da expansão base64. Sem redução silenciosa. Decodificação e memória dependem do navegador/dispositivo, sem nova garantia geral de desempenho. Sem PDF, perspectiva, recorte/tratamento, deformação por eixo, vetorização, reconhecimento, vínculo/atração aos pixels, Fiada ou imagem do vizinho na comparação. Calibração uniforme não comprova precisão física ou corrige distorção. Aplicativos anteriores podem recusar envelope 11. Aceites anteriores permanecem preservados.
+
+### 15.5. Aceite do solicitante e roteiro manual de referência
+
+**Aceite global do solicitante:** M8 aprovado por confirmação explícita nesta conversa, com teste do marco declarado pelo solicitante. O aceite abrange a implementação consolidada nesta seção e encerra a pendência global de aprovação. As verificações do Codex e as limitações permanecem registradas separadamente na §15.4. Não foram informados resultados individuais dos passos do roteiro; eles permanecem como referência, sem atribuição de execução específica. Os aceites anteriores permanecem preservados.
+
+Roteiro de referência para o servidor habitual da porta 5173:
+
+1. Em Planta, sem elemento selecionado, abrir Adicionar imagem em Propriedades do pavimento. Escolher uma PNG/JPEG de planta conhecida; marcar dois pontos por cliques e informar a distância em cm. Conferir proporção em relação a uma parede/Medida conhecida, depois Concluir. A calibração não cria uma Medida no projeto.
+2. Ajustar: arrastar a imagem, mudar ângulo e usar Definir escala novamente. Conferir prévia/âncora do primeiro ponto, Concluir/Cancelar e desfazer/refazer. Usar zoom/navegação entre cliques sem alterar a escala real.
+3. Conferir opacidade inicial de 40%, variar até zero/100% e Mostrar. Desenhar/selecionar paredes e medidas sobre o fundo fora de Ajustar; a imagem não deve se mover. Conferir o espaço ocupado pela seção e o menu compacto no monitor habitual.
+4. Substituir por outra imagem e cancelar, preservando a anterior; repetir e concluir. Tentar arquivo inválido/excessivo e conferir mensagem e preservação. Remover e desfazer. Trocar ferramenta, modo ou pavimento com prévia aberta e conferir descarte sem alterar a referência confirmada.
+5. Alternar/duplicar pavimento e conferir referências independentes; remover o pavimento e desfazer. Em Fiada e na referência de outro pavimento, conferir ausência da imagem daquele vizinho.
+6. Salvar, reabrir, baixar e importar o .ecovit; conferir imagem e ajustes mesmo sem o arquivo original no computador. Abrir outra aba em somente leitura e conferir visualização, com alterações bloqueadas. Falhas artificiais, limite total e chamadas ao motor ficam nas verificações do Codex.
+7. Comunicar eventuais problemas observados no uso do M8.

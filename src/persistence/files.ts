@@ -1,3 +1,4 @@
+import { validateReference } from "../domain/reference-image";
 import { z } from "zod";
 import { validateSlab } from "../domain/slabs";
 import {
@@ -136,7 +137,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(9),
+    schemaVersion: z.literal(11),
     project: z
       .object({
         id,
@@ -206,6 +207,29 @@ const schema = z
               .strict(),
           )
           .max(MAX_OPENINGS),
+        referenceImages: z
+          .array(
+            z
+              .object({
+                floorId: id,
+                name: z.string().min(1).max(200),
+                mime: z.enum(["image/png", "image/jpeg"]),
+                data: z.string(),
+                width: positive,
+                height: positive,
+                x: z.number().finite(),
+                y: z.number().finite(),
+                scale: z.number().finite().positive(),
+                angle: z.number().finite(),
+                opacity: z.number().min(0).max(1),
+                visible: z.boolean(),
+              })
+              .strict(),
+          )
+          .max(4),
+        measurements: z.array(
+          z.object({ id, floorId: id, a: point, b: point }).strict(),
+        ),
         slabs: z
           .array(
             z
@@ -290,13 +314,37 @@ export function validateProject(
   checkGenerated = true,
 ): Project {
   if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    (value.schemaVersion === 9 || value.schemaVersion === 10) &&
+    "model" in value &&
+    value.model &&
+    typeof value.model === "object"
+  ) {
+    if (
+      "referenceImages" in value.model ||
+      (value.schemaVersion === 9 && "measurements" in value.model)
+    )
+      throw new Error("Arquivo inválido: campos em formato anterior.");
+    value = {
+      ...value,
+      schemaVersion: 11,
+      model: {
+        ...value.model,
+        ...(value.schemaVersion === 9 ? { measurements: [] } : {}),
+        referenceImages: [],
+      },
+    };
+  }
+  if (
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 9
+    value.schemaVersion !== 11
   )
     throw new Error(
-      "Formato incompatível. Crie um novo projeto; arquivos de marcos anteriores não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9, 10 ou 11; demais formatos não são convertidos.",
     );
   const parsed = schema.safeParse(value);
   if (!parsed.success)
@@ -311,6 +359,16 @@ export function validateProject(
         }
       : parsed.data
   ) as Project;
+  const imageFloors = new Set<string>();
+  for (const image of doc.model.referenceImages) {
+    if (
+      !doc.model.floors.some((f) => f.id === image.floorId) ||
+      imageFloors.has(image.floorId)
+    )
+      throw new Error("Imagem duplicada ou pavimento inexistente.");
+    imageFloors.add(image.floorId);
+    validateReference(image);
+  }
   validateBase(doc.project.base);
   const m = doc.project.base.width,
     h = doc.project.base.height;
@@ -340,6 +398,15 @@ export function validateProject(
     checked([f.level + f.defaultHeight]);
   }
   const walls = new Map(doc.model.walls.map((w) => [w.id, w]));
+  for (const measurement of doc.model.measurements) {
+    take(measurement.id);
+    if (
+      !floors.has(measurement.floorId) ||
+      (measurement.a.x === measurement.b.x &&
+        measurement.a.y === measurement.b.y)
+    )
+      throw new Error("Medida sem comprimento ou com pavimento inválido.");
+  }
   const slabFloors = new Set<string>();
   let lastSlabFloor = -1;
   for (const slab of doc.model.slabs) {

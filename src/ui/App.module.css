@@ -653,6 +653,56 @@ button.iconButton {
   background: #f8faf5e8;
   padding: 5px;
 }
+.canvasMessages {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 11px;
+  color: #345746;
+}
+.canvasMessages > span:not(:empty),
+.compositionStatus {
+  background: #f8faf5ed;
+  padding: 5px;
+  border-radius: 4px;
+}
+.compositionStatus {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.compositionStatus button {
+  pointer-events: auto;
+}
+.modal.preferencesDialog {
+  width: min(420px, calc(100vw - 32px));
+  border: 1px solid #b6c4b4;
+  color: inherit;
+}
+.preferencesDialog fieldset {
+  border: 1px solid #dde3d6;
+  border-radius: 6px;
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+}
+.preferencesDialog fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.preferencesDialog input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #205d48;
+}
+.preferencesDialog::backdrop {
+  background: #142e2859;
+}
 .zoom {
   pointer-events: auto;
   display: flex;
@@ -1719,4 +1769,126 @@ button.iconButton {
 }
 .quantityTable tfoot {
   background: #eef3e9;
+}
+.referenceImage {
+  border-top: 1px solid #dfe5dd;
+  border-bottom: 1px solid #dfe5dd;
+  padding: 10px 0;
+  margin: 10px 0;
+  display: grid;
+  gap: 8px;
+}
+.referenceImage h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.editorApp .referenceImage h3 {
+  margin: 0;
+}
+.editorApp .referenceImage .imageActions {
+  gap: 4px;
+}
+.editorApp .referenceImage .imageActions label {
+  font-size: 11px;
+}
+.editorApp .referenceImage .imageActions input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  margin: 0;
+  accent-color: #205d48;
+}
+.editorApp .referenceImage .imageActions button {
+  min-height: 30px;
+  padding: 4px 6px;
+}
+.editorApp .referenceImage .imageActions details {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.imageName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #657366;
+}
+.imageActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.imageActions label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: auto;
+  font-size: 12px;
+}
+.imageActions details {
+  position: relative;
+}
+.imageActions summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  min-height: 30px;
+  border: 1px solid #d7dfd4;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.imageActions details[open] > div {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 5;
+  display: grid;
+  padding: 5px;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #d7dfd4;
+  border-radius: 4px;
+  box-shadow: 0 3px 10px #182d2520;
+}
+.imageOpacity {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  font-size: 11px;
+}
+.imageOpacity input {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 2px 0 0;
+  accent-color: #205d48;
+}
+.imageAngle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.imageAngle input {
+  width: 85px;
+  min-width: 0;
+}
+.imageDistance {
+  display: flex;
+  gap: 6px;
+  align-items: end;
+}
+.imageDistance label {
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+  min-width: 0;
+}
+.imageDistance input {
+  width: 100%;
+  min-width: 0;
 }

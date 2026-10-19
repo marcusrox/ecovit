@@ -1,3 +1,4 @@
+import { useReferenceImageCanvas } from "./ReferenceImage";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Circle, Text, Shape } from "react-konva";
 import {
@@ -42,6 +43,9 @@ import {
 } from "../domain/floor-reference";
 import { FloorReferenceLayer } from "./FloorReference";
 import { drawOpeningSymbol } from "./opening-symbol";
+import { usePreferences } from "../state/preferences";
+import { CompositionStatus } from "./CompositionStatus";
+import { useMeasurementCanvas } from "./Measurements";
 import {
   activeGrout,
   courseCells,
@@ -75,6 +79,7 @@ export function Canvas({
   side: 1 | -1;
   setSide: (s: 1 | -1) => void;
 }) {
+  const labelVisibility = usePreferences((s) => s.labels);
   const mode = useStore((s) => s.mode),
     course = useStore((s) => s.course),
     ghost = useStore((s) => s.ghost),
@@ -121,7 +126,16 @@ export function Canvas({
   >(null);
   const module = doc.project.base.width,
     walls = doc.model.walls;
+  const imageCanvas = useReferenceImageCanvas(camera, size);
+  const imageDraft = useStore((s) => s.imageDraft);
   const slabs = useSlabCanvas(doc, tool, setTool, camera);
+  const measurements = useMeasurementCanvas(
+    doc,
+    tool,
+    camera,
+    host,
+    panning || spaceHeld,
+  );
   const output = compositionPreview ?? doc.generated;
   const markers = useMemo(
     () => (output && mode === "course" ? courseCells(doc, output, course) : []),
@@ -424,11 +438,31 @@ export function Canvas({
     setCamera({ scale, x: point.x - w.x * scale, y: point.y - w.y * scale });
   };
   const fit = () => {
-    const box = floorPlanBounds(
+    let box = floorPlanBounds(
       project,
       [doc.viewFloorId, ...(reference ? [reference.id] : [])],
       mode === "plan",
+      mode === "plan" ? doc.viewFloorId : undefined,
     );
+    if (mode === "plan" && imageCanvas.bounds.length) {
+      const points = [
+        ...imageCanvas.bounds,
+        ...(box
+          ? [
+              { x: box.x, y: box.y },
+              { x: box.x + box.width, y: box.y + box.height },
+            ]
+          : []),
+      ];
+      const x = Math.min(...points.map((p) => p.x)),
+        y = Math.min(...points.map((p) => p.y));
+      box = {
+        x,
+        y,
+        width: Math.max(...points.map((p) => p.x)) - x,
+        height: Math.max(...points.map((p) => p.y)) - y,
+      };
+    }
     if (!box) {
       // Keep the existing Fiada behavior for a floor containing only a slab.
       if (mode === "course" && doc.model.slabs.length) return;
@@ -500,6 +534,7 @@ export function Canvas({
   const showModule =
     mode === "plan" &&
     tool !== "select" &&
+    tool !== "measure" &&
     !busy &&
     !readonly &&
     !panning &&
@@ -553,6 +588,7 @@ export function Canvas({
           if (
             (e.button !== 0 && e.button !== 1) ||
             gesture.current ||
+            measurements.isDragging() ||
             busy ||
             (e.target as HTMLElement).closest("button")
           )
@@ -627,9 +663,11 @@ export function Canvas({
             return;
           }
           if (readonly) return;
+          if (imageCanvas.down(p)) return;
           useStore.getState().inspect({ pendingOpening: null });
+          if (measurements.down(p, e.altKey)) return;
           if (slabs.down(p)) return;
-          if (activeOpening && tool === "select") {
+          if (activeOpening && (tool === "select" || tool === "measure")) {
             const w = walls.find((w) => w.id === activeOpening.wallId)!,
               b = openingBox(activeOpening, w, module);
             const points =
@@ -658,7 +696,12 @@ export function Canvas({
                 return;
               }
           }
-          if (tool !== "wall" && tool !== "select" && tool !== "slab") {
+          if (
+            tool !== "wall" &&
+            tool !== "select" &&
+            tool !== "slab" &&
+            tool !== "measure"
+          ) {
             const hits = hitWalls(walls, p, module, 3 / camera.scale);
             const w =
               hits.find((w) => w.id === hostWallId) ??
@@ -761,6 +804,7 @@ export function Canvas({
           if (e.button === 1) e.preventDefault();
         }}
         onLostPointerCapture={() => {
+          measurements.cancel();
           cancel();
           slabs.cancel();
         }}
@@ -768,13 +812,35 @@ export function Canvas({
           setMouseScreen(pointer(e.clientX, e.clientY));
           if (
             gesture.current?.type !== "pan" &&
+            imageCanvas.move(world(pointer(e.clientX, e.clientY)))
+          )
+            return;
+          if (
+            gesture.current?.type !== "pan" &&
             slabs.move(world(pointer(e.clientX, e.clientY)))
           )
             return;
-          if (gesture.current?.type !== "pan")
+          if (gesture.current?.type !== "pan") {
+            if (
+              measurements.move(world(pointer(e.clientX, e.clientY)), e.altKey)
+            )
+              return;
             update(pointer(e.clientX, e.clientY));
+          }
         }}
         onMouseUp={(e) => {
+          if (
+            e.button === 0 &&
+            gesture.current?.type !== "pan" &&
+            imageCanvas.up()
+          )
+            return;
+          if (
+            e.button === 0 &&
+            gesture.current?.type !== "pan" &&
+            measurements.up(world(pointer(e.clientX, e.clientY)), e.altKey)
+          )
+            return;
           if (
             e.button === 0 &&
             gesture.current?.type !== "pan" &&
@@ -907,6 +973,7 @@ export function Canvas({
           cancel();
         }}
         onMouseLeave={() => {
+          measurements.leave();
           setHover(null);
           setMouseScreen(null);
           setGroutHover(null);
@@ -918,13 +985,14 @@ export function Canvas({
           height={size.height}
           onWheel={(e) => {
             e.evt.preventDefault();
-            if (!busy && !gesture.current)
+            if (!busy && !gesture.current && !measurements.isDragging())
               zoom(
                 e.evt.deltaY < 0 ? 1.12 : 1 / 1.12,
                 pointer(e.evt.clientX, e.evt.clientY),
               );
           }}
         >
+          {imageCanvas.layer}
           <Layer listening={false}>{grid}</Layer>
           {reference && (
             <FloorReferenceLayer
@@ -993,26 +1061,27 @@ export function Canvas({
                     strokeWidth={2}
                   />
                 ))}
-                {(["a", "b"] as const).map((end) => (
-                  <Text
-                    key={`label-${end}`}
-                    text={end.toUpperCase()}
-                    x={
-                      (preview?.id === active.id ? preview : active)[end].x *
-                        camera.scale +
-                      camera.x +
-                      9
-                    }
-                    y={
-                      (preview?.id === active.id ? preview : active)[end].y *
-                        camera.scale +
-                      camera.y -
-                      18
-                    }
-                    fontSize={11}
-                    fill="#205d48"
-                  />
-                ))}
+                {labelVisibility.wall &&
+                  (["a", "b"] as const).map((end) => (
+                    <Text
+                      key={`label-${end}`}
+                      text={end.toUpperCase()}
+                      x={
+                        (preview?.id === active.id ? preview : active)[end].x *
+                          camera.scale +
+                        camera.x +
+                        9
+                      }
+                      y={
+                        (preview?.id === active.id ? preview : active)[end].y *
+                          camera.scale +
+                        camera.y -
+                        18
+                      }
+                      fontSize={11}
+                      fill="#205d48"
+                    />
+                  ))}
               </>
             )}
             {mode === "plan" && target && (
@@ -1265,6 +1334,54 @@ export function Canvas({
                   width: number;
                   height: number;
                 }[] = [];
+                if (mode === "plan" && labelVisibility.wall) {
+                  for (const wall of rendered) {
+                    const vertical = wall.a.x === wall.b.x;
+                    const text = `C: ${display(length(wall))} cm · H: ${display(wall.height)} cm`;
+                    ctx.save();
+                    ctx.font = "11px sans-serif";
+                    ctx.fillStyle = "#234b40";
+                    const metrics = ctx.measureText(text);
+                    const ascent = metrics.actualBoundingBoxAscent;
+                    const descent = metrics.actualBoundingBoxDescent;
+                    const box = bounds(wall, module);
+                    let x = vertical
+                      ? box.x * camera.scale + camera.x - 5 - ascent
+                      : ((wall.a.x + wall.b.x) / 2) * camera.scale +
+                        camera.x -
+                        metrics.width / 2;
+                    let y = vertical
+                      ? ((wall.a.y + wall.b.y) / 2) * camera.scale +
+                        camera.y +
+                        metrics.width / 2
+                      : box.y * camera.scale + camera.y - 5;
+                    const rect = () => ({
+                      x: vertical ? x - descent : x,
+                      y: vertical ? y - metrics.width : y - ascent,
+                      width: vertical ? ascent + descent : metrics.width,
+                      height: vertical ? metrics.width : ascent + descent,
+                    });
+                    let r = rect();
+                    while (
+                      labels.some(
+                        (l) =>
+                          r.x < l.x + l.width + 3 &&
+                          r.x + r.width + 3 > l.x &&
+                          r.y < l.y + l.height + 3 &&
+                          r.y + r.height + 3 > l.y,
+                      )
+                    ) {
+                      if (vertical) x -= 14;
+                      else y -= 14;
+                      r = rect();
+                    }
+                    labels.push(r);
+                    ctx.translate(x, y);
+                    if (vertical) ctx.rotate(-Math.PI / 2);
+                    ctx.fillText(text, 0, 0);
+                    ctx.restore();
+                  }
+                }
                 for (const o of visible) {
                   const w = rendered.find((w) => w.id === o.wallId);
                   if (!w || o.width <= 0) continue;
@@ -1335,7 +1452,10 @@ export function Canvas({
                     else labelY -= 14;
                     bounds = labelBounds();
                   }
-                  if (vertical ? bounds.x >= 0 : bounds.y >= 0) {
+                  if (
+                    labelVisibility[o.kind] &&
+                    (vertical ? bounds.x >= 0 : bounds.y >= 0)
+                  ) {
                     labels.push(bounds);
                     ctx.save();
                     ctx.translate(labelX, labelY);
@@ -1388,13 +1508,20 @@ export function Canvas({
             </Layer>
           )}
           {slabs.after}
+          {measurements.layer}
+          {imageCanvas.markers}
         </Stage>
+        {measurements.menu}
       </div>
       {slabs.controls}
       {!walls.length &&
         !doc.model.slabs.length &&
+        !doc.model.measurements.length &&
+        !doc.model.referenceImages.length &&
+        !imageDraft &&
         referenceEmpty &&
         tool !== "slab" &&
+        tool !== "measure" &&
         !preview && (
           <div className={styles.canvasHint}>
             <span>SEU PROJETO COMEÇA AQUI</span>
@@ -1491,22 +1618,28 @@ export function Canvas({
         </div>
       )}
       <div className={styles.canvasBottom}>
-        <span title="Navegar: botão do meio + arraste ou Espaço + arraste. Roda: zoom.">
-          {readonly
-            ? "Somente leitura"
-            : mode === "course"
-              ? groutMode
-                ? groutHover
-                  ? groutPresent(groutHover)
-                    ? "Remover graute · eixo completo"
-                    : "Adicionar graute · eixo completo"
-                  : "Clique num furo · Esc encerra Graute"
-                : "Inspecione um conjunto"
-              : tool === "wall"
-                ? "Arraste para desenhar · Esc cancela"
-                : "Clique para selecionar · Arraste o corpo para mover ou uma alça para editar"}
-          {" · Botão do meio + arraste para navegar"}
-        </span>
+        <div className={styles.canvasMessages}>
+          <CompositionStatus />
+          <span>
+            {readonly
+              ? "Somente leitura"
+              : imageCanvas.hint
+                ? imageCanvas.hint
+                : mode === "course"
+                  ? groutMode
+                    ? groutHover
+                      ? groutPresent(groutHover)
+                        ? "Remover graute · eixo completo"
+                        : "Adicionar graute · eixo completo"
+                      : "Clique num furo · Esc encerra Graute"
+                    : ""
+                  : tool === "wall"
+                    ? "Arraste para desenhar · Esc cancela"
+                    : tool === "measure"
+                      ? `${measurements.creating ? "Clique no ponto final" : "Clique no ponto inicial"} · Alt suspende atração · Esc cancela`
+                      : ""}
+          </span>
+        </div>
         <div className={styles.zoom}>
           <button
             disabled={busy}

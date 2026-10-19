@@ -1,5 +1,5 @@
 // Single-floor views for the existing geometry regression cases. Persistence
-// still exercises the real envelope 9 reader; no legacy reader is supplied.
+// still exercises the current native reader and the supported envelope 9 upgrade.
 import {
   createProject,
   type Base,

@@ -189,9 +189,9 @@ for (const snapshot of ["legacy", "v2"])
     }));
     await load(page, reference);
     await page.getByRole("button", { name: "Fiada", exact: true }).click();
-    await expect(
-      page.getByText("Geometria nominal verificada", { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByTestId("composition-status")).toHaveText(
+      "Composição nominal atualizada",
+    );
     await expect(
       page.getByText(
         "Composição geométrica resolvida; ligação complementar necessária.",
