@@ -14,14 +14,14 @@ Editor local de plantas com paredes ortogonais, malha de meio tijolo, medidas in
 | M4.1 | Até quatro pavimentos independentes com cota única modular | Implementado e aceito pelo solicitante |
 | M4.2 | Lajes ortogonais, aberturas, alças e redesenho | Implementado e aceito pelo solicitante |
 | M4.3 | Comparação visual entre pavimentos | Implementado e aceito pelo solicitante |
-| M5 | Quantitativos e duplicação de projetos | [Implementado e aceito; verificações no plano §12](docs/Ecovit-Plano-Implementacao.md#12-m5--consulta-e-conclusão-da-primeira-versão) |
-| M6 | Preferências, rótulos de paredes e status/ajuda do canvas | Implementado e aceito pelo solicitante; registro no plano §13 |
-| M7 | Medidas independentes em Planta | Implementado e aceito pelo solicitante; verificações e aceite no plano §14 |
-| M8 | Imagem de referência por pavimento, calibração e controles compactos | Implementado e aceito pelo solicitante; verificações e aceite no plano §15 |
-| M9 | Tipos e símbolos de portas/janelas, com orientação cíclica | Implementado e aceito pelo solicitante; verificações e aceite no plano §16 |
-| M10 | Mobiliários: 40 opções, upload e edição em Planta | Implementado e aceito pelo solicitante; registro no plano §17 |
+| M5 | Quantitativos e duplicação de projetos | [Implementado e aceito; verificações de M5](docs/marcos/M5-Quantitativos-e-Projetos.md) |
+| M6 | Preferências, rótulos de paredes e status/ajuda do canvas | Implementado e aceito pelo solicitante; registro no [M6](docs/marcos/M6-Preferencias.md) |
+| M7 | Medidas independentes em Planta | Implementado e aceito pelo solicitante; verificações e aceite no [M7](docs/marcos/M7-Medidas.md) |
+| M8 | Imagem de referência por pavimento, calibração e controles compactos | Implementado e aceito pelo solicitante; verificações e aceite no [M8](docs/marcos/M8-Imagem-de-Referencia.md) |
+| M9 | Tipos e símbolos de portas/janelas, com orientação cíclica | Implementado e aceito pelo solicitante; verificações e aceite no [M9](docs/marcos/M9-Esquadrias.md) |
+| M10 | Mobiliários: 40 opções, upload e edição em Planta | Implementado e aceito pelo solicitante; registro no [M10](docs/marcos/M10-Mobiliarios.md) |
 
-O aplicativo trabalha com um a quatro pavimentos independentes. A composição é nominal, sem dimensionamento estrutural ou comprovação de passagem física em furos/canais. Requisitos e limites no [PRD](docs/Ecovit-PRD.md); verificações e aceites no [plano](docs/Ecovit-Plano-Implementacao.md). O aceite específico das revisões de apresentação está pendente, conforme Plano §11.
+O aplicativo trabalha com um a quatro pavimentos independentes. A composição é nominal, sem dimensionamento estrutural ou comprovação de passagem física em furos/canais. Requisitos e limites no [PRD](docs/Ecovit-PRD.md); verificações e aceites no [plano](docs/Ecovit-Plano-Implementacao.md). O aceite específico das revisões de apresentação está pendente, conforme [Apresentação, operação e verificação documental](docs/marcos/Apresentacao-e-Operacao.md).
 
 Em Planta, o campo Referência de pavimento em Propriedades do pavimento na lateral (sem elemento selecionado) mostra um vizinho inferior/superior como referência tracejada, sem edição ou encaixe. Enquadrar considera as duas plantas; cada pavimento lembra sua direção durante a sessão ao alternar entre eles. Entrar em Fiada limpa a escolha do ativo; reabrir o projeto limpa todas. Essa preferência é apenas da sessão, sem alterar arquivo ou cálculo.
 
@@ -72,25 +72,25 @@ O arquivo vigente usa envelope versão 14 e composição `nominal-v10`, com leit
 
 ## Tipos de portas e janelas — M9
 
-Selecione uma porta ou janela e escolha Tipo da esquadria nas propriedades. Portas oferecem giro de uma/duas folhas, correr de uma folha/abertura central e basculante de garagem; janelas oferecem giro de uma/duas folhas, correr de duas folhas e basculante. O único botão **Alternar orientação** percorre as posições e volta à primeira. Trocas são imediatas e desfazíveis, sem aplicar dimensões ainda em edição nem recalcular a alvenaria. Novas portas começam em giro simples e novas janelas em correr; as antigas mantêm símbolo genérico até uma escolha explícita. Na Planta e na comparação, folhas/arcos, setas e projeções identificam os tipos; na Fiada permanece apenas o vão. Basculantes são esquemáticos, com movimento vertical: a seta indica a face projetada. Aparência salva no projeto/arquivo e preservada nas cópias; aplicações anteriores podem recusar envelope 12. Verificações e roteiro manual no Plano §16.
+Selecione uma porta ou janela e escolha Tipo da esquadria nas propriedades. Portas oferecem giro de uma/duas folhas, correr de uma folha/abertura central e basculante de garagem; janelas oferecem giro de uma/duas folhas, correr de duas folhas e basculante. O único botão **Alternar orientação** percorre as posições e volta à primeira. Trocas são imediatas e desfazíveis, sem aplicar dimensões ainda em edição nem recalcular a alvenaria. Novas portas começam em giro simples e novas janelas em correr; as antigas mantêm símbolo genérico até uma escolha explícita. Na Planta e na comparação, folhas/arcos, setas e projeções identificam os tipos; na Fiada permanece apenas o vão. Basculantes são esquemáticos, com movimento vertical: a seta indica a face projetada. Aparência salva no projeto/arquivo e preservada nas cópias; aplicações anteriores podem recusar envelope 12. Verificações e roteiro manual no [M9](docs/marcos/M9-Esquadrias.md).
 
 ## Imagem de referência — M8
 
-Em Planta, sem elemento selecionado, use Adicionar imagem em Propriedades do pavimento. Aceita uma PNG/JPEG por pavimento, até 10 MiB e 16 megapixels. Marque dois pontos de um trecho conhecido e informe a distância em cm; Calibrar ajusta a proporção. Ajustar libera posição, ângulo e recalibração; Concluir salva, Cancelar preserva o anterior. Mostrar e Opacidade controlam o fundo sem atrapalhar o desenho. O menu compacto oferece Substituir/Remover. Imagem e ajustes viajam no .ecovit, com histórico e cópias independentes; o arquivo completo mantém limite de 50 MiB. Sem PDF, perspectiva, reconhecimento automático ou exibição em Fiada/referência de outro pavimento. Verificações e registro do aceite no plano §15.
+Em Planta, sem elemento selecionado, use Adicionar imagem em Propriedades do pavimento. Aceita uma PNG/JPEG por pavimento, até 10 MiB e 16 megapixels. Marque dois pontos de um trecho conhecido e informe a distância em cm; Calibrar ajusta a proporção. Ajustar libera posição, ângulo e recalibração; Concluir salva, Cancelar preserva o anterior. Mostrar e Opacidade controlam o fundo sem atrapalhar o desenho. O menu compacto oferece Substituir/Remover. Imagem e ajustes viajam no .ecovit, com histórico e cópias independentes; o arquivo completo mantém limite de 50 MiB. Sem PDF, perspectiva, reconhecimento automático ou exibição em Fiada/referência de outro pavimento. Verificações e registro do aceite no [M8](docs/marcos/M8-Imagem-de-Referencia.md).
 
 ## Medidas independentes — M7
 
-Em Planta, escolha Medida, clique no ponto inicial e depois no ponto final, inclusive fora da malha e em diagonal. O alvo destacado indica atração a extremidades/vértices e linhas próximas; Alt suspende a atração. A medida permanece independente depois de confirmada. Em Selecionar, arraste o corpo para mover ou uma ponta para ajustar; Delete ou Excluir medida remove, com desfazer/refazer. A opção Medidas nas preferências controla apenas o rótulo. Segmentos pertencem ao pavimento, são salvos no arquivo e não entram na composição/quantitativos; não aparecem em Fiada ou na referência de outro pavimento. Roteiro de teste e limitações no plano §14.
+Em Planta, escolha Medida, clique no ponto inicial e depois no ponto final, inclusive fora da malha e em diagonal. O alvo destacado indica atração a extremidades/vértices e linhas próximas; Alt suspende a atração. A medida permanece independente depois de confirmada. Em Selecionar, arraste o corpo para mover ou uma ponta para ajustar; Delete ou Excluir medida remove, com desfazer/refazer. A opção Medidas nas preferências controla apenas o rótulo. Segmentos pertencem ao pavimento, são salvos no arquivo e não entram na composição/quantitativos; não aparecem em Fiada ou na referência de outro pavimento. Roteiro de teste e limitações no [M7](docs/marcos/M7-Medidas.md).
 
 ## Testar lajes de M4.2
 
-Em Planta, escolha Laje, clique nos vértices e feche pelo primeiro ponto ou por Fechar contorno. Informe espessura positiva e confirme a prévia. Selecione a laje para adicionar aberturas, editar espessura ou redesenhar. Arraste o corpo para mover a laje com seus vazios; selecione uma abertura para movê-la isoladamente. As alças deslocam arestas perpendicularmente na malha; Redesenhar contorno permite acrescentar ou retirar cantos. Contatos, sobreposições ou abertura fora da laje impedem a confirmação integralmente. Escape cancela; Desfazer durante prévia cancela primeiro a prévia. Há até uma laje por pavimento, com topo na cota do andar e espessura para baixo; paredes e composição permanecem independentes. Roteiro completo e verificações no plano §10.2.
+Em Planta, escolha Laje, clique nos vértices e feche pelo primeiro ponto ou por Fechar contorno. Informe espessura positiva e confirme a prévia. Selecione a laje para adicionar aberturas, editar espessura ou redesenhar. Arraste o corpo para mover a laje com seus vazios; selecione uma abertura para movê-la isoladamente. As alças deslocam arestas perpendicularmente na malha; Redesenhar contorno permite acrescentar ou retirar cantos. Contatos, sobreposições ou abertura fora da laje impedem a confirmação integralmente. Escape cancela; Desfazer durante prévia cancela primeiro a prévia. Há até uma laje por pavimento, com topo na cota do andar e espessura para baixo; paredes e composição permanecem independentes. Roteiro completo e verificações no [M4.2](docs/marcos/M4.2-Lajes.md).
 
 ## Testar edição de M3.4
 
 Desenhe duas paredes compatíveis separadas e preencha o intervalo: a prévia e o resultado devem ser uma parede. Em Selecionar, mova uma parede até a continuidade de outra e confira a união; teste Desfazer/Refazer. Vãos acompanham a parede movida e ficam na posição mundial atingida após unir. Alturas/lados incompatíveis não se unem; sobreposição positiva permanece diagnosticada. Redimensionar pelas alças não dispara união.
 
-Supressões de canaleta herdadas de uma união mostram limites do trecho e são restauradas individualmente; remover uma nova faixa continua abrangendo a parede inteira. Graute manual compartilhado conserva a intenção na parede que fica e cria uma cópia na movida. Escolhas de encontros invalidadas ficam pendentes na Fiada, com ação Descartar escolha de encontro. Confirme esses casos pelo roteiro do plano §8.
+Supressões de canaleta herdadas de uma união mostram limites do trecho e são restauradas individualmente; remover uma nova faixa continua abrangendo a parede inteira. Graute manual compartilhado conserva a intenção na parede que fica e cria uma cópia na movida. Escolhas de encontros invalidadas ficam pendentes na Fiada, com ação Descartar escolha de encontro. Confirme esses casos pelo roteiro do [M3.4](docs/marcos/M3.4-Edicao-no-Canvas.md).
 
 Arquivos anteriores a M4.2, inclusive envelope 8 de M4.1, são recusados sem conversão. Aplicativos sem suporte ao envelope vigente rejeitam o arquivo; conserve uma cópia de segurança. O arquivo original importado não é modificado. Categorias de graute/configurações já existentes são preservadas.
 
@@ -98,25 +98,25 @@ Arquivos anteriores a M4.2, inclusive envelope 8 de M4.1, são recusados sem con
 
 Em Configurações → Graute vertical, escolher Encontros, Laterais dos vãos, Pontas livres e Intervalos em paredes longas. Categorias são independentes; novos projetos recebem quatro habilitadas e distância 100 cm. Aplicar/Cancelar/Restaurar preservam ajustes manuais e vãos existentes.
 
-Na Fiada, ativar Graute. Passe sobre um furo: + adiciona; − remove um eixo preenchido escuro. Clique confirma inclusão/remoção em todos os seus intervalos de alvenaria, respeitando os vazios das aberturas. O seletor de furos oferece a mesma ação por teclado. Selecionar ou Escape encerra a ferramenta; navegação e referência não editam. Uma exclusão não gera substituto automático. Ajustes sem alvo ficam preservados com diagnóstico e ação Descartar ajuste de graute. Roteiro e resultados reais no plano §7.
+Na Fiada, ativar Graute. Passe sobre um furo: + adiciona; − remove um eixo preenchido escuro. Clique confirma inclusão/remoção em todos os seus intervalos de alvenaria, respeitando os vazios das aberturas. O seletor de furos oferece a mesma ação por teclado. Selecionar ou Escape encerra a ferramenta; navegação e referência não editam. Uma exclusão não gera substituto automático. Ajustes sem alvo ficam preservados com diagnóstico e ação Descartar ajuste de graute. Roteiro e resultados reais no [M3](docs/marcos/M3-Vaos-Canaletas-Grautes.md).
 
 ## Testar canaletas de M3.2
 
 Em Configurações, grupo Canaletas, adicionar/remover níveis e consultar topo/fiada. Aplicar confirma uma operação; Cancelar preserva o projeto; Restaurar padrões recupera 112/224 cm sem apagar supressões. Novos projetos recebem esses níveis; sua referência é local a cada pavimento.
 
-Na Fiada, clicar numa canaleta ou usar Selecionar faixa. A prévia verde mostra todos os trechos da parede naquela fiada. Remover faixa de canaleta devolve tijolos comuns; Restaurar faixa suprimida recupera a composição automática. Desfazer/refazer, reabrir e transportar por `.ecovit` preservam os ajustes. Canais são esquemáticos. Roteiro detalhado e resultados reais no plano §7.
+Na Fiada, clicar numa canaleta ou usar Selecionar faixa. A prévia verde mostra todos os trechos da parede naquela fiada. Remover faixa de canaleta devolve tijolos comuns; Restaurar faixa suprimida recupera a composição automática. Desfazer/refazer, reabrir e transportar por `.ecovit` preservam os ajustes. Canais são esquemáticos. Roteiro detalhado e resultados reais no [M3](docs/marcos/M3-Vaos-Canaletas-Grautes.md).
 
 ## Testar vãos de M3.1
 
 Em Planta, escolha Porta, Janela ou Vão e arraste sobre uma parede. Selecionar permite mover o corpo, redimensionar pelas duas alças ou editar posição/largura/base/altura e usar Aplicar vão. Medidas incompatíveis oferecem alternativas explícitas; Cancelar edição preserva o documento. Delete ou Excluir vão remove a abertura e pode ser desfeito. A seleção de empilhados identifica tipo/base/topo; há também um seletor acessível por teclado. Configurações expõe apenas padrões de vãos, com Aplicar/Cancelar/Restaurar; alterações não modificam aberturas existentes.
 
-Na Fiada, abertura aparece somente na altura atingida; clicar fora da ferramenta Graute oferece Editar na Planta. Diagnósticos no rodapé permite localizar, ver fiada e editar o elemento. Encurtar parede mantém a posição do vão, sinalizando os que não couberem. Uma fiada de alvenaria entre empilhados é exigida e pode compartilhar as canaletas dos dois vãos. Grautes respeitam os intervalos de alvenaria restantes. O roteiro completo e as evidências estão no plano §7.
+Na Fiada, abertura aparece somente na altura atingida; clicar fora da ferramenta Graute oferece Editar na Planta. Diagnósticos no rodapé permite localizar, ver fiada e editar o elemento. Encurtar parede mantém a posição do vão, sinalizando os que não couberem. Uma fiada de alvenaria entre empilhados é exigida e pode compartilhar as canaletas dos dois vãos. Grautes respeitam os intervalos de alvenaria restantes. O roteiro completo e as evidências estão no [M3](docs/marcos/M3-Vaos-Canaletas-Grautes.md).
 
 ## Quantitativos e cópias de projeto
 
 No projeto aberto, use **Quantitativos** para consultar peças por tipo, pavimento e fiada e informar perdas opcionais. O percentual vale para a sessão e não é salvo no arquivo. Voltar ao desenho conserva seu contexto confirmado.
 
-Na lista inicial, **Duplicar** cria outro projeto a partir do último estado salvo, com nome próprio e edições independentes. Escopo, verificações e roteiro manual de M5 no [plano §12](docs/Ecovit-Plano-Implementacao.md#12-m5--consulta-e-conclusão-da-primeira-versão).
+Na lista inicial, **Duplicar** cria outro projeto a partir do último estado salvo, com nome próprio e edições independentes. Escopo, verificações e aceite no [registro de M5](docs/marcos/M5-Quantitativos-e-Projetos.md).
 
 ## Verificações
 

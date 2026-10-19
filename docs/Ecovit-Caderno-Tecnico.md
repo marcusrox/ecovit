@@ -2,8 +2,8 @@
 
 **Convenção vigente:** nominal-v10; extensão de alturas em CT-14.
 **Estado:** M2 e M3.1–M3.5 implementados e aceitos. M4.1 implementado, revisado e aceito pelo solicitante; M4.2 implementado e aceito pelo solicitante conforme CT-13/EX-65–74, com verificações e aceite no plano; M4.3 implementado e aceito pelo solicitante conforme CT-15/EX-80–85, com verificações e aceite no plano.
-**M5:** contagem nominal implementada em CT-16/EX-86–94 (§12), com M5 aceito pelo solicitante; registro e verificações no Plano §12; sem nova convenção do motor.
-**M9:** símbolos esquemáticos implementados conforme CT-17/EX-95–99 (§13), sem mudança na convenção do motor; M9 aceito pelo solicitante, com verificações e registro do aceite no Plano §16.
+**M5:** contagem nominal implementada em CT-16/EX-86–94 (§12), com M5 aceito pelo solicitante; registro e verificações no [M5](marcos/M5-Quantitativos-e-Projetos.md); sem nova convenção do motor.
+**M9:** símbolos esquemáticos implementados conforme CT-17/EX-95–99 (§13), sem mudança na convenção do motor; M9 aceito pelo solicitante, com verificações e registro do aceite no [M9](marcos/M9-Esquadrias.md).
 **Alcance implementado:** composição nominal de paredes, vãos, canaletas e grautes por pavimento independente, até quatro, e geometria de lajes/aberturas. CT-01–15 e EX-01–85 definem convenções e exemplos; CT-15/EX-80–85 pertencem a M4.3, e os casos de versões legadas são identificados explicitamente. O [PRD](Ecovit-PRD.md) define comportamento e limites do produto; o [plano](Ecovit-Plano-Implementacao.md) reúne verificações e aceite por marco.
 
 Durante o MVP, cada marco pode adotar novo contrato sem compatibilidade com formatos de marcos anteriores, sem obrigação de manter migrações ou geradores legados. M4.1 aplica essa quebra. As fórmulas e exemplos com referências distintas de piso e início da alvenaria documentam os marcos já entregues; não exigem sua conversão em marcos futuros. As convenções de M4 estão na seção 11; lajes implementadas conforme §11.2.
@@ -199,7 +199,7 @@ As decisões P1–P5 estão definidas para o recorte nominal aprovado e foram im
 
 ## 6. Contrato de implementação
 
-Contrato de processamento de M2. A representação vigente e a matriz de compatibilidade estão na Arquitetura §9/15–17; verificações e aceite de M2 no Plano §6.
+Contrato de processamento de M2. A representação vigente e a matriz de compatibilidade estão na Arquitetura §9/15–17; verificações e aceite de M2 no [M2](marcos/M2-Composicao.md).
 
 - Domínio puro: entradas são modelo, ajustes e convenções; saída é composição e diagnósticos. Sem dependência de canvas ou banco.
 - Regeneração integral e sequencial após alteração confirmada. Salvar modelo desatualizado, calcular, salvar resultado. Sem Worker, filas, debounce ou recálculo por região. Liberar controles em sucesso e falha.
@@ -227,7 +227,7 @@ O [plano de M2](Ecovit-Plano-Implementacao.md), seção 5, define aceite, testes
 
 ## 8. M3 — Vãos, canaletas e grautes nominais
 
-**Estado:** implementado e aceito. CT-07/08 implementados em M3.1, CT-09 em M3.2 e CT-10 em M3.3. Verificações e aceites no Plano §7. Fórmulas de ocupação são convenções nominais do Ecovit, não dimensionamento de apoios ou reforços.
+**Estado:** implementado e aceito. CT-07/08 implementados em M3.1, CT-09 em M3.2 e CT-10 em M3.3. Verificações e aceites no [M3](marcos/M3-Vaos-Canaletas-Grautes.md). Fórmulas de ocupação são convenções nominais do Ecovit, não dimensionamento de apoios ou reforços.
 
 ### Evidências sobre vãos, canaletas e grautes
 
@@ -333,7 +333,7 @@ Exemplo de aplicação dos padrões normativos do PRD §14: para h=7 e piso/iní
 
 ## 9. M3.4 — Convenções de edição geométrica
 
-Definições do produto, não pesquisa ou recomendação construtiva. Sem novo apoio, espaçamento resistente ou peça especial. CT-07–10 permanecem; CT-11 explicita exceções de transformação para operações de edição autorizadas no PRD §15. Exemplos abaixo são resultados esperados independentes; sua verificação na implementação está registrada no Plano §8.
+Definições do produto, não pesquisa ou recomendação construtiva. Sem novo apoio, espaçamento resistente ou peça especial. CT-07–10 permanecem; CT-11 explicita exceções de transformação para operações de edição autorizadas no PRD §15. Exemplos abaixo são resultados esperados independentes; sua verificação na implementação está registrada no [M3.4](marcos/M3.4-Edicao-no-Canvas.md).
 
 ### CT-11 — União e translação com preservação de intenção
 
@@ -391,7 +391,7 @@ A posição ativa da cruz seleciona a célula que contém o ponto, sem aproxima�
 
 ### CT-12 — Cruz, fases e composição do conjunto
 
-**Estado:** implementado e aceito em M3.5. Verificações no Plano §9. CT-12 usa CT-02/03/04/05/06/08/09/10 e os exemplos independentes abaixo. É uma convenção de desenho nominal, sem dimensão física, regra de fabricante ou ligação resistente confirmada. EX-11 e nominal-v1–v7 definem o contrato legado de cruz bloqueada; nominal-v8 aplica a composição de CT-12.
+**Estado:** implementado e aceito em M3.5. Verificações no [M3.5](marcos/M3.5-Cruz-Nominal.md). CT-12 usa CT-02/03/04/05/06/08/09/10 e os exemplos independentes abaixo. É uma convenção de desenho nominal, sem dimensão física, regra de fabricante ou ligação resistente confirmada. EX-11 e nominal-v1–v7 definem o contrato legado de cruz bloqueada; nominal-v8 aplica a composição de CT-12.
 
 Reconhecer cruz pela célula com quatro vizinhos ortogonais na união da alvenaria ativa, não pelo número/IDs das paredes nem só por extremidades coincidentes. Cada ramo deve existir nessa fiada. Contato por vértice, sobreposição colinear e região mais espessa que os padrões existentes não viram cruz válida automaticamente.
 
@@ -417,11 +417,11 @@ Só após a paginação, subtrair vãos por CT-07/08, preservando sua validaçã
 | EX-54 | EX-52 com horizontal altura 3h e vertical 2h; variante alturas trocadas | Primeiras duas fiadas cruz A/B; terceira tem só a reta de 7 células, 3 inteiros + 1 meio, na fase absoluta A. Com alternativa global começa B/A e terceira é B; posição do meio segue CT-04, sem reset de fase. Nenhum trecho acima de sua altura. |
 | EX-55 | EX-53 com m=12,5,h=7,altura 280; janela na parede inferior, células x=4/5,y=11, base 98/topo 210; incluir graute manual em origem `(4m,11m)` e testar níveis/supressões | 70 células nas fiadas completas; 68 nas fiadas 15–30, descontadas só as duas células do vão. Sem peça invadindo o vazio ou reinício de fase. Graute nesse eixo ocupa [0,98) e [210,280), sem trecho no vazio; centro da cruz tem um eixo quando Encontros está habilitado. Canaletas e ajustes seguem CT-09/10/11 sem duplicação. Salvar/desfazer/mover/transportar preserva intenção e composição correspondente. |
 
-Conferência independente: `2I+M` reproduz 5/13/70 células; EX-53 tem contorno compartilhado só uma vez e divisão explícita das regiões nas duas fases. As verificações do Plano §9 incluem essas contagens, rotações/reflexões e encontros próximos. Orientação padrão é pelos eixos mundiais, não pelos IDs ou ordem de desenho. EX-53 define medidas próprias; não deriva dimensões de pixels de imagens de referência.
+Conferência independente: `2I+M` reproduz 5/13/70 células; EX-53 tem contorno compartilhado só uma vez e divisão explícita das regiões nas duas fases. As verificações do [M3.5](marcos/M3.5-Cruz-Nominal.md) incluem essas contagens, rotações/reflexões e encontros próximos. Orientação padrão é pelos eixos mundiais, não pelos IDs ou ordem de desenho. EX-53 define medidas próprias; não deriva dimensões de pixels de imagens de referência.
 
 ## 11. M4 — Pavimentos e lajes
 
-**Estado:** pavimentos implementados em M4.1; lajes (M4.2) implementadas conforme §11.2; comparação visual (M4.3) implementada conforme §11.4, com aceite global do solicitante registrado no Plano §10. Sem pesquisa construtiva específica adicional. M4 admite até quatro pavimentos, sem distinção de piso ou cobertura. Cada pavimento tem cota única `Z`, especificada na criação, com `Z/h` inteiro, onde `h` é a altura-base. Admitir negativos e zero; impedir cotas iguais. Ordenar por cota crescente e derivar adjacência dessa ordem. Todas as paredes começam em `Z`, e a numeração das fiadas reinicia em 1. O topo de cada parede é `Z+H`, com compatibilidade modular de `H` por CT-02. Bases de vãos e níveis de canaletas são relativos a `Z`. Não há referência separada de piso acabado nem conversão de arquivos anteriores, que são incompatíveis com M4.1.
+**Estado:** pavimentos implementados em M4.1; lajes (M4.2) implementadas conforme §11.2; comparação visual (M4.3) implementada conforme §11.4, com aceite global do solicitante registrado no [M4](marcos/M4-Lajes-e-Pavimentos.md). Sem pesquisa construtiva específica adicional. M4 admite até quatro pavimentos, sem distinção de piso ou cobertura. Cada pavimento tem cota única `Z`, especificada na criação, com `Z/h` inteiro, onde `h` é a altura-base. Admitir negativos e zero; impedir cotas iguais. Ordenar por cota crescente e derivar adjacência dessa ordem. Todas as paredes começam em `Z`, e a numeração das fiadas reinicia em 1. O topo de cada parede é `Z+H`, com compatibilidade modular de `H` por CT-02. Bases de vãos e níveis de canaletas são relativos a `Z`. Não há referência separada de piso acabado nem conversão de arquivos anteriores, que são incompatíveis com M4.1.
 
 Cada pavimento admite no máximo uma laje, com ou sem paredes. A face superior coincide com a cota do próprio pavimento e a face inferior é essa cota menos a espessura positiva. A espessura cresce para baixo. A laje não limita ou recorta a composição das paredes de qualquer pavimento; suas aberturas não mudam as alturas dessas paredes. Para representar uma laje acima das paredes, criar outro pavimento na cota desejada e desenhar a laje nele, podendo deixá-lo sem paredes. Não há sugestão ou proposta de atualização de cotas em função das lajes. Comportamento normativo em RF-08/13; diretrizes técnicas na Arquitetura §18.
 
@@ -439,7 +439,7 @@ Duplicação e mudança de cota preservam medidas relativas, transladando també
 
 ### 11.1. M4.1 — Referências e exemplos para pavimentos
 
-**Estado:** implementado em nominal-v9. Exemplos EX-56–64 são referências geométricas independentes; as verificações efetivamente executadas e o aceite global do solicitante estão no Plano §§10–10.1. Contrato de dados em Arquitetura §19, tarefas/aceite em Plano §10.1. Não acrescentam convenção resistente nem mudam a paginação de CT-01–12.
+**Estado:** implementado em nominal-v9. Exemplos EX-56–64 são referências geométricas independentes; as verificações efetivamente executadas e o aceite global do solicitante estão no [M4](marcos/M4-Lajes-e-Pavimentos.md) a [M4.1](marcos/M4.1-Pavimentos.md). Contrato de dados em Arquitetura §19, tarefas/aceite em [M4.1](marcos/M4.1-Pavimentos.md). Não acrescentam convenção resistente nem mudam a paginação de CT-01–12.
 
 Usar cota única `Z`, `m = largura-base`, `h = altura-base`, e sempre número local da fiada. Aplicar CT-02/07/09 com `F=S=Z`. Configurações comuns do projeto são avaliadas separadamente em cada pavimento; inclusões/exclusões, supressões e escolhas têm propriedade local explícita. Nenhuma comparação geométrica entre andares faz parte do motor. M4.1 mantém lajes ausentes; os exemplos de laje da seção 11 pertencem a M4.2.
 
@@ -455,13 +455,13 @@ Usar cota única `Z`, `m = largura-base`, `h = altura-base`, e sempre número lo
 | EX-63 | Baixar/reabrir envelope 8 com quatro pavimentos, configurações e ajustes pendentes; adulterar snapshot atual; forjar ajuste com paredes de dois pavimentos; tentar arquivo versão 7 | Reabertura válida preserva intenção e composição nominal-v9; importação cria novo ID de projeto, preservando IDs internos. Snapshot adulterado, referência entre pavimentos, UUID duplicado e versão incompatível são recusados antes de substituir o aberto. Arquivo desatualizado íntegro usa resultado ausente e pode conter pendências geométricas. Se o resultado derivado exceder o limite do transporte compacto, o backup mantém toda a intenção nesse estado e recompõe na abertura; a memória atual não é modificada e o usuário recebe aviso. Documento local antigo permanece armazenado, identificado como incompatível, sem conversão ou cálculo. |
 | EX-64 | Quatro pavimentos em 0/70/140/210, h=7, um trecho de `8m×3h` por andar; conferir limites de integridade da entrada e injetar falhas de cálculo/salvamento | Caso pequeno cobre 96 células ao todo e gera 12 fiadas locais no total, não 33 pelo alcance global. Não estimar ou controlar orçamento de geração, nem publicar diagnóstico de quantidade máxima de células/fiadas/peças/eixos. Excesso de limite estrutural de entrada na duplicação recusa a cópia inteira. Exceção real mantém estado desatualizado sem snapshot e libera controles; falha de armazenamento preserva memória/download. Não exige gerar volumes altos como condição deste exemplo. |
 
-Nas verificações de referência, repetir cotas negativas e translações com bases de alturas diferentes, rotação/reflexão dos desenhos existentes e módulo representável de 12,51 cm para não arredondar centros de furos. Integrar vãos empilhados, L/T/cruz e supressões de alcance conforme CT-07–12, com o mesmo conjunto geométrico em mais de um pavimento. Esses casos verificam isolamento e preservação das regras existentes; não autorizam novo padrão construtivo. Limites de integridade de arquivo, registros de intenção e precisão seguem Arquitetura §19.5 e exigem casos de fronteira e recusa. Remover os antigos bloqueios por células/fiadas/eixos/intervalos gerados; não criar controles ou quantitativos antecipados para substituí-los. A análise de quantidades pelo usuário permanece futura em M5, com evidências de carga registradas exclusivamente no Plano §10.1.
+Nas verificações de referência, repetir cotas negativas e translações com bases de alturas diferentes, rotação/reflexão dos desenhos existentes e módulo representável de 12,51 cm para não arredondar centros de furos. Integrar vãos empilhados, L/T/cruz e supressões de alcance conforme CT-07–12, com o mesmo conjunto geométrico em mais de um pavimento. Esses casos verificam isolamento e preservação das regras existentes; não autorizam novo padrão construtivo. Limites de integridade de arquivo, registros de intenção e precisão seguem Arquitetura §19.5 e exigem casos de fronteira e recusa. Remover os antigos bloqueios por células/fiadas/eixos/intervalos gerados; não criar controles ou quantitativos antecipados para substituí-los. A análise de quantidades pelo usuário permanece futura em M5, com evidências de carga registradas exclusivamente no [M4.1](marcos/M4.1-Pavimentos.md).
 
 ### 11.2. M4.2 — Geometria de lajes
 
 #### CT-13 — Anéis ortogonais e subtração de aberturas
 
-**Estado:** geometria implementada em M4.2, sem comprovação estrutural; verificações e aceite separados no Plano §10.2. Não altera CT-01–12 nem nominal-v9. Produto em RF-13, persistência/comandos na Arquitetura §20 e verificações no Plano §10.2. D42-01 está confirmada: alças nas arestas e redesenho para acrescentar ou retirar cantos, sujeitos à validade abaixo. Não são necessárias novas hipóteses de fabricante para validar polígonos: não há neste marco cálculo de apoios, vãos resistentes, armaduras ou espessura estrutural recomendada.
+**Estado:** geometria implementada em M4.2, sem comprovação estrutural; verificações e aceite separados no [M4.2](marcos/M4.2-Lajes.md). Não altera CT-01–12 nem nominal-v9. Produto em RF-13, persistência/comandos na Arquitetura §20 e verificações no [M4.2](marcos/M4.2-Lajes.md). D42-01 está confirmada: alças nas arestas e redesenho para acrescentar ou retirar cantos, sujeitos à validade abaixo. Não são necessárias novas hipóteses de fabricante para validar polígonos: não há neste marco cálculo de apoios, vãos resistentes, armaduras ou espessura estrutural recomendada.
 
 Usar `m = largura-base`, vértices em `(i*m,j*m)` com `i/j` inteiros em relação à origem da malha do projeto, inclusive negativos. Cada anel é um polígono simples fechado, com área não nula, ao menos quatro vértices e arestas horizontais/verticais de comprimento positivo. Não repetir vértices, incluindo primeiro/último, nem manter vértice intermediário colinear redundante. Arestas consecutivas compartilham somente seu extremo comum; arestas não consecutivas não podem cruzar, sobrepor ou tocar, nem por ponto. Proibir retorno sobre a mesma aresta e contato que forme estrangulamento de largura zero. Concavidade e dimensões mínimas resultantes de um passo de malha são válidas geometricamente; isso não dimensiona largura construtiva.
 
@@ -508,7 +508,7 @@ Vãos só removem células nas respectivas alturas e hospedeiras; canaletas resp
 
 ### 11.4. M4.3 — Comparação visual (CT-15)
 
-**Estado:** implementado e aceito pelo solicitante em M4.3; verificações no Plano §10.3 e aceite global na §10. Produto em RF-08, contratos de sessão/renderização na Arquitetura §22, tarefas e aceite no Plano §10.3. CT-15 define projeção e exemplos de comparação, sem alterar composição nominal-v10 ou acrescentar hipótese construtiva, regra de apoio, continuidade ou ensaio físico. Não há pesquisa estrutural nova a realizar para sobrepor desenhos existentes.
+**Estado:** implementado e aceito pelo solicitante em M4.3; verificações no [M4.3](marcos/M4.3-Comparacao-de-Pavimentos.md) e aceite global na §10. Produto em RF-08, contratos de sessão/renderização na Arquitetura §22, tarefas e aceite no [M4.3](marcos/M4.3-Comparacao-de-Pavimentos.md). CT-15 define projeção e exemplos de comparação, sem alterar composição nominal-v10 ou acrescentar hipótese construtiva, regra de apoio, continuidade ou ensaio físico. Não há pesquisa estrutural nova a realizar para sobrepor desenhos existentes.
 
 Uma planta de referência é uma projeção horizontal da intenção confirmada de um único vizinho na ordem das cotas. Para qualquer ponto mundial `(x,y)`, sua posição em tela é a mesma em ambos os andares sob a mesma câmera; cotas negativas, distância vertical entre andares, espessura da laje e alturas de parede não alteram x/y. Projetar os anéis de CT-13 sem alterar, corrigir ou unir polígonos. Um vazio da laje de referência não subtrai paredes ou material do ativo; um vazio ativo não corta a referência. Não há união, diferença booleana ou teste de contato entre geometrias de andares distintos. Sobreposição não comprova apoio ou alinhamento construtivo.
 
@@ -527,7 +527,7 @@ Oráculos de geometria são a identidade das coordenadas e as caixas explícitas
 
 ## 12. M5 — Contagem nominal (CT-16)
 
-**Estado:** convenção de contagem implementada em M5, aceito pelo solicitante; registro e verificações do Codex no Plano §12. RF-11/12 define o produto; Arquitetura §23 define projeção, perdas transitórias e cópia; Plano §12 reúne tarefas/aceite/roteiro. CT-16 não muda nominal-v10 nem a geometria de CT-01–15.
+**Estado:** convenção de contagem implementada em M5, aceito pelo solicitante; registro e verificações do Codex no [M5](marcos/M5-Quantitativos-e-Projetos.md). RF-11/12 define o produto; Arquitetura §23 define projeção, perdas transitórias e cópia; [M5](marcos/M5-Quantitativos-e-Projetos.md) reúne tarefas/aceite/roteiro. CT-16 não muda nominal-v10 nem a geometria de CT-01–15.
 
 Contar unidades das peças finais, após subtração de vãos e tipagem/recomposição de canaletas, uma vez por pavimento/fiada. Inteiro e canaleta inteira ocupam duas células; meio e meia canaleta, uma, mas cada um conta como uma peça. Paredes de um encontro e origens coincidentes são associações de uma peça, não multiplicadores. Somar peças de todos os andares mesmo que suas coordenadas horizontais coincidam; referências visuais não são material adicional. A soma dos quatro tipos deve fechar tanto entre fiadas e pavimentos quanto entre pavimentos e projeto.
 

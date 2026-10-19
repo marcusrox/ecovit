@@ -4,7 +4,7 @@
 
 - [PRD](docs/Ecovit-PRD.md): comportamento do produto e limites de escopo.
 - [Arquitetura](docs/Ecovit-Arquitetura-Tecnica.md): stack, modelo, processamento e persistência.
-- [Plano incremental](docs/Ecovit-Plano-Implementacao.md): entrega atual, critérios de aceite, verificações e andamento.
+- [Plano incremental](docs/Ecovit-Plano-Implementacao.md): índice, sequência e situação dos marcos; consulte o arquivo correspondente em [docs/marcos](docs/marcos) para escopo, tarefas, critérios, verificações, limitações e aceite.
 - [Caderno técnico](docs/Ecovit-Caderno-Tecnico.md): fontes, convenções nominais, exemplos e lacunas da composição. Consulte antes de implementar o motor; não trate hipóteses como medidas físicas verificadas.
 
 Consulte as seções pertinentes à alteração. Não duplique esses documentos em novas especificações. Instruções atuais do solicitante prevalecem; quando mudarem o comportamento acordado, atualize os documentos afetados. Não transforme uma ambiguidade em ampliação silenciosa do produto.
@@ -14,13 +14,14 @@ Consulte as seções pertinentes à alteração. Não duplique esses documentos 
 - Implemente somente a entrega ou alteração solicitada. O plano não autoriza executar todas as entregas de uma vez.
 - Entregue funcionalidades no próprio aplicativo, sem prova técnica ou protótipo separado.
 - Detalhe entregas futuras apenas quando forem iniciadas. Preserve os IDs de requisitos e aceite para relacionar implementação e verificações.
-- Ao concluir, mantenha no plano um resumo consolidado por marco do alcance implementado, verificações executadas, limitações e testes pendentes. Separe verificação do Codex de teste manual do solicitante; não declare este último concluído sem seu retorno.
+- Ao concluir, mantenha no arquivo do marco em `docs/marcos/` um resumo consolidado e atualize sua situação no índice do plano; registre nele o alcance implementado, verificações executadas, limitações e testes pendentes. Esse resumo substitui relatos transitórios. Preserve IDs e aceites existentes. Mantenha somente a situação final dos itens implementados, sem diários de tentativas. Separe verificação do Codex de teste manual do solicitante; não declare este último concluído sem seu retorno.
+- Não duplique o conteúdo dos marcos no índice; comportamento, contratos e convenções continuam nos documentos responsáveis.
 - Corrija falhas pertinentes antes de declarar a entrega pronta para teste. Mudanças de comportamento motivadas por feedback devem atualizar especificação e código juntos.
 
 ## Uso das especificações
 
 - Use o PRD para comportamento e limites do produto, a arquitetura para decisões técnicas e contratos de dados, o caderno técnico para convenções geométricas/construtivas e o plano para escopo, andamento e aceite da entrega solicitada.
-- Não mantenha cópias dessas regras neste arquivo. Ao alterar comportamento ou contrato técnico, atualize o documento responsável junto com a implementação e consolide o estado do marco no plano. A documentação descreve o produto por assunto e marco, sem diário de decisões, datas de ajustes ou relatos de tentativas intermediárias. Preserve IDs e contratos legados necessários à compatibilidade de arquivos; distinga-os do comportamento vigente.
+- Não mantenha cópias dessas regras neste arquivo. Ao alterar comportamento ou contrato técnico, atualize o documento responsável junto com a implementação e consolide o estado no arquivo do marco e no índice do plano. A documentação descreve o produto por assunto e marco, sem diário de decisões, datas de ajustes ou relatos de tentativas intermediárias. Preserve IDs e contratos legados necessários à compatibilidade de arquivos; distinga-os do comportamento vigente.
 - Distinga funcionalidade especificada de funcionalidade implementada e aprovada; não trate a existência de uma especificação como autorização para implementá-la.
 - Não introduza bibliotecas, serviços ou abstrações sem necessidade concreta da entrega e compatibilidade com a arquitetura.
 - Para mudanças de interface, consulte o padrão de iconografia na [Arquitetura §2.1](docs/Ecovit-Arquitetura-Tecnica.md#21-padrão-de-iconografia), incluindo a implementação e as verificações exigidas; mantenha as regras nesse documento.

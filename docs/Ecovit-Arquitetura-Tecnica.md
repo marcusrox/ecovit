@@ -1,10 +1,10 @@
 # Ecovit — Arquitetura Técnica
 
 **Versão documental:** 1.34
-**Base funcional:** PRD Ecovit 0.41. M1–M3.5 implementados e aceitos; M4.1 implementado, revisado e aceito pelo solicitante; M4.2 implementado e aceito pelo solicitante na §20, com verificações no plano; M4.3 implementado e aceito pelo solicitante na §22; M5 implementado e aceito pelo solicitante na §23, com registro e verificações no plano. M6 implementado e aceito pelo solicitante na §24, com registro no plano. M7 implementado e aceito pelo solicitante na §25, com registro do aceite no plano. M8 implementado e aceito pelo solicitante na §26, com verificações e registro do aceite no Plano §15. M10 implementado e aceito pelo solicitante na §28, com verificações e registro do aceite no Plano §17.
-**Aplicativo:** 0.15.1; arquivo versão 14, com leitura de versões 9/10/11/12/13; composição nominal-v10 (CT-14). M9 implementado e aceito pelo solicitante; verificações e registro do aceite no Plano §16.
+**Base funcional:** PRD Ecovit 0.41. M1–M3.5 implementados e aceitos; M4.1 implementado, revisado e aceito pelo solicitante; M4.2 implementado e aceito pelo solicitante na §20, com verificações no plano; M4.3 implementado e aceito pelo solicitante na §22; M5 implementado e aceito pelo solicitante na §23, com registro e verificações no plano. M6 implementado e aceito pelo solicitante na §24, com registro no plano. M7 implementado e aceito pelo solicitante na §25, com registro do aceite no plano. M8 implementado e aceito pelo solicitante na §26, com verificações e registro do aceite no [M8](marcos/M8-Imagem-de-Referencia.md). M10 implementado e aceito pelo solicitante na §28, com verificações e registro do aceite no [M10](marcos/M10-Mobiliarios.md).
+**Aplicativo:** 0.15.1; arquivo versão 14, com leitura de versões 9/10/11/12/13; composição nominal-v10 (CT-14). M9 implementado e aceito pelo solicitante; verificações e registro do aceite no [M9](marcos/M9-Esquadrias.md).
 
-As seções gerais descrevem a arquitetura do aplicativo. As seções de M3–M3.5 registram contratos históricos; M4.1 está implementado conforme §19, preservando as regras nominais locais. Lajes estão implementadas conforme §20; comparação visual de M4 está implementada conforme §22, com aceite global do solicitante registrado no Plano §10. Versões de formato e convenções nominais identificam contratos de dados, não etapas pendentes de desenvolvimento.
+As seções gerais descrevem a arquitetura do aplicativo. As seções de M3–M3.5 registram contratos históricos; M4.1 está implementado conforme §19, preservando as regras nominais locais. Lajes estão implementadas conforme §20; comparação visual de M4 está implementada conforme §22, com aceite global do solicitante registrado no [M4](marcos/M4-Lajes-e-Pavimentos.md). Versões de formato e convenções nominais identificam contratos de dados, não etapas pendentes de desenvolvimento.
 
 Durante o MVP, cada marco pode quebrar compatibilidade com formatos de marcos anteriores, sem obrigação de implementar ou manter migrações, conversores ou geradores exclusivamente para esse fim. M4.1 aplica essa decisão: arquivos e documentos locais anteriores são recusados, sem conversão. Os contratos e geradores legados descritos nas seções dos marcos anteriores registram o comportamento já entregue; não constituem obrigação de mantê-los nos marcos seguintes. As diretrizes de M4 estão na seção 18, os contratos de pavimentos na seção 19 e o contrato vigente de lajes/arquivo na seção 20. Leitores e geradores exclusivamente legados foram removidos.
 
@@ -41,7 +41,7 @@ As dependências escolhidas são de código aberto, sem licença comercial obrig
 
 ### 2.1. Padrão de iconografia
 
-**Implementação:** Lucide React (`lucide-react` **1.57.0**) é o catálogo único para ícones de interface, na família de contorno. Dependência exata no package.json/lockfile, compatível com React 19. `src/ui/Icon.tsx` centraliza importações individuais e nomes semânticos, sem paths autorais. Verificações e aceite específico da apresentação no Plano §11.
+**Implementação:** Lucide React (`lucide-react` **1.57.0**) é o catálogo único para ícones de interface, na família de contorno. Dependência exata no package.json/lockfile, compatível com React 19. `src/ui/Icon.tsx` centraliza importações individuais e nomes semânticos, sem paths autorais. Verificações e aceite específico da apresentação no [Apresentação, operação e verificação documental](marcos/Apresentacao-e-Operacao.md).
 
 A escolha atende à necessidade concreta de catálogo amplo com linguagem visual consistente, SVGs configuráveis e componentes React. Importações individuais permitem incluir apenas os ícones usados. Referências oficiais: [catálogo](https://lucide.dev/icons/), [React/importações](https://lucide.dev/guide/react/getting-started), [traço](https://lucide.dev/guide/react/basics/stroke-width) e [licença](https://lucide.dev/license). Licença integral do pacote, incluindo avisos ISC/MIT dos derivados, em `public/third-party/lucide-react-LICENSE.txt`, copiada pelo build para dist. Em futuras atualizações, selecionar versão estável compatível, atualizar lockfile e conferir/manter os avisos distribuídos; sem CDN/fontes remotas.
 
@@ -317,7 +317,7 @@ As referências oficiais fundamentam as escolhas de tecnologia. Evidências de t
 As seções 15–17 registram os contratos de dados dos marcos anteriores. Seus leitores, migrações e geradores antigos não integram M4.1; formato, persistência, resultado ausente e limites vigentes são os de §19. As regras nominais locais e operações construtivas permanecem, sem compatibilidade com arquivos anteriores.
 
 
-M3.1 cobre vãos e seus padrões; M3.2 cobre canaletas e supressões; M3.3 cobre grautes nominais e ajustes. O contrato de M3.3 é arquivo versão 5/composição nominal-v6; o formato vigente de M4.1 consta nas seções 9/19. PRD §14, Plano §7 e CT-07–10 são referências; nenhuma exigência de física de cavidades, dimensionamento de apoio/armadura ou cadastro de fabricante.
+M3.1 cobre vãos e seus padrões; M3.2 cobre canaletas e supressões; M3.3 cobre grautes nominais e ajustes. O contrato de M3.3 é arquivo versão 5/composição nominal-v6; o formato vigente de M4.1 consta nas seções 9/19. PRD §14, [M3](marcos/M3-Vaos-Canaletas-Grautes.md) e CT-07–10 são referências; nenhuma exigência de física de cavidades, dimensionamento de apoio/armadura ou cadastro de fabricante.
 
 ### Dados persistentes
 
@@ -340,7 +340,7 @@ Disparos de cálculo por configuração seguem os efeitos definidos no PRD §14.
 
 ### Editor
 
-Os controles e comportamentos visíveis seguem RF-04/06/07 e PRD §14; sua disponibilização por incremento segue Plano §7. O editor projeta o modelo e usa IDs estáveis para comandos, sem armazenar nós gráficos no documento.
+Os controles e comportamentos visíveis seguem RF-04/06/07 e PRD §14; sua disponibilização por incremento segue [M3](marcos/M3-Vaos-Canaletas-Grautes.md). O editor projeta o modelo e usa IDs estáveis para comandos, sem armazenar nós gráficos no documento.
 
 Em ferramenta Graute na Fiada, hit testing por centro de célula/furo nominal da camada ativa, com tolerância em pixels ajustada ao zoom. Hover +/− é transitório; clique confirma uma alteração em todo eixo. Cor escura identifica presença. Canaletas também expõem seus eixos nominais para o mesmo gesto, sem pretensão de cavidade física. Bloquear ação durante processamento/somente leitura; distinguir navegação por botão central; fiada de referência não recebe ação. Oferecer rótulos e acionamento por teclado.
 
@@ -372,7 +372,7 @@ A evolução de quantitativos permanece futura. Não deduzir volume de graute ou
 
 ## 16. Contratos de M3.4 — Evolução da edição
 
-Contrato implementado em M3.4; resultados e limitações no Plano §8. PRD §15 define os comportamentos; CT-11 define transformações e exemplos; Plano §8 define a entrega. A seção 15 define M3.1–3.3; os contratos desta seção tratam união/movimento, vínculos e supressões herdadas.
+Contrato implementado em M3.4; resultados e limitações no [M3.4](marcos/M3.4-Edicao-no-Canvas.md). PRD §15 define os comportamentos; CT-11 define transformações e exemplos; [M3.4](marcos/M3.4-Edicao-no-Canvas.md) define a entrega. A seção 15 define M3.1–3.3; os contratos desta seção tratam união/movimento, vínculos e supressões herdadas.
 
 ### Comandos e dependências
 
@@ -435,7 +435,7 @@ No renderer do canvas, identificar orientação pela parede hospedeira. Rótulo 
 
 ## 17. Contratos de M3.5 — Cruz nominal
 
-**Estado:** implementado e aceito, com verificações no Plano §9. Produto em PRD §16, geometria em CT-12/EX-51–55. O motor nominal-v8 compõe a cruz suportada; os geradores nominal-v1–v7 mantêm sua interpretação de cruz bloqueada para validar arquivos antigos.
+**Estado:** implementado e aceito, com verificações no [M3.5](marcos/M3.5-Cruz-Nominal.md). Produto em PRD §16, geometria em CT-12/EX-51–55. O motor nominal-v8 compõe a cruz suportada; os geradores nominal-v1–v7 mantêm sua interpretação de cruz bloqueada para validar arquivos antigos.
 
 ### Processamento e resultado
 
@@ -483,7 +483,7 @@ M4.1 adota novo contrato de arquivo e armazenamento local com cota única, sem l
 
 ## 19. Contratos de M4.1 — Pavimentos
 
-**Estado:** implementado e aceito pelo solicitante; verificações no Plano §10.1 e aceite global na §10. Produto em RF-07/08/09/10/12; convenções e exemplos em Caderno §11.1/EX-56–64; tarefas e aceite em Plano §10.1. Envelope 8 e convenção nominal-v9 registram o contrato do aplicativo 0.8.0; o vigente é envelope 9/nominal-v10 conforme §§20–21. M4.1 não contém lajes, sobreposição visual entre pavimentos ou quantitativos.
+**Estado:** implementado e aceito pelo solicitante; verificações no [M4.1](marcos/M4.1-Pavimentos.md) e aceite global na §10. Produto em RF-07/08/09/10/12; convenções e exemplos em Caderno §11.1/EX-56–64; tarefas e aceite em [M4.1](marcos/M4.1-Pavimentos.md). Envelope 8 e convenção nominal-v9 registram o contrato do aplicativo 0.8.0; o vigente é envelope 9/nominal-v10 conforme §§20–21. M4.1 não contém lajes, sobreposição visual entre pavimentos ou quantitativos.
 
 ### 19.1. Intenção persistida e referências
 
@@ -553,7 +553,7 @@ Verificações de referência cobrem todas as bases e os limites de integridade 
 
 ## 20. Contratos de M4.2 — Lajes
 
-**Estado:** implementado no aplicativo 0.9.0 e aceito pelo solicitante; verificações no Plano §10.2 e aceite global na §10. RF-13 define o comportamento, CT-13/EX-65–74 a geometria. D42-01 confirmada e implementada com alças nas arestas e redesenho. O aplicativo usa envelope **9**, mantendo **nominal-v9** para a composição de alvenaria: a laje não muda as regras nem a estrutura do resultado do motor. Não criar nominal-v10 apenas para versionar o novo dado de entrada.
+**Estado:** implementado no aplicativo 0.9.0 e aceito pelo solicitante; verificações no [M4.2](marcos/M4.2-Lajes.md) e aceite global na §10. RF-13 define o comportamento, CT-13/EX-65–74 a geometria. D42-01 confirmada e implementada com alças nas arestas e redesenho. O aplicativo usa envelope **9**, mantendo **nominal-v9** para a composição de alvenaria: a laje não muda as regras nem a estrutura do resultado do motor. Não criar nominal-v10 apenas para versionar o novo dado de entrada.
 
 ### 20.1. Intenção, referências e versão
 
@@ -617,7 +617,7 @@ Ordem de desenho: malha → preenchimento/contornos da laje com vazios → pared
 
 Hit-testing: limitar ao proprietário ativo, testar material da laje excluindo aberturas, bordas externas e aberturas individualmente, além dos alvos existentes. Alça ativa tem prioridade. Resolver clique sem arraste pela primeira categoria não vazia: vão de parede, parede, abertura de laje, laje; candidatos de categorias inferiores não abrem caixa de escolha. Havendo múltiplos candidatos na categoria prioritária, conservar seleção contextual identificável (vãos incluem base/topo); a lista contextual da laje ordena os candidatos por ID, e os seletores do editor de parede/vão mantêm seus critérios existentes. Quando não há alvo já selecionado sob o ponteiro e há parede/vão prioritário, encaminhar ao editor existente para preservar início de gesto e escolha entre alvos da mesma categoria. Não escolher alvo pela última forma desenhada. O select único Selecionar elemento… na barra de Planta usa optgroup Laje e Vãos de parede, derivados exclusivamente de useEditingProject (view do pavimento ativo), com IDs existentes como valores. Omitir grupos vazios e o controle sem opções; não restringir sua presença à ferramenta Selecionar. onChange descarta slabDraft/slabEditing e pendingOpening, ativa Selecionar e encaminha o ID à seleção compartilhada; a lista de sobreposição de laje/aberturas é descartada ao mudar a seleção, sem cancelar o gesto de edição do novo alvo; nenhum dado ou novo estado de seleção é persistido. A lista das propriedades da laje continua como acesso local alternativo. Após escolha explícita no seletor ou na lista, o próximo arraste pelo corpo usa o alvo selecionado, inclusive sob outro elemento; a escolha é encaminhada ao gesto de parede/vão antes da prioridade habitual dos vãos. Um clique sem arraste no ponto sobreposto aplica novamente a prioridade por categoria; o alvo selecionado continua prevalecendo no arraste efetivo. Soltura sem deslocamento de laje ou parede não grava estado nem histórico. Distinguir clique de arraste antes de mover ou abrir a lista, sem trocar de alvo silenciosamente. As listas de vãos também usam somente a view do pavimento ativo. Trocar a seleção cancela a sessão de laje na transição de estado compartilhada, abrangendo listas e diagnósticos, sem histórico ou salvamento.
 
-Cancelamentos, confirmação e indicações seguem RF-13. Fechar pelo clique inicial exige que o ponto clicado, após snap, seja o primeiro vértice; a tolerância visual não transforma um vértice vizinho em fechamento ao reduzir o zoom. Desfazer durante prévia cancela primeiro a prévia, sem consumir histórico; só nova ação Desfazer atua no documento. Ajustar enquadramento para incluir o contorno da laje ativa, inclusive em andar sem paredes; aberturas não ampliam seus limites. Em Fiada, não renderizar nem selecionar lajes e conservar estado vazio/última fiada local de M4.1. A comparação de M4.3 é implementada separadamente na §22. Reusar Lucide centralizado e padrões de §2.1 para ações; alças/contornos são geometria de domínio. Verificação visual e acessível nas três resoluções previstas e fluxos Chrome/Edge na porta 5174 constam do Plano §10.2.
+Cancelamentos, confirmação e indicações seguem RF-13. Fechar pelo clique inicial exige que o ponto clicado, após snap, seja o primeiro vértice; a tolerância visual não transforma um vértice vizinho em fechamento ao reduzir o zoom. Desfazer durante prévia cancela primeiro a prévia, sem consumir histórico; só nova ação Desfazer atua no documento. Ajustar enquadramento para incluir o contorno da laje ativa, inclusive em andar sem paredes; aberturas não ampliam seus limites. Em Fiada, não renderizar nem selecionar lajes e conservar estado vazio/última fiada local de M4.1. A comparação de M4.3 é implementada separadamente na §22. Reusar Lucide centralizado e padrões de §2.1 para ações; alças/contornos são geometria de domínio. Verificação visual e acessível nas três resoluções previstas e fluxos Chrome/Edge na porta 5174 constam do [M4.2](marcos/M4.2-Lajes.md).
 
 ## 21. Alturas diferentes e atualização de cálculo no envelope 9
 
@@ -629,7 +629,7 @@ Na leitura de arquivo e IndexedDB, o schema aceita resultados nominal-v9 e nomin
 
 ## 22. Contratos de M4.3 — Comparação visual entre pavimentos
 
-**Estado:** implementado no aplicativo 0.10.0, com aceite global do solicitante registrado no Plano §10. Comportamento em RF-08, geometria em CT-15/EX-80–85, tarefas/aceite/verificações no Plano §10.3. Não modifica o motor, a composição nominal-v10, o envelope 9 ou o contrato de atualização de resultados da §21. Não criar migração, novo resultado persistido ou dependência para a comparação. A versão 0.10.0 identifica a entrega de interface; o arquivo permanece na versão 9 e o resultado nominal-v10 continua com o mesmo algoritmo.
+**Estado:** implementado no aplicativo 0.10.0, com aceite global do solicitante registrado no [M4](marcos/M4-Lajes-e-Pavimentos.md). Comportamento em RF-08, geometria em CT-15/EX-80–85, tarefas/aceite/verificações no [M4.3](marcos/M4.3-Comparacao-de-Pavimentos.md). Não modifica o motor, a composição nominal-v10, o envelope 9 ou o contrato de atualização de resultados da §21. Não criar migração, novo resultado persistido ou dependência para a comparação. A versão 0.10.0 identifica a entrega de interface; o arquivo permanece na versão 9 e o resultado nominal-v10 continua com o mesmo algoritmo.
 
 ### 22.1. Estado transitório e resolução da referência
 
@@ -662,11 +662,11 @@ O seletor nativo Comparar pavimento é renderizado no ramo de Propriedades do pa
 
 Nenhum novo campo persistido ou mudança de schemaVersion/convention: operar somente comparação, sem edição de campo pendente a confirmar por foco, deve conservar por igualdade o documento serializado, generated, diagnostics, metadata e histórico; saveProject e generate não são chamados. Salvar/baixar/reabrir/importar e atualização v9→v10 conservam os contratos existentes, iniciando sessão sem comparação. Em readonly, nem trocar referência nem navegar grava o registro compartilhado.
 
-Verificar resolução/normalização e limites com os oráculos do Caderno, isolamento de estado/persistência e fluxos reais em Chrome/Edge na 5174. Cobrir tanto listening=false quanto os caminhos manuais de seleção/arraste/união, pois o canvas usa ambos. Roteiro, comandos e estados de aceite pertencem ao Plano §10.3. Sem detecção volumétrica, alinhamento automático, vínculo entre andares ou quantitativos.
+Verificar resolução/normalização e limites com os oráculos do Caderno, isolamento de estado/persistência e fluxos reais em Chrome/Edge na 5174. Cobrir tanto listening=false quanto os caminhos manuais de seleção/arraste/união, pois o canvas usa ambos. Roteiro, comandos e estados de aceite pertencem ao [M4.3](marcos/M4.3-Comparacao-de-Pavimentos.md). Sem detecção volumétrica, alinhamento automático, vínculo entre andares ou quantitativos.
 
 ## 23. Contratos de M5 — Quantitativos e duplicação de projetos
 
-**Estado:** implementado no aplicativo 0.11.0 e aceito pelo solicitante; registro e verificações no Plano §12. Produto em RF-11/12; convenções e oráculos em CT-16/EX-86–94; tarefas/aceite/roteiro no Plano §12. Preservar M4.1–M4.3, envelope **9**, composição **nominal-v10** e a atualização de cálculo da §21. M5 não muda a paginação nem acrescenta algoritmo construtivo ou biblioteca.
+**Estado:** implementado no aplicativo 0.11.0 e aceito pelo solicitante; registro e verificações no [M5](marcos/M5-Quantitativos-e-Projetos.md). Produto em RF-11/12; convenções e oráculos em CT-16/EX-86–94; tarefas/aceite/roteiro no [M5](marcos/M5-Quantitativos-e-Projetos.md). Preservar M4.1–M4.3, envelope **9**, composição **nominal-v10** e a atualização de cálculo da §21. M5 não muda a paginação nem acrescenta algoritmo construtivo ou biblioteca.
 
 ### 23.1. Projeção de consulta
 
@@ -711,7 +711,7 @@ Cartão comum de 80 px incluindo borda, com conteúdo principal de no mínimo 78
 
 ## 24. Contratos de M6 — Preferências do Ecovit
 
-**Estado: implementado e aceito pelo solicitante.** Requisitos de produto: PRD RF-09/10/14 e §8; escopo, verificações e aceite: Plano §13. M6 é uma evolução de apresentação independente do encerramento de M5, sem mudança no motor ou no contrato de projeto.
+**Estado: implementado e aceito pelo solicitante.** Requisitos de produto: PRD RF-09/10/14 e §8; escopo, verificações e aceite: [M6](marcos/M6-Preferencias.md). M6 é uma evolução de apresentação independente do encerramento de M5, sem mudança no motor ou no contrato de projeto.
 
 Preferências de apresentação permanecem separadas do documento de projeto e de suas configurações construtivas. `src/state/preferences.ts` mantém estado Zustand próprio e registro local no localStorage, chave `ecovit:preferences:v1`, com booleanos door/window/opening/wall, inicialmente true. Validar a leitura; ausência, conteúdo inválido ou falha de leitura usam padrões seguros, sem impedir abertura do aplicativo. Não criar tabela no banco de projetos, serviço, conta ou dependência. O estado em memória acompanha a aplicação, sem reinicializar ao trocar/fechar projeto; ler o registro na inicialização. Sincronização em tempo real entre abas não integra M6.
 
@@ -733,7 +733,7 @@ Retirar o span de status da barra Planta/Fiada e o status duplicado do footer. P
 
 ## 25. Contratos de M7 — Medidas independentes
 
-**Estado: implementado e aceito pelo solicitante.** Produto em RF-15, escopo, verificações e aceite no Plano §14. Aplicativo 0.12.0, envelope 10 com leitura de 9, sem alteração da convenção nominal-v10.
+**Estado: implementado e aceito pelo solicitante.** Produto em RF-15, escopo, verificações e aceite no [M7](marcos/M7-Medidas.md). Aplicativo 0.12.0, envelope 10 com leitura de 9, sem alteração da convenção nominal-v10.
 
 ### 25.1. Dados e precisão
 
@@ -765,7 +765,7 @@ Duplicação de projeto/importação preserva o desenho das medidas conforme o c
 
 ## 26. Contratos de M8 — Imagem de referência por pavimento
 
-**Estado: implementado e aceito pelo solicitante; verificações e registro do aceite no Plano §15.** Produto: PRD RF-16; escopo, verificações e aceite: Plano §15. Aplicativo 0.13.0, envelope 11 com leitura de 9/10. Sem mudança da convenção nominal, biblioteca ou serviço novo.
+**Estado: implementado e aceito pelo solicitante; verificações e registro do aceite no [M8](marcos/M8-Imagem-de-Referencia.md).** Produto: PRD RF-16; escopo, verificações e aceite: [M8](marcos/M8-Imagem-de-Referencia.md). Aplicativo 0.13.0, envelope 11 com leitura de 9/10. Sem mudança da convenção nominal, biblioteca ou serviço novo.
 
 ### 26.1. Dados, arquivo e validação
 
@@ -789,7 +789,7 @@ Usar seção compacta em Propriedades do pavimento: controles essenciais no esta
 
 ## 27. M9 — Tipos e orientação de esquadrias
 
-Contrato do RF-06/BL-08; escopo e aceite no Plano §16. Aplicativo 0.14.0, envelope 12 e convenção nominal-v10. Opening recebe appearance opcional: { type, orientation }. type admite swing, double-swing, sliding, center-sliding e tilt; center-sliding só para portas, e vão livre não admite appearance. orientation é inteiro 0..3 para swing/sliding e 0..1 para os demais. Ausência representa esquadria genérica legada, sem atribuir tipo físico. Não persistir quantidade redundante de folhas: definida pela combinação kind/type.
+Contrato do RF-06/BL-08; escopo e aceite no [M9](marcos/M9-Esquadrias.md). Aplicativo 0.14.0, envelope 12 e convenção nominal-v10. Opening recebe appearance opcional: { type, orientation }. type admite swing, double-swing, sliding, center-sliding e tilt; center-sliding só para portas, e vão livre não admite appearance. orientation é inteiro 0..3 para swing/sliding e 0..1 para os demais. Ausência representa esquadria genérica legada, sem atribuir tipo físico. Não persistir quantidade redundante de folhas: definida pela combinação kind/type.
 
 Leitura dos envelopes 9/10/11 normaliza para 12 em memória, preservando a origem e recusando appearance em envelopes antigos; a leitura de 9 acrescenta medidas vazias, a de 9/10 imagens vazias. Envelope 12 valida estritamente tipos e orientações, inclusive a combinação com kind. Campos desconhecidos, combinações inválidas e snapshots adulterados continuam recusados. Lista local reconhece 9–12. Cópia, remapeamento de paredes/pavimentos e histórico preservam appearance por valor.
 
@@ -799,7 +799,7 @@ O seletor Tipo da esquadria e o único botão Alternar orientação confirmam op
 
 ## 28. Contratos de M10 — Mobiliários
 
-**Estado: implementado, verificado pelo Codex e aceito pelo solicitante.** Produto em PRD RF-17; catálogo, tarefas, evidências e aceite no Plano §17. Aplicativo 0.15.1/envelope 14/nominal-v10.
+**Estado: implementado, verificado pelo Codex e aceito pelo solicitante.** Produto em PRD RF-17; catálogo, tarefas, evidências e aceite no [M10](marcos/M10-Mobiliarios.md). Aplicativo 0.15.1/envelope 14/nominal-v10.
 
 ### 28.1. Catálogo e preparação das artes
 
