@@ -140,7 +140,7 @@ it("M8 arquivo 11, leitura 9/10 sem tocar origem e referências inválidas recus
     if (version === 9) delete old.model.measurements;
     const original = JSON.stringify(old),
       normalized = validateProject(old);
-    expect(normalized.schemaVersion).toBe(13);
+    expect(normalized.schemaVersion).toBe(14);
     expect(normalized.model.referenceImages).toEqual([]);
     expect(JSON.stringify(old)).toBe(original);
     old.model.referenceImages = [];

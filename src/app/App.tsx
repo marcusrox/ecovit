@@ -402,9 +402,10 @@ function Properties({ doc }: { doc: Project }) {
       <details>
         <summary>Como usar o editor</summary>
         <p>
-          Mobiliários: escolha no catálogo e clique na Planta.
-          Arraste para mover; as alças preservam a proporção e o controle
-          circular gira. Ajuste dimensões em cm nas propriedades. Escape
+          Mobiliários: escolha no catálogo e clique na Planta. Arraste para
+          mover; os quatro cantos preservam a proporção atual. As duas alças
+          quadradas ajustam largura ou profundidade separadamente; o controle
+          circular externo gira. Ajuste dimensões em cm nas propriedades. Escape
           cancela. Uploads são incorporados ao .ecovit; imagens padrão usam o
           catálogo do aplicativo.
         </p>

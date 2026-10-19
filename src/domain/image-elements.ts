@@ -41,6 +41,41 @@ export function elementLocal(e: ImageElement, p: Point): Point {
     y: -(p.x - e.x) * s + (p.y - e.y) * c,
   };
 }
+export function elementSideHandle(
+  e: ImageElement,
+  axis: "width" | "depth",
+): Point {
+  const a = (e.angle * Math.PI) / 180;
+  return axis === "width"
+    ? {
+        x: e.x + (Math.cos(a) * e.width) / 2,
+        y: e.y + (Math.sin(a) * e.width) / 2,
+      }
+    : {
+        x: e.x - (Math.sin(a) * e.depth) / 2,
+        y: e.y + (Math.cos(a) * e.depth) / 2,
+      };
+}
+export function resizeElementSide(
+  e: ImageElement,
+  axis: "width" | "depth",
+  p: Point,
+): ImageElement {
+  const local = elementLocal(e, p);
+  const size = (axis === "width" ? local.x : local.y) + e[axis] / 2;
+  if (!Number.isFinite(size) || size <= 0)
+    throw new Error(
+      "Mantenha largura e profundidade positivas, sem cruzar o lado oposto.",
+    );
+  const delta = (size - e[axis]) / 2,
+    a = (e.angle * Math.PI) / 180;
+  return {
+    ...e,
+    [axis]: size,
+    x: e.x + (axis === "width" ? Math.cos(a) : -Math.sin(a)) * delta,
+    y: e.y + (axis === "width" ? Math.sin(a) : Math.cos(a)) * delta,
+  };
+}
 export const hitImageElement = (e: ImageElement, p: Point, tolerance = 0) => {
   const q = elementLocal(e, p);
   return (
@@ -69,18 +104,17 @@ export function validateElement(
   e: ImageElement,
   assets: readonly CustomImageAsset[],
 ) {
-  const ratio = elementRatio(e, assets);
+  elementRatio(e, assets);
   if (
     ![e.x, e.y, e.width, e.depth, e.angle].every(Number.isFinite) ||
     e.width <= 0 ||
     e.depth <= 0 ||
     Math.abs(e.angle) > 360 ||
-    Math.abs(e.width / e.depth - ratio) > 1e-8 * Math.max(1, ratio) ||
     elementCorners(e).some(
       (p) => Math.abs(p.x) > LIMIT || Math.abs(p.y) > LIMIT,
     )
   )
-    throw new Error("Dimensões, proporção ou posição da imagem inválidas.");
+    throw new Error("Dimensões ou posição da imagem inválidas.");
 }
 export function validateCustomAsset(a: CustomImageAsset) {
   const info = inspectImage(imageBytes(a.data));

@@ -4,7 +4,7 @@ Registro de ideias para desenvolvimento futuro, criado em 15 de outubro de 2026.
 
 ## BL-01 — Imagens como elementos do projeto
 
-**Estado: implementado no M10, verificado pelo Codex; aceite funcional do solicitante pendente.** Biblioteca integrada ao Ecovit com núcleo de 40 opções em oito categorias, vista superior, cores suaves e acabamento uniforme aprovado, com vegetação simplificada. Inserção e edição de ocorrências por pavimento em Planta, dimensões proporcionais, rotação, duplicação e histórico, sem efeito construtivo. Imagens padrão são referenciadas pelo catálogo e não incorporadas ao `.ecovit`; PNG/JPEG personalizados são incorporados uma vez e reutilizados por suas ocorrências. Comportamento no PRD RF-17, contratos na Arquitetura §28, catálogo e tarefas/aceite no Plano §17. A aprovação do padrão visual permanece distinta do aceite funcional da entrega.
+**Estado: implementado no M10, verificado pelo Codex; aceite funcional do solicitante pendente.** Biblioteca integrada ao Ecovit com núcleo de 40 opções em oito categorias, vista superior, cores suaves e acabamento uniforme aprovado, com vegetação simplificada. Inserção e edição de ocorrências por pavimento em Planta, dimensões proporcionais pelos cantos/campos e independentes por duas alças quadradas, rotação, duplicação e histórico, sem efeito construtivo. Imagens padrão são referenciadas pelo catálogo e não incorporadas ao `.ecovit`; PNG/JPEG personalizados são incorporados uma vez e reutilizados por suas ocorrências. Comportamento no PRD RF-17, contratos na Arquitetura §28, catálogo e tarefas/aceite no Plano §17. A aprovação do padrão visual permanece distinta do aceite funcional da entrega.
 
 ## BL-02 — Imagens de fundo com transparência
 

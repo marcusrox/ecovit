@@ -89,7 +89,7 @@ it("EX-93: cópia persistida independente, intenção/referências/pendências i
   expect(copy.model).toEqual(source.model);
   expect(copy.adjustments).toEqual(source.adjustments);
   expect(copy.generated).toEqual(source.generated);
-  expect(copy.metadata.appVersion).toBe("0.15.0");
+  expect(copy.metadata.appVersion).toBe("0.15.1");
   expect(await loadProject(source.project.id)).toEqual(source);
   expect(await loadProject(copy.project.id)).toEqual(copy);
   copy.model.walls[0].a.x = 1250;

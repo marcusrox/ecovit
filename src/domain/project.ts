@@ -107,7 +107,7 @@ export type Tool =
   "select" | "wall" | "slab" | "measure" | "furniture" | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 13;
+  schemaVersion: 14;
   project: {
     id: string;
     name: string;
@@ -197,7 +197,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 13,
+    schemaVersion: 14,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -229,7 +229,7 @@ export function createProject(
     adjustments: { junctions: [], grout: [], channels: [] },
     generated: null,
     generationState: { status: "outdated", diagnostics: [] },
-    metadata: { createdAt: now, updatedAt: now, appVersion: "0.15.0" },
+    metadata: { createdAt: now, updatedAt: now, appVersion: "0.15.1" },
   };
 }
 export const snap = (n: number, module: number) =>

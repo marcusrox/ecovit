@@ -159,7 +159,7 @@ type State = Inspection & {
 };
 export const useStore = create<State>((set, get) => {
   async function persist(doc: Project, calculate = true) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.15.0" } };
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.15.1" } };
     set({ doc });
     set({ busy: true, saved: "saving" });
     let saveFailed = false;
@@ -565,7 +565,7 @@ export const useStore = create<State>((set, get) => {
               : s.doc.generationState,
             metadata: {
               ...candidate.metadata,
-              appVersion: "0.15.0",
+              appVersion: "0.15.1",
               updatedAt: new Date().toISOString(),
             },
           },

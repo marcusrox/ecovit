@@ -191,7 +191,7 @@ test("M9 histórico, transporte, legado 11 e bloqueio real entre abas", async ({
   await settled(page);
   expect((await doc(page)).model.openings).toEqual(selected.model.openings);
   const copy = await exported(page);
-  expect(copy.schemaVersion).toBe(13);
+  expect(copy.schemaVersion).toBe(14);
   expect(copy.model.openings).toEqual(selected.model.openings);
   expect(copy.generated).toEqual(before.generated);
   const second = await context.newPage();

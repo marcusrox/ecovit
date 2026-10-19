@@ -2,6 +2,10 @@ import { test, expect, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { createProject, type Project } from "../../src/domain/project";
 import { imageCatalog } from "../../src/domain/image-catalog";
+import {
+  elementCorners,
+  elementSideHandle,
+} from "../../src/domain/image-elements";
 async function state(page: Page) {
   return page.evaluate(async () => {
     const path = "/src/state/store.ts";
@@ -120,7 +124,7 @@ test("M10 catálogo, inserção/cancelamento, propriedades, histórico e exporta
   const file = await event;
   const text = await readFile((await file.path())!, "utf8"),
     output = JSON.parse(text);
-  expect(output.schemaVersion).toBe(13);
+  expect(output.schemaVersion).toBe(14);
   expect(output.model.customImageAssets).toEqual([]);
   expect(text).not.toContain("data:image");
   expect(Buffer.byteLength(text)).toBeLessThan(10000);
@@ -367,6 +371,116 @@ test("M10 mesas com cadeiras, propriedades compactas e atração angular pela al
   });
   expect(rect.width).toBe(26000);
   expect(rect.depth).toBe(19000);
+});
+
+test("M10 alças quadradas independentes, cantos proporcionais e transporte da deformação", async ({
+  page,
+}) => {
+  await open(page);
+  let e = await insert(page);
+  const original = e;
+  const panel = page.getByRole("complementary", {
+    name: "Propriedades do mobiliário",
+  });
+  async function drag(
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+  ) {
+    const a = await at(page, from.x, from.y),
+      b = await at(page, to.x, to.y);
+    await page.mouse.move(a.x, a.y);
+    await page.mouse.down();
+    await page.mouse.move(b.x, b.y, { steps: 5 });
+    await page.mouse.up();
+    await settled(page);
+  }
+  let start = elementSideHandle(e, "width");
+  await drag(start, { x: start.x + 4000, y: start.y });
+  e = (await state(page)).doc.model.imageElements[0];
+  expect(Math.abs(e.width - original.width - 4000)).toBeLessThan(100);
+  expect(e.depth).toBe(original.depth);
+  expect(e.x - e.width / 2).toBeCloseTo(original.x - original.width / 2);
+  const widened = e;
+  await page.getByRole("button", { name: "Desfazer", exact: true }).click();
+  await settled(page);
+  expect((await state(page)).doc.model.imageElements[0]).toEqual(original);
+  await page.getByRole("button", { name: "Refazer", exact: true }).click();
+  await settled(page);
+  expect((await state(page)).doc.model.imageElements[0]).toEqual(widened);
+  await page
+    .getByLabel("Selecionar elemento", { exact: true })
+    .selectOption(e.id);
+  await panel.getByLabel("Rotação (graus)").fill("45");
+  await panel.getByRole("button", { name: "Aplicar imagem" }).click();
+  await settled(page);
+  e = (await state(page)).doc.model.imageElements[0];
+  const beforeDepth = e,
+    c = Math.SQRT1_2;
+  start = elementSideHandle(e, "depth");
+  await drag(start, { x: start.x - c * 3000, y: start.y + c * 3000 });
+  e = (await state(page)).doc.model.imageElements[0];
+  expect(e.width).toBe(beforeDepth.width);
+  expect(Math.abs(e.depth - beforeDepth.depth - 3000)).toBeLessThan(100);
+  expect(e.angle).toBe(45);
+  for (const i of [0, 1]) {
+    expect(elementCorners(e)[i].x).toBeCloseTo(
+      elementCorners(beforeDepth)[i].x,
+    );
+    expect(elementCorners(e)[i].y).toBeCloseTo(
+      elementCorners(beforeDepth)[i].y,
+    );
+  }
+  const beforeCancel = await state(page);
+
+  start = elementSideHandle(e, "depth");
+  const screen = await at(page, start.x, start.y);
+  await page.mouse.move(screen.x, screen.y);
+  await page.mouse.down();
+  await page.mouse.move(screen.x - 20, screen.y + 20, { steps: 3 });
+  await page.keyboard.press("Escape");
+  await page.mouse.up();
+  expect((await state(page)).history).toEqual(beforeCancel.history);
+  expect((await state(page)).doc).toEqual(beforeCancel.doc);
+  await drag(start, {
+    x: start.x + c * (e.depth + 2000),
+    y: start.y - c * (e.depth + 2000),
+  });
+  expect((await state(page)).doc).toEqual(beforeCancel.doc);
+  const beforeCorner = e,
+    corners = elementCorners(e),
+    anchor = corners[0],
+    corner = corners[2];
+  await drag(corner, {
+    x: anchor.x + (corner.x - anchor.x) * 1.15,
+    y: anchor.y + (corner.y - anchor.y) * 1.15,
+  });
+  e = (await state(page)).doc.model.imageElements[0];
+  expect(e.width).toBeGreaterThan(beforeCorner.width);
+  expect(e.width / e.depth).toBeCloseTo(
+    beforeCorner.width / beforeCorner.depth,
+    10,
+  );
+  expect(elementCorners(e)[0].x).toBeCloseTo(anchor.x);
+  expect(elementCorners(e)[0].y).toBeCloseTo(anchor.y);
+  const ratio = e.width / e.depth;
+  await panel.getByLabel("Largura (cm)", { exact: true }).fill("300");
+  await panel.getByRole("button", { name: "Aplicar imagem" }).click();
+  await settled(page);
+  e = (await state(page)).doc.model.imageElements[0];
+  expect(e.width / e.depth).toBeCloseTo(ratio, 3);
+  const event = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Baixar projeto", exact: true })
+    .click();
+  const file = await event,
+    text = await readFile((await file.path())!, "utf8");
+  await page.getByTestId("import-file").setInputFiles({
+    name: "deformado.ecovit",
+    mimeType: "application/json",
+    buffer: Buffer.from(text),
+  });
+  await settled(page);
+  expect((await state(page)).doc.model.imageElements[0]).toEqual(e);
 });
 
 test("M10 acervo transparente e revisão visual nas três resoluções", async ({

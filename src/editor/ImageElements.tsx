@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { Circle, Group, Image as KonvaImage, Layer, Line } from "react-konva";
+import {
+  Circle,
+  Rect,
+  Group,
+  Image as KonvaImage,
+  Layer,
+  Line,
+} from "react-konva";
 import {
   cm,
   display,
@@ -17,6 +24,8 @@ import {
 } from "../domain/image-catalog";
 import {
   elementCorners,
+  elementSideHandle,
+  resizeElementSide,
   elementRatio,
   elementUrl,
   hitImageElement,
@@ -111,12 +120,11 @@ function ObjectBitmap({
     };
   }, [url]);
   if (!bitmap) return null;
-  const fit = Math.min(
-    element.width / bitmap.crop.width,
-    element.depth / bitmap.crop.height,
-  );
-  const width = bitmap.crop.width * fit * camera.scale;
-  const height = bitmap.crop.height * fit * camera.scale;
+  const sourceRatio = elementRatio(element, assets);
+  const fit = Math.min(sourceRatio / bitmap.crop.width, 1 / bitmap.crop.height);
+  const width =
+    ((bitmap.crop.width * fit * element.width) / sourceRatio) * camera.scale;
+  const height = bitmap.crop.height * fit * element.depth * camera.scale;
   return (
     <KonvaImage
       image={bitmap.image}
@@ -352,7 +360,7 @@ export function ImageElementProperties({ doc }: { doc: LocalProject }) {
     setDepth(display(e.depth));
     setAngle(String(e.angle));
   }, [e]);
-  const ratio = elementRatio(e, doc.model.customImageAssets);
+  const ratio = e.width / e.depth;
   function size(value: string, axis: "width" | "depth") {
     if (axis === "width") setWidth(value);
     else setDepth(value);
@@ -468,8 +476,9 @@ export function ImageElementProperties({ doc }: { doc: LocalProject }) {
         </button>
       </fieldset>
       <p className={styles.furnitureNote}>
-        Proporção preservada. Arraste para mover; use as alças para tamanho e
-        rotação. Dimensões genéricas, sem validação física.
+        Cantos mantêm a proporção atual. Alças quadradas ajustam só largura ou
+        profundidade e podem deformar a imagem. Arraste o corpo para mover.
+        Dimensões genéricas, sem validação física.
       </p>
       {error && <p role="alert">{error}</p>}
     </aside>
@@ -495,7 +504,7 @@ export function useImageElements(
   const drag = useRef<{
     original: ImageElement;
     start: Point;
-    kind: "move" | "resize" | "rotate";
+    kind: "move" | "resize" | "rotate" | "width" | "depth";
     corner?: number;
   } | null>(null);
   const draft =
@@ -529,7 +538,8 @@ export function useImageElements(
       if (
         e.key === "Escape" &&
         !document.querySelector("dialog[open]") &&
-        !(e.target as HTMLElement).closest("input,textarea,select")
+        (drag.current ||
+          !(e.target as HTMLElement).closest("input,textarea,select"))
       )
         blur();
     };
@@ -537,11 +547,12 @@ export function useImageElements(
       if (!host.current?.contains(e.target as Node)) cancel();
     };
     window.addEventListener("blur", blur);
-    window.addEventListener("keydown", key);
+    // Cancel before canvas shortcuts can change store state and replace listeners.
+    window.addEventListener("keydown", key, true);
     window.addEventListener("mouseup", outside);
     return () => {
       window.removeEventListener("blur", blur);
-      window.removeEventListener("keydown", key);
+      window.removeEventListener("keydown", key, true);
       window.removeEventListener("mouseup", outside);
     };
   });
@@ -570,7 +581,13 @@ export function useImageElements(
           (Math.atan2(p.y - e.y, p.x - e.x) * 180) / Math.PI + 90,
         ),
       });
-    else {
+    else if (g.kind === "width" || g.kind === "depth") {
+      try {
+        setPreview(resizeElementSide(e, g.kind, p));
+      } catch {
+        setPreview(null);
+      }
+    } else {
       const corners = elementCorners(e),
         anchor = corners[(g.corner! + 2) % 4],
         end = corners[g.corner!];
@@ -633,6 +650,13 @@ export function useImageElements(
         drag.current = { original: active, start: p, kind: "resize", corner };
         setPreview(active);
         return true;
+      }
+      for (const axis of ["width", "depth"] as const) {
+        if (near(elementSideHandle(active, axis))) {
+          drag.current = { original: active, start: p, kind: axis };
+          setPreview(active);
+          return true;
+        }
       }
     }
     if (
@@ -754,6 +778,24 @@ export function useImageElements(
                 strokeWidth={2}
               />
             ))}
+            {(["width", "depth"] as const).map((axis) => {
+              const p = elementSideHandle(shown, axis);
+              return (
+                <Rect
+                  key={axis}
+                  x={p.x * camera.scale + camera.x}
+                  y={p.y * camera.scale + camera.y}
+                  width={10}
+                  height={10}
+                  offsetX={5}
+                  offsetY={5}
+                  rotation={shown.angle}
+                  fill="white"
+                  stroke="#245d49"
+                  strokeWidth={2}
+                />
+              );
+            })}
             <Line
               points={[
                 shown.x * camera.scale + camera.x,

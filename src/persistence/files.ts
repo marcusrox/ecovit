@@ -144,7 +144,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(13),
+    schemaVersion: z.literal(14),
     project: z
       .object({
         id,
@@ -385,15 +385,17 @@ export function validateProject(
     (value.schemaVersion === 9 ||
       value.schemaVersion === 10 ||
       value.schemaVersion === 11 ||
-      value.schemaVersion === 12) &&
+      value.schemaVersion === 12 ||
+      value.schemaVersion === 13) &&
     "model" in value &&
     value.model &&
     typeof value.model === "object"
   ) {
     if (
       (value.schemaVersion < 11 && "referenceImages" in value.model) ||
-      "imageElements" in value.model ||
-      "customImageAssets" in value.model ||
+      (value.schemaVersion < 13 &&
+        ("imageElements" in value.model ||
+          "customImageAssets" in value.model)) ||
       (value.schemaVersion === 9 && "measurements" in value.model)
     )
       throw new Error("Arquivo inválido: campos em formato anterior.");
@@ -408,13 +410,14 @@ export function validateProject(
       throw new Error("Arquivo inválido: aparência em formato anterior.");
     value = {
       ...value,
-      schemaVersion: 13,
+      schemaVersion: 14,
       model: {
         ...value.model,
         ...(value.schemaVersion === 9 ? { measurements: [] } : {}),
         ...(value.schemaVersion < 11 ? { referenceImages: [] } : {}),
-        imageElements: [],
-        customImageAssets: [],
+        ...(value.schemaVersion < 13
+          ? { imageElements: [], customImageAssets: [] }
+          : {}),
       },
     };
   }
@@ -422,10 +425,10 @@ export function validateProject(
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 13
+    value.schemaVersion !== 14
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 13; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 14; demais formatos não são convertidos.",
     );
   const parsed = schema.safeParse(value);
   if (!parsed.success)

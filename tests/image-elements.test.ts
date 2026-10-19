@@ -17,6 +17,8 @@ import {
 import {
   elementCorners,
   elementLocal,
+  elementSideHandle,
+  resizeElementSide,
   hitImageElement,
   setImageElement,
   snapFurnitureAngle,
@@ -91,9 +93,49 @@ it("M10-A04/10 transformação do retângulo rotacionado e seleção respeitam p
     { depth: Infinity },
     { angle: 361 },
     { x: LIMIT },
-    { depth: e.depth + 10 },
   ])
     expect(() => validateElement({ ...e, ...bad }, [])).toThrow();
+});
+it("M10-A04 duas alças laterais alteram um eixo local e fixam a aresta oposta, inclusive após giro", () => {
+  for (const angle of [0, 45, 90, 135, 270]) {
+    for (const axis of ["width", "depth"] as const) {
+      const e = { ...sofa(project()), x: -10000, y: 20000, angle };
+      const handle = elementSideHandle(e, axis),
+        a = (angle * Math.PI) / 180;
+      // Movement perpendicular to the active axis must have no effect on its size.
+      const u =
+        axis === "width"
+          ? { x: Math.cos(a), y: Math.sin(a) }
+          : { x: -Math.sin(a), y: Math.cos(a) };
+      const resized = resizeElementSide(e, axis, {
+        x: handle.x + u.x * 4000 - u.y * 2300,
+        y: handle.y + u.y * 4000 + u.x * 2300,
+      });
+      expect(resized[axis]).toBeCloseTo(e[axis] + 4000);
+      expect(resized[axis === "width" ? "depth" : "width"]).toBe(
+        e[axis === "width" ? "depth" : "width"],
+      );
+      expect(resized.angle).toBe(angle);
+      const before = elementCorners(e),
+        after = elementCorners(resized);
+      for (const i of axis === "width" ? [0, 3] : [0, 1]) {
+        expect(after[i].x).toBeCloseTo(before[i].x);
+        expect(after[i].y).toBeCloseTo(before[i].y);
+      }
+      expect(() => validateElement(resized, [])).not.toThrow();
+      const shrunk = resizeElementSide(e, axis, {
+        x: handle.x - u.x * 1000,
+        y: handle.y - u.y * 1000,
+      });
+      expect(shrunk[axis]).toBeCloseTo(e[axis] - 1000);
+      expect(() =>
+        resizeElementSide(e, axis, {
+          x: handle.x - u.x * e[axis] * 2,
+          y: handle.y - u.y * e[axis] * 2,
+        }),
+      ).toThrow();
+    }
+  }
 });
 it("M10-A07 padrões são referências, uploads reutilizados uma vez e cópia transporta intenção", () => {
   const d = project(),
@@ -101,14 +143,14 @@ it("M10-A07 padrões são referências, uploads reutilizados uma vez e cópia tr
     e = sofa(d);
   d.model.customImageAssets = [a];
   d.model.imageElements = [
-    e,
+    { ...e, depth: e.depth * 1.3 },
     {
       ...e,
       id: crypto.randomUUID(),
       name: "Custom",
       source: { kind: "custom", assetId: a.id },
       width: 10000,
-      depth: 10000,
+      depth: 7000,
     },
   ];
   d.model.imageElements.push({
@@ -127,6 +169,27 @@ it("M10-A07 padrões são referências, uploads reutilizados uma vez e cópia tr
   });
   expect(text).not.toContain("/catalog/");
   expect(text).not.toContain("data:image");
+});
+it("M10-A08 lê envelope 13 preservando ocorrências e bytes sem modificar a origem", () => {
+  const d = project(),
+    a = asset();
+  d.model.customImageAssets = [a];
+  d.model.imageElements = [
+    sofa(d),
+    {
+      ...sofa(d),
+      id: crypto.randomUUID(),
+      source: { kind: "custom", assetId: a.id },
+      width: 1000,
+      depth: 1000,
+    },
+  ];
+  const old = { ...d, schemaVersion: 13 },
+    original = JSON.stringify(old);
+  const restored = validateProject(old);
+  expect(restored.schemaVersion).toBe(14);
+  expect(restored.model).toEqual(d.model);
+  expect(JSON.stringify(old)).toBe(original);
 });
 it("M10-A06/08 recusa fontes órfãs, padrão desconhecido, IDs repetidos e conteúdo adulterado", () => {
   const d = project(),
@@ -185,7 +248,7 @@ it("M10-A08 leitura 9–12 normaliza coleções vazias sem modificar origem ou a
     if (version === 9) delete old.model.measurements;
     const original = JSON.stringify(old),
       restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(13);
+    expect(restored.schemaVersion).toBe(14);
     expect(restored.model.imageElements).toEqual([]);
     expect(JSON.stringify(old)).toBe(original);
     old.model.imageElements = [];
