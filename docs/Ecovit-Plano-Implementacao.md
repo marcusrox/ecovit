@@ -2,12 +2,12 @@
 
 **Data:** 10 de outubro de 2026  
 **Atualização documental:** 19 de outubro de 2026\
-**Base:** [PRD 0.34](Ecovit-PRD.md) e [Arquitetura 1.27](Ecovit-Arquitetura-Tecnica.md)\
-**Estado:** M1, M2 e M3.1–M3.5 aprovados pelo solicitante; aceites globais de M3.4 e M3.5 recebidos em 14/10/2026. M4.1, M4.2 e M4.3 também aprovados pelo solicitante, conforme registro consolidado na seção 10. Relatórios e registros de aceite nas seções 7–10. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais. M5 implementado, revisado e aceito pelo solicitante; registro e verificações na seção 12. M6 implementado, verificado pelo Codex e aceito pelo solicitante; registro na seção 13. M7 implementado e aceito pelo solicitante, incluindo a criação por dois cliques; verificações e registro do aceite na seção 14. M8 implementado e aceito pelo solicitante; verificações e registro do aceite na seção 15.
+**Base:** [PRD 0.35](Ecovit-PRD.md) e [Arquitetura 1.28](Ecovit-Arquitetura-Tecnica.md)\
+**Estado:** M1, M2 e M3.1–M3.5 aprovados pelo solicitante; aceites globais de M3.4 e M3.5 recebidos em 14/10/2026. M4.1, M4.2 e M4.3 também aprovados pelo solicitante, conforme registro consolidado na seção 10. Relatórios e registros de aceite nas seções 7–10. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais. M5 implementado, revisado e aceito pelo solicitante; registro e verificações na seção 12. M6 implementado, verificado pelo Codex e aceito pelo solicitante; registro na seção 13. M7 implementado e aceito pelo solicitante, incluindo a criação por dois cliques; verificações e registro do aceite na seção 14. M8 implementado e aceito pelo solicitante; verificações e registro do aceite na seção 15. M9 implementado e aceito pelo solicitante; verificações e registro do aceite na seção 16.
 
 ## 1. Como usar este plano
 
-Ideias para evoluções futuras estão no [backlog](Ecovit-Backlog.md), com oito propostas do solicitante e estado por item quando definido. BL-06 está implementado; BL-07 foi implementado e aceito pelo solicitante no M6 (§13). BL-03 foi implementado e aceito pelo solicitante no M7 (§14). BL-02 implementado e aceito pelo solicitante no M8 (§15). Os demais itens continuam sem escopo de implementação aprovado. Aprovação de especificação não equivale a autorização para implementar nem a aceite funcional.
+Ideias para evoluções futuras estão no [backlog](Ecovit-Backlog.md), com oito propostas do solicitante e estado por item quando definido. BL-06 está implementado; BL-07 foi implementado e aceito pelo solicitante no M6 (§13). BL-03 foi implementado e aceito pelo solicitante no M7 (§14). BL-02 implementado e aceito pelo solicitante no M8 (§15). BL-08 foi implementado e aceito pelo solicitante no M9 (§16). Os demais itens continuam sem escopo de implementação aprovado. Aprovação de especificação não equivale a autorização para implementar nem a aceite funcional.
 
 Cada marco acrescenta uma funcionalidade testável ao aplicativo definitivo. M1 mantém sua especificação e relatório; M2 está detalhado na seção 5, M3.1–3.3 na seção 7, M3.4 na seção 8 e M3.5 na seção 9. M significa Marco e é a única sigla usada para essas etapas. Subdivisões usam ponto: M3.1 (Vãos), M3.2 (Canaletas), M3.3 (Grauteamentos), M3.4 (Evolução da edição no canvas) e M3.5 (Cruz nominal). Preservar IDs existentes; M3.4/M3.5 usam seus próprios prefixos de tarefa/aceite, sem renumerar entregas aceitas. RF, CT e EX continuam identificando requisitos, convenções técnicas e exemplos.
 
@@ -33,6 +33,7 @@ O PRD define comportamento; a arquitetura define contratos de dados/processament
 | M6 — Preferências do Ecovit | Preferências de rótulos, comprimento/altura das paredes e reorganização do status/ajuda do canvas | BL-07; RF-09/10/14 | Implementado e aceito pelo solicitante; registro e verificações na §13 |
 | M7 — Medidas independentes | Segmentos de medição livres em Planta, atração geométrica e persistência por pavimento | BL-03; RF-15, integração com RF-02/08/09/11/12/14 | Implementado e aceito pelo solicitante; verificações e aceite na §14 |
 | M8 — Imagem de referência por pavimento | Uma imagem de fundo calibrada, posição/rotação, opacidade e interface compacta | BL-02; RF-16, integração com RF-02/08/09/11/12 | Implementado e aceito pelo solicitante; verificações e aceite na §15 |
+| M9 — Tipos de portas e janelas | Nove variantes e símbolos em Planta com botão único de orientação cíclica | BL-08; RF-06; Arquitetura §27; CT-17 | Implementado e aceito pelo solicitante; verificações e aceite na §16 |
 
 Persistência, integridade e verificação acompanham cada entrega. M4 depende da composição de M3 e acrescenta pavimentos independentes e comparação visual, com quebra de compatibilidade dos documentos anteriores; M5 depende de M4. A divisão de M4 em incrementos está na seção 10.
 
@@ -1042,3 +1043,59 @@ Roteiro de referência para o servidor habitual da porta 5173:
 5. Alternar/duplicar pavimento e conferir referências independentes; remover o pavimento e desfazer. Em Fiada e na referência de outro pavimento, conferir ausência da imagem daquele vizinho.
 6. Salvar, reabrir, baixar e importar o .ecovit; conferir imagem e ajustes mesmo sem o arquivo original no computador. Abrir outra aba em somente leitura e conferir visualização, com alterações bloqueadas. Falhas artificiais, limite total e chamadas ao motor ficam nas verificações do Codex.
 7. Comunicar eventuais problemas observados no uso do M8.
+
+## 16. M9 — Tipos e orientação de portas e janelas
+
+**Estado: implementado, verificado pelo Codex e aceito pelo solicitante.** Origem BL-08; RF-06, Arquitetura §27, CT-17/EX-95–99. Aceite funcional global na §16.4, separado das verificações do Codex.
+
+### 16.1. Alcance
+
+Nove variantes: portas de giro simples/duplo, correr simples/central e basculante de garagem; janelas de giro simples/duplo, correr de duas folhas e basculante. Símbolos conforme proposta aprovada, seletor contextual e um único botão Alternar orientação com ciclo completo. Padrões novos, preservação de genéricos legados, prévia, referências, arquivo/cópias/histórico e ausência de recálculo visual conforme contratos responsáveis. Fora do marco: demais tipos, colisões, animação, ferragens e contagem de esquadrias.
+
+### 16.2. Tarefas e aceite
+
+- [x] M9-T01: consolidar escopo aprovado e convenção visual nos documentos responsáveis.
+- [x] M9-T02: dados, validação e normalização de arquivos/local para envelope 12.
+- [x] M9-T03: símbolos compartilhados, seletor, botão cíclico e integração ao editor.
+- [x] M9-T04: verificar regressões, corrigir falhas e consolidar evidências/limites.
+
+| ID | Resultado verificável |
+|---|---|
+| M9-A01 | Nove variantes reconhecíveis sem cor/rótulo, proporcionais, nas duas direções de parede; tipos e defaults corretos. |
+| M9-A02 | Um único botão percorre quatro ou duas orientações e retorna à inicial; texto acessível identifica posição. Tipo/orientação aplicam sem confirmar dimensões em edição. |
+| M9-A03 | Seleção/movimento/alças pelo vão, leitura das dimensões e validações mantidos; cópias, histórico, reabertura e arquivo preservam aparência. |
+| M9-A04 | Mudança exclusivamente visual não chama motor nem altera resultado/diagnósticos/quantidades, inclusive resultado desatualizado e undo/redo. |
+| M9-A05 | Leitura íntegra de 9/10/11 preserva genéricos/origem; 12 recusa tipo/orientação/combinação inválidos e snapshot adulterado. |
+| M9-A06 | Referência usa símbolos sem interação, Fiada sem folhas/arcos/setas, preferências ocultam somente rótulos e readonly bloqueia alterações. |
+| M9-A07 | Chrome/Edge, teclado, foco e painel/canvas legíveis em 1366×768, 1280×720 e 900×680; tipos/lint/build e testes pertinentes aprovados. |
+
+### 16.3. Verificações, limites e aceite
+
+**Alcance implementado:** nove variantes em Planta e na referência de pavimento; geometria compartilhada com a prévia contextual. Seletor Tipo da esquadria e único botão Alternar orientação, ciclos completos de duas/quatro posições, indicação acessível da posição e preservação do foco após salvamento para uso repetido por teclado. Alterações visuais imediatas independentes dos campos dimensionais em edição; criação pendente só confirma com dimensões válidas. Novas portas em giro simples e janelas em correr; genéricos anteriores preservados até escolha explícita. Enquadramento inclui projeções em Planta; Fiada conserva o vão sem folhas/arcos/setas. Histórico, readonly, gravação/recuperação, arquivo e cópias integrados, incluindo cópia independente de appearance na duplicação de pavimento. Alterações visuais não chamam motor nem invalidam resultados atuais/desatualizados. Aplicativo 0.14.0, envelope 12 com leitura de 9/10/11, nominal-v10 preservado; sem dependências novas.
+
+**Verificação do Codex — M9-A01–07:** tipos, lint, build de produção e git diff --check aprovados. Suíte completa de domínio/persistência: **333 testes em 24 arquivos**, incluindo 17 testes de M9 (ciclos, geometria com expectativas literais, transformações, contratos, cópias, enquadramento, ausência de recálculo, histórico, readonly, falha de gravação e integridade de snapshot). Inclui o teste pesado de backup da suíte existente. Log `.tools/m9-unit.txt`; tipos/lint/build em `.tools/m9-types.txt`, `.tools/m9-lint.txt` e `.tools/m9-build.txt`.
+
+**Navegador:** **54 casos distintos aprovados em Chrome/Edge**, 27 por navegador: sete cenários de M9 em cada navegador e 40 regressões de vãos, preferências e comparação de pavimentos. Arquivos opening-appearance.spec.ts, opening-defaults.spec.ts, openings.spec.ts, preferences.spec.ts e floor-reference.spec.ts, excluindo cenário de carga do navegador. Logs finais `.tools/m9-browser-final.txt` (48) e `.tools/m9-browser-defaults.txt` (6). Ciclos completos exercitados nas nove variantes, em paredes horizontais/verticais, com comparação do canvas ao alternar e ao retornar à posição original; teclado/foco, dimensões em edição, criação real/padrões, criação pendente, undo/redo, download/reabertura, legado 11 e trava real entre abas. Leitura 9/10 e combinações inválidas cobertas em domínio. Fiada comparada antes/depois de alteração de aparência; preferências desligadas conservam símbolos. Servidores próprios na porta 5174 e contextos isolados; nenhuma utilização ou alteração do servidor da porta 5173. Não é declaração de execução de toda a suíte de navegador.
+
+**Apresentação:** controles acessíveis e sem rolagem horizontal no painel/documento nas resoluções 1366×768, 1280×720 e 900×680, com capturas em Chrome/Edge `.tools/m9-garage-<navegador>-<largura>.png` e `.tools/m9-vertical-<navegador>-<largura>.png`. Prancha com nove variantes no próprio aplicativo em `.tools/m9-catalog-<índice>-<navegador>.png`; revisão visual por amostra de prancha/basculantes em Chrome e orientação vertical em Edge, incluindo painel estreito. Build: JavaScript 960,35 kB (299,44 kB gzip), com avisos conhecidos não impeditivos de anotações do Zod e bundle acima de 500 kB. Sem auditoria completa de acessibilidade com leitor de tela ou nova garantia geral de desempenho.
+
+**Limites:** símbolos esquemáticos sem simulação, colisões ou declaração normativa; projeção basculante não informa altura/curso físico. Quantitativos permanecem de peças da composição, sem esquadrias. Projeções não viram alvos de seleção/atração; selecionar pelo vão ou pela lista de elementos. Rótulos podem sobrepor símbolos em desenhos densos; a preferência permite ocultá-los. Envelope 12 pode ser recusado por aplicativos anteriores. Aceites dos marcos anteriores preservados; aceite funcional global do M9 registrado na §16.4, sem alterar estes limites.
+
+**Integridade da sessão e bloqueios — RF-12/Arquitetura §9:** abertura repetida do mesmo projeto editável a partir do registro salvo conserva documento/histórico e trava; inicialização explícita reutiliza a trava própria e preserva a sessão anterior em caso de validação inválida. Descarte do store no hot reload impede novas alterações naquela instância, aguarda operação em andamento e libera a trava antes da substituição. Voltar à lista não mantém bloqueio de edição. Falha confirmada de reabertura contra a própria trava foi reproduzida em Chrome/Edge e corrigida; ausência de rotina de descarte no módulo anterior permitia travas retidas durante desenvolvimento. O solicitante confirmou que fechar outra aba do Edge, que mostrava a lista, liberou o projeto; consulta mostrava duas travas sob um único clientId. Esse retorno confirma a liberação pelo encerramento do proprietário, sem comprovar o evento exato que originou as travas antigas. O solicitante também confirmou o funcionamento após a correção; aceite global do M9 na §16.4.
+
+**Verificação dos bloqueios:** 24 casos distintos aprovados em Chrome/Edge nos arquivos editor.spec.ts e project-lock.spec.ts (12 por navegador), com recarga real, consulta a Web Locks, reabertura idempotente/explicita, validação inválida, dono em outra aba, retorno à lista e liberação após fechamento. O teste de hot reload invoca a rotina real de descarte registrada no runtime Vite isolado, simula uma operação ocupada e verifica que a trava permanece até seu término, que a instância descartada não grava e que outra aba passa a editar; não edita fontes para provocar atualização no servidor do solicitante. Logs `.tools/lock-final.txt` (22) e `.tools/lock-list.txt` (2). Suíte completa de domínio/persistência revalidada: 333 testes em 24 arquivos, sem somar os mesmos testes novamente; log `.tools/lock-unit.txt`. Tipos, lint, build e git diff --check aprovados, logs `.tools/lock-types.txt`, `.tools/lock-lint.txt` e `.tools/lock-build.txt`. Build atual: JavaScript 960,44 kB (299,49 kB gzip), com os mesmos avisos conhecidos. Verificações na 5174, sem reiniciar/encerrar ou testar interativamente na 5173. Travas de módulos antigos já órfãos exigem encerrar/recarregar o documento proprietário; não há tomada forçada de bloqueios nem sincronização entre abas.
+
+### 16.4. Aceite do solicitante e roteiro manual de referência
+
+**Aceite global do solicitante:** M9 testado e aprovado por confirmação explícita nesta conversa. O solicitante declarou ter testado os tipos de portas e janelas e confirmou o funcionamento após a correção do bloqueio de edição. O aceite encerra a pendência funcional global do marco, preservando as verificações do Codex e as limitações registradas na §16.3. Os resultados individuais dos passos abaixo não foram informados; o roteiro permanece como referência, sem atribuir execução ou resultado específico a cada passo. Não autoriza iniciar outros itens do backlog.
+
+**Verificação deste registro documental:** estados do README, backlog, PRD, arquitetura, caderno técnico e plano alinhados; revisão de consistência e git diff --check, sem alteração de código ou nova execução de testes do aplicativo.
+
+No servidor habitual iniciado pelo solicitante com `./Start-Ecovit.ps1 -Task dev`, na porta 5173:
+
+1. Criar uma porta e uma janela; conferir padrões giro simples/correr, dimensões e prévia. Selecionar cada uma e experimentar todas as variantes de Tipo da esquadria, incluindo basculantes.
+2. Usar somente Alternar orientação para percorrer o ciclo completo e retornar à inicial, em paredes horizontais e verticais. Repetir com Tab/Enter e conferir indicação da posição e continuidade do foco.
+3. Digitar uma largura sem aplicar; trocar tipo/orientação e confirmar que o vão mantém a dimensão salva, conservando o texto digitado. Aplicar vão e conferir preservação da aparência. Mover/redimensionar, desfazer/refazer e conferir resultado.
+4. Ocultar rótulos de portas/janelas nas preferências; conferir reconhecimento dos símbolos e seleção pelo vão. Alternar Fiada e comparação de pavimentos, verificando ausência de folhas em Fiada e referência visual sem edição.
+5. Duplicar pavimento/projeto, alterar a cópia e conferir independência. Baixar/reabrir/importar `.ecovit`, verificando tipos/orientações. Em projeto anterior compatível, conferir símbolo genérico até escolher um tipo.
+6. Avaliar especialmente a legibilidade dos basculantes, da prévia e do botão no monitor habitual e comunicar eventuais problemas. Os resultados individuais dos passos do roteiro não foram informados pelo solicitante; o aceite global não atribui execução específica a cada um.

@@ -3,6 +3,7 @@
 **Convenção vigente:** nominal-v10; extensão de alturas em CT-14.
 **Estado:** M2 e M3.1–M3.5 implementados e aceitos. M4.1 implementado, revisado e aceito pelo solicitante; M4.2 implementado e aceito pelo solicitante conforme CT-13/EX-65–74, com verificações e aceite no plano; M4.3 implementado e aceito pelo solicitante conforme CT-15/EX-80–85, com verificações e aceite no plano.
 **M5:** contagem nominal implementada em CT-16/EX-86–94 (§12), com M5 aceito pelo solicitante; registro e verificações no Plano §12; sem nova convenção do motor.
+**M9:** símbolos esquemáticos implementados conforme CT-17/EX-95–99 (§13), sem mudança na convenção do motor; M9 aceito pelo solicitante, com verificações e registro do aceite no Plano §16.
 **Alcance implementado:** composição nominal de paredes, vãos, canaletas e grautes por pavimento independente, até quatro, e geometria de lajes/aberturas. CT-01–15 e EX-01–85 definem convenções e exemplos; CT-15/EX-80–85 pertencem a M4.3, e os casos de versões legadas são identificados explicitamente. O [PRD](Ecovit-PRD.md) define comportamento e limites do produto; o [plano](Ecovit-Plano-Implementacao.md) reúne verificações e aceite por marco.
 
 Durante o MVP, cada marco pode adotar novo contrato sem compatibilidade com formatos de marcos anteriores, sem obrigação de manter migrações ou geradores legados. M4.1 aplica essa quebra. As fórmulas e exemplos com referências distintas de piso e início da alvenaria documentam os marcos já entregues; não exigem sua conversão em marcos futuros. As convenções de M4 estão na seção 11; lajes implementadas conforme §11.2.
@@ -549,3 +550,16 @@ Nos exemplos a ordem dos vetores é **(inteiro, meio, canaleta, meia canaleta)**
 | EX-94 | EX-89 com vãos/alturas de EX-78, escolhas e supressões válidas/pendentes; editar/desfazer/refazer e baixar/reabrir, inclusive backup sem snapshot e nominal-v9. Consultar também em somente leitura e após falha de salvamento. | A consulta reflete exclusivamente as peças atuais após cada recálculo; somas fecham em toda versão atual, resultados parciais mantêm seu estado. Backup recompõe antes de disponibilizar valores; atualização de v9 preserva desenho. Apenas consultar/filtrar/perdas não altera documento, metadados, histórico, resultado, diagnósticos ou armazenamento. Reabrir reinicia perdas em 0%; o arquivo não contém totais, filtros ou percentual. |
 
 EX-88/91 isolam agregação sobre peças finais, com contagens dadas previamente; não substituem testes de integração com o motor de EX-26/53/78. As verificações devem usar expectativas literais acima e inspecionar peças/estados, sem produzir o valor esperado chamando a própria função de agregação.
+## 13. M9 — Símbolos esquemáticos de esquadrias (CT-17)
+
+Fonte visual: proposta interativa avaliada e aprovada pelo solicitante para M9; convenção de apresentação do Ecovit, sem declaração de conformidade normativa ou hipótese construtiva nova. RF-06 define catálogo/comportamento; Arquitetura §27 define dados e transformações. Não modifica CT-01–16 ou nominal-v10.
+
+Giro simples: folha perpendicular ao vão e arco de 90° com raio igual à largura; giro duplo: duas folhas iguais e dois arcos de raio meia largura. Correr simples: folha lateral deslocada e seta longitudinal; correr central: duas folhas de meia largura afastadas e setas para lados opostos. Janela de correr: duas folhas sobrepostas, uma fixa e uma móvel com seta. Basculantes: painel no vão, projeção tracejada e seta para a face projetada, explicitamente identificada como movimento vertical no painel. Profundidade gráfica nominal da projeção: 0,6 da largura para garagem, 0,3 para janela; não é altura/curso físico do equipamento. Janelas têm quadro duplo; a tipologia deve ser reconhecível com rótulos desligados.
+
+| ID | Entrada | Resultado esperado |
+|---|---|---|
+| EX-95 | Porta de giro simples em vão horizontal de 100 cm, posição 0 | Dobradiça na menor coordenada, folha para cima da tela, raio de 100 cm. Ciclo 0→1→2→3→0 preserva vão e resultado. |
+| EX-96 | Mesmo vão vertical com parede desenhada em sentido invertido | Rotação 90° horária da representação, início ainda na menor coordenada y; sentido de desenho da parede não altera símbolo. |
+| EX-97 | Giro duplo, correr central e basculante | Duas posições 0→1→0; giro/correr central com folhas iguais; projeção basculante troca face sem representar deslizamento horizontal. |
+| EX-98 | Janela de correr/basculante, rótulos ocultos, comparação e Fiada | Tipos distintos por quadro/folhas/seta/projeção; referência usa mesma geometria sem edição; Fiada não contém folhas/arcos/setas. |
+| EX-99 | Arquivos 9/10/11 com portas/janelas genéricas | Normalização para 12 não inventa tipo/orientação nem modifica origem. Escolha explícita, cópia e round-trip preservam a nova aparência; aparência inválida é recusada. |

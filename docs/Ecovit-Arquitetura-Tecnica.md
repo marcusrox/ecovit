@@ -1,8 +1,8 @@
 # Ecovit — Arquitetura Técnica
 
-**Versão documental:** 1.27
-**Base funcional:** PRD Ecovit 0.34. M1–M3.5 implementados e aceitos; M4.1 implementado, revisado e aceito pelo solicitante; M4.2 implementado e aceito pelo solicitante na §20, com verificações no plano; M4.3 implementado e aceito pelo solicitante na §22; M5 implementado e aceito pelo solicitante na §23, com registro e verificações no plano. M6 implementado e aceito pelo solicitante na §24, com registro no plano. M7 implementado e aceito pelo solicitante na §25, com registro do aceite no plano. M8 implementado e aceito pelo solicitante na §26, com verificações e registro do aceite no Plano §15.
-**Aplicativo:** 0.13.0; arquivo versão 11, com leitura de versões 9/10; composição nominal-v10 (CT-14).
+**Versão documental:** 1.28
+**Base funcional:** PRD Ecovit 0.35. M1–M3.5 implementados e aceitos; M4.1 implementado, revisado e aceito pelo solicitante; M4.2 implementado e aceito pelo solicitante na §20, com verificações no plano; M4.3 implementado e aceito pelo solicitante na §22; M5 implementado e aceito pelo solicitante na §23, com registro e verificações no plano. M6 implementado e aceito pelo solicitante na §24, com registro no plano. M7 implementado e aceito pelo solicitante na §25, com registro do aceite no plano. M8 implementado e aceito pelo solicitante na §26, com verificações e registro do aceite no Plano §15.
+**Aplicativo:** 0.14.0; arquivo versão 12, com leitura de versões 9/10/11; composição nominal-v10 (CT-14). M9 implementado e aceito pelo solicitante; verificações e registro do aceite no Plano §16.
 
 As seções gerais descrevem a arquitetura do aplicativo. As seções de M3–M3.5 registram contratos históricos; M4.1 está implementado conforme §19, preservando as regras nominais locais. Lajes estão implementadas conforme §20; comparação visual de M4 está implementada conforme §22, com aceite global do solicitante registrado no Plano §10. Versões de formato e convenções nominais identificam contratos de dados, não etapas pendentes de desenvolvimento.
 
@@ -207,7 +207,8 @@ O formato vigente é envelope versão 11/composição nominal-v10, conforme §26
 | M4.2 | 9 | nominal-v9 |
 | Alturas diferentes/M5/M6 | 9 | nominal-v10 |
 | M7 | 10, com leitura de 9 | nominal-v10 |
-| M8 (vigente) | 11, com leitura de 9/10 | nominal-v10 |
+| M8 | 11, com leitura de 9/10 | nominal-v10 |
+| M9 (vigente) | 12, com leitura de 9/10/11 | nominal-v10 |
 
 IndexedDB, via Dexie, armazena registros de projetos com id, updatedAt e documento completo; nome e demais metadados pertencem ao documento. A interface e o motor não dependem da representação interna do banco. Referência: [Dexie e IndexedDB](https://dexie.org/docs).
 
@@ -215,12 +216,16 @@ Salvar o documento inteiro em uma transação após cada alteração confirmada.
 
 Falhas de quota ou indisponibilidade manterão o documento em memória e oferecerão download após a operação. O download sempre usa a memória atual, sem exigir salvamento local bem-sucedido. Para impedir sobrescrita por outra aba, usar um único bloqueio exclusivo por projeto durante a edição; a segunda aba informa que o projeto já está aberto e não permite editá-lo. Não implementar sincronização ou mesclagem entre abas.
 
+Abertura repetida do projeto já editável no mesmo store a partir do registro salvo é idempotente: conservar documento em memória, histórico e bloqueio existente, sem disputar novamente o próprio Web Lock nem recarregar um registro salvo mais antigo. Inicialização explícita com fresh valida o documento solicitado reutilizando a trava própria, sem liberá-la se a validação falhar. Abertura em somente leitura pode tentar obter a trava novamente ao reabrir; não tomar uma trava de outro documento. Sair para a lista libera o bloqueio; recarregar encerra a página proprietária, mas não libera bloqueios de outras páginas ainda abertas.
+
+Em desenvolvimento, o descarte do módulo do store pelo hot reload do Vite marca aquela instância como inativa: impedir novas aberturas/gravações/undo/retry, aguardar a operação em andamento terminar e liberar seu Web Lock antes de carregar a substituta. Não liberar a trava enquanto uma gravação antiga ainda pode continuar. A rotina pertence ao ciclo do módulo e não ao componente React; desmontagem visual não encerra uma sessão de edição. Travas órfãs de módulos substituídos antes dessa rotina só são eliminadas ao encerrar/recarregar o documento proprietário no navegador.
+
 ### Estrutura do arquivo
 
 JSON UTF-8 com extensão .ecovit:
 
 - format: identificador ecovit.
-- schemaVersion: 11 vigente em M8, com leitura de 9/10 conforme §26; versões 8/9 registram os contratos históricos das seções 19/20.
+- schemaVersion: 12 vigente em M9, com leitura de 9/10/11 conforme §27; versões 8/9 registram os contratos históricos das seções 19/20.
 - project: identificadores, nome, unidades e dimensões-base.
 - model: pavimentos, paredes, vãos, lajes, medidas independentes e referências verticais.
 - adjustments: escolhas de encontros e ajustes de graute/canaletas.
@@ -777,3 +782,13 @@ Imagem em camada abaixo da malha e geometria, sem hit-testing fora de Ajustar. D
 Imagem e ajustes pertencem à intenção do projeto; visibilidade/opacidade não vão ao registro global de preferências. Integrar cópia de projeto, cópia/remoção de pavimento, merge do pavimento ativo, arquivo, travas entre abas, recuperação de gravação e histórico. Cópias não compartilham estado mutável de edição. Excluir referência e transformação das assinaturas de insumos construtivos, preservando resultados/diagnósticos mesmo se já desatualizados; operações exclusivamente na imagem não chamam o motor. Uma confirmação de ajuste e um gesto completo de opacidade geram cada qual uma operação de histórico/salvamento, sem reencodar os bytes em cada movimento de prévia.
 
 Usar seção compacta em Propriedades do pavimento: controles essenciais no estado normal, campos de ângulo/escala e Concluir/Cancelar somente na edição. Ações secundárias podem usar menu compacto; não acrescentar nova barra permanente, grandes instruções ou painel sobreposto ao canvas. Seguir integralmente a §2.1 para ícones centralizados, área de clique, nomes acessíveis, dicas e foco. Orientação operacional breve na faixa existente e ajuda estável em Como usar o editor. Validar legibilidade, teclado e ausência de sobreposição/rolagem horizontal em Chrome/Edge nas três resoluções de referência. Iconografia central acrescentada: image→ImagePlus e more→Ellipsis, do Lucide instalado. Implementação em src/domain/reference-image.ts e src/editor/ReferenceImage.tsx; estado transitório em Inspection do store, sem persistir o rascunho. Importação assíncrona é descartada ao mudar de contexto/ferramenta antes de terminar. Ajustar pode mostrar temporariamente imagem oculta sem alterar sua visibilidade confirmada; confirmação sem mudanças encerra sem histórico. Não altera os contratos construtivos anteriores.
+
+## 27. M9 — Tipos e orientação de esquadrias
+
+Contrato do RF-06/BL-08; escopo e aceite no Plano §16. Aplicativo 0.14.0, envelope 12 e convenção nominal-v10. Opening recebe appearance opcional: { type, orientation }. type admite swing, double-swing, sliding, center-sliding e tilt; center-sliding só para portas, e vão livre não admite appearance. orientation é inteiro 0..3 para swing/sliding e 0..1 para os demais. Ausência representa esquadria genérica legada, sem atribuir tipo físico. Não persistir quantidade redundante de folhas: definida pela combinação kind/type.
+
+Leitura dos envelopes 9/10/11 normaliza para 12 em memória, preservando a origem e recusando appearance em envelopes antigos; a leitura de 9 acrescenta medidas vazias, a de 9/10 imagens vazias. Envelope 12 valida estritamente tipos e orientações, inclusive a combinação com kind. Campos desconhecidos, combinações inválidas e snapshots adulterados continuam recusados. Lista local reconhece 9–12. Cópia, remapeamento de paredes/pavimentos e histórico preservam appearance por valor.
+
+Geometria dos símbolos compartilhada entre canvas ativo, referência de pavimento e prévia das propriedades. Coordenadas locais têm origem no centro do vão, eixo longitudinal da menor para maior coordenada; na vertical rotacionar 90° horário. Giro simples e correr usam espelhamento longitudinal nas posições ímpares, face oposta nas posições 2/3; tipos de duas orientações alternam apenas a face. Giro descreve um quarto de círculo de raio igual à folha. Projeção basculante é esquemática proporcional à largura, sem inferir altura de painel, curso ou mecanismo físico. Traços e setas são desenhos do domínio; botões seguem §2.1, com texto Alternar orientação e sem novo catálogo de ícones. Prévia não é alvo de seleção; o canvas mantém o hit-test no vão e os alvos geométricos de medição existentes. Enquadrar em Planta inclui a extensão dos símbolos confirmados do ativo e da referência; Fiada mantém limites construtivos.
+
+O seletor Tipo da esquadria e o único botão Alternar orientação confirmam operações visuais independentes dos campos de dimensão. Rascunhos de dimensões permanecem no formulário. PendingOpening recebe a aparência sem confirmar a criação até Aplicar vão. Erros e readonly mantêm bloqueios existentes. Excluir somente appearance da comparação de insumos construtivos no store: largura/base/altura/posição/kind/parede continuam invalidando o cálculo; tipo/orientação preservam resultado e diagnósticos, inclusive desatualizados e ao desfazer/refazer. Sem mudança nas regras do motor ou dependências.

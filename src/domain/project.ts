@@ -37,10 +37,15 @@ export type Wall = {
   side: 1 | -1;
   height: number;
 };
+export type OpeningAppearance = {
+  type: "swing" | "double-swing" | "sliding" | "center-sliding" | "tilt";
+  orientation: 0 | 1 | 2 | 3;
+};
 export type Opening = {
   id: string;
   wallId: string;
   kind: "door" | "window" | "opening";
+  appearance?: OpeningAppearance;
   offset: number;
   width: number;
   base: number;
@@ -80,7 +85,7 @@ export const defaultChannelLevels = (): ChannelLevel[] =>
 export type Tool = "select" | "wall" | "slab" | "measure" | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 11;
+  schemaVersion: 12;
   project: {
     id: string;
     name: string;
@@ -168,7 +173,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 11,
+    schemaVersion: 12,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -198,7 +203,7 @@ export function createProject(
     adjustments: { junctions: [], grout: [], channels: [] },
     generated: null,
     generationState: { status: "outdated", diagnostics: [] },
-    metadata: { createdAt: now, updatedAt: now, appVersion: "0.13.0" },
+    metadata: { createdAt: now, updatedAt: now, appVersion: "0.14.0" },
   };
 }
 export const snap = (n: number, module: number) =>

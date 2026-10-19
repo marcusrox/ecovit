@@ -43,6 +43,7 @@ import {
 } from "../domain/floor-reference";
 import { FloorReferenceLayer } from "./FloorReference";
 import { drawOpeningSymbol } from "./opening-symbol";
+import { defaultAppearance } from "../domain/opening-appearance";
 import { usePreferences } from "../state/preferences";
 import { CompositionStatus } from "./CompositionStatus";
 import { useMeasurementCanvas } from "./Measurements";
@@ -443,6 +444,7 @@ export function Canvas({
       [doc.viewFloorId, ...(reference ? [reference.id] : [])],
       mode === "plan",
       mode === "plan" ? doc.viewFloorId : undefined,
+      mode === "plan",
     );
     if (mode === "plan" && imageCanvas.bounds.length) {
       const points = [
@@ -724,6 +726,9 @@ export function Canvas({
               id: crypto.randomUUID(),
               wallId: w.id,
               kind: tool,
+              ...(defaultAppearance(tool)
+                ? { appearance: defaultAppearance(tool) }
+                : {}),
               offset,
               width: 0,
               base,
@@ -1412,15 +1417,16 @@ export function Canvas({
                   ctx.fillRect(x, y, width, height);
                   ctx.setLineDash(o.kind === "opening" ? [4, 3] : []);
                   ctx.strokeRect(x, y, width, height);
-                  drawOpeningSymbol(
-                    ctx,
-                    o.kind,
-                    w.a.y === w.b.y,
-                    x,
-                    y,
-                    width,
-                    height,
-                  );
+                  if (mode === "plan")
+                    drawOpeningSymbol(
+                      ctx,
+                      o,
+                      w.a.y === w.b.y,
+                      x,
+                      y,
+                      width,
+                      height,
+                    );
                   ctx.setLineDash([]);
                   ctx.fillStyle = "#234b40";
                   ctx.font = "11px sans-serif";

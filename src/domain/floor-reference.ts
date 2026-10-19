@@ -1,4 +1,6 @@
 import { bounds, type EditableProject, type Project } from "./project";
+import { openingBox } from "./openings";
+import { openingSymbolStrokes } from "./opening-symbol";
 
 export type FloorReference = "none" | "below" | "above";
 
@@ -13,16 +15,39 @@ export function resolveFloorReference(
   return floors[index + (direction === "below" ? -1 : 1)];
 }
 
-// Confirmed world geometry only. Openings never enlarge their hosts' bounds.
+// Confirmed world geometry, including schematic projections in Planta.
 export function floorPlanBounds(
   doc: EditableProject,
   floorIds: readonly string[],
   includeSlabs = true,
   measureFloorId?: string,
+  includeSymbols = true,
 ) {
   const boxes = doc.model.walls
     .filter((w) => floorIds.includes(w.floorId))
     .map((w) => bounds(w, doc.project.base.width));
+  if (includeSymbols) {
+    const walls = new Map(
+      doc.model.walls
+        .filter((w) => floorIds.includes(w.floorId))
+        .map((w) => [w.id, w]),
+    );
+    for (const o of doc.model.openings) {
+      const w = walls.get(o.wallId);
+      if (!w) continue;
+      const b = openingBox(o, w, doc.project.base.width);
+      for (const stroke of openingSymbolStrokes(
+        o,
+        w.a.y === w.b.y,
+        b.x,
+        b.y,
+        b.width,
+        b.height,
+      ))
+        for (const p of stroke.points)
+          boxes.push({ ...p, width: 0, height: 0 });
+    }
+  }
   for (const m of doc.model.measurements.filter(
     (m) => m.floorId === measureFloorId,
   )) {

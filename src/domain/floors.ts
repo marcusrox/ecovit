@@ -202,6 +202,7 @@ export function duplicateFloor(
           .filter((o) => ids.has(o.wallId))
           .map((o) => ({
             ...o,
+            ...(o.appearance ? { appearance: { ...o.appearance } } : {}),
             id: crypto.randomUUID(),
             wallId: ids.get(o.wallId)!,
           })),

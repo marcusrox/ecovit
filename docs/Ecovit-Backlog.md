@@ -32,4 +32,4 @@ Implementar autenticação por conta Google ou por e-mail, sem senha própria: n
 
 ## BL-08 — Diferentes tipos de portas e janelas
 
-Ampliar as opções de portas e janelas para permitir escolher diferentes tipos e suas respectivas representações em planta. Os tipos iniciais e suas propriedades serão definidos ao iniciar a entrega, preservando a relação com o vão existente e distinguindo a representação visual de eventuais efeitos sobre dimensões, composição e validações construtivas.
+**Estado: implementado no M9 e aceito pelo solicitante.** Portas de giro simples/duplo, correr simples/central e basculante de garagem; janelas de giro simples/duplo, correr de duas folhas e basculante. Símbolos esquemáticos aprovados na proposta visual, seletor contextual e um único botão Alternar orientação com ciclo completo. Tipo/orientação preservam vão bruto e resultado construtivo. Produto no PRD RF-06, contrato na Arquitetura §27, convenção CT-17 e alcance/verificações/roteiro no Plano §16. Aceite funcional global registrado no Plano §16.4, separado das verificações do Codex.

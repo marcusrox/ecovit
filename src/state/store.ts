@@ -24,15 +24,18 @@ import { validateProject } from "../persistence/files";
 import { mergeFloorView } from "../domain/floors";
 import { useMemo } from "react";
 import { reconcileOpenings } from "../domain/openings";
+import { constructionOpenings } from "../domain/opening-appearance";
 import {
   resolveFloorReference,
   type FloorReference,
 } from "../domain/floor-reference";
 let release: (() => void) | null = null;
+let retired = false;
 const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
     {
       ...previous.model,
+      openings: constructionOpenings(previous.model.openings),
       measurements: undefined,
       referenceImages: undefined,
       floors: previous.model.floors.map((f) => ({
@@ -50,6 +53,7 @@ const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
     {
       ...next.model,
+      openings: constructionOpenings(next.model.openings),
       measurements: undefined,
       referenceImages: undefined,
       floors: next.model.floors.map((f) => ({
@@ -142,7 +146,7 @@ type State = Inspection & {
 };
 export const useStore = create<State>((set, get) => {
   async function persist(doc: Project, calculate = true) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.13.0" } };
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.14.0" } };
     set({ doc });
     set({ busy: true, saved: "saving" });
     let saveFailed = false;
@@ -304,11 +308,17 @@ export const useStore = create<State>((set, get) => {
           : {}),
       })),
     open: async (requested, fresh = false) => {
-      if (get().busy) return;
+      if (retired || get().busy) return;
+      // A delayed/repeated open must not compete with the lock already owned
+      // by this store, or replace unsaved work with an older stored document.
+      const ownedRelease =
+        get().doc?.project.id === requested.project.id ? release : null;
+      if (ownedRelease && !fresh) return;
       set({ busy: true, message: "" });
       let nextRelease: (() => void) | null = null;
       try {
-        nextRelease = await acquireProject(requested.project.id);
+        nextRelease =
+          ownedRelease ?? (await acquireProject(requested.project.id));
         let doc = fresh
           ? validateProject(requested)
           : await loadProject(requested.project.id);
@@ -332,7 +342,7 @@ export const useStore = create<State>((set, get) => {
             calculationMessage = `Cálculo não concluído: ${e instanceof Error ? e.message : String(e)}. O desenho foi preservado; baixe uma cópia ou reabra para tentar novamente.`;
           }
         }
-        release?.();
+        if (release !== nextRelease) release?.();
         release = nextRelease;
         set({
           ...inspection,
@@ -351,7 +361,7 @@ export const useStore = create<State>((set, get) => {
         if (release && (fresh || doc.generationState.status === "outdated"))
           await persist(doc);
       } catch (e) {
-        nextRelease?.();
+        if (nextRelease !== release) nextRelease?.();
         set({ message: String(e instanceof Error ? e.message : e) });
       } finally {
         set({ busy: false });
@@ -374,7 +384,7 @@ export const useStore = create<State>((set, get) => {
     },
     commit: async (candidate, command = "resize") => {
       const s = get();
-      if (s.busy || s.readonly || !s.doc) return;
+      if (retired || s.busy || s.readonly || !s.doc) return;
       try {
         if (s.imageDraft && command !== "image" && command !== "floor")
           throw new Error("Conclua ou cancele o ajuste da imagem.");
@@ -504,7 +514,7 @@ export const useStore = create<State>((set, get) => {
               : s.doc.generationState,
             metadata: {
               ...candidate.metadata,
-              appVersion: "0.13.0",
+              appVersion: "0.14.0",
               updatedAt: new Date().toISOString(),
             },
           },
@@ -556,7 +566,7 @@ export const useStore = create<State>((set, get) => {
     },
     undo: async (redo = false) => {
       const s = get();
-      if (!s.doc || s.busy || s.readonly) return;
+      if (retired || !s.doc || s.busy || s.readonly) return;
       if (s.imageDraft) {
         set({ imageDraft: null });
         return;
@@ -606,10 +616,29 @@ export const useStore = create<State>((set, get) => {
     },
     retry: async () => {
       const s = get();
-      if (s.doc && !s.busy && !s.readonly) await persist(s.doc);
+      if (!retired && s.doc && !s.busy && !s.readonly) await persist(s.doc);
     },
   };
 });
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(async () => {
+    // A replaced store must finish its current write before releasing ownership,
+    // and must not start new writes while Vite loads its replacement.
+    retired = true;
+    if (useStore.getState().busy)
+      await new Promise<void>((resolve) => {
+        const unsubscribe = useStore.subscribe((state) => {
+          if (!state.busy) {
+            unsubscribe();
+            resolve();
+          }
+        });
+      });
+    release?.();
+    release = null;
+  });
+}
 
 export function editingProject(s: Pick<State, "doc" | "activeFloorId">) {
   return s.doc

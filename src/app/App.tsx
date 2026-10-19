@@ -424,6 +424,11 @@ function Properties({ doc }: { doc: Project }) {
           a atração. Arraste o corpo para mover ou uma ponta para ajustar.
         </p>
         <p>
+          Portas e janelas: escolha o tipo nas propriedades. Alternar orientação
+          percorre as posições e salva imediatamente. No basculante, o tracejado
+          indica a projeção do painel; o movimento é vertical.
+        </p>
+        <p>
           A e B são o início e o final do desenho. A face externa tracejada
           permanece fixa ao editar o comprimento.
         </p>
