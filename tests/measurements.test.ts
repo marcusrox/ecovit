@@ -183,9 +183,11 @@ it("M7 validação, transporte, envelope 9 e cópias de pavimento preservam inte
   );
   const legacy = structuredClone(d) as unknown as {
     schemaVersion: number;
-    model: { measurements?: Measurement[]; referenceImages?: unknown[] };
+    model: { measurements?: Measurement[]; referenceImages?: unknown[]; imageElements?: unknown[]; customImageAssets?: unknown[] };
   };
   legacy.schemaVersion = 9;
+  delete legacy.model.imageElements;
+  delete legacy.model.customImageAssets;
   delete legacy.model.referenceImages;
   delete legacy.model.measurements;
   expect(validateProject(legacy).model.measurements).toEqual([]);

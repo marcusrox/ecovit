@@ -1,34 +1,33 @@
 import type { Opening } from "../domain/project";
+import { openingSymbolStrokes } from "../domain/opening-symbol";
 
 export function drawOpeningSymbol(
   ctx: Pick<
     CanvasRenderingContext2D,
-    "beginPath" | "moveTo" | "lineTo" | "stroke"
+    "beginPath" | "moveTo" | "lineTo" | "stroke" | "setLineDash" | "getLineDash"
   >,
-  kind: Opening["kind"],
+  opening: Pick<Opening, "kind" | "appearance">,
   horizontal: boolean,
   x: number,
   y: number,
   width: number,
   height: number,
 ) {
-  if (kind === "opening") return;
-  ctx.beginPath();
-  if (kind === "window") {
-    if (horizontal) {
-      ctx.moveTo(x, y + height / 3);
-      ctx.lineTo(x + width, y + height / 3);
-      ctx.moveTo(x, y + (2 * height) / 3);
-      ctx.lineTo(x + width, y + (2 * height) / 3);
-    } else {
-      ctx.moveTo(x + width / 3, y);
-      ctx.lineTo(x + width / 3, y + height);
-      ctx.moveTo(x + (2 * width) / 3, y);
-      ctx.lineTo(x + (2 * width) / 3, y + height);
-    }
-  } else {
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + width, y + height);
+  const dash = ctx.getLineDash();
+  for (const stroke of openingSymbolStrokes(
+    opening,
+    horizontal,
+    x,
+    y,
+    width,
+    height,
+  )) {
+    ctx.setLineDash(stroke.dashed ? [5, 4] : dash);
+    ctx.beginPath();
+    stroke.points.forEach((p, i) =>
+      i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y),
+    );
+    ctx.stroke();
   }
-  ctx.stroke();
+  ctx.setLineDash(dash);
 }

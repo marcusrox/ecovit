@@ -1,5 +1,9 @@
 import { decodeReference, type ImageDraft } from "../domain/reference-image";
 import {
+  decodeCustomAssets,
+  decodeCatalogElements,
+} from "../domain/image-elements";
+import {
   generate,
   signature,
   floorView,
@@ -14,6 +18,8 @@ import {
   type Opening,
   type EditableProject,
   type Point,
+  type ImageElement,
+  type CustomImageAsset,
 } from "../domain/project";
 import {
   acquireProject,
@@ -24,17 +30,22 @@ import { validateProject } from "../persistence/files";
 import { mergeFloorView } from "../domain/floors";
 import { useMemo } from "react";
 import { reconcileOpenings } from "../domain/openings";
+import { constructionOpenings } from "../domain/opening-appearance";
 import {
   resolveFloorReference,
   type FloorReference,
 } from "../domain/floor-reference";
 let release: (() => void) | null = null;
+let retired = false;
 const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
     {
       ...previous.model,
+      openings: constructionOpenings(previous.model.openings),
       measurements: undefined,
       referenceImages: undefined,
+      imageElements: undefined,
+      customImageAssets: undefined,
       floors: previous.model.floors.map((f) => ({
         id: f.id,
         level: f.level,
@@ -50,8 +61,11 @@ const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
     {
       ...next.model,
+      openings: constructionOpenings(next.model.openings),
       measurements: undefined,
       referenceImages: undefined,
+      imageElements: undefined,
+      customImageAssets: undefined,
       floors: next.model.floors.map((f) => ({
         id: f.id,
         level: f.level,
@@ -65,6 +79,7 @@ const changedInputs = (previous: Project, next: Project) =>
     next.project.groutSettings,
   ]);
 type Inspection = {
+  furnitureDraft: { element: ImageElement; asset?: CustomImageAsset } | null;
   imageRequest: string | null;
   imageDraft: ImageDraft | null;
   imageOpacity: number | null;
@@ -91,6 +106,7 @@ type Inspection = {
   diagnosticWalls: string[];
 };
 const inspection: Inspection = {
+  furnitureDraft: null,
   imageDraft: null,
   imageRequest: null,
   imageOpacity: null,
@@ -134,7 +150,8 @@ type State = Inspection & {
       | "floor"
       | "slab"
       | "measure"
-      | "image",
+      | "image"
+      | "furniture",
   ) => Promise<void>;
   undo: (redo?: boolean) => Promise<void>;
   notify: (message: string) => void;
@@ -143,7 +160,7 @@ type State = Inspection & {
 };
 export const useStore = create<State>((set, get) => {
   async function persist(doc: Project, calculate = true) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.13.0" } };
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.15.1" } };
     set({ doc });
     set({ busy: true, saved: "saving" });
     let saveFailed = false;
@@ -245,6 +262,7 @@ export const useStore = create<State>((set, get) => {
           },
           ...(change.mode && change.mode !== s.mode
             ? {
+                furnitureDraft: null,
                 slabDraft: null,
                 slabEditing: false,
                 imageDraft: null,
@@ -306,7 +324,12 @@ export const useStore = create<State>((set, get) => {
           : {}),
       })),
     open: async (requested, fresh = false) => {
-      if (get().busy) return;
+      if (retired || get().busy) return;
+      // A delayed/repeated open must not compete with the lock already owned
+      // by this store, or replace unsaved work with an older stored document.
+      const ownedRelease =
+        get().doc?.project.id === requested.project.id ? release : null;
+      if (ownedRelease && !fresh) return;
       const id =
         typeof requested === "string" ? requested : requested.project.id;
       set({ busy: true, openingProjectId: id, message: "" });
@@ -322,9 +345,12 @@ export const useStore = create<State>((set, get) => {
           fresh && typeof requested !== "string"
             ? validateProject(requested)
             : await loadProject(id);
-        if (typeof Image !== "undefined")
+        if (typeof Image !== "undefined") {
+          await decodeCustomAssets(doc.model.customImageAssets);
+          await decodeCatalogElements(doc.model.imageElements);
           for (const image of doc.model.referenceImages)
             await decodeReference(image);
+        }
         let calculationMessage = "";
         // A read-only tab may update disposable results in memory, never the shared record.
         if (!nextRelease && doc.generationState.status === "outdated") {
@@ -342,7 +368,7 @@ export const useStore = create<State>((set, get) => {
             calculationMessage = `Cálculo não concluído: ${e instanceof Error ? e.message : String(e)}. O desenho foi preservado; baixe uma cópia ou reabra para tentar novamente.`;
           }
         }
-        release?.();
+        if (release !== nextRelease) release?.();
         release = nextRelease;
         set({
           ...inspection,
@@ -361,7 +387,7 @@ export const useStore = create<State>((set, get) => {
         if (release && (fresh || doc.generationState.status === "outdated"))
           await persist(doc);
       } catch (e) {
-        nextRelease?.();
+        if (nextRelease !== release) nextRelease?.();
         set({ message: String(e instanceof Error ? e.message : e) });
       } finally {
         set({ busy: false, openingProjectId: null });
@@ -373,6 +399,7 @@ export const useStore = create<State>((set, get) => {
       release = null;
       set({
         doc: null,
+        furnitureDraft: null,
         imageDraft: null,
         imageRequest: null,
         floorReference: "none",
@@ -384,11 +411,44 @@ export const useStore = create<State>((set, get) => {
     },
     commit: async (candidate, command = "resize") => {
       const s = get();
-      if (s.busy || s.readonly || !s.doc) return;
+      if (retired || s.busy || s.readonly || !s.doc) return;
       try {
         if (s.imageDraft && command !== "image" && command !== "floor")
           throw new Error("Conclua ou cancele o ajuste da imagem.");
         candidate = mergeFloorView(s.doc, candidate);
+        if (command === "furniture") {
+          if (
+            [
+              ...candidate.model.imageElements,
+              ...s.doc.model.imageElements,
+            ].some(
+              (e) =>
+                e.floorId !== s.activeFloorId &&
+                JSON.stringify(
+                  candidate.model.imageElements.find((i) => i.id === e.id),
+                ) !==
+                  JSON.stringify(
+                    s.doc!.model.imageElements.find((i) => i.id === e.id),
+                  ),
+            )
+          )
+            throw new Error("Edite mobiliário somente no pavimento ativo.");
+          if (
+            s.doc.model.customImageAssets.some(
+              (a) =>
+                candidate.model.imageElements.some(
+                  (e) =>
+                    e.floorId !== s.activeFloorId &&
+                    e.source.kind === "custom" &&
+                    e.source.assetId === a.id,
+                ) &&
+                JSON.stringify(
+                  candidate.model.customImageAssets.find((i) => i.id === a.id),
+                ) !== JSON.stringify(a),
+            )
+          )
+            throw new Error("Não altere recursos usados por outro pavimento.");
+        }
         if (
           command === "image" &&
           [
@@ -514,7 +574,7 @@ export const useStore = create<State>((set, get) => {
               : s.doc.generationState,
             metadata: {
               ...candidate.metadata,
-              appVersion: "0.13.0",
+              appVersion: "0.15.1",
               updatedAt: new Date().toISOString(),
             },
           },
@@ -555,6 +615,7 @@ export const useStore = create<State>((set, get) => {
           diagnosticWalls: [],
           doc,
           imageDraft: null,
+          furnitureDraft: null,
           imageOpacity: null,
           history: remember(s.history, s.doc),
           message: "",
@@ -566,7 +627,11 @@ export const useStore = create<State>((set, get) => {
     },
     undo: async (redo = false) => {
       const s = get();
-      if (!s.doc || s.busy || s.readonly) return;
+      if (retired || !s.doc || s.busy || s.readonly) return;
+      if (s.furnitureDraft) {
+        set({ furnitureDraft: null });
+        return;
+      }
       if (s.imageDraft) {
         set({ imageDraft: null });
         return;
@@ -616,10 +681,29 @@ export const useStore = create<State>((set, get) => {
     },
     retry: async () => {
       const s = get();
-      if (s.doc && !s.busy && !s.readonly) await persist(s.doc);
+      if (!retired && s.doc && !s.busy && !s.readonly) await persist(s.doc);
     },
   };
 });
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(async () => {
+    // A replaced store must finish its current write before releasing ownership,
+    // and must not start new writes while Vite loads its replacement.
+    retired = true;
+    if (useStore.getState().busy)
+      await new Promise<void>((resolve) => {
+        const unsubscribe = useStore.subscribe((state) => {
+          if (!state.busy) {
+            unsubscribe();
+            resolve();
+          }
+        });
+      });
+    release?.();
+    release = null;
+  });
+}
 
 export function editingProject(s: Pick<State, "doc" | "activeFloorId">) {
   return s.doc

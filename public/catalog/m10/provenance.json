@@ -1,0 +1,275 @@
+{
+  "method": "Built-in image_gen tool",
+  "reference": "docs/images/M10-Estudo-Acervo.png",
+  "background": "transparent alpha",
+  "dimensions": "Generic editable suggestions in src/domain/image-catalog.ts; not verified product measurements.",
+  "generationTemplate": "Create ONE standalone production furniture image for Ecovit 2D floor plans. Input image is STYLE REFERENCE ONLY. Subject: {subject}. Strict true orthographic TOP VIEW, camera exactly 90 degrees directly overhead. Intended footprint width {widthCm} cm, depth {depthCm} cm: silhouette width-to-height ratio approximately {widthCm}:{depthCm}. Use canvas orientation that best fits the object, tightly fit whole silhouette with narrow transparent margins. Refined colored architectural plan illustration matching reference: crisp thin warm-gray outlines, muted beige light oak ivory sage/leaf green stainless gray as appropriate, delicate interior material detail and tonal shading. All vegetation must be simplified with clustered shapes and low detail. Genuinely transparent alpha background. ONLY ONE OBJECT. No text, label, frame, floor, grid, pedestal, room, scenery, surrounding decoration or external shadow. No perspective/isometric projection, front elevation, visible vertical cabinet faces, logos or watermark. Keep all object parts within image, no clipping. Preserve the reference's realistic soft material finish, without exaggerated photorealism. New isolated asset, NOT a contact sheet or edit of the board.",
+  "items": [
+    {
+      "id": "poltrona",
+      "subject": "beige upholstered armchair, backrest at top, arms at sides",
+      "widthCm": 90,
+      "depthCm": 85,
+      "revision": 1
+    },
+    {
+      "id": "mesa-centro",
+      "subject": "oval light oak coffee table, no objects on top",
+      "widthCm": 110,
+      "depthCm": 60,
+      "revision": 1
+    },
+    {
+      "id": "rack",
+      "subject": "low light oak TV console, only its closed top surface visible, no TV",
+      "widthCm": 160,
+      "depthCm": 40,
+      "revision": 1
+    },
+    {
+      "id": "cadeira",
+      "subject": "light oak dining chair with beige seat and backrest at top",
+      "widthCm": 45,
+      "depthCm": 50,
+      "revision": 1
+    },
+    {
+      "id": "mesa-retangular",
+      "subject": "rectangular light oak dining table alone, empty top, no chairs",
+      "widthCm": 160,
+      "depthCm": 90,
+      "revision": 1
+    },
+    {
+      "id": "cama-solteiro",
+      "subject": "single bed, headboard at top, one pillow, soft sage duvet",
+      "widthCm": 90,
+      "depthCm": 190,
+      "revision": 1
+    },
+    {
+      "id": "cama-casal",
+      "subject": "double bed, headboard at top, two pillows, soft sage duvet",
+      "widthCm": 138,
+      "depthCm": 188,
+      "revision": 1
+    },
+    {
+      "id": "cama-queen",
+      "subject": "queen bed, headboard at top, two pillows, soft sage duvet",
+      "widthCm": 158,
+      "depthCm": 198,
+      "revision": 1
+    },
+    {
+      "id": "cama-king",
+      "subject": "king bed, headboard at top, two pillows, soft sage duvet",
+      "widthCm": 193,
+      "depthCm": 203,
+      "revision": 1
+    },
+    {
+      "id": "mesa-cabeceira",
+      "subject": "small square light oak bedside cabinet, top surface only, empty",
+      "widthCm": 45,
+      "depthCm": 40,
+      "revision": 1
+    },
+    {
+      "id": "guarda-roupa",
+      "subject": "rectangular wardrobe viewed from overhead, top surface light oak, subtle narrow back edge, no front elevation",
+      "widthCm": 180,
+      "depthCm": 60,
+      "revision": 1
+    },
+    {
+      "id": "armario",
+      "subject": "rectangular kitchen base cabinet, light oak countertop top surface, no front doors visible",
+      "widthCm": 120,
+      "depthCm": 60,
+      "revision": 1
+    },
+    {
+      "id": "bancada",
+      "subject": "rectangular charcoal gray stone countertop slab, empty",
+      "widthCm": 120,
+      "depthCm": 60,
+      "revision": 1
+    },
+    {
+      "id": "pia",
+      "subject": "single stainless sink basin inset in neutral rectangular countertop, small overhead faucet at top",
+      "widthCm": 120,
+      "depthCm": 60,
+      "revision": 1
+    },
+    {
+      "id": "geladeira",
+      "subject": "white refrigerator with rounded corners, closed top surface viewed overhead, subtle door seam along bottom edge, no front view",
+      "widthCm": 70,
+      "depthCm": 70,
+      "revision": 1
+    },
+    {
+      "id": "cooktop",
+      "subject": "black glass cooktop with four circular gas burners symmetrically arranged, no perspective",
+      "widthCm": 60,
+      "depthCm": 50,
+      "revision": 1
+    },
+    {
+      "id": "micro-ondas",
+      "subject": "compact microwave viewed overhead, top surface white rectangular casing, subtle dark front edge at bottom, no front elevation",
+      "widthCm": 50,
+      "depthCm": 40,
+      "revision": 1
+    },
+    {
+      "id": "lavatorio",
+      "subject": "white porcelain bathroom washbasin, overhead basin opening and small faucet at top, no cabinet",
+      "widthCm": 55,
+      "depthCm": 45,
+      "revision": 1
+    },
+    {
+      "id": "vaso-sanitario",
+      "subject": "white ceramic toilet in architectural overhead view, rectangular cistern at top and open oval bowl below",
+      "widthCm": 38,
+      "depthCm": 70,
+      "revision": 1
+    },
+    {
+      "id": "chuveiro",
+      "subject": "round stainless overhead shower head on short horizontal wall arm, visible directly from top",
+      "widthCm": 25,
+      "depthCm": 35,
+      "revision": 1
+    },
+    {
+      "id": "box",
+      "subject": "square glass shower enclosure footprint, extremely thin glass frame along edges and circular floor drain at center, no walls or room",
+      "widthCm": 90,
+      "depthCm": 90,
+      "revision": 1
+    },
+    {
+      "id": "tanque",
+      "subject": "white utility laundry sink, deep square basin opening and small washboard surface on side",
+      "widthCm": 60,
+      "depthCm": 55,
+      "revision": 1
+    },
+    {
+      "id": "maquina-lavar",
+      "subject": "white top-loading washing machine, overhead top lid and small rear control strip, no front face",
+      "widthCm": 60,
+      "depthCm": 65,
+      "revision": 1
+    },
+    {
+      "id": "carro",
+      "subject": "silver compact passenger car, roof windows hood and mirrors viewed directly from above",
+      "widthCm": 180,
+      "depthCm": 430,
+      "revision": 1
+    },
+    {
+      "id": "caixa-agua",
+      "subject": "round blue polyethylene water storage tank with concentric circular lid, directly overhead",
+      "widthCm": 150,
+      "depthCm": 150,
+      "revision": 1
+    },
+    {
+      "id": "condensadora",
+      "subject": "rectangular outdoor air conditioner condenser, gray top grille and large circular fan visible from above",
+      "widthCm": 80,
+      "depthCm": 35,
+      "revision": 1
+    },
+    {
+      "id": "extintor",
+      "subject": "portable fire extinguisher from directly above, small circular red cylinder top with black hose loop and handle, no cylinder side elevation",
+      "widthCm": 25,
+      "depthCm": 25,
+      "revision": 1
+    },
+    {
+      "id": "mesa-redonda",
+      "subject": "circular light oak dining table, empty top, no chairs",
+      "widthCm": 100,
+      "depthCm": 100,
+      "revision": 1
+    },
+    {
+      "id": "banco",
+      "subject": "light oak rectangular outdoor slatted bench, seat planks and narrow backrest along top edge viewed overhead",
+      "widthCm": 140,
+      "depthCm": 45,
+      "revision": 1
+    },
+    {
+      "id": "banqueta",
+      "subject": "round light oak bar stool seat viewed directly overhead, no legs visible",
+      "widthCm": 35,
+      "depthCm": 35,
+      "revision": 1
+    },
+    {
+      "id": "espreguicadeira",
+      "subject": "light oak outdoor pool lounge chair, long narrow slatted surface, sage cushion, fully overhead with no perspective",
+      "widthCm": 70,
+      "depthCm": 190,
+      "revision": 1
+    },
+    {
+      "id": "piscina",
+      "subject": "rectangular pool, muted blue water with subtle soft ripples and thin pale stone coping, no surrounding deck",
+      "widthCm": 300,
+      "depthCm": 600,
+      "revision": 1
+    },
+    {
+      "id": "arvore",
+      "subject": "ornamental tree canopy only, irregular round green crown with about twelve simplified clustered foliage shapes, restrained soft tonal shading, NO detailed individual leaves, no trunk elevation",
+      "widthCm": 300,
+      "depthCm": 300,
+      "revision": 1
+    },
+    {
+      "id": "vaso-planta",
+      "subject": "square pale ceramic planter viewed overhead with simplified lush green foliage, restrained leaf detail",
+      "widthCm": 45,
+      "depthCm": 45,
+      "revision": 1
+    },
+    {
+      "id": "canteiro",
+      "subject": "long narrow rectangular terracotta planter bed with simplified green shrubs, overhead, no side elevation",
+      "widthCm": 150,
+      "depthCm": 40,
+      "revision": 1
+    },
+    {
+      "id": "cerca-viva",
+      "subject": "rectangular clipped hedge canopy directly overhead, simplified clustered greenery, minimal leaf detail",
+      "widthCm": 150,
+      "depthCm": 50,
+      "revision": 1
+    }
+  ],
+  "sofaPrompt": "Generate a single standalone production asset for the Ecovit architectural floor-plan furniture catalog. Reference image is a STYLE reference only; preserve its refined material finish, muted colors and thin warm gray outlines. Subject: one beige 3-seat sofa, strictly orthographic TOP VIEW camera 90 degrees directly overhead, backrest at top, arms left/right, seat cushions visible, NO front elevation or legs. Isolated object on genuinely transparent alpha background, no floor, no backdrop, no external shadow, no label, no text, no border, no extra objects. Whole silhouette tightly framed with narrow clear margins, horizontal width-to-depth aspect ratio 2.5:1, centered in canvas. Same soft beige upholstery, lightly shaded texture and crisp thin contours as the reference. This is a new individual asset, not an edit of the contact sheet. Output only the sofa.",
+  "treeEditPrompt": "Edit this tree canopy asset for Ecovit architectural top-view floor plans. Keep the strictly overhead orthographic view, green/sage palette, general round irregular silhouette, true transparent background and thin discreet outline. CHANGE ONLY THE LEVEL OF DETAIL: dramatically simplify foliage into about 12 to 18 LARGE soft clustered crown masses, each a broad rounded gently lobed shape. Eliminate the hundreds of tiny leaf silhouettes and fine texture. Only broad restrained flat tonal areas within these large masses, maximum 3 or 4 green tones. No leaf veins, no individual leaves, no micro texture, no tiny scalloped edges, no external shadows or outlines in neon colors. Refined colored architectural illustration, same family as approved furniture, not an emoji or icon. Round leafy tree crown from directly above, no trunk or side view. Isolated tightly framed, transparent alpha canvas, no text, no ground, no other objects.",
+  "additions": [
+    {
+      "id": "mesa-redonda-4-cadeiras",
+      "revision": 1,
+      "prompt": "Generate ONE standalone production PNG asset for Ecovit furniture floor plans. Reference contact sheet is STYLE REFERENCE ONLY, not an edit target. Subject: one round light oak dining table with EXACTLY FOUR matching chairs around it, at 12, 3, 6 and 9 o'clock, each chair facing the table center. The central tabletop is a clean circle and is empty. Chairs have light oak frames and soft beige upholstered seats. Complete square overall silhouette, suggested overall footprint including all four chairs 200 by 200 cm. Strict true ORTHOGRAPHIC TOP VIEW, directly overhead at 90 degrees, NO perspective, no isometric view, no vertical front elevations or visible chair legs. Every chair and the whole table entirely visible inside the frame, clearly countable, evenly arranged with subtle gaps between table and seats. Match the approved reference: refined softly colored architectural plan illustration, thin warm-gray contours, muted light oak, ivory/beige upholstery, very restrained realistic material texture and internal shading. All objects form ONE furniture arrangement, not separate cells or a collage. Genuinely transparent alpha background, no ground, no external cast shadows, no decorative objects, text, labels, logos, border or watermark. Tight framing with small clear margins. Preserve the full group silhouette and consistent scale among chairs."
+    },
+    {
+      "id": "mesa-retangular-6-cadeiras",
+      "revision": 1,
+      "prompt": "Generate ONE standalone production PNG asset for Ecovit furniture floor plans. Reference contact sheet is STYLE REFERENCE ONLY, not an edit target. Subject: one horizontal rectangular light oak dining table with EXACTLY SIX matching chairs: TWO chairs along the upper long side, TWO along the lower long side, ONE at the left short end and ONE at the right short end, all facing the table. Empty tabletop. Chairs have light oak frames and soft beige upholstered seats. Overall footprint including all six chairs approximately 260 cm wide by 190 cm deep. Strict true ORTHOGRAPHIC TOP VIEW, directly overhead at 90 degrees, NO perspective, no isometric view, no vertical front elevations or visible chair legs. Every chair and the whole table entirely visible inside the frame, clearly countable, evenly arranged with subtle gaps between table and seats. Match the approved reference: refined softly colored architectural plan illustration, thin warm-gray contours, muted light oak, ivory/beige upholstery, very restrained realistic material texture and internal shading. All objects form ONE furniture arrangement, not separate cells or a collage. Genuinely transparent alpha background, no ground, no external cast shadows, no decorative objects, text, labels, logos, border or watermark. Tight framing with small clear margins. Preserve the full group silhouette and consistent scale among chairs."
+    }
+  ]
+}

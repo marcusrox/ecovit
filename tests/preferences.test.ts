@@ -3,9 +3,39 @@ import {
   preferencesKey,
   readPreferences,
   usePreferences,
+  renderingPreferencesKey,
+  readHighQualityImages,
 } from "../src/state/preferences";
 
 afterEach(() => vi.unstubAllGlobals());
+
+it("M10 qualidade alta tem padrão seguro, persiste separadamente e mantém a sessão após falha", () => {
+  const storage = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => storage.get(key) ?? null,
+    setItem: (key: string, value: string) => storage.set(key, value),
+  });
+  expect(readHighQualityImages()).toBe(true);
+  usePreferences.getState().setLabel("wall", false);
+  const labels = storage.get(preferencesKey);
+  usePreferences.getState().setHighQualityImages(false);
+  expect(readHighQualityImages()).toBe(false);
+  expect(storage.get(preferencesKey)).toBe(labels);
+  storage.set(renderingPreferencesKey, '"false"');
+  expect(readHighQualityImages()).toBe(true);
+  vi.stubGlobal("localStorage", {
+    getItem: () => {
+      throw new Error("blocked");
+    },
+    setItem: () => {
+      throw new Error("quota");
+    },
+  });
+  expect(readHighQualityImages()).toBe(true);
+  usePreferences.getState().setHighQualityImages(false);
+  expect(usePreferences.getState().highQualityImages).toBe(false);
+  expect(usePreferences.getState().error).toContain("não foi salva");
+});
 
 it("usa padrões visíveis em armazenamento ausente, inválido ou inacessível", () => {
   for (const value of [

@@ -60,7 +60,7 @@ export function FloorReferenceLayer({
             ctx.strokeRect(x, y, width, height);
             drawOpeningSymbol(
               ctx,
-              o.kind,
+              o,
               w.a.y === w.b.y,
               x,
               y,

@@ -1343,6 +1343,8 @@ button.iconButton {
   flex-shrink: 0;
 }
 .editorApp .toolbar {
+  min-width: 0;
+  max-width: 100%;
   height: auto;
   padding: 0 12px 0 0;
   border: 0;
@@ -1351,6 +1353,12 @@ button.iconButton {
 }
 .editorApp .tools {
   gap: 3px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.editorApp .tools > select {
+  max-width: 220px;
+  min-width: 0;
 }
 .editorApp .fiadaToolbar {
   padding: 0;
@@ -1892,30 +1900,143 @@ button.iconButton {
   width: 100%;
   min-width: 0;
 }
-:global(html[data-opening-project]),
-:global(html[data-opening-project] *) {
-  cursor: wait !important;
+.openingPreview {
+  display: block;
+  width: 100%;
+  height: 120px;
+  margin: 8px 0;
+  color: inherit;
 }
-
-.openingSpinner {
+.furnitureDialog {
+  width: min(760px, calc(100vw - 40px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 22px;
+  border: 1px solid #cbd3cb;
+  border-radius: 12px;
+  color: #234b40;
+}
+.furnitureDialog::backdrop {
+  background: #14271b66;
+}
+.furnitureProperties fieldset {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.furnitureProperties label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.furnitureProperties input {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.furnitureProperties button {
+  max-width: 100%;
+}
+.furnitureDialog label {
+  display: grid;
+  gap: 5px;
+  margin: 10px 0;
+}
+.furnitureDialog input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.furnitureHeader {
   display: flex;
-  animation: openingSpin 1s linear infinite;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
-
-.projectCard.projectOpeningCard:disabled {
-  opacity: 1;
-  background: #edf2eb;
-  border-color: #8ca78e;
+.furnitureHeader h2 {
+  font-size: 19px;
+  margin: 0 0 10px;
 }
-
-@keyframes openingSpin {
-  to {
-    transform: rotate(360deg);
-  }
+.furnitureHeader .iconButton[data-tooltip]::after {
+  top: calc(100% + 6px);
+  bottom: auto;
+  left: auto;
+  right: 0;
+  transform: none;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .openingSpinner {
-    animation: none;
+.furnitureTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 12px 0;
+}
+.furnitureTabs button {
+  padding: 5px 9px;
+  font-size: 12px;
+}
+.furnitureTabs button[aria-pressed="true"] {
+  color: white;
+  background: #245d49;
+}
+.furnitureGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+.furnitureGrid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.furnitureGrid img {
+  width: 100%;
+  height: 110px;
+  object-fit: contain;
+}
+.furnitureGrid small,
+.furnitureNote {
+  font-size: 11px;
+  color: #52685a;
+}
+.furnitureGrid span {
+  font-size: 12px;
+}
+.furnitureUpload {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.furnitureUpload img {
+  width: 90px;
+  height: 80px;
+  object-fit: contain;
+}
+.furnitureCustom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.furnitureCustom button {
+  display: grid;
+  width: 120px;
+  gap: 5px;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+.furnitureCustom img {
+  width: 100%;
+  height: 60px;
+  object-fit: contain;
+}
+@media (max-width: 1000px) {
+  .furnitureGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

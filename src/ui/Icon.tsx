@@ -1,5 +1,6 @@
 import {
   ImagePlus,
+  Armchair,
   Ellipsis,
   ArrowLeft,
   ArrowRight,
@@ -38,6 +39,7 @@ import styles from "./App.module.css";
 
 // Semantic names remain stable across screens; only this module imports Lucide.
 const icons = {
+  furniture: Armchair,
   image: ImagePlus,
   more: Ellipsis,
   select: MousePointer2,

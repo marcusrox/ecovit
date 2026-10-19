@@ -678,6 +678,9 @@ export function floorView(
       openings: doc.model.openings.filter((o) => wallIds.has(o.wallId)),
       slabs: doc.model.slabs.filter((s) => s.floorId === floorId),
       measurements: doc.model.measurements.filter((m) => m.floorId === floorId),
+      imageElements: doc.model.imageElements.filter(
+        (m) => m.floorId === floorId,
+      ),
       referenceImages: doc.model.referenceImages.filter(
         (m) => m.floorId === floorId,
       ),

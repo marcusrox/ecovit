@@ -1,4 +1,10 @@
 import { validateReference } from "../domain/reference-image";
+import {
+  validateElement,
+  validateCustomAsset,
+  MAX_IMAGE_ELEMENTS,
+  MAX_CUSTOM_ASSETS,
+} from "../domain/image-elements";
 import { z } from "zod";
 import { validateSlab } from "../domain/slabs";
 import {
@@ -11,6 +17,7 @@ import {
 import { MAX_GROUT_ADJUSTMENTS } from "../domain/grout";
 import { generate } from "../domain/composition";
 import { MAX_OPENINGS, openingBox } from "../domain/openings";
+import { validAppearance } from "../domain/opening-appearance";
 import {
   MAX_CHANNEL_LEVELS,
   MAX_CHANNEL_SUPPRESSIONS,
@@ -137,7 +144,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(11),
+    schemaVersion: z.literal(14),
     project: z
       .object({
         id,
@@ -199,6 +206,24 @@ const schema = z
                 id,
                 wallId: id,
                 kind: z.enum(["door", "window", "opening"]),
+                appearance: z
+                  .object({
+                    type: z.enum([
+                      "swing",
+                      "double-swing",
+                      "sliding",
+                      "center-sliding",
+                      "tilt",
+                    ]),
+                    orientation: z.union([
+                      z.literal(0),
+                      z.literal(1),
+                      z.literal(2),
+                      z.literal(3),
+                    ]),
+                  })
+                  .strict()
+                  .optional(),
                 offset: integer,
                 width: positive,
                 base: integer,
@@ -207,6 +232,46 @@ const schema = z
               .strict(),
           )
           .max(MAX_OPENINGS),
+        imageElements: z
+          .array(
+            z
+              .object({
+                id,
+                floorId: id,
+                name: z.string().trim().min(1).max(200),
+                source: z.discriminatedUnion("kind", [
+                  z
+                    .object({
+                      kind: z.literal("catalog"),
+                      itemId: z.string().min(1).max(100),
+                      revision: z.number().int().positive(),
+                    })
+                    .strict(),
+                  z.object({ kind: z.literal("custom"), assetId: id }).strict(),
+                ]),
+                x: z.number().finite(),
+                y: z.number().finite(),
+                width: z.number().finite().positive(),
+                depth: z.number().finite().positive(),
+                angle: z.number().finite(),
+              })
+              .strict(),
+          )
+          .max(MAX_IMAGE_ELEMENTS),
+        customImageAssets: z
+          .array(
+            z
+              .object({
+                id,
+                name: z.string().min(1).max(200),
+                mime: z.enum(["image/png", "image/jpeg"]),
+                data: z.string(),
+                width: positive,
+                height: positive,
+              })
+              .strict(),
+          )
+          .max(MAX_CUSTOM_ASSETS),
         referenceImages: z
           .array(
             z
@@ -317,23 +382,42 @@ export function validateProject(
     value &&
     typeof value === "object" &&
     "schemaVersion" in value &&
-    (value.schemaVersion === 9 || value.schemaVersion === 10) &&
+    (value.schemaVersion === 9 ||
+      value.schemaVersion === 10 ||
+      value.schemaVersion === 11 ||
+      value.schemaVersion === 12 ||
+      value.schemaVersion === 13) &&
     "model" in value &&
     value.model &&
     typeof value.model === "object"
   ) {
     if (
-      "referenceImages" in value.model ||
+      (value.schemaVersion < 11 && "referenceImages" in value.model) ||
+      (value.schemaVersion < 13 &&
+        ("imageElements" in value.model ||
+          "customImageAssets" in value.model)) ||
       (value.schemaVersion === 9 && "measurements" in value.model)
     )
       throw new Error("Arquivo inválido: campos em formato anterior.");
+    if (
+      value.schemaVersion < 12 &&
+      "openings" in value.model &&
+      Array.isArray(value.model.openings) &&
+      value.model.openings.some(
+        (o: unknown) => o && typeof o === "object" && "appearance" in o,
+      )
+    )
+      throw new Error("Arquivo inválido: aparência em formato anterior.");
     value = {
       ...value,
-      schemaVersion: 11,
+      schemaVersion: 14,
       model: {
         ...value.model,
         ...(value.schemaVersion === 9 ? { measurements: [] } : {}),
-        referenceImages: [],
+        ...(value.schemaVersion < 11 ? { referenceImages: [] } : {}),
+        ...(value.schemaVersion < 13
+          ? { imageElements: [], customImageAssets: [] }
+          : {}),
       },
     };
   }
@@ -341,10 +425,10 @@ export function validateProject(
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 11
+    value.schemaVersion !== 14
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9, 10 ou 11; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 14; demais formatos não são convertidos.",
     );
   const parsed = schema.safeParse(value);
   if (!parsed.success)
@@ -359,6 +443,8 @@ export function validateProject(
         }
       : parsed.data
   ) as Project;
+  if (doc.model.openings.some((o) => !validAppearance(o)))
+    throw new Error("Tipo ou orientação da esquadria inválidos.");
   const imageFloors = new Set<string>();
   for (const image of doc.model.referenceImages) {
     if (
@@ -398,6 +484,16 @@ export function validateProject(
     checked([f.level + f.defaultHeight]);
   }
   const walls = new Map(doc.model.walls.map((w) => [w.id, w]));
+  for (const asset of doc.model.customImageAssets) {
+    take(asset.id);
+    validateCustomAsset(asset);
+  }
+  for (const element of doc.model.imageElements) {
+    take(element.id);
+    if (!floors.has(element.floorId))
+      throw new Error("Imagem com pavimento inválido.");
+    validateElement(element, doc.model.customImageAssets);
+  }
   for (const measurement of doc.model.measurements) {
     take(measurement.id);
     if (

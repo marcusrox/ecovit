@@ -7,6 +7,7 @@ import {
   type Wall,
   type Point,
 } from "./project";
+import { validAppearance } from "./opening-appearance";
 
 export const openingLabel = { door: "Porta", window: "Janela", opening: "Vão" };
 export const MAX_OPENINGS = 1000;
@@ -25,6 +26,11 @@ export function openingIssue(
   doc: Project,
   o: Opening,
 ): { code: string; message: string } | null {
+  if (!validAppearance(o))
+    return {
+      code: "opening-appearance",
+      message: "Tipo ou orientação da esquadria inválidos.",
+    };
   const w = doc.model.walls.find((w) => w.id === o.wallId);
   if (!w)
     return { code: "opening-wall-missing", message: "Parede do vão ausente." };

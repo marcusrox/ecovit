@@ -5,6 +5,27 @@ import type {
   JunctionChoice,
 } from "./composition";
 export type Point = { x: number; y: number };
+export type CustomImageAsset = {
+  id: string;
+  name: string;
+  mime: "image/png" | "image/jpeg";
+  data: string;
+  width: number;
+  height: number;
+};
+export type ImageElement = {
+  id: string;
+  floorId: string;
+  name: string;
+  source:
+    | { kind: "catalog"; itemId: string; revision: number }
+    | { kind: "custom"; assetId: string };
+  x: number;
+  y: number;
+  width: number;
+  depth: number;
+  angle: number;
+};
 export type ReferenceImage = {
   floorId: string;
   name: string;
@@ -37,10 +58,15 @@ export type Wall = {
   side: 1 | -1;
   height: number;
 };
+export type OpeningAppearance = {
+  type: "swing" | "double-swing" | "sliding" | "center-sliding" | "tilt";
+  orientation: 0 | 1 | 2 | 3;
+};
 export type Opening = {
   id: string;
   wallId: string;
   kind: "door" | "window" | "opening";
+  appearance?: OpeningAppearance;
   offset: number;
   width: number;
   base: number;
@@ -77,10 +103,11 @@ export const defaultGroutSettings = (enabled = true): GroutSettings => ({
 });
 export const defaultChannelLevels = (): ChannelLevel[] =>
   [11200, 22400].map((top) => ({ id: crypto.randomUUID(), top }));
-export type Tool = "select" | "wall" | "slab" | "measure" | Opening["kind"];
+export type Tool =
+  "select" | "wall" | "slab" | "measure" | "furniture" | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 11;
+  schemaVersion: 14;
   project: {
     id: string;
     name: string;
@@ -104,6 +131,8 @@ export type Project = {
     slabs: Slab[];
     measurements: Measurement[];
     referenceImages: ReferenceImage[];
+    imageElements: ImageElement[];
+    customImageAssets: CustomImageAsset[];
   };
   adjustments: {
     junctions: JunctionChoice[];
@@ -168,7 +197,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 11,
+    schemaVersion: 14,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -194,11 +223,13 @@ export function createProject(
       slabs: [],
       measurements: [],
       referenceImages: [],
+      imageElements: [],
+      customImageAssets: [],
     },
     adjustments: { junctions: [], grout: [], channels: [] },
     generated: null,
     generationState: { status: "outdated", diagnostics: [] },
-    metadata: { createdAt: now, updatedAt: now, appVersion: "0.13.0" },
+    metadata: { createdAt: now, updatedAt: now, appVersion: "0.15.1" },
   };
 }
 export const snap = (n: number, module: number) =>

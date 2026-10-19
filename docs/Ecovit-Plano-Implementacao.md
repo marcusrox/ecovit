@@ -1,50 +1,48 @@
 # Ecovit — Plano incremental de implementação
 
-**Data:** 10 de outubro de 2026  
-**Atualização documental:** 19 de outubro de 2026\
-**Base:** [PRD 0.34](Ecovit-PRD.md) e [Arquitetura 1.27](Ecovit-Arquitetura-Tecnica.md)\
-**Estado:** M1, M2 e M3.1–M3.5 aprovados pelo solicitante; aceites globais de M3.4 e M3.5 recebidos em 14/10/2026. M4.1, M4.2 e M4.3 também aprovados pelo solicitante, conforme registro consolidado na seção 10. Relatórios e registros de aceite nas seções 7–10. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais. M5 implementado, revisado e aceito pelo solicitante; registro e verificações na seção 12. M6 implementado, verificado pelo Codex e aceito pelo solicitante; registro na seção 13. M7 implementado e aceito pelo solicitante, incluindo a criação por dois cliques; verificações e registro do aceite na seção 14. M8 implementado e aceito pelo solicitante; verificações e registro do aceite na seção 15.
+Índice dos marcos e de seus registros finais. Comportamento vigente no [PRD](Ecovit-PRD.md), contratos na [Arquitetura](Ecovit-Arquitetura-Tecnica.md), convenções no [Caderno técnico](Ecovit-Caderno-Tecnico.md) e propostas futuras no [Backlog](Ecovit-Backlog.md).
 
-## 1. Como usar este plano
+## Como usar
 
-Ideias para evoluções futuras estão no [backlog](Ecovit-Backlog.md), com oito propostas do solicitante e estado por item quando definido. BL-06 está implementado; BL-07 foi implementado e aceito pelo solicitante no M6 (§13). BL-03 foi implementado e aceito pelo solicitante no M7 (§14). BL-02 implementado e aceito pelo solicitante no M8 (§15). Os demais itens continuam sem escopo de implementação aprovado. Aprovação de especificação não equivale a autorização para implementar nem a aceite funcional.
+- Consultar o arquivo do marco para alcance, tarefas, critérios de aceite, verificações, limitações e aceite do solicitante. M3.1–M3.3 compartilham um arquivo por utilizarem critérios comuns; M4 tem um resumo e três entregas independentes.
+- Preservar os IDs de tarefas/aceite e de referências RF/CT/EX/D/AH. O número do marco identifica a entrega; a numeração interna preservada nos arquivos permite reconhecer as referências anteriores.
+- Os marcos são cumulativos em funcionalidades. Formatos e limitações de uma entrega antiga são históricos; o contrato suportado atualmente é definido na arquitetura. O aceite de um marco não autoriza executar outros itens.
+- Verificações do Codex são evidências da entrega, sem atribuir nova execução a revisões posteriores. Aceite global do solicitante não comprova execução individual de cada roteiro ou auditoria de cada detalhe.
+- Manter um resumo final por marco, sem diário de tentativas, logs intermediários, contagens acumuladas de reexecuções ou cópias dos contratos de produto/arquitetura. Resultados transitórios ficam no histórico do Git. Preservar limitações e pendências reais, inclusive aceites específicos de ajustes posteriores.
 
-Cada marco acrescenta uma funcionalidade testável ao aplicativo definitivo. M1 mantém sua especificação e relatório; M2 está detalhado na seção 5, M3.1–3.3 na seção 7, M3.4 na seção 8 e M3.5 na seção 9. M significa Marco e é a única sigla usada para essas etapas. Subdivisões usam ponto: M3.1 (Vãos), M3.2 (Canaletas), M3.3 (Grauteamentos), M3.4 (Evolução da edição no canvas) e M3.5 (Cruz nominal). Preservar IDs existentes; M3.4/M3.5 usam seus próprios prefixos de tarefa/aceite, sem renumerar entregas aceitas. RF, CT e EX continuam identificando requisitos, convenções técnicas e exemplos.
+## Marcos
 
-Os marcos são cumulativos em funcionalidades. Uma limitação do recorte de M1 ou M2 não descreve, por si só, o aplicativo completo: o suporte vigente resulta de M1–M4.3. Durante o MVP, cada marco pode adotar novo formato sem compatibilidade com marcos anteriores, sem obrigação de criar ou manter migrações ou geradores legados. Contratos e verificações antigas abaixo registram o que foi entregue e não impõem sua manutenção em marcos futuros. A reabertura e o transporte devem funcionar para o contrato suportado pelo marco entregue; formatos incompatíveis são recusados sem sobrescrever o trabalho aberto.
-
-Os resultados de teste abaixo são evidências registradas das entregas, não uma nova execução nem uma garantia de cobertura de toda revisão posterior. Aceite global do solicitante e verificação do Codex são informações distintas; os aceites não atribuem resultado individual a cada passo manual. Os roteiros permanecem como referência de verificação.
-
-O PRD define comportamento; a arquitetura define contratos de dados/processamento; o caderno define convenções e limites geométricos. Este plano reúne alcance e evidências sem repetir integralmente esses contratos. Funcionalidade prevista não equivale a implementação ou autorização para executar outro marco.
-
-## 2. Sequência dos marcos
-
-| Marco | Resultado no aplicativo | Referências | Estado |
+| Marco | Resultado | Referências | Situação final |
 |---|---|---|---|
-| M1 — Planta editável e persistência | Projetos, paredes, histórico e arquivo nativo | RF-01/02/03/08/09/11/12 | Implementado e aceito |
-| M2 — Composição e inspeção de fiadas | Catálogo nominal, retas, L/U/T/contornos, fases, diagnóstico e inspeção | RF-01/03/04/05/09/10/11/12; CT-01–06 | Implementado e aceito |
-| M3.1 — Vãos | Portas, janelas, vãos e padrões de inserção | RF-04/06/09/10/12; CT-07/08 | Implementado e aceito |
-| M3.2 — Canaletas | Níveis globais, faixas locais, supressão/restauração | RF-04/07/09/10/12; CT-09 | Implementado e aceito |
-| M3.3 — Grautes | Categorias, distância, eixos e ajustes individuais | RF-04/07/09/10/12; CT-10 | Implementado e aceito |
-| M3.4 — Edição no canvas | Continuidade/união, movimento com dependentes e módulo inicial | RF-02/03/06/07/09/10/11/12; CT-11 | Implementado e aceito |
-| M3.5 — Cruz nominal | Cruz integrada a L/T/contorno, fases e elementos associados | RF-04/05/07/09/10/12; CT-12 | Implementado e aceito |
-| M4 — Lajes e múltiplos pavimentos | Cota única modular, lajes independentes, até quatro pavimentos e comparação visual | RF-08/13 e integração com RF-04/05/07 | M4.1, M4.2 e M4.3 implementados, revisados e aceitos pelo solicitante; registro e verificações nas §§10–10.3 |
-| M5 — Consulta e conclusão da primeira versão | Quantitativos, duplicação de projetos e cenários restantes | RF-10/11/12 e cenários do PRD | Implementado, revisado e aceito pelo solicitante em 0.11.0; registro e verificações na §12 |
-| M6 — Preferências do Ecovit | Preferências de rótulos, comprimento/altura das paredes e reorganização do status/ajuda do canvas | BL-07; RF-09/10/14 | Implementado e aceito pelo solicitante; registro e verificações na §13 |
-| M7 — Medidas independentes | Segmentos de medição livres em Planta, atração geométrica e persistência por pavimento | BL-03; RF-15, integração com RF-02/08/09/11/12/14 | Implementado e aceito pelo solicitante; verificações e aceite na §14 |
-| M8 — Imagem de referência por pavimento | Uma imagem de fundo calibrada, posição/rotação, opacidade e interface compacta | BL-02; RF-16, integração com RF-02/08/09/11/12 | Implementado e aceito pelo solicitante; verificações e aceite na §15 |
+| [M1 — Planta editável e persistência](marcos/M1-Planta-e-Persistencia.md) | Projetos, paredes, histórico e arquivo nativo | RF-01/02/03/08/09/11/12 | Implementado e aceito pelo solicitante |
+| [M2 — Composição e inspeção de fiadas](marcos/M2-Composicao.md) | Catálogo nominal, retas, L/U/T/contornos, fases, diagnóstico e inspeção | RF-01/03/04/05/09/10/11/12; CT-01–06 | Implementado e aceito pelo solicitante |
+| [M3.1 — Vãos](marcos/M3-Vaos-Canaletas-Grautes.md) | Portas, janelas, vãos e padrões de inserção | RF-04/06/09/10/12; CT-07/08 | Implementado e aceito pelo solicitante |
+| [M3.2 — Canaletas](marcos/M3-Vaos-Canaletas-Grautes.md) | Níveis globais, faixas locais, supressão/restauração | RF-04/07/09/10/12; CT-09 | Implementado e aceito pelo solicitante |
+| [M3.3 — Grautes](marcos/M3-Vaos-Canaletas-Grautes.md) | Categorias, distância, eixos e ajustes individuais | RF-04/07/09/10/12; CT-10 | Implementado e aceito pelo solicitante |
+| [M3.4 — Edição no canvas](marcos/M3.4-Edicao-no-Canvas.md) | Continuidade/união, movimento com dependentes e módulo inicial | RF-02/03/06/07/09/10/11/12; CT-11 | Implementado e aceito pelo solicitante |
+| [M3.5 — Cruz nominal](marcos/M3.5-Cruz-Nominal.md) | Cruz integrada a L/T/contorno, fases e elementos associados | RF-04/05/07/09/10/12; CT-12 | Implementado e aceito pelo solicitante |
+| [M4 — Lajes e múltiplos pavimentos](marcos/M4-Lajes-e-Pavimentos.md) | Cota única modular, lajes independentes, até quatro pavimentos e comparação visual | RF-08/13 e integração com RF-04/05/07 | Implementado e aceito pelo solicitante |
+| [M4.1 — Pavimentos](marcos/M4.1-Pavimentos.md) | Gestão de pavimentos, cotas e composição local | RF-08; EX-56–64 | Implementado e aceito pelo solicitante |
+| [M4.2 — Lajes](marcos/M4.2-Lajes.md) | Lajes/aberturas, edição e extensão AH de alturas | RF-13; CT-13/14; EX-65–79; D42-01 | Implementado e aceito pelo solicitante |
+| [M4.3 — Comparação visual](marcos/M4.3-Comparacao-de-Pavimentos.md) | Referência de pavimento adjacente em Planta | RF-08; CT-15; EX-80–85 | Implementado e aceito pelo solicitante |
+| [M5 — Consulta e conclusão da primeira versão](marcos/M5-Quantitativos-e-Projetos.md) | Quantitativos, duplicação de projetos e cenários restantes | RF-10/11/12 e cenários do PRD | Implementado e aceito pelo solicitante |
+| [M6 — Preferências do Ecovit](marcos/M6-Preferencias.md) | Preferências de rótulos, comprimento/altura das paredes e reorganização do status/ajuda do canvas | BL-07; RF-09/10/14 | Implementado e aceito pelo solicitante |
+| [M7 — Medidas independentes](marcos/M7-Medidas.md) | Segmentos de medição livres em Planta, atração geométrica e persistência por pavimento | BL-03; RF-15, integração com RF-02/08/09/11/12/14 | Implementado e aceito pelo solicitante |
+| [M8 — Imagem de referência por pavimento](marcos/M8-Imagem-de-Referencia.md) | Uma imagem de fundo calibrada, posição/rotação, opacidade e interface compacta | BL-02; RF-16, integração com RF-02/08/09/11/12 | Implementado e aceito pelo solicitante |
+| [M9 — Tipos de portas e janelas](marcos/M9-Esquadrias.md) | Nove variantes e símbolos em Planta com botão único de orientação cíclica | BL-08; RF-06; [Elementos construtivos](arquitetura/Elementos-Construtivos.md#vãos-e-aparência-de-esquadrias); CT-17 | Implementado e aceito pelo solicitante |
+| [M10 — Mobiliários](marcos/M10-Mobiliarios.md) | Acervo integrado com 40 opções, ocorrências editáveis em Planta e upload incorporado ao arquivo | BL-01; RF-17; [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) | Implementado e aceito pelo solicitante |
 
-Persistência, integridade e verificação acompanham cada entrega. M4 depende da composição de M3 e acrescenta pavimentos independentes e comparação visual, com quebra de compatibilidade dos documentos anteriores; M5 depende de M4. A divisão de M4 em incrementos está na seção 10.
+Persistência, integridade e verificação acompanham cada entrega. M4 depende de M3; M5 depende de M4. Os subitens de M4 têm seus próprios critérios, verificações e aceites.
 
-## 3. M1 — Planta editável e persistência
+## Ajustes transversais e pendências específicas
 
-**Estado:** implementado e aceito.
+[Apresentação e operação](marcos/Apresentacao-e-Operacao.md) reúne interface, iconografia e limites operacionais que não pertencem a um único marco. Seus aceites específicos pendentes permanecem separados dos aceites globais.
 
-### Alcance
+O [registro de M5](marcos/M5-Quantitativos-e-Projetos.md) preserva também a situação dos ajustes posteriores de exclusão de projetos, cartões e cabeçalho, inclusive os aceites específicos ainda pendentes. M1–M10 aprovados não implica aprovação automática dessas alterações.
 
-Criar, nomear, listar e abrir projetos locais; escolher base 25 × 12,5 × 7 cm, 30 × 15 × 7 cm ou personalizada 2:1; desenhar paredes ortogonais pela face externa e editar pelas duas pontas ou por comprimento. Inclui seleção de sobrepostos, exclusão, cancelamentos, histórico de 50 operações, salvamento local, bloqueio entre abas e download/importação de arquivo.
+BL-01/02/03/06/07/08 estão implementados; BL-04/05 permanecem sem escopo de implementação aprovado, conforme o backlog. Nenhum novo marco foi iniciado nesta reorganização.
 
-O recorte de M1 contém um térreo com piso/início da alvenaria em 0 cm e altura padrão de 280 cm, editáveis. Não inclui composição, vãos, canaletas ou grautes; esses recursos pertencem aos marcos seguintes. O envelope de M1 é versão 1, sem composição gerada. A importação cria cópia com novo ID de projeto, preservando IDs e relações dos elementos.
+## Verificação da reorganização
 
 ### Tarefas de implementação de M1
 

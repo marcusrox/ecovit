@@ -6,6 +6,7 @@ import {
   defaultChannelLevels,
   defaultGroutSettings,
   type Opening,
+  type OpeningAppearance,
   type LocalProject as Project,
 } from "../domain/project";
 import {
@@ -18,6 +19,83 @@ import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
 import { Icon } from "../ui/Icon";
 import { validateChannelLevels, MAX_CHANNEL_LEVELS } from "../domain/channels";
+import {
+  appearanceOptions,
+  nextOrientation,
+  orientationCount,
+  orientationDescription,
+} from "../domain/opening-appearance";
+import { openingSymbolStrokes } from "../domain/opening-symbol";
+
+function OpeningPreview({
+  opening,
+  horizontal,
+}: {
+  opening: Opening;
+  horizontal: boolean;
+}) {
+  const strokes = openingSymbolStrokes(
+    opening,
+    horizontal,
+    -50,
+    -6,
+    horizontal ? 100 : 12,
+    horizontal ? 12 : 100,
+  );
+  const points = strokes.flatMap((s) => s.points);
+  const wall = horizontal
+    ? [
+        { x: -90, y: -6, width: 40, height: 12 },
+        { x: 50, y: -6, width: 40, height: 12 },
+      ]
+    : [
+        { x: -50, y: -46, width: 12, height: 40 },
+        { x: -50, y: 94, width: 12, height: 40 },
+      ];
+  const xs = [
+    ...points.map((p) => p.x),
+    ...wall.flatMap((b) => [b.x, b.x + b.width]),
+  ];
+  const ys = [
+    ...points.map((p) => p.y),
+    ...wall.flatMap((b) => [b.y, b.y + b.height]),
+  ];
+  const left = Math.min(...xs) - 8,
+    top = Math.min(...ys) - 8;
+  return (
+    <svg
+      className={styles.openingPreview}
+      viewBox={`${left} ${top} ${Math.max(...xs) - left + 8} ${Math.max(...ys) - top + 8}`}
+      role="img"
+      aria-label="Prévia da esquadria"
+    >
+      <title>
+        {appearanceOptions(opening.kind).find(
+          (a) => a.type === opening.appearance?.type,
+        )?.label ?? "Símbolo genérico legado"}
+      </title>
+      {wall.map((b, i) => (
+        <rect
+          key={i}
+          {...b}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1"
+        />
+      ))}
+      {strokes.map((stroke, i) => (
+        <polyline
+          key={i}
+          points={stroke.points.map((p) => `${p.x},${p.y}`).join(" ")}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1"
+          strokeDasharray={stroke.dashed ? "4 3" : undefined}
+        />
+      ))}
+    </svg>
+  );
+}
 
 type Suggestion = { field: string; requested: number; values: number[] };
 function Suggestions({
@@ -99,6 +177,33 @@ function OpeningForm({
   const s = useStore(),
     disabled = s.busy || s.readonly;
   const w = doc.model.walls.find((w) => w.id === o.wallId)!;
+  const changeAppearance = async (
+    appearance: OpeningAppearance,
+    control: HTMLButtonElement | HTMLSelectElement,
+  ) => {
+    if (disabled) return;
+    if (pending) s.inspect({ pendingOpening: { ...o, appearance } });
+    else {
+      await s.commit({
+        ...doc,
+        model: {
+          ...doc.model,
+          openings: doc.model.openings.map((opening) =>
+            opening.id === o.id ? { ...opening, appearance } : opening,
+          ),
+        },
+      });
+      // Saving temporarily disables controls; preserve keyboard navigation unless
+      // the user has deliberately focused a different element in the meantime.
+      if (
+        control.isConnected &&
+        useStore.getState().select === o.id &&
+        (document.activeElement === document.body ||
+          document.activeElement === control)
+      )
+        control.focus({ preventScroll: true });
+    }
+  };
   const [values, setValues] = useState<Record<string, string>>({
     "Posição do vão": display(o.offset),
     "Largura do vão": display(o.width),
@@ -152,6 +257,61 @@ function OpeningForm({
         Parede {doc.model.walls.indexOf(w) + 1} · distância desde a menor
         coordenada.
       </p>
+      {o.kind !== "opening" && (
+        <section aria-label="Representação da esquadria">
+          <label className={styles.field}>
+            Tipo da esquadria
+            <select
+              aria-label="Tipo da esquadria"
+              disabled={disabled}
+              value={o.appearance?.type ?? ""}
+              onChange={(e) =>
+                void changeAppearance(
+                  {
+                    type: e.target.value as OpeningAppearance["type"],
+                    orientation: 0,
+                  },
+                  e.currentTarget,
+                )
+              }
+            >
+              {!o.appearance && (
+                <option value="" disabled>
+                  Genérico (legado)
+                </option>
+              )}
+              {appearanceOptions(o.kind).map((a) => (
+                <option key={a.type} value={a.type}>
+                  {a.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <OpeningPreview opening={o} horizontal={w.a.y === w.b.y} />
+          <button
+            type="button"
+            disabled={disabled || !o.appearance}
+            onClick={(e) =>
+              o.appearance &&
+              void changeAppearance(
+                nextOrientation(o.appearance),
+                e.currentTarget,
+              )
+            }
+          >
+            Alternar orientação
+          </button>
+          <p
+            className={styles.note}
+            aria-live="polite"
+            aria-label="Orientação da esquadria"
+          >
+            {o.appearance
+              ? `${o.appearance.orientation + 1}/${orientationCount(o.appearance.type)} · ${orientationDescription(o.appearance, w.a.y === w.b.y)}`
+              : "Escolha um tipo para definir a orientação."}
+          </p>
+        </section>
+      )}
       <form
         onKeyDown={(e) => {
           if (e.key === "Escape") {
