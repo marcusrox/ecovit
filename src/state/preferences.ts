@@ -1,6 +1,18 @@
 import { create } from "zustand";
 
 export const preferencesKey = "ecovit:preferences:v1";
+export const renderingPreferencesKey = "ecovit:rendering:v1";
+export function readHighQualityImages(): boolean {
+  try {
+    const value: unknown = JSON.parse(
+      localStorage.getItem(renderingPreferencesKey) ?? "null",
+    );
+    if (typeof value === "boolean") return value;
+  } catch {
+    /* Keep rendering available when storage fails. */
+  }
+  return true;
+}
 export type LabelType = "door" | "window" | "opening" | "wall" | "measure";
 export type LabelPreferences = Record<LabelType, boolean>;
 const defaults: LabelPreferences = {
@@ -39,10 +51,23 @@ export function readPreferences(): LabelPreferences {
 
 export const usePreferences = create<{
   labels: LabelPreferences;
+  highQualityImages: boolean;
+  setHighQualityImages: (high: boolean) => void;
   error: string;
   setLabel: (type: LabelType, visible: boolean) => void;
 }>((set, get) => ({
   labels: readPreferences(),
+  highQualityImages: readHighQualityImages(),
+  setHighQualityImages(high) {
+    let error = "";
+    try {
+      localStorage.setItem(renderingPreferencesKey, JSON.stringify(high));
+    } catch {
+      error =
+        "A preferência foi aplicada nesta sessão, mas não foi salva para a próxima abertura.";
+    }
+    set({ highQualityImages: high, error });
+  },
   error: "",
   setLabel(type, visible) {
     const labels = { ...get().labels, [type]: visible };

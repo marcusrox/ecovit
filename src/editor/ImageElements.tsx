@@ -1,4 +1,18 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import Konva from "konva";
+import { usePreferences } from "../state/preferences";
+import {
+  acquireFurnitureBitmap,
+  furnitureBitmapLevel,
+  setFurnitureSmoothing,
+  type FurnitureBitmap,
+} from "./furniture-bitmaps";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import {
   Circle,
   Rect,
@@ -40,54 +54,6 @@ import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
 
 type Camera = { x: number; y: number; scale: number };
-type Bitmap = {
-  image: HTMLImageElement;
-  crop: { x: number; y: number; width: number; height: number };
-};
-// Cache promises only while a canvas is using them; original bytes remain unchanged.
-async function loadBitmap(url: string): Promise<Bitmap> {
-  const image = new Image();
-  image.src = url;
-  await image.decode();
-  if (url.startsWith("data:"))
-    return {
-      image,
-      crop: {
-        x: 0,
-        y: 0,
-        width: image.naturalWidth,
-        height: image.naturalHeight,
-      },
-    };
-  const canvas = document.createElement("canvas");
-  canvas.width = image.naturalWidth;
-  canvas.height = image.naturalHeight;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
-  ctx.drawImage(image, 0, 0);
-  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-  let left = canvas.width,
-    top = canvas.height,
-    right = -1,
-    bottom = -1;
-  for (let y = 0; y < canvas.height; y++)
-    for (let x = 0; x < canvas.width; x++)
-      if (pixels[(y * canvas.width + x) * 4 + 3] > 8) {
-        left = Math.min(left, x);
-        top = Math.min(top, y);
-        right = Math.max(right, x);
-        bottom = Math.max(bottom, y);
-      }
-  if (right < left) throw new Error("Imagem inteiramente transparente.");
-  return {
-    image,
-    crop: {
-      x: left,
-      y: top,
-      width: right - left + 1,
-      height: bottom - top + 1,
-    },
-  };
-}
 function ObjectBitmap({
   element,
   assets,
@@ -100,10 +66,12 @@ function ObjectBitmap({
   ghost?: boolean;
 }) {
   const url = elementUrl(element, assets),
-    [bitmap, setBitmap] = useState<Bitmap | null>(null);
+    [bitmap, setBitmap] = useState<FurnitureBitmap | null>(null);
   useEffect(() => {
     let live = true;
-    void loadBitmap(url)
+    setBitmap(null);
+    const resource = acquireFurnitureBitmap(url);
+    void resource.promise
       .then((i) => {
         if (live) setBitmap(i);
       })
@@ -117,6 +85,7 @@ function ObjectBitmap({
       });
     return () => {
       live = false;
+      resource.release();
     };
   }, [url]);
   if (!bitmap) return null;
@@ -125,10 +94,12 @@ function ObjectBitmap({
   const width =
     ((bitmap.crop.width * fit * element.width) / sourceRatio) * camera.scale;
   const height = bitmap.crop.height * fit * element.depth * camera.scale;
+  const ratio = Konva.pixelRatio || window.devicePixelRatio || 1;
+  const level = furnitureBitmapLevel(bitmap, width * ratio, height * ratio);
   return (
     <KonvaImage
-      image={bitmap.image}
-      crop={bitmap.crop}
+      image={level.image}
+      crop={level.crop}
       x={element.x * camera.scale + camera.x}
       y={element.y * camera.scale + camera.y}
       offsetX={width / 2}
@@ -494,6 +465,19 @@ export function useImageElements(
 ) {
   const { select, mode, busy, readonly, furnitureDraft, imageDraft } =
     useStore();
+  const bitmapLayer = useRef<Konva.Layer>(null);
+  const highQuality = usePreferences((s) => s.highQualityImages);
+  useLayoutEffect(() => {
+    const layer = bitmapLayer.current;
+    if (!layer) return;
+    const apply = () => setFurnitureSmoothing(layer, highQuality);
+    layer.on("beforeDraw.furnitureQuality", apply);
+    apply();
+    layer.batchDraw();
+    return () => {
+      layer.off("beforeDraw.furnitureQuality", apply);
+    };
+  }, [highQuality, mode]);
   const [preview, setPreviewState] = useState<ImageElement | null>(null),
     [position, setPosition] = useState<Point | null>(null);
   const previewRef = useRef<ImageElement | null>(null);
@@ -732,7 +716,7 @@ export function useImageElements(
     bounds: doc.model.imageElements.flatMap(elementCorners),
     layer:
       mode === "plan" ? (
-        <Layer listening={false}>
+        <Layer ref={bitmapLayer} listening={false}>
           {doc.model.imageElements.map((e) => (
             <ObjectBitmap
               key={e.id}

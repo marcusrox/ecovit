@@ -581,3 +581,172 @@ test("M10 acervo transparente e revisão visual nas três resoluções", async (
     );
   }
 });
+test("M10 resoluções em memória e qualidade alta local sem alterar projeto ou arquivo", async ({
+  page,
+}, info) => {
+  await page.addInitScript(() => {
+    const records = new Map<
+      HTMLCanvasElement,
+      {
+        canvasSource: boolean;
+        sourceWidth: number;
+        width: number;
+        quality: string;
+      }[]
+    >();
+    const draw = CanvasRenderingContext2D.prototype.drawImage;
+    const clear = CanvasRenderingContext2D.prototype.clearRect;
+    CanvasRenderingContext2D.prototype.clearRect = function (...args) {
+      records.set(this.canvas, []);
+      return clear.apply(this, args);
+    };
+    CanvasRenderingContext2D.prototype.drawImage = function (
+      this: CanvasRenderingContext2D,
+      ...args: Parameters<typeof draw>
+    ) {
+      if (this.canvas.isConnected) {
+        const entries = records.get(this.canvas) ?? [],
+          source = args[0];
+        entries.push({
+          canvasSource: source instanceof HTMLCanvasElement,
+          sourceWidth: args[3],
+          width: args[7],
+          quality: this.imageSmoothingQuality,
+        });
+        records.set(this.canvas, entries);
+      }
+      return draw.apply(this, args);
+    } as typeof draw;
+    Object.assign(window, {
+      furnitureDraws: () =>
+        [...records.entries()]
+          .filter(([canvas]) => canvas.isConnected)
+          .flatMap(([, entries]) => entries),
+    });
+  });
+  await open(page);
+  const cache = await page.evaluate(async () => {
+    const path = "/src/editor/furniture-bitmaps.ts";
+    const { acquireFurnitureBitmap, furnitureBitmapLevel } = await import(path);
+    const url = "/catalog/m10/sofa-r1.png";
+    const first = acquireFurnitureBitmap(url),
+      second = acquireFurnitureBitmap(url);
+    const bitmap = await first.promise;
+    const reduced = furnitureBitmapLevel(bitmap, 100, 40);
+    const enlarged = furnitureBitmapLevel(bitmap, 10000, 4000);
+    first.release();
+    const third = acquireFurnitureBitmap(url);
+    const shared =
+      first.promise === second.promise && third.promise === first.promise;
+    second.release();
+    third.release();
+    const fresh = acquireFurnitureBitmap(url);
+    const released = fresh.promise !== first.promise;
+    await fresh.promise;
+    fresh.release();
+    return {
+      shared,
+      released,
+      reduced: reduced.crop.width < enlarged.crop.width,
+      original: enlarged.image instanceof HTMLImageElement,
+    };
+  });
+  expect(cache).toEqual({
+    shared: true,
+    released: true,
+    reduced: true,
+    original: true,
+  });
+  await insert(page);
+  for (let i = 0; i < 5; i++)
+    await page
+      .getByRole("button", { name: "Reduzir zoom", exact: true })
+      .click();
+  const draws = () =>
+    page.evaluate(() =>
+      (
+        window as unknown as {
+          furnitureDraws: () => {
+            canvasSource: boolean;
+            sourceWidth: number;
+            width: number;
+            quality: string;
+          }[];
+        }
+      ).furnitureDraws(),
+    );
+  await expect
+    .poll(async () =>
+      (await draws()).some(
+        (d) =>
+          d.canvasSource &&
+          d.sourceWidth < 1024 &&
+          d.sourceWidth >= d.width &&
+          d.quality === "high",
+      ),
+    )
+    .toBe(true);
+  const before = await state(page);
+  const exportText = async () => {
+    const event = page.waitForEvent("download");
+    await page
+      .getByRole("button", { name: "Baixar projeto", exact: true })
+      .click();
+    return readFile((await (await event).path())!, "utf8");
+  };
+  const exported = await exportText();
+  await page
+    .getByRole("button", { name: "Preferências do Ecovit", exact: true })
+    .click();
+  const checkbox = page.getByRole("checkbox", {
+    name: "Suavização em qualidade alta",
+    exact: true,
+  });
+  await expect(checkbox).toBeChecked();
+  await checkbox.uncheck();
+  await page.getByRole("button", { name: "Fechar", exact: true }).click();
+  await expect
+    .poll(async () =>
+      (await draws()).some((d) => d.canvasSource && d.quality === "low"),
+    )
+    .toBe(true);
+  expect((await state(page)).doc).toEqual(before.doc);
+  expect((await state(page)).history).toEqual(before.history);
+  expect(await exportText()).toBe(exported);
+  await page.reload();
+  await page
+    .getByRole("button", { name: /M10 teste/ })
+    .first()
+    .click();
+  await settled(page);
+  await page
+    .getByRole("button", { name: "Preferências do Ecovit", exact: true })
+    .click();
+  await expect(checkbox).not.toBeChecked();
+  await checkbox.check();
+  for (const [width, height] of [
+    [1366, 768],
+    [1280, 720],
+    [900, 680],
+  ]) {
+    await page.setViewportSize({ width, height });
+    const dialog = page.getByRole("dialog", { name: "Preferências do Ecovit" });
+    await dialog.screenshot({
+      path: `.tools/m10-render-preferences-${info.project.name}-${width}.png`,
+    });
+    expect(
+      await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth),
+    ).toBe(true);
+  }
+  await page.keyboard.press("Escape");
+  for (let i = 0; i < 5; i++)
+    await page
+      .getByRole("button", { name: "Reduzir zoom", exact: true })
+      .click();
+  await expect
+    .poll(async () => (await draws()).some((d) => d.quality === "high"))
+    .toBe(true);
+  await page.screenshot({
+    path: `.tools/m10-render-reduced-${info.project.name}.png`,
+  });
+});

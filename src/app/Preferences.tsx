@@ -4,7 +4,8 @@ import styles from "../ui/App.module.css";
 
 export function PreferencesDialog({ close }: { close: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const { labels, error, setLabel } = usePreferences();
+  const { labels, error, setLabel, highQualityImages, setHighQualityImages } =
+    usePreferences();
   useEffect(() => {
     const node = dialog.current!;
     node.showModal();
@@ -42,6 +43,20 @@ export function PreferencesDialog({ close }: { close: () => void }) {
           </label>
         ))}
       </fieldset>
+      <fieldset>
+        <legend>Imagens dos mobiliários</legend>
+        <label>
+          <input
+            type="checkbox"
+            checked={highQualityImages}
+            onChange={(e) => setHighQualityImages(e.target.checked)}
+          />
+          Suavização em qualidade alta
+        </label>
+      </fieldset>
+      <p>
+        Suaviza imagens ao reduzir ou girar. Pode exigir mais processamento.
+      </p>
       <p>
         As alterações são imediatas e valem para todos os projetos neste
         navegador.
