@@ -2,12 +2,13 @@
 
 **Data:** 10 de outubro de 2026  
 **Atualização documental:** 19 de outubro de 2026\
-**Base:** [PRD 0.35](Ecovit-PRD.md) e [Arquitetura 1.28](Ecovit-Arquitetura-Tecnica.md)\
+**Base:** [PRD 0.36](Ecovit-PRD.md) e [Arquitetura 1.29](Ecovit-Arquitetura-Tecnica.md)\
+**Próximo marco:** M10 especificado na §17, com padrão visual aprovado e implementação não iniciada.\
 **Estado:** M1, M2 e M3.1–M3.5 aprovados pelo solicitante; aceites globais de M3.4 e M3.5 recebidos em 14/10/2026. M4.1, M4.2 e M4.3 também aprovados pelo solicitante, conforme registro consolidado na seção 10. Relatórios e registros de aceite nas seções 7–10. Os aceites atuais substituem pendências globais de aprovação nos relatos históricos, sem atribuir resultados individuais aos passos manuais. M5 implementado, revisado e aceito pelo solicitante; registro e verificações na seção 12. M6 implementado, verificado pelo Codex e aceito pelo solicitante; registro na seção 13. M7 implementado e aceito pelo solicitante, incluindo a criação por dois cliques; verificações e registro do aceite na seção 14. M8 implementado e aceito pelo solicitante; verificações e registro do aceite na seção 15. M9 implementado e aceito pelo solicitante; verificações e registro do aceite na seção 16.
 
 ## 1. Como usar este plano
 
-Ideias para evoluções futuras estão no [backlog](Ecovit-Backlog.md), com oito propostas do solicitante e estado por item quando definido. BL-06 está implementado; BL-07 foi implementado e aceito pelo solicitante no M6 (§13). BL-03 foi implementado e aceito pelo solicitante no M7 (§14). BL-02 implementado e aceito pelo solicitante no M8 (§15). BL-08 foi implementado e aceito pelo solicitante no M9 (§16). Os demais itens continuam sem escopo de implementação aprovado. Aprovação de especificação não equivale a autorização para implementar nem a aceite funcional.
+Ideias para evoluções futuras estão no [backlog](Ecovit-Backlog.md), com oito propostas do solicitante e estado por item quando definido. BL-06 está implementado; BL-07 foi implementado e aceito pelo solicitante no M6 (§13). BL-03 foi implementado e aceito pelo solicitante no M7 (§14). BL-02 implementado e aceito pelo solicitante no M8 (§15). BL-08 foi implementado e aceito pelo solicitante no M9 (§16). BL-01 tem escopo consolidado no M10 (§17), ainda não implementado. BL-04/05 continuam sem escopo de implementação aprovado. Aprovação de especificação não equivale a autorização para implementar nem a aceite funcional.
 
 Cada marco acrescenta uma funcionalidade testável ao aplicativo definitivo. M1 mantém sua especificação e relatório; M2 está detalhado na seção 5, M3.1–3.3 na seção 7, M3.4 na seção 8 e M3.5 na seção 9. M significa Marco e é a única sigla usada para essas etapas. Subdivisões usam ponto: M3.1 (Vãos), M3.2 (Canaletas), M3.3 (Grauteamentos), M3.4 (Evolução da edição no canvas) e M3.5 (Cruz nominal). Preservar IDs existentes; M3.4/M3.5 usam seus próprios prefixos de tarefa/aceite, sem renumerar entregas aceitas. RF, CT e EX continuam identificando requisitos, convenções técnicas e exemplos.
 
@@ -34,6 +35,7 @@ O PRD define comportamento; a arquitetura define contratos de dados/processament
 | M7 — Medidas independentes | Segmentos de medição livres em Planta, atração geométrica e persistência por pavimento | BL-03; RF-15, integração com RF-02/08/09/11/12/14 | Implementado e aceito pelo solicitante; verificações e aceite na §14 |
 | M8 — Imagem de referência por pavimento | Uma imagem de fundo calibrada, posição/rotação, opacidade e interface compacta | BL-02; RF-16, integração com RF-02/08/09/11/12 | Implementado e aceito pelo solicitante; verificações e aceite na §15 |
 | M9 — Tipos de portas e janelas | Nove variantes e símbolos em Planta com botão único de orientação cíclica | BL-08; RF-06; Arquitetura §27; CT-17 | Implementado e aceito pelo solicitante; verificações e aceite na §16 |
+| M10 — Mobiliário e equipamentos por imagens | Acervo integrado com 38 opções, ocorrências editáveis em Planta e upload incorporado ao arquivo | BL-01; RF-17; Arquitetura §28 | Especificado; padrão visual aprovado; implementação não iniciada; tarefas e aceite na §17 |
 
 Persistência, integridade e verificação acompanham cada entrega. M4 depende da composição de M3 e acrescenta pavimentos independentes e comparação visual, com quebra de compatibilidade dos documentos anteriores; M5 depende de M4. A divisão de M4 em incrementos está na seção 10.
 
@@ -1099,3 +1101,69 @@ No servidor habitual iniciado pelo solicitante com `./Start-Ecovit.ps1 -Task dev
 4. Ocultar rótulos de portas/janelas nas preferências; conferir reconhecimento dos símbolos e seleção pelo vão. Alternar Fiada e comparação de pavimentos, verificando ausência de folhas em Fiada e referência visual sem edição.
 5. Duplicar pavimento/projeto, alterar a cópia e conferir independência. Baixar/reabrir/importar `.ecovit`, verificando tipos/orientações. Em projeto anterior compatível, conferir símbolo genérico até escolher um tipo.
 6. Avaliar especialmente a legibilidade dos basculantes, da prévia e do botão no monitor habitual e comunicar eventuais problemas. Os resultados individuais dos passos do roteiro não foram informados pelo solicitante; o aceite global não atribui execução específica a cada um.
+
+## 17. M10 — Mobiliário e equipamentos por imagens
+
+**Estado: escopo consolidado e padrão visual aprovado; implementação não iniciada.** Origem: BL-01. Produto: PRD RF-17; contratos previstos: Arquitetura §28. Especificação e aprovação visual não constituem autorização para implementar nem aceite funcional do marco. M1–M9 conservam seus estados e evidências.
+
+### 17.1. Alcance e catálogo inicial
+
+Biblioteca distribuída com o Ecovit, categorias/busca e inserção de ocorrências por clique em Planta. Seleção, posição livre, rotação, redimensionamento proporcional por alças/campos, nome, duplicação, exclusão e histórico. Propriedades com posição, largura/profundidade em cm e ângulo. Dimensões sugeridas para catálogo e definição de uma dimensão para upload; nenhuma calibração de dois pontos. Associação por pavimento, persistência e cópias independentes. Integração visual e ausência de efeito construtivo conforme RF-17, sem confundir estes objetos com a referência de fundo de M8.
+
+| Categoria | Opções incluídas | Quantidade |
+|---|---|---|
+| Sala | Sofá; Poltrona; Mesa de centro; Rack; Cadeira; Mesa retangular | 6 |
+| Quarto | Cama de solteiro; Cama de casal; Cama queen; Cama king; Mesa de cabeceira; Guarda-roupa | 6 |
+| Cozinha | Armário; Bancada; Pia; Geladeira; Cooktop; Micro-ondas | 6 |
+| Banheiro | Lavatório; Vaso sanitário; Chuveiro; Box | 4 |
+| Lavanderia | Tanque; Máquina de lavar; Armário | 3 |
+| Outros | Carro; Caixa-d’água; Condensadora de ar; Extintor | 4 |
+| Varanda | Mesa redonda; Banco; Banqueta; Espreguiçadeira; Piscina | 5 |
+| Paisagismo | Árvore ornamental; Vaso com planta; Canteiro; Cerca viva | 4 |
+| Total | Opções de catálogo, com possibilidade de compartilhar artes | 38 |
+
+Padrão aprovado: vista superior ortogonal, contorno fino, cores suaves e acabamento da [prancha de estudo](images/M10-Estudo-Acervo.png), com folhagem simplificada. A prancha é referência documental gerada por IA, não entrega das artes finais. Conservar a mesma arte na miniatura e no canvas; arquivos finais individuais com transparência. A aprovação visual recebida abrange acabamento/paleta/direção de vista e simplificação da vegetação, não avaliação individual de 38 recursos finais. Resolução, dimensões iniciais e procedência de cada arte serão revisadas na preparação do acervo.
+
+Imagens padrão ficam referenciadas por ID/revisão, sem conteúdo incorporado ao documento local ou .ecovit. Imagens personalizadas PNG/JPEG ficam incorporadas uma vez por recurso e podem atender várias ocorrências. Manter limite total de 50 MiB. A revisão do catálogo suportada pela distribuição é necessária para reabrir; ausência de recurso deve ser informada antes de substituir o documento aberto. Formato futuro e validações na Arquitetura §28, sem alterar o contrato vigente nesta etapa documental.
+
+Fora do recorte: demais itens das capturas, deformação independente por eixo, edição/recorte/remoção de fundo, biblioteca global de uploads, agrupamento, ordenação manual de camadas, 3D, geração de imagens no aplicativo, instalações e verificação de circulação/colisão. Referência de outro pavimento e Fiada não mostram estes objetos. Não alterar o motor, diagnósticos ou quantitativos construtivos.
+
+### 17.2. Tarefas previstas
+
+- [ ] M10-T01: preparar e revisar o acervo uniforme, transparência, proporções/dimensões genéricas e procedência; simplificar vegetação e criar manifesto estático das 38 opções.
+- [ ] M10-T02: implementar modelo de ocorrências/recursos, transformações e comandos de edição proporcional, mantendo isolamento do motor.
+- [ ] M10-T03: implementar catálogo, busca, upload, prévia, inserção, seleção de sobrepostos e propriedades no aplicativo; seguir Arquitetura §2.1.
+- [ ] M10-T04: integrar histórico, pavimentos, cópia de projeto, arquivo previsto, validação e falhas de armazenamento, sem incorporar imagens padrão.
+- [ ] M10-T05: executar verificações pertinentes, corrigir falhas, revisar apresentação e disponibilizar para teste manual; consolidar evidências reais nesta seção.
+
+### 17.3. Critérios de aceite
+
+| ID | Resultado verificável |
+|---|---|
+| M10-A01 | Catálogo oferece as oito categorias e exatamente as 38 opções de §17.1, com busca, nomes e miniaturas correspondentes às artes de Planta. Não requer upload para usar o acervo padrão. |
+| M10-A02 | Artes têm vista superior, acabamento/paleta aprovados e alpha real; vegetação simplificada mantém legibilidade. Nenhuma arte traz marca ou rótulo incorporado. Dimensões sugeridas são editáveis e identificadas como genéricas. |
+| M10-A03 | Escolher item mostra prévia; clique confirma no pavimento ativo. Escape, perda de foco e troca de contexto cancelam sem resíduos, gravação ou histórico; catálogo e busca não alteram o projeto. |
+| M10-A04 | Selecionar, mover livremente, girar, redimensionar proporcionalmente por alças/campos, renomear, duplicar e excluir funcionam; a dimensão complementar acompanha a proporção. Valores inválidos não alteram a intenção confirmada. |
+| M10-A05 | Uma confirmação/gesto gera uma operação; desfazer/refazer restaura IDs, geometria, fontes e uploads. Navegação, cancelamento e ausência de alteração não geram operações. Atalhos preservam digitação. |
+| M10-A06 | Upload aceita PNG/JPEG válidos e exige dimensão em cm; mantém proporção e bytes originais. Conteúdo corrompido, tipo/limite inválido e arquivo total acima de 50 MiB são recusados antes do commit, sem perda do aberto. |
+| M10-A07 | Exportação contém referências ID/revisão para padrões, sem seus bytes/miniaturas. Um recurso personalizado usado por várias ocorrências aparece uma vez; transporte/reabertura preserva conteúdo e transformações. |
+| M10-A08 | Recurso padrão/revisão indisponível ou referência personalizada órfã impede abertura com mensagem clara, preservando projeto atual. O catálogo não substitui artes silenciosamente; arquivos incompatíveis são recusados. |
+| M10-A09 | Cópia de projeto/pavimento preserva os objetos com edição independente; remoção de pavimento e histórico restauram suas ocorrências/recursos. Nenhum elemento fica associado a pavimento inexistente. |
+| M10-A10 | Planta mostra objetos do ativo acima das lajes e abaixo dos traços técnicos; seleção de sobrepostos continua acessível. Enquadramento inclui cantos rotacionados em pavimento só com objetos; Fiada e comparação não mostram esses objetos. |
+| M10-A11 | Operações exclusivas de imagens não chamam o motor nem mudam composição, diagnósticos ou quantitativos, com resultado atual ou desatualizado e também no histórico. M8 e suas calibrações permanecem independentes. |
+| M10-A12 | Salvamento/reabertura, falha de quota com retenção em memória/download e bloqueio entre abas preservam integridade. Somente leitura impede inserção/edição; interface e teclado seguem §2.1 nas resoluções e navegadores previstos. |
+
+### 17.4. Verificações previstas
+
+- Domínio/arquivo: proporção e rotação, limites, relações de IDs/fontes, serialização sem padrões e recurso personalizado reutilizado, decodificação/corrupção, cópias/remoção e ausência de motor em alterações visuais.
+- Estado/persistência: atomicidade e cancelamento, histórico, contexto de upload assíncrono, resultado desatualizado preservado, falha de armazenamento/download e bloqueio real entre abas.
+- Navegador: catálogo/busca, inserção e transformação reais, upload, reabertura/transportabilidade, camadas/seleção, readonly e regressão de M8. Usar Chrome/Edge em sessões isoladas e porta 5174, sem iniciar, encerrar ou reiniciar o servidor do solicitante na 5173.
+- Tipos, lint, testes pertinentes, build e revisão visual nas resoluções 1366×768, 1280×720 e 900×680 conforme Arquitetura §2.1. Avaliar reconhecimento dos objetos também com zoom reduzido e sem nomes no canvas.
+
+### 17.5. Estado consolidado, limitações e teste manual
+
+**Alcance implementado:** nenhum código de M10; documentação de produto/contratos/escopo e prancha de referência preservada. Preparação dos 38 recursos finais, dimensões sugeridas, implementação e verificações funcionais pendentes. O aplicativo continua no formato e comportamento de M9.
+
+**Verificação do Codex nesta etapa:** revisão de consistência entre RF-17, Arquitetura §28, BL-01 e esta seção; conferência da soma das 38 opções e do vínculo da prancha; git diff --check. Alteração somente documental, sem instalação de dependências nem execução de testes do aplicativo. Estas verificações não são evidência funcional de M10.
+
+**Teste manual do solicitante:** pendente de implementação. A aprovação recebida é do padrão visual e da seleção inicial, não aceite de funcionalidade. Roteiro previsto: conferir catálogo e artes; inserir/mover/girar/redimensionar/duplicar; testar upload e histórico; copiar pavimento/projeto; baixar e reabrir em outro navegador com a mesma distribuição do Ecovit; verificar fidelidade e tamanho do arquivo, seleção, leitura em Planta e ausência em Fiada/comparação. Registrar retorno real após a entrega, separadamente das verificações do Codex.

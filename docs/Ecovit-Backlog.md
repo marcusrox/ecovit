@@ -4,7 +4,7 @@ Registro de ideias para desenvolvimento futuro, criado em 15 de outubro de 2026.
 
 ## BL-01 — Imagens como elementos do projeto
 
-Permitir importar imagens e utilizá-las como elementos posicionáveis no desenho, por exemplo para representar mobiliário, equipamentos ou referências visuais. A ideia inclui selecionar, mover, redimensionar e remover essas imagens, preservando sua proporção e sua associação ao projeto ao salvar e reabrir.
+**Estado: escopo consolidado no M10; implementação não iniciada.** Biblioteca integrada ao Ecovit com núcleo de 38 opções em oito categorias, vista superior, cores suaves e acabamento uniforme aprovado, com vegetação simplificada. Inserção e edição de ocorrências por pavimento em Planta, dimensões proporcionais, rotação, duplicação e histórico, sem efeito construtivo. Imagens padrão são referenciadas pelo catálogo e não incorporadas ao `.ecovit`; PNG/JPEG personalizados são incorporados uma vez e reutilizados por suas ocorrências. Comportamento no PRD RF-17, contratos previstos na Arquitetura §28, catálogo e tarefas/aceite no Plano §17. Aprovação do padrão visual e consolidação documental não autorizam implementação nem constituem aceite funcional.
 
 ## BL-02 — Imagens de fundo com transparência
 
