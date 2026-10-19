@@ -14,7 +14,7 @@ export const listProjects = async () =>
   (await projects.orderBy("updatedAt").reverse().toArray()).map((row) => ({
     id: row.id,
     name: row.doc.project.name,
-    compatible: [9, 10, 11, 12].includes(row.doc.schemaVersion),
+    compatible: [9, 10, 11, 12, 13].includes(row.doc.schemaVersion),
     updatedAt: row.updatedAt,
     walls: row.doc.model.walls.length,
   }));
@@ -43,7 +43,7 @@ export async function duplicateProject(id: string, name: string) {
   const source = await loadProject(id);
   const copy = structuredClone(importedCopy(source));
   copy.project.name = trimmed;
-  copy.metadata.appVersion = "0.14.0";
+  copy.metadata.appVersion = "0.15.0";
   // The confirmed name/metadata may increase the portable intention size.
   // Geometry and the unchanged snapshot were already verified by loadProject.
   validateProject(copy, false);

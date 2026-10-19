@@ -1,6 +1,6 @@
 # Ecovit
 
-Editor local de plantas com paredes ortogonais, malha de meio tijolo, medidas independentes e composição nominal de fiadas. Aplicativo 0.14.0, arquivo versão 12 e composição nominal-v10.
+Editor local de plantas com paredes ortogonais, malha de meio tijolo, medidas independentes e composição nominal de fiadas. Aplicativo 0.15.0, arquivo versão 13 e composição nominal-v10.
 
 | Marco | Funcionalidade | Estado |
 |---|---|---|
@@ -19,12 +19,15 @@ Editor local de plantas com paredes ortogonais, malha de meio tijolo, medidas in
 | M7 | Medidas independentes em Planta | Implementado e aceito pelo solicitante; verificações e aceite no plano §14 |
 | M8 | Imagem de referência por pavimento, calibração e controles compactos | Implementado e aceito pelo solicitante; verificações e aceite no plano §15 |
 | M9 | Tipos e símbolos de portas/janelas, com orientação cíclica | Implementado e aceito pelo solicitante; verificações e aceite no plano §16 |
+| M10 | Mobiliários: 40 opções, upload e edição em Planta | Implementado e verificado pelo Codex; aceite funcional pendente no plano §17 |
 
 O aplicativo trabalha com um a quatro pavimentos independentes. A composição é nominal, sem dimensionamento estrutural ou comprovação de passagem física em furos/canais. Requisitos e limites no [PRD](docs/Ecovit-PRD.md); verificações e aceites no [plano](docs/Ecovit-Plano-Implementacao.md). O aceite específico das revisões de apresentação está pendente, conforme Plano §11.
 
 Em Planta, o campo Referência de pavimento em Propriedades do pavimento na lateral (sem elemento selecionado) mostra um vizinho inferior/superior como referência tracejada, sem edição ou encaixe. Enquadrar considera as duas plantas; cada pavimento lembra sua direção durante a sessão ao alternar entre eles. Entrar em Fiada limpa a escolha do ativo; reabrir o projeto limpa todas. Essa preferência é apenas da sessão, sem alterar arquivo ou cálculo.
 
-Durante o MVP, cada marco pode adotar novo formato sem compatibilidade com marcos anteriores. M9 grava envelope 12 e lê envelopes 9/10/11, preservando os símbolos genéricos das esquadrias anteriores, sem inferir seu funcionamento. Acrescenta imagens vazias nos envelopes 9/10 e medidas vazias no 9, sem modificar o arquivo original. Resultados nominal-v9 são atualizados pelo cálculo nominal-v10, preservando desenhos e ajustes. Outros envelopes, inclusive o de M4.1, continuam incompatíveis. Registros incompatíveis permanecem na lista identificados; nesse caso, crie um novo projeto.
+Durante o MVP, cada marco pode adotar novo formato sem compatibilidade com marcos anteriores. M10 grava envelope 13 e lê envelopes 9/10/11/12, acrescentando coleções vazias de mobiliário/recursos personalizados aos formatos anteriores e preservando os símbolos genéricos das esquadrias anteriores, sem inferir seu funcionamento. Acrescenta imagens vazias nos envelopes 9/10 e medidas vazias no 9, sem modificar o arquivo original. Resultados nominal-v9 são atualizados pelo cálculo nominal-v10, preservando desenhos e ajustes. Outros envelopes, inclusive o de M4.1, continuam incompatíveis. Registros incompatíveis permanecem na lista identificados; nesse caso, crie um novo projeto.
+
+Em Planta, Mobiliários abre o acervo do Ecovit em oito categorias. Escolha e clique para posicionar; arraste para mover, use as alças para tamanho/rotação e as propriedades para dimensões em cm. Imagens padrão são referências do catálogo, sem bytes no .ecovit; uploads PNG/JPEG são incorporados uma vez e reutilizados. As dimensões são genéricas e o mobiliário não altera composição ou quantitativos.
 
 ## Abrir nesta máquina
 
@@ -65,7 +68,7 @@ O térreo começa na cota 0 cm, com altura de novas paredes em 280 cm. No seleto
 
 Pontas livres e contornos abertos são permitidos. Retas conectadas, L, U e ciclos sem ramificações após o tratamento dos encontros usam paginação contínua: inteiros pareiam células consecutivas, cantos seguem a paridade do percurso e meios ficam nas extremidades quando necessários. Não há obrigação de orientar todos os cantos igualmente nem mínimo de quatro módulos para a ponte de um U. Reservas incompatíveis entre encontros próximos, sobreposições e transições de altura sem padrão continuam diagnosticadas; cruz → reta conforme altura é suportada.
 
-O arquivo vigente usa envelope versão 12 e composição `nominal-v10`, com leitura de envelopes 9/10/11 conforme descrito acima. O download usa JSON compacto; se o resultado calculado ultrapassar o limite de 50 MiB do arquivo, a cópia conserva todos os desenhos, medidas, imagens, configurações e ajustes e reconstrói o resultado ao abrir, com aviso. A composição nesta aba permanece intacta. Snapshots atuais são conferidos por recomputação antes de abrir; adulteração é recusada. Em outra aba, somente leitura atualiza resultados antigos apenas em memória, sem salvar no registro compartilhado. Configurações são comuns, mas paredes, vãos, medidas e ajustes são independentes por pavimento. Lajes e aberturas são independentes das paredes.
+O arquivo vigente usa envelope versão 13 e composição `nominal-v10`, com leitura de envelopes 9/10/11/12 conforme descrito acima. O download usa JSON compacto; se o resultado calculado ultrapassar o limite de 50 MiB do arquivo, a cópia conserva todos os desenhos, medidas, imagens, configurações e ajustes e reconstrói o resultado ao abrir, com aviso. A composição nesta aba permanece intacta. Snapshots atuais são conferidos por recomputação antes de abrir; adulteração é recusada. Em outra aba, somente leitura atualiza resultados antigos apenas em memória, sem salvar no registro compartilhado. Configurações são comuns, mas paredes, vãos, medidas e ajustes são independentes por pavimento. Lajes e aberturas são independentes das paredes.
 
 ## Tipos de portas e janelas — M9
 

@@ -47,6 +47,7 @@ import { defaultAppearance } from "../domain/opening-appearance";
 import { usePreferences } from "../state/preferences";
 import { CompositionStatus } from "./CompositionStatus";
 import { useMeasurementCanvas } from "./Measurements";
+import { useImageElements } from "./ImageElements";
 import {
   activeGrout,
   courseCells,
@@ -129,6 +130,7 @@ export function Canvas({
     walls = doc.model.walls;
   const imageCanvas = useReferenceImageCanvas(camera, size);
   const imageDraft = useStore((s) => s.imageDraft);
+  const furniture = useImageElements(doc, tool, camera, host, setTool);
   const slabs = useSlabCanvas(doc, tool, setTool, camera);
   const measurements = useMeasurementCanvas(
     doc,
@@ -446,9 +448,13 @@ export function Canvas({
       mode === "plan" ? doc.viewFloorId : undefined,
       mode === "plan",
     );
-    if (mode === "plan" && imageCanvas.bounds.length) {
+    if (
+      mode === "plan" &&
+      (imageCanvas.bounds.length || furniture.bounds.length)
+    ) {
       const points = [
         ...imageCanvas.bounds,
+        ...(mode === "plan" ? furniture.bounds : []),
         ...(box
           ? [
               { x: box.x, y: box.y },
@@ -591,6 +597,7 @@ export function Canvas({
             (e.button !== 0 && e.button !== 1) ||
             gesture.current ||
             measurements.isDragging() ||
+            furniture.isDragging() ||
             busy ||
             (e.target as HTMLElement).closest("button")
           )
@@ -666,6 +673,8 @@ export function Canvas({
           }
           if (readonly) return;
           if (imageCanvas.down(p)) return;
+          if (furniture.down(p)) return;
+          if (tool === "furniture") return;
           useStore.getState().inspect({ pendingOpening: null });
           if (measurements.down(p, e.altKey)) return;
           if (slabs.down(p)) return;
@@ -809,12 +818,18 @@ export function Canvas({
           if (e.button === 1) e.preventDefault();
         }}
         onLostPointerCapture={() => {
+          furniture.cancel();
           measurements.cancel();
           cancel();
           slabs.cancel();
         }}
         onMouseMove={(e) => {
           setMouseScreen(pointer(e.clientX, e.clientY));
+          if (
+            gesture.current?.type !== "pan" &&
+            furniture.move(world(pointer(e.clientX, e.clientY)))
+          )
+            return;
           if (
             gesture.current?.type !== "pan" &&
             imageCanvas.move(world(pointer(e.clientX, e.clientY)))
@@ -834,6 +849,12 @@ export function Canvas({
           }
         }}
         onMouseUp={(e) => {
+          if (
+            e.button === 0 &&
+            gesture.current?.type !== "pan" &&
+            furniture.up(world(pointer(e.clientX, e.clientY)))
+          )
+            return;
           if (
             e.button === 0 &&
             gesture.current?.type !== "pan" &&
@@ -1007,6 +1028,7 @@ export function Canvas({
             />
           )}
           {slabs.before}
+          {furniture.layer}
           <Layer listening={false}>
             {mode === "plan" &&
               rendered.map((w, i) => {
@@ -1515,6 +1537,7 @@ export function Canvas({
           )}
           {slabs.after}
           {measurements.layer}
+          {furniture.controls}
           {imageCanvas.markers}
         </Stage>
         {measurements.menu}
@@ -1524,10 +1547,12 @@ export function Canvas({
         !doc.model.slabs.length &&
         !doc.model.measurements.length &&
         !doc.model.referenceImages.length &&
+        !doc.model.imageElements.length &&
         !imageDraft &&
         referenceEmpty &&
         tool !== "slab" &&
         tool !== "measure" &&
+        tool !== "furniture" &&
         !preview && (
           <div className={styles.canvasHint}>
             <span>SEU PROJETO COMEÇA AQUI</span>
@@ -1631,19 +1656,23 @@ export function Canvas({
               ? "Somente leitura"
               : imageCanvas.hint
                 ? imageCanvas.hint
-                : mode === "course"
-                  ? groutMode
-                    ? groutHover
-                      ? groutPresent(groutHover)
-                        ? "Remover graute · eixo completo"
-                        : "Adicionar graute · eixo completo"
-                      : "Clique num furo · Esc encerra Graute"
-                    : ""
-                  : tool === "wall"
-                    ? "Arraste para desenhar · Esc cancela"
-                    : tool === "measure"
-                      ? `${measurements.creating ? "Clique no ponto final" : "Clique no ponto inicial"} · Alt suspende atração · Esc cancela`
-                      : ""}
+                : furniture.hint
+                  ? furniture.hint
+                  : mode === "course"
+                    ? groutMode
+                      ? groutHover
+                        ? groutPresent(groutHover)
+                          ? "Remover graute · eixo completo"
+                          : "Adicionar graute · eixo completo"
+                        : "Clique num furo · Esc encerra Graute"
+                      : ""
+                    : tool === "furniture"
+                      ? "Clique para posicionar a imagem · Esc cancela"
+                      : tool === "wall"
+                        ? "Arraste para desenhar · Esc cancela"
+                        : tool === "measure"
+                          ? `${measurements.creating ? "Clique no ponto final" : "Clique no ponto inicial"} · Alt suspende atração · Esc cancela`
+                          : ""}
           </span>
         </div>
         <div className={styles.zoom}>

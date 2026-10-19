@@ -2,6 +2,8 @@ import { ReferenceImageProperties } from "../editor/ReferenceImage";
 import { FloorControls } from "./Floors";
 import { PreferencesDialog } from "./Preferences";
 import { MeasurementProperties } from "../editor/Measurements";
+import { ImageCatalog, ImageElementProperties } from "../editor/ImageElements";
+import { setImageElement } from "../domain/image-elements";
 import { measurementText } from "../domain/measurements";
 import {
   resolveFloorReference,
@@ -400,6 +402,13 @@ function Properties({ doc }: { doc: Project }) {
       <details>
         <summary>Como usar o editor</summary>
         <p>
+          Mobiliários: escolha no catálogo e clique na Planta.
+          Arraste para mover; as alças preservam a proporção e o controle
+          circular gira. Ajuste dimensões em cm nas propriedades. Escape
+          cancela. Uploads são incorporados ao .ecovit; imagens padrão usam o
+          catálogo do aplicativo.
+        </p>
+        <p>
           Imagem: marque um trecho longo de distância conhecida e informe seu
           tamanho em cm. Ajustar libera posição e ângulo; Concluir salva. A
           escala não corrige perspectiva.
@@ -450,6 +459,7 @@ export default function App() {
     message = useStore((s) => s.message),
     history = useStore((s) => s.history);
   const [tool, setTool] = useState<Tool>("select"),
+    [furnitureCatalog, setFurnitureCatalog] = useState(false),
     [settings, setSettings] = useState(false),
     [preferences, setPreferences] = useState(false),
     [diagnostics, setDiagnostics] = useState(false),
@@ -495,7 +505,12 @@ export default function App() {
   const changeTool = useCallback((t: Tool) => {
     useStore
       .getState()
-      .inspect({ imageDraft: null, imageOpacity: null, imageRequest: null });
+      .inspect({
+        imageDraft: null,
+        imageOpacity: null,
+        imageRequest: null,
+        furnitureDraft: null,
+      });
     setTool(t);
   }, []);
   useEffect(() => {
@@ -546,9 +561,12 @@ export default function App() {
         s.select
       ) {
         e.preventDefault();
-        if (s.imageDraft || s.slabDraft || s.slabEditing) return;
+        if (s.imageDraft || s.slabDraft || s.slabEditing || s.furnitureDraft)
+          return;
         if (s.pendingOpening) s.inspect({ pendingOpening: null });
-        else if (deleteSlabSelection()) return;
+        else if (s.doc.model.imageElements.some((i) => i.id === s.select)) {
+          void s.commit(setImageElement(s.doc, null, s.select), "furniture");
+        } else if (deleteSlabSelection()) return;
         else void s.commit(removeElement(s.doc, s.select));
         s.choose(null);
       }
@@ -842,8 +860,29 @@ export default function App() {
                     <Icon name="measure" /> Medida
                   </button>
                 )}
+                {mode === "plan" && (
+                  <button
+                    className={styles.iconText}
+                    disabled={busy || readonly}
+                    onClick={() => {
+                      changeTool("select");
+                      useStore
+                        .getState()
+                        .inspect({
+                          slabDraft: null,
+                          slabEditing: false,
+                          pendingOpening: null,
+                        });
+                      setFurnitureCatalog(true);
+                    }}
+                  >
+                    <Icon name="furniture" />
+                    Mobiliários
+                  </button>
+                )}
                 {mode === "plan" &&
                   (!!editingDoc!.model.slabs.length ||
+                    !!editingDoc!.model.imageElements.length ||
                     !!editingDoc!.model.measurements.length ||
                     !!editingDoc!.model.openings.length) && (
                     <select
@@ -852,6 +891,9 @@ export default function App() {
                       value={
                         editingDoc!.model.openings.some(
                           (o) => o.id === selected,
+                        ) ||
+                        editingDoc!.model.imageElements.some(
+                          (i) => i.id === selected,
                         ) ||
                         editingDoc!.model.measurements.some(
                           (m) => m.id === selected,
@@ -875,6 +917,15 @@ export default function App() {
                       }}
                     >
                       <option value="">Selecionar elemento…</option>
+                      {!!editingDoc!.model.imageElements.length && (
+                        <optgroup label="Mobiliários">
+                          {editingDoc!.model.imageElements.map((e) => (
+                            <option key={e.id} value={e.id}>
+                              {e.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
                       {!!editingDoc!.model.measurements.length && (
                         <optgroup label="Medidas">
                           {editingDoc!.model.measurements.map((m, i) => (
@@ -956,6 +1007,10 @@ export default function App() {
             ) : mode === "plan" ? (
               editingDoc!.model.measurements.some((m) => m.id === selected) ? (
                 <MeasurementProperties doc={editingDoc!} />
+              ) : editingDoc!.model.imageElements.some(
+                  (e) => e.id === selected,
+                ) ? (
+                <ImageElementProperties key={selected} doc={editingDoc!} />
               ) : editingDoc!.model.slabs.some(
                   (s) =>
                     s.id === selected ||
@@ -1351,6 +1406,17 @@ export default function App() {
         <OpeningSettingsDialog
           doc={editingDoc!}
           close={() => setSettings(false)}
+        />
+      )}
+      {furnitureCatalog && doc && (
+        <ImageCatalog
+          close={() => setFurnitureCatalog(false)}
+          select={(element, asset) => {
+            changeTool("furniture");
+            useStore.getState().choose(null);
+            useStore.getState().inspect({ furnitureDraft: { element, asset } });
+            setFurnitureCatalog(false);
+          }}
         />
       )}
       {preferences && doc && (

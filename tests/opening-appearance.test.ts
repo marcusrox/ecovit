@@ -152,11 +152,13 @@ it("EX-99 transporte/cópias e envelopes anteriores preservam genéricos sem toc
   for (const version of [9, 10, 11]) {
     const old = JSON.parse(JSON.stringify(d));
     old.schemaVersion = version;
+    delete old.model.imageElements;
+    delete old.model.customImageAssets;
     if (version < 11) delete old.model.referenceImages;
     if (version === 9) delete old.model.measurements;
     const original = JSON.stringify(old);
     const restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(12);
+    expect(restored.schemaVersion).toBe(13);
     expect(restored.model.openings[0].appearance).toBeUndefined();
     expect(JSON.stringify(old)).toBe(original);
     old.model.openings[0].appearance = { type: "swing", orientation: 0 };

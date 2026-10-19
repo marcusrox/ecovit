@@ -1,5 +1,9 @@
 import { decodeReference, type ImageDraft } from "../domain/reference-image";
 import {
+  decodeCustomAssets,
+  decodeCatalogElements,
+} from "../domain/image-elements";
+import {
   generate,
   signature,
   floorView,
@@ -14,6 +18,8 @@ import {
   type Opening,
   type EditableProject,
   type Point,
+  type ImageElement,
+  type CustomImageAsset,
 } from "../domain/project";
 import {
   acquireProject,
@@ -38,6 +44,8 @@ const changedInputs = (previous: Project, next: Project) =>
       openings: constructionOpenings(previous.model.openings),
       measurements: undefined,
       referenceImages: undefined,
+      imageElements: undefined,
+      customImageAssets: undefined,
       floors: previous.model.floors.map((f) => ({
         id: f.id,
         level: f.level,
@@ -56,6 +64,8 @@ const changedInputs = (previous: Project, next: Project) =>
       openings: constructionOpenings(next.model.openings),
       measurements: undefined,
       referenceImages: undefined,
+      imageElements: undefined,
+      customImageAssets: undefined,
       floors: next.model.floors.map((f) => ({
         id: f.id,
         level: f.level,
@@ -69,6 +79,7 @@ const changedInputs = (previous: Project, next: Project) =>
     next.project.groutSettings,
   ]);
 type Inspection = {
+  furnitureDraft: { element: ImageElement; asset?: CustomImageAsset } | null;
   imageRequest: string | null;
   imageDraft: ImageDraft | null;
   imageOpacity: number | null;
@@ -95,6 +106,7 @@ type Inspection = {
   diagnosticWalls: string[];
 };
 const inspection: Inspection = {
+  furnitureDraft: null,
   imageDraft: null,
   imageRequest: null,
   imageOpacity: null,
@@ -137,7 +149,8 @@ type State = Inspection & {
       | "floor"
       | "slab"
       | "measure"
-      | "image",
+      | "image"
+      | "furniture",
   ) => Promise<void>;
   undo: (redo?: boolean) => Promise<void>;
   notify: (message: string) => void;
@@ -146,7 +159,7 @@ type State = Inspection & {
 };
 export const useStore = create<State>((set, get) => {
   async function persist(doc: Project, calculate = true) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.14.0" } };
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.15.0" } };
     set({ doc });
     set({ busy: true, saved: "saving" });
     let saveFailed = false;
@@ -248,6 +261,7 @@ export const useStore = create<State>((set, get) => {
           },
           ...(change.mode && change.mode !== s.mode
             ? {
+                furnitureDraft: null,
                 slabDraft: null,
                 slabEditing: false,
                 imageDraft: null,
@@ -322,9 +336,12 @@ export const useStore = create<State>((set, get) => {
         let doc = fresh
           ? validateProject(requested)
           : await loadProject(requested.project.id);
-        if (typeof Image !== "undefined")
+        if (typeof Image !== "undefined") {
+          await decodeCustomAssets(doc.model.customImageAssets);
+          await decodeCatalogElements(doc.model.imageElements);
           for (const image of doc.model.referenceImages)
             await decodeReference(image);
+        }
         let calculationMessage = "";
         // A read-only tab may update disposable results in memory, never the shared record.
         if (!nextRelease && doc.generationState.status === "outdated") {
@@ -373,6 +390,7 @@ export const useStore = create<State>((set, get) => {
       release = null;
       set({
         doc: null,
+        furnitureDraft: null,
         imageDraft: null,
         imageRequest: null,
         floorReference: "none",
@@ -389,6 +407,39 @@ export const useStore = create<State>((set, get) => {
         if (s.imageDraft && command !== "image" && command !== "floor")
           throw new Error("Conclua ou cancele o ajuste da imagem.");
         candidate = mergeFloorView(s.doc, candidate);
+        if (command === "furniture") {
+          if (
+            [
+              ...candidate.model.imageElements,
+              ...s.doc.model.imageElements,
+            ].some(
+              (e) =>
+                e.floorId !== s.activeFloorId &&
+                JSON.stringify(
+                  candidate.model.imageElements.find((i) => i.id === e.id),
+                ) !==
+                  JSON.stringify(
+                    s.doc!.model.imageElements.find((i) => i.id === e.id),
+                  ),
+            )
+          )
+            throw new Error("Edite mobiliário somente no pavimento ativo.");
+          if (
+            s.doc.model.customImageAssets.some(
+              (a) =>
+                candidate.model.imageElements.some(
+                  (e) =>
+                    e.floorId !== s.activeFloorId &&
+                    e.source.kind === "custom" &&
+                    e.source.assetId === a.id,
+                ) &&
+                JSON.stringify(
+                  candidate.model.customImageAssets.find((i) => i.id === a.id),
+                ) !== JSON.stringify(a),
+            )
+          )
+            throw new Error("Não altere recursos usados por outro pavimento.");
+        }
         if (
           command === "image" &&
           [
@@ -514,7 +565,7 @@ export const useStore = create<State>((set, get) => {
               : s.doc.generationState,
             metadata: {
               ...candidate.metadata,
-              appVersion: "0.14.0",
+              appVersion: "0.15.0",
               updatedAt: new Date().toISOString(),
             },
           },
@@ -555,6 +606,7 @@ export const useStore = create<State>((set, get) => {
           diagnosticWalls: [],
           doc,
           imageDraft: null,
+          furnitureDraft: null,
           imageOpacity: null,
           history: remember(s.history, s.doc),
           message: "",
@@ -567,6 +619,10 @@ export const useStore = create<State>((set, get) => {
     undo: async (redo = false) => {
       const s = get();
       if (retired || !s.doc || s.busy || s.readonly) return;
+      if (s.furnitureDraft) {
+        set({ furnitureDraft: null });
+        return;
+      }
       if (s.imageDraft) {
         set({ imageDraft: null });
         return;

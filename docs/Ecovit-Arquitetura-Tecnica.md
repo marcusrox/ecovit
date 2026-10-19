@@ -1,8 +1,8 @@
 # Ecovit — Arquitetura Técnica
 
-**Versão documental:** 1.29
-**Base funcional:** PRD Ecovit 0.36. M1–M3.5 implementados e aceitos; M4.1 implementado, revisado e aceito pelo solicitante; M4.2 implementado e aceito pelo solicitante na §20, com verificações no plano; M4.3 implementado e aceito pelo solicitante na §22; M5 implementado e aceito pelo solicitante na §23, com registro e verificações no plano. M6 implementado e aceito pelo solicitante na §24, com registro no plano. M7 implementado e aceito pelo solicitante na §25, com registro do aceite no plano. M8 implementado e aceito pelo solicitante na §26, com verificações e registro do aceite no Plano §15. M10 especificado na §28, ainda não implementado.
-**Aplicativo:** 0.14.0; arquivo versão 12, com leitura de versões 9/10/11; composição nominal-v10 (CT-14). M9 implementado e aceito pelo solicitante; verificações e registro do aceite no Plano §16.
+**Versão documental:** 1.31
+**Base funcional:** PRD Ecovit 0.38. M1–M3.5 implementados e aceitos; M4.1 implementado, revisado e aceito pelo solicitante; M4.2 implementado e aceito pelo solicitante na §20, com verificações no plano; M4.3 implementado e aceito pelo solicitante na §22; M5 implementado e aceito pelo solicitante na §23, com registro e verificações no plano. M6 implementado e aceito pelo solicitante na §24, com registro no plano. M7 implementado e aceito pelo solicitante na §25, com registro do aceite no plano. M8 implementado e aceito pelo solicitante na §26, com verificações e registro do aceite no Plano §15. M10 implementado na §28, verificado pelo Codex e com aceite funcional pendente no Plano §17.
+**Aplicativo:** 0.15.0; arquivo versão 13, com leitura de versões 9/10/11/12; composição nominal-v10 (CT-14). M9 implementado e aceito pelo solicitante; verificações e registro do aceite no Plano §16.
 
 As seções gerais descrevem a arquitetura do aplicativo. As seções de M3–M3.5 registram contratos históricos; M4.1 está implementado conforme §19, preservando as regras nominais locais. Lajes estão implementadas conforme §20; comparação visual de M4 está implementada conforme §22, com aceite global do solicitante registrado no Plano §10. Versões de formato e convenções nominais identificam contratos de dados, não etapas pendentes de desenvolvimento.
 
@@ -67,7 +67,7 @@ A escolha atende à necessidade concreta de catálogo amplo com linguagem visual
 
 #### Mapa semântico e verificação
 
-O mapa central relaciona ações a ícones: select→MousePointer2, wall→BrickWall, slab→RectangleHorizontal, door→DoorClosed, window→SquareSplitHorizontal, opening→SquareDashed, settings→SlidersHorizontal, preferences→Settings, measure→Ruler, image→ImagePlus, more→Ellipsis, undo/redo→Undo2/Redo2, left/right→ChevronLeft/ChevronRight, close→X, plus/minus→Plus/Minus, copy/delete→Copy/Trash2, apply→Check, redraw→Pencil, download/upload→Download/Upload, fit→Scan, info→Info, plan→PanelsTopLeft. Porta representa folha/batente, janela quadro dividido, vão contorno tracejado; símbolos são ferramentas, não detalhes construtivos.
+O mapa central relaciona ações a ícones: select→MousePointer2, wall→BrickWall, slab→RectangleHorizontal, door→DoorClosed, window→SquareSplitHorizontal, opening→SquareDashed, settings→SlidersHorizontal, preferences→Settings, measure→Ruler, furniture→Armchair, image→ImagePlus, more→Ellipsis, undo/redo→Undo2/Redo2, left/right→ChevronLeft/ChevronRight, close→X, plus/minus→Plus/Minus, copy/delete→Copy/Trash2, apply→Check, redraw→Pencil, download/upload→Download/Upload, fit→Scan, info→Info, plan→PanelsTopLeft. Porta representa folha/batente, janela quadro dividido, vão contorno tracejado; símbolos são ferramentas, não detalhes construtivos.
 
 O mapa também inclui status saved/warning/saving/readonly→Check/TriangleAlert/LoaderCircle/LockKeyhole, next→ArrowRight e home→House. Estado vazio, abertura de cartão e orientação de backup usam o mesmo catálogo. Inverter lado conserva direções ↓/→/↑/← como indicação geométrica separada do texto da ação; +/− do graute e legendas técnicas permanecem desenhos/sinais do domínio. Handlers, nomes acessíveis, condições de exibição, atalhos, foco e histórico preservados. Não acrescentar ícone a todo botão de texto automaticamente; usar quando facilitar reconhecimento.
 
@@ -192,7 +192,7 @@ Não adicionar event sourcing ou persistência de cada movimento do mouse.
 
 ## 9. Persistência e arquivo .ecovit
 
-O formato vigente é envelope versão 11/composição nominal-v10, conforme §26, com leitura de envelopes 9/10 normalizados para imagens vazias; envelope 9 também recebe medidas vazias. Snapshots atuais são conferidos por recomputação completa antes de abrir; envelopes 1–8, versões desconhecidas e adulteração são recusados. Resultados nominal-v9 são descartados e atualizados pelo cálculo vigente, conforme §21; em somente leitura, atualizações ficam em memória, sem gravar o registro. Registros locais incompatíveis permanecem identificados na lista, sem exclusão automática. A tabela abaixo registra a evolução histórica; não implica outros leitores antigos.
+O formato vigente é envelope versão 13/composição nominal-v10, conforme §28, com leitura de envelopes 9–12 normalizados para ocorrências/recursos de mobiliário vazios; versões 9/10 recebem imagens de referência vazias e a versão 9 também recebe medidas vazias. Snapshots atuais são conferidos por recomputação completa antes de abrir; envelopes 1–8, versões desconhecidas e adulteração são recusados. Resultados nominal-v9 são descartados e atualizados pelo cálculo vigente, conforme §21; em somente leitura, atualizações ficam em memória, sem gravar o registro. Registros locais incompatíveis permanecem identificados na lista, sem exclusão automática. A tabela abaixo registra a evolução histórica; não implica outros leitores antigos.
 
 | Marco | Envelope | Convenção de composição |
 |---|---|---|
@@ -208,7 +208,8 @@ O formato vigente é envelope versão 11/composição nominal-v10, conforme §26
 | Alturas diferentes/M5/M6 | 9 | nominal-v10 |
 | M7 | 10, com leitura de 9 | nominal-v10 |
 | M8 | 11, com leitura de 9/10 | nominal-v10 |
-| M9 (vigente) | 12, com leitura de 9/10/11 | nominal-v10 |
+| M9 | 12, com leitura de 9/10/11 | nominal-v10 |
+| M10 (vigente) | 13, com leitura de 9/10/11/12 | nominal-v10 |
 
 IndexedDB, via Dexie, armazena registros de projetos com id, updatedAt e documento completo; nome e demais metadados pertencem ao documento. A interface e o motor não dependem da representação interna do banco. Referência: [Dexie e IndexedDB](https://dexie.org/docs).
 
@@ -225,9 +226,9 @@ Em desenvolvimento, o descarte do módulo do store pelo hot reload do Vite marca
 JSON UTF-8 com extensão .ecovit:
 
 - format: identificador ecovit.
-- schemaVersion: 12 vigente em M9, com leitura de 9/10/11 conforme §27; versões 8/9 registram os contratos históricos das seções 19/20.
+- schemaVersion: 13 vigente em M10, com leitura de 9/10/11/12 conforme §28; versões 8/9 registram os contratos históricos das seções 19/20.
 - project: identificadores, nome, unidades e dimensões-base.
-- model: pavimentos, paredes, vãos, lajes, medidas independentes e referências verticais.
+- model: pavimentos, paredes, vãos, lajes, medidas independentes, imagens de referência, ocorrências de mobiliário e recursos personalizados.
 - adjustments: escolhas de encontros e ajustes de graute/canaletas.
 - generated: resultado completo agrupado por pavimento ou null quando desatualizado.
 - generationState: atualidade do resultado e diagnósticos.
@@ -793,29 +794,29 @@ Geometria dos símbolos compartilhada entre canvas ativo, referência de pavimen
 
 O seletor Tipo da esquadria e o único botão Alternar orientação confirmam operações visuais independentes dos campos de dimensão. Rascunhos de dimensões permanecem no formulário. PendingOpening recebe a aparência sem confirmar a criação até Aplicar vão. Erros e readonly mantêm bloqueios existentes. Excluir somente appearance da comparação de insumos construtivos no store: largura/base/altura/posição/kind/parede continuam invalidando o cálculo; tipo/orientação preservam resultado e diagnósticos, inclusive desatualizados e ao desfazer/refazer. Sem mudança nas regras do motor ou dependências.
 
-## 28. Contratos previstos de M10 — Mobiliário e equipamentos por imagens
+## 28. Contratos de M10 — Mobiliários
 
-**Estado: especificado, não implementado.** Produto em PRD RF-17; catálogo, tarefas e aceite no Plano §17. O aplicativo vigente permanece 0.14.0/envelope 12/nominal-v10. Esta seção descreve o contrato a implementar em M10, sem antecipar mudança de versão no código ou nos arquivos atuais.
+**Estado: implementado, verificado pelo Codex; aceite funcional do solicitante pendente.** Produto em PRD RF-17; catálogo, tarefas, evidências e aceite no Plano §17. Aplicativo 0.15.0/envelope 13/nominal-v10.
 
 ### 28.1. Catálogo e preparação das artes
 
 Distribuir o acervo como arquivos estáticos do Ecovit e manifesto local, sem API/CDN ou novo serviço. Cada opção tem ID estável, categoria, nome em português, recurso/revisão da arte e dimensões iniciais em cm. Uma arte pode atender mais de uma opção; Armário de Cozinha/Lavanderia pode compartilhar recurso, conservando as duas entradas do catálogo. As quatro camas têm proporções/dimensões próprias, mesmo quando derivadas de um desenho-base. A contagem de 38 refere-se a opções, não a 38 arquivos necessariamente distintos.
 
-Usar imagens individuais PNG com alpha real, margens transparentes reduzidas e orientação superior ortogonal, conforme padrão visual de RF-17. Preparar miniaturas a partir dos mesmos recursos. A prancha em docs/images/M10-Estudo-Acervo.png é referência documental, não recurso de produção. Preservar seu acabamento e paleta, simplificando a vegetação. Revisar proporções, transparência, nitidez com zoom e dimensões nominais antes de integrar. Definir resolução e dimensões de cada item durante essa preparação, sem tratar a escala ilustrativa da prancha como medida física.
+Usar imagens individuais PNG com alpha real, margens transparentes reduzidas e orientação superior ortogonal, conforme padrão visual de RF-17. Preparar miniaturas a partir dos mesmos recursos. A prancha em docs/images/M10-Estudo-Acervo.png é referência documental, não recurso de produção. Preservar seu acabamento e paleta, simplificando a vegetação. Revisar proporções, transparência, nitidez com zoom e dimensões nominais antes de integrar. Resoluções e dimensões iniciais constam dos recursos distribuídos e de src/domain/image-catalog.ts; a escala ilustrativa da prancha não é medida física. O renderizador identifica os limites alpha da arte padrão sem alterar o arquivo original e acomoda a imagem com escala uniforme no retângulo nominal, sem esticar por eixo. Uploads conservam também as margens originais. Todas as transformações posteriores preservam a proporção do elemento. Recursos em public/catalog/m10 e registro de geração/procedência em provenance.json.
 
 O acervo é preparado para o Ecovit; artes próprias ou fontes externas compatíveis devem manter procedência e eventuais avisos de licença na distribuição. Nenhum serviço de geração é executado no aplicativo. ID/revisão identifica uma arte imutável: mudança visual que altere sua representação recebe nova revisão. Conservar na distribuição as revisões suportadas pelos projetos; não substituir silenciosamente por outra imagem. Recursos padrão não existem como base64, bytes ou miniaturas nos documentos locais/exportados. A disponibilidade depende da distribuição/cache do aplicativo, sem prometer funcionamento offline novo neste marco.
 
 ### 28.2. Intenção, recursos personalizados e versão prevista
 
-Prever model.imageElements como coleção de ocorrências e model.customImageAssets como recursos personalizados do projeto, separadas de model.referenceImages de M8. Ocorrência: ID, floorId, nome, fonte discriminada (catálogo com ID/revisão, ou personalizada com assetId), posição XY do centro, largura/profundidade em unidades do mundo e rotação em graus. Rotacionar em torno do centro, sem mudar a proporção. Campos numéricos finitos, dimensões positivas e transformação/extensão dentro dos limites do editor; posição/dimensão podem ser fracionárias sem impor módulo construtivo. A proporção deve corresponder à arte identificada, considerando orientação de apresentação do arquivo.
+model.imageElements armazena ocorrências e model.customImageAssets armazena recursos personalizados do projeto, separadas de model.referenceImages de M8. Ocorrência: ID, floorId, nome, fonte discriminada (catálogo com ID/revisão, ou personalizada com assetId), posição XY do centro, largura/profundidade em unidades do mundo e rotação em graus. Rotacionar em torno do centro, sem mudar a proporção. Campos numéricos finitos, dimensões positivas e transformação/extensão dentro dos limites do editor; posição/dimensão podem ser fracionárias sem impor módulo construtivo. A proporção deve corresponder à arte identificada, considerando orientação de apresentação do arquivo.
 
 Recurso personalizado: ID, nome, MIME real PNG/JPEG, largura/altura de apresentação em pixels e bytes originais em base64. Não persistir caminhos locais, URLs temporárias, imagem DOM, nós Konva ou prévias. Reutilizar por assetId, sem duplicar bytes por ocorrência ou codificá-los durante movimentos. Não exigir deduplicação automática de uploads independentes com bytes iguais. Cópias de projeto são independentes; duplicar pavimento/ocorrência cria novos IDs de ocorrência, remapeia floorId quando necessário e pode reutilizar recurso imutável no mesmo projeto. Recursos sem ocorrências podem ser omitidos do documento confirmado/exportado, preservando no histórico o necessário à restauração.
 
-Formato previsto: envelope 13, mantendo nominal-v10. Prever leitura de 9–12 com as normalizações existentes e acréscimo das duas coleções vazias; preservar a aparência de esquadrias de M9. Não aceitar campos novos disfarçados como versão antiga, referências órfãs, IDs duplicados ou versões desconhecidas. A implementação deverá atualizar esquema, lista local e caminhos de cópia/importação juntos; esta especificação não altera o envelope vigente. Recursos padrão são resolvidos exclusivamente pelo manifesto confiável do aplicativo, nunca por caminho/URL fornecido pelo projeto. Referência padrão ausente ou revisão não suportada recusa a abertura com explicação antes de substituir o projeto atual.
+Formato vigente: envelope 13, mantendo nominal-v10. Leitura de 9–12 com as normalizações existentes e acréscimo das duas coleções vazias; preservar a aparência de esquadrias de M9. Não aceitar campos novos disfarçados como versão antiga, referências órfãs, IDs duplicados ou versões desconhecidas. Esquema, lista local e caminhos de cópia/importação usam o mesmo formato. Recursos padrão são resolvidos exclusivamente pelo manifesto confiável do aplicativo, nunca por caminho/URL fornecido pelo projeto. Referência padrão ausente ou revisão não suportada recusa a abertura com explicação antes de substituir o projeto atual.
 
 ### 28.3. Validação e integridade
 
-Reutilizar as verificações aplicáveis de §26.1 para PNG/JPEG personalizado: conteúdo real e decodificação, orientação EXIF, CRC de PNG, até 10 MiB por recurso e até 16 milhões de pixels. Conferir IDs, proporção, transformações e relações com pavimentos/recursos. Validar o limite total de 50 MiB considerando base64 e demais dados da intenção, antes de confirmar upload ou alteração que inviabilize o download. Falha preserva o documento aberto; nenhuma recompressão, remoção de fundo ou reamostragem silenciosa. Não aplicar o fluxo de calibração de M8 aos objetos.
+Limites defensivos: até 2.000 ocorrências e 200 recursos personalizados por projeto, além do limite total de arquivo. Reutilizar as verificações aplicáveis de §26.1 para PNG/JPEG personalizado: conteúdo real e decodificação, orientação EXIF, CRC de PNG, até 10 MiB por recurso e até 16 milhões de pixels. Conferir IDs, proporção, transformações e relações com pavimentos/recursos. Validar o limite total de 50 MiB considerando base64 e demais dados da intenção, antes de confirmar upload ou alteração que inviabilize o download. Falha preserva o documento aberto; nenhuma recompressão, remoção de fundo ou reamostragem silenciosa. Não aplicar o fluxo de calibração de M8 aos objetos.
 
 Manter imagens padrão fora da serialização, inclusive quando usadas repetidamente; bytes personalizados aparecem uma vez na coleção de recursos, nunca dentro de cada ocorrência. Revalidar relações e conteúdo na importação e decodificar antes de substituir o documento aberto. Capturar falha de armazenamento, manter a intenção em memória e permitir download conforme o fluxo existente. Recursos temporários de decodificação são liberados sem perder histórico ou bytes necessários. Preservar bloqueio por projeto e consulta em somente leitura.
 
@@ -823,7 +824,7 @@ Manter imagens padrão fora da serialização, inclusive quando usadas repetidam
 
 Catálogo em diálogo com categorias, busca e opção de upload; acesso e controles seguem integralmente §2.1, com ícones Lucide centralizados, nomes acessíveis, foco e dicas. Não usar as artes dos objetos como ícones de ações. Suspender atalhos de edição do canvas enquanto o diálogo estiver ativo e devolver foco adequadamente. Propriedades contextuais mantêm a apresentação compacta do editor; orientações operacionais na faixa existente e ajuda estável em Como usar o editor.
 
-Prévia de inserção separada da intenção, sem histórico ou salvamento. Cancelar ao pressionar Escape, perder foco ou mudar ferramenta/modo/pavimento; descartar também upload assíncrono cujo contexto deixou de ser válido. Navegação não confirma inserção. Seleção, arraste, rotação, edição numérica proporcional, duplicação e exclusão operam no pavimento ativo; cada confirmação ou gesto completo gera uma única operação. Cancelamento e operação sem mudanças não geram histórico. Nome não é desenhado permanentemente no canvas.
+Prévia de inserção separada da intenção, sem histórico ou salvamento. Cancelar ao pressionar Escape, perder foco ou mudar ferramenta/modo/pavimento; descartar também upload assíncrono cujo contexto deixou de ser válido. Navegação não confirma inserção. Seleção, arraste, rotação, edição numérica proporcional, duplicação e exclusão operam no pavimento ativo; não expor campos X/Y nas propriedades nem alterar coordenadas ao confirmar outros campos. Na alça de rotação, normalizar em [0°, 360°) e atrair múltiplos de 45° com distância angular de até 5°, inclusive a passagem 360°/0°; fora da tolerância manter giro livre. A edição numérica do ângulo não aplica atração. Mostrar ângulo/atração na faixa operacional existente durante o giro; cada confirmação ou gesto completo gera uma única operação. Cancelamento e operação sem mudanças não geram histórico. Nome não é desenhado permanentemente no canvas.
 
 Renderizar somente objetos do ativo em Planta, acima das lajes e abaixo dos traços técnicos; preservar a imagem de fundo de M8 abaixo da malha. Resolver seleção de elementos sobrepostos sem bloquear paredes/vãos/medidas; imagem não fornece novos alvos de atração de Medida. Enquadrar usa os quatro cantos transformados, inclusive em pavimento contendo apenas objetos. Não incluir em Fiada nem na referência de pavimento.
 

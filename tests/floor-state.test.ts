@@ -173,7 +173,7 @@ it.each([false, true])(
     expect(s.doc!.model).toEqual({
       ...original.model,
       measurements: [],
-      referenceImages: [],
+      referenceImages: [], imageElements: [], customImageAssets: [],
     });
     expect(s.doc!.adjustments).toEqual(original.adjustments);
     expect(s.doc!.generated!.convention).toBe("nominal-v10");
@@ -206,7 +206,7 @@ it.each([false, true])(
     expect(s.doc?.model).toEqual({
       ...original.model,
       measurements: [],
-      referenceImages: [],
+      referenceImages: [], imageElements: [], customImageAssets: [],
     });
     expect(s.doc?.adjustments).toEqual(original.adjustments);
     expect(s.doc?.generated).toBeNull();
@@ -221,7 +221,7 @@ it.each([false, true])(
     expect(parseFile(serializeFile(s.doc!).text).model).toEqual({
       ...original.model,
       measurements: [],
-      referenceImages: [],
+      referenceImages: [], imageElements: [], customImageAssets: [],
     });
     if (readonly) {
       expect(save).not.toHaveBeenCalled();

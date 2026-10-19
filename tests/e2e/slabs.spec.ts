@@ -171,7 +171,7 @@ test("M4.2 criação, fechamento explícito, vazios, movimento, espessura e tran
   await opening(page);
   const before = await exported(page),
     slab = before.model.slabs[0];
-  expect(before.schemaVersion).toBe(12);
+  expect(before.schemaVersion).toBe(13);
   expect(slab.openings).toHaveLength(1);
   await page
     .getByLabel("Selecionar elemento", { exact: true })
