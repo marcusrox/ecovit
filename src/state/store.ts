@@ -118,11 +118,12 @@ type State = Inspection & {
   switchFloor: (id: string) => void;
   history: History;
   busy: boolean;
+  openingProjectId: string | null;
   readonly: boolean;
   saved: "saved" | "saving" | "error";
   message: string;
   select: string | null;
-  open: (doc: Project, fresh?: boolean) => Promise<void>;
+  open: (project: Project | string, fresh?: boolean) => Promise<void>;
   close: () => void;
   commit: (
     doc: EditableProject,
@@ -285,6 +286,7 @@ export const useStore = create<State>((set, get) => {
     doc: null,
     history: { past: [], future: [] },
     busy: false,
+    openingProjectId: null,
     readonly: false,
     saved: "saved",
     message: "",
@@ -305,13 +307,21 @@ export const useStore = create<State>((set, get) => {
       })),
     open: async (requested, fresh = false) => {
       if (get().busy) return;
-      set({ busy: true, message: "" });
+      const id =
+        typeof requested === "string" ? requested : requested.project.id;
+      set({ busy: true, openingProjectId: id, message: "" });
       let nextRelease: (() => void) | null = null;
       try {
-        nextRelease = await acquireProject(requested.project.id);
-        let doc = fresh
-          ? validateProject(requested)
-          : await loadProject(requested.project.id);
+        // Let React paint the opening feedback and wait cursor before validation.
+        if (typeof requestAnimationFrame === "function")
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => setTimeout(resolve, 0)),
+          );
+        nextRelease = await acquireProject(id);
+        let doc =
+          fresh && typeof requested !== "string"
+            ? validateProject(requested)
+            : await loadProject(id);
         if (typeof Image !== "undefined")
           for (const image of doc.model.referenceImages)
             await decodeReference(image);
@@ -354,7 +364,7 @@ export const useStore = create<State>((set, get) => {
         nextRelease?.();
         set({ message: String(e instanceof Error ? e.message : e) });
       } finally {
-        set({ busy: false });
+        set({ busy: false, openingProjectId: null });
       }
     },
     close: () => {

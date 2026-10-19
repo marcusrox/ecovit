@@ -215,6 +215,18 @@ Salvar o documento inteiro em uma transação após cada alteração confirmada.
 
 Falhas de quota ou indisponibilidade manterão o documento em memória e oferecerão download após a operação. O download sempre usa a memória atual, sem exigir salvamento local bem-sucedido. Para impedir sobrescrita por outra aba, usar um único bloqueio exclusivo por projeto durante a edição; a segunda aba informa que o projeto já está aberto e não permite editá-lo. Não implementar sincronização ou mesclagem entre abas.
 
+### Abertura pela lista de projetos
+
+A lista chama `useStore.open(projectId)` diretamente, sem carregar/validar o documento na interface. O store verifica busy e ativa busy/openingProjectId sincronamente; antes de obter o bloqueio e chamar loadProject, aguarda requestAnimationFrame seguido de uma tarefa com setTimeout(0), permitindo a pintura do feedback. O registro é lido e validado uma vez, após tentar adquirir o bloqueio; preservar decode das referências, recomputação de integridade e atualização de resultados vigentes/desatualizados. O contrato `open(documento, true)` de criação/importação permanece validado; passar um documento sem fresh continua reabrindo seu registro por ID.
+
+O cartão escolhido mostra seu nome e “Abrindo projeto…” com status acessível, substitui o pictograma pelo saving→LoaderCircle do componente central e mantém contraste durante disabled. O indicador gira, salvo movimento reduzido. `useLayoutEffect` aplica `data-opening-project` ao elemento html durante a operação, com cursor wait para a página e seus controles; cleanup remove o atributo, sem sobrescrever estilos de cursor anteriores. finally limpa busy/openingProjectId em sucesso ou erro. Não usar percentual fictício ou novo serviço/worker. Erros preservam o documento anterior e liberam o bloqueio candidato, exibindo a causa e permitindo nova tentativa. Esta alteração elimina a carga/validação duplicada da lista, não modifica a validação do formato nem promete animação fluida durante execução síncrona do motor.
+
+### Visualização local por projeto
+
+`src/editor/useProjectCamera.ts` mantém câmera e dimensões do canvas fora do documento. Preferência em `localStorage`, chave `ecovit:project-view:v1:<projectId>`, valor `{ centerX, centerY, scale }`: centro em coordenadas do desenho e escala em pixels por unidade interna. Aceitar somente números finitos e escala entre 0,0015 e 0,12; ausência/invalidez/erro de leitura usa câmera inicial. Restaurar o centro com as dimensões reais medidas por ResizeObserver; redimensionamento conserva centro e escala.
+
+Gravar após zoom, Enquadrar, foco programático e redimensionamento; no deslocamento, somente ao terminar o gesto. Ao desmontar o canvas e em pagehide, guardar a câmera mais recente como proteção adicional. Sem temporizadores ou gravação de cada movimento do mouse. Esta escrita síncrona pequena é independente de saveProject, bloqueio do documento, updatedAt, histórico e cálculo; também se aplica em somente leitura. Erro de gravação é exibido na área de mensagens do canvas, conservando a navegação em memória. Uma preferência por projeto, sem chaves por pavimento/modo e sem transporte, migração de envelope ou sincronização entre abas; última gravação local prevalece.
+
 ### Estrutura do arquivo
 
 JSON UTF-8 com extensão .ecovit:

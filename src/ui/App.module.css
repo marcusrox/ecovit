@@ -1892,3 +1892,30 @@ button.iconButton {
   width: 100%;
   min-width: 0;
 }
+:global(html[data-opening-project]),
+:global(html[data-opening-project] *) {
+  cursor: wait !important;
+}
+
+.openingSpinner {
+  display: flex;
+  animation: openingSpin 1s linear infinite;
+}
+
+.projectCard.projectOpeningCard:disabled {
+  opacity: 1;
+  background: #edf2eb;
+  border-color: #8ca78e;
+}
+
+@keyframes openingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .openingSpinner {
+    animation: none;
+  }
+}

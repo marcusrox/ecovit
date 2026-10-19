@@ -12,7 +12,13 @@ import { DuplicateProjectDialog } from "./DuplicateProject";
 import { DeleteProjectDialog } from "./DeleteProject";
 import { editFloor } from "../domain/floors";
 import { FiadaPanel, FiadaToolbar } from "../editor/Fiada";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Canvas } from "../editor/Canvas";
 import { SlabProperties, deleteSlabSelection } from "../editor/Slabs";
 import {
@@ -31,7 +37,7 @@ import {
   type Tool,
 } from "../domain/project";
 import { download, importedCopy, readFile } from "../persistence/files";
-import { listProjects, loadProject } from "../persistence/database";
+import { listProjects } from "../persistence/database";
 import { useStore, useEditingProject } from "../state/store";
 import styles from "../ui/App.module.css";
 import { Icon } from "../ui/Icon";
@@ -440,10 +446,18 @@ export default function App() {
   const editingDoc = useEditingProject();
   const doc = useStore((s) => s.doc),
     busy = useStore((s) => s.busy),
+    openingProjectId = useStore((s) => s.openingProjectId),
     readonly = useStore((s) => s.readonly),
     saved = useStore((s) => s.saved),
     message = useStore((s) => s.message),
     history = useStore((s) => s.history);
+  useLayoutEffect(() => {
+    if (!openingProjectId) return;
+    document.documentElement.dataset.openingProject = "true";
+    return () => {
+      delete document.documentElement.dataset.openingProject;
+    };
+  }, [openingProjectId]);
   const [tool, setTool] = useState<Tool>("select"),
     [settings, setSettings] = useState(false),
     [preferences, setPreferences] = useState(false),
@@ -1019,6 +1033,7 @@ export default function App() {
           <div className={styles.homeGrid}>
             <button
               className={styles.newCard}
+              disabled={busy || importing}
               onClick={() => {
                 setFormError("");
                 setCreating(true);
@@ -1073,7 +1088,7 @@ export default function App() {
                       <button
                         disabled={busy}
                         key={p.id}
-                        className={styles.projectCard}
+                        className={`${styles.projectCard} ${openingProjectId === p.id ? styles.projectOpeningCard : ""}`}
                         aria-expanded={
                           !p.compatible
                             ? incompatibleProject === p.id
@@ -1089,26 +1104,34 @@ export default function App() {
                             setIncompatibleProject(p.id);
                             return;
                           }
-                          void loadProject(p.id)
-                            .then((d) => useStore.getState().open(d))
-                            .catch((e) =>
-                              useStore.getState().notify(e.message),
-                            );
+                          void useStore.getState().open(p.id);
                         }}
                       >
                         <span className={styles.projectIcon} aria-hidden="true">
-                          <Icon name="plan" size="card" />
+                          {openingProjectId === p.id ? (
+                            <span className={styles.openingSpinner}>
+                              <Icon name="saving" size="card" />
+                            </span>
+                          ) : (
+                            <Icon name="plan" size="card" />
+                          )}
                         </span>
                         <span className={styles.projectInfo}>
                           <strong title={p.name}>{p.name}</strong>
-                          <small>
-                            {!p.compatible && (
-                              <span>Formato incompatível · </span>
-                            )}
-                            {p.walls} {p.walls === 1 ? "parede" : "paredes"} ·
-                            Atualizado em{" "}
-                            {new Date(p.updatedAt).toLocaleDateString("pt-BR")}
-                          </small>
+                          {openingProjectId === p.id ? (
+                            <small role="status">Abrindo projeto…</small>
+                          ) : (
+                            <small>
+                              {!p.compatible && (
+                                <span>Formato incompatível · </span>
+                              )}
+                              {p.walls} {p.walls === 1 ? "parede" : "paredes"} ·
+                              Atualizado em{" "}
+                              {new Date(p.updatedAt).toLocaleDateString(
+                                "pt-BR",
+                              )}
+                            </small>
+                          )}
                           {!p.compatible && incompatibleProject === p.id && (
                             <small
                               id={`project-compatibility-${p.id}`}

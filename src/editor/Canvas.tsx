@@ -1,4 +1,5 @@
 import { useReferenceImageCanvas } from "./ReferenceImage";
+import { useProjectCamera } from "./useProjectCamera";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Circle, Text, Shape } from "react-konva";
 import {
@@ -103,13 +104,18 @@ export function Canvas({
   const host = useRef<HTMLDivElement>(null),
     gesture = useRef<Gesture | null>(null),
     space = useRef(false);
-  const [size, setSize] = useState({ width: 900, height: 700 }),
-    [camera, setCamera] = useState<Camera>({ x: 120, y: 100, scale: 0.012 });
   const [preview, setPreview] = useState<Wall | null>(null),
     [target, setTarget] = useState<Point | null>(null),
     [hover, setHover] = useState<string | null>(null),
     [choices, setChoices] = useState<Wall[]>([]),
     [panning, setPanning] = useState(false);
+  const {
+    camera,
+    setCamera,
+    size,
+    resize,
+    error: viewError,
+  } = useProjectCamera(project.project.id, panning);
   const [wallEdit, setWallEdit] = useState<WallEdit | null>(null);
   const [mouseScreen, setMouseScreen] = useState<Point | null>(null);
   const [hostWallId, setHostWallId] = useState<string | null>(null);
@@ -211,7 +217,7 @@ export function Canvas({
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
       const r = entries[0].contentRect;
-      setSize({ width: r.width, height: r.height });
+      resize({ width: r.width, height: r.height });
     });
     if (host.current) observer.observe(host.current);
     const blur = () => {
@@ -284,7 +290,7 @@ export function Canvas({
       window.removeEventListener("mouseup", outside);
       window.removeEventListener("mousemove", pan);
     };
-  }, [setTool]);
+  }, [setTool, resize, setCamera]);
   useEffect(() => {
     if (preview && gesture.current?.type === "draw")
       setPreview((p) => (p ? { ...p, side } : null));
@@ -296,7 +302,7 @@ export function Canvas({
         x: size.width / 2 - focus.x * c.scale,
         y: size.height / 2 - focus.y * c.scale,
       }));
-  }, [focus, size.width, size.height]);
+  }, [focus, size.width, size.height, setCamera]);
   useEffect(() => {
     cancel();
     setChoices([]);
@@ -1620,6 +1626,7 @@ export function Canvas({
       <div className={styles.canvasBottom}>
         <div className={styles.canvasMessages}>
           <CompositionStatus />
+          {viewError && <span role="alert">{viewError}</span>}
           <span>
             {readonly
               ? "Somente leitura"
