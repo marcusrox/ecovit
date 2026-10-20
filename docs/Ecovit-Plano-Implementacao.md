@@ -36,7 +36,7 @@ Persistência, integridade e verificação acompanham cada entrega. M4 depende d
 
 ## Ajustes transversais e pendências específicas
 
-[Apresentação e operação](marcos/Apresentacao-e-Operacao.md) reúne interface, iconografia e limites operacionais que não pertencem a um único marco. Seus aceites específicos pendentes permanecem separados dos aceites globais.
+[Apresentação e operação](marcos/Apresentacao-e-Operacao.md) reúne interface, iconografia e limites operacionais que não pertencem a um único marco, incluindo o favicon implementado. Seus aceites específicos pendentes permanecem separados dos aceites globais.
 
 O [registro de M5](marcos/M5-Quantitativos-e-Projetos.md) preserva também a situação dos ajustes posteriores de exclusão de projetos, cartões e cabeçalho, inclusive os aceites específicos ainda pendentes. M1–M10 aprovados não implica aprovação automática dessas alterações.
 

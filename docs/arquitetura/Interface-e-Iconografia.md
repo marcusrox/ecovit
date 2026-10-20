@@ -30,6 +30,8 @@ A escolha atende à necessidade concreta de catálogo amplo com linguagem visual
 
 **Exceções de natureza, não bibliotecas alternativas:** logotipo Ecovit é identidade própria; tijolos, furos, canaletas, eixos, grautes, alças e sinais geométricos do canvas são desenhos do domínio. Não substituí-los por pictogramas genéricos. Multiplicação em medidas, sinais numéricos e unidades continuam texto. Legendas de peças/eixos devem usar amostras dos desenhos correspondentes; os caracteres ■/○/▱/● atuais são candidatos à melhoria de fidelidade, sem importar peças do Lucide.
 
+O favicon em `public/favicon.svg`, declarado em `index.html`, reutiliza o símbolo de casa modular do logotipo, em verde profundo sobre fundo claro arredondado para manter contraste nas abas claras e escuras. É um recurso SVG local de identidade, independente dos ícones de controles.
+
 #### Mapa semântico e verificação
 
 O mapa central relaciona ações a ícones: select→MousePointer2, wall→BrickWall, slab→RectangleHorizontal, door→DoorClosed, window→SquareSplitHorizontal, opening→SquareDashed, settings→SlidersHorizontal, preferences→Settings, measure→Ruler, furniture→Armchair, image→ImagePlus, more→Ellipsis, undo/redo→Undo2/Redo2, left/right→ChevronLeft/ChevronRight, close→X, plus/minus→Plus/Minus, copy/delete→Copy/Trash2, apply→Check, redraw→Pencil, download/upload→Download/Upload, fit→Scan, info→Info, plan→PanelsTopLeft. Porta representa folha/batente, janela quadro dividido, vão contorno tracejado; símbolos são ferramentas, não detalhes construtivos.

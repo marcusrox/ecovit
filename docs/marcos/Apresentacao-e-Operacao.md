@@ -10,6 +10,12 @@
 
 **Aceite específico da apresentação:** pendente do solicitante, incluindo posição/dicas do botão de configurações, abertura por teclado/durante renomeação e reconhecimento dos ícones. Os aceites globais dos marcos não atribuem aprovação específica a esses ajustes. Os ajustes posteriores de cabeçalho/cartões têm situação própria em [M5](M5-Quantitativos-e-Projetos.md).
 
+## Favicon
+
+**Implementado:** favicon SVG local reutilizando a casa modular do logotipo, em verde profundo sobre fundo claro arredondado, declarado no HTML e distribuído pelo build. Contrato em [Interface e iconografia](../arquitetura/Interface-e-Iconografia.md#iconografia).
+
+**Verificação do Codex:** tipos, lint e build aprovados, com os avisos conhecidos de Zod e tamanho do bundle. Chrome/Edge em sessões isoladas na porta 5174 confirmaram declaração no HTML, resposta HTTP 200 com tipo SVG e decodificação em 16 e 32 px. Revisão visual desses tamanhos sobre fundos claro/escuro aprovada; arquivo presente em `dist/favicon.svg`. Sem alteração dos controles, fluxos ou dados do projeto; sem nova execução das suítes de domínio ou fluxos do editor. Teste manual e aceite específico do solicitante pendentes.
+
 ## Operação e limites
 
 Porta 5173 reservada ao solicitante e 5174 para verificações isoladas do Codex; comandos vigentes no [README](../../README.md) e [AGENTS.md](../../AGENTS.md). A separação está implementada nos scripts; sua conferência manual específica pelo solicitante permanece pendente. Uma execução histórica de bloqueio entre abas foi interrompida sem resumo final e não é contada como suíte aprovada. Evidências concluídas de bloqueio/arquivo constam dos marcos correspondentes.
