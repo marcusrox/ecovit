@@ -1,6 +1,7 @@
 import { bounds, type EditableProject, type Project } from "./project";
 import { openingBox } from "./openings";
 import { openingSymbolStrokes } from "./opening-symbol";
+import { measurementGeometry } from "./measurements";
 
 export type FloorReference = "none" | "below" | "above";
 
@@ -51,11 +52,14 @@ export function floorPlanBounds(
   for (const m of doc.model.measurements.filter(
     (m) => m.floorId === measureFloorId,
   )) {
+    const line = measurementGeometry(m);
+    const xs = [m.a.x, m.b.x, line.a.x, line.b.x];
+    const ys = [m.a.y, m.b.y, line.a.y, line.b.y];
     boxes.push({
-      x: Math.min(m.a.x, m.b.x),
-      y: Math.min(m.a.y, m.b.y),
-      width: Math.abs(m.b.x - m.a.x),
-      height: Math.abs(m.b.y - m.a.y),
+      x: Math.min(...xs),
+      y: Math.min(...ys),
+      width: Math.max(...xs) - Math.min(...xs),
+      height: Math.max(...ys) - Math.min(...ys),
     });
   }
   if (includeSlabs)

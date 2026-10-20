@@ -18,6 +18,8 @@ import {
   nearMeasurement,
   projection,
   validMeasurement,
+  measurementGeometry,
+  measurementOffset,
 } from "../src/domain/measurements";
 import {
   duplicateFloor,
@@ -49,6 +51,97 @@ beforeEach(() => {
   useStore.setState({ busy: false });
   useStore.getState().close();
   vi.mocked(saveProject).mockClear();
+});
+
+it("M7 afastamento perpendicular conserva distância, lados e seleção apenas da geometria visível", () => {
+  const m = measurement(
+    crypto.randomUUID(),
+    { x: 0, y: 0 },
+    { x: 30000, y: 40000 },
+  );
+  const dimension = { ...m, offset: 10000 };
+  expect(measurementGeometry(dimension)).toMatchObject({
+    a: { x: -8000, y: 6000 },
+    b: { x: 22000, y: 46000 },
+  });
+  expect(measurementOffset(m, { x: -8000, y: 6000 })).toBe(10000);
+  expect(measurementOffset(m, { x: 8000, y: -6000 })).toBe(-10000);
+  expect(measurementLength(dimension)).toBe(50000);
+  expect(measurementText(dimension)).toBe("500 cm");
+  expect(nearMeasurement({ x: 7000, y: 26000 }, dimension, 1)).toBe(true);
+  expect(nearMeasurement({ x: -4000, y: 3000 }, dimension, 1)).toBe(true);
+  expect(nearMeasurement({ x: 15000, y: 20000 }, dimension, 1)).toBe(false);
+  const reverse = { ...dimension, a: m.b, b: m.a, offset: -10000 };
+  expect(measurementGeometry(reverse).a).toEqual(
+    measurementGeometry(dimension).b,
+  );
+  expect(validMeasurement(dimension)).toBe(true);
+  for (const offset of [NaN, Infinity, 0.1, LIMIT + 1])
+    expect(validMeasurement({ ...m, offset })).toBe(false);
+  expect(
+    validMeasurement({
+      ...m,
+      a: { x: LIMIT, y: LIMIT - 1 },
+      b: { x: LIMIT, y: LIMIT },
+      offset: -1,
+    }),
+  ).toBe(false);
+});
+
+it("M7 formato 16 preserva afastamento em arquivo/cópia/pavimento e lê 15 sem alterar a origem", async () => {
+  const d = fixture(),
+    floor = d.model.floors[0].id;
+  const m = {
+    ...measurement(floor, { x: 0, y: 0 }, { x: 30000, y: 0 }),
+    offset: -5000,
+  };
+  d.model.measurements = [m];
+  expect(parseFile(serializeFile(d).text).model.measurements).toEqual([m]);
+  expect(importedCopy(d).model.measurements).toEqual([m]);
+  expect(
+    duplicateFloor(d, floor, 28000, "Outro").model.measurements[1],
+  ).toMatchObject({ a: m.a, b: m.b, offset: -5000 });
+  expect(floorPlanBounds(d, [floor], true, floor)).toEqual({
+    x: 0,
+    y: -5000,
+    width: 30000,
+    height: 5000,
+  });
+  const old = JSON.parse(JSON.stringify(d));
+  old.schemaVersion = 15;
+  delete old.model.measurements[0].offset;
+  const original = JSON.stringify(old);
+  expect(validateProject(old).schemaVersion).toBe(16);
+  expect(JSON.stringify(old)).toBe(original);
+  expect(
+    measurementGeometry(validateProject(old).model.measurements[0]).a,
+  ).toEqual(m.a);
+  for (const version of [10, 11, 12, 13, 14, 15])
+    expect(() => validateProject({ ...d, schemaVersion: version })).toThrow(
+      /formato anterior/,
+    );
+  for (const offset of [0.5, NaN, Infinity, LIMIT + 1])
+    expect(() =>
+      validateProject({
+        ...d,
+        model: { ...d.model, measurements: [{ ...m, offset }] },
+      }),
+    ).toThrow();
+  await useStore.getState().open(d, true);
+  const current = useStore.getState().doc!;
+  const spy = vi.spyOn(engine, "generate");
+  await useStore.getState().commit(
+    {
+      ...current,
+      model: { ...current.model, measurements: [{ ...m, offset: 5000 }] },
+    },
+    "measure",
+  );
+  await useStore.getState().undo();
+  expect(useStore.getState().doc!.model.measurements[0].offset).toBe(-5000);
+  await useStore.getState().undo(true);
+  expect(useStore.getState().doc!.model.measurements[0].offset).toBe(5000);
+  expect(spy).not.toHaveBeenCalled();
 });
 
 it("M7 distância euclidiana, arredondamento só no texto e segmentos finitos", () => {
@@ -183,7 +276,12 @@ it("M7 validação, transporte, envelope 9 e cópias de pavimento preservam inte
   );
   const legacy = structuredClone(d) as unknown as {
     schemaVersion: number;
-    model: { measurements?: Measurement[]; referenceImages?: unknown[]; imageElements?: unknown[]; customImageAssets?: unknown[] };
+    model: {
+      measurements?: Measurement[];
+      referenceImages?: unknown[];
+      imageElements?: unknown[];
+      customImageAssets?: unknown[];
+    };
   };
   legacy.schemaVersion = 9;
   delete legacy.model.imageElements;

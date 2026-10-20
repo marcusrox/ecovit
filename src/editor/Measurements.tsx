@@ -22,6 +22,8 @@ import {
   nearMeasurement,
   roundedPoint,
   validMeasurement,
+  measurementGeometry,
+  measurementOffset,
 } from "../domain/measurements";
 import { useStore } from "../state/store";
 import { usePreferences } from "../state/preferences";
@@ -33,7 +35,7 @@ type Hit = { id: string; label: string };
 type Drag = {
   original: Measurement;
   start: Point;
-  type: "create" | "move" | "a" | "b";
+  type: "create" | "offset" | "move" | "a" | "b";
   choices: Hit[];
 };
 
@@ -103,6 +105,10 @@ export function useMeasurementCanvas(
   };
   const candidate = (p: Point, alt: boolean) => {
     const g = drag.current!;
+    if (g.type === "offset") {
+      setTarget(null);
+      return { ...g.original, offset: measurementOffset(g.original, p) };
+    }
     if (g.type === "move") {
       const delta = roundedPoint({ x: p.x - g.start.x, y: p.y - g.start.y });
       return {
@@ -173,7 +179,22 @@ export function useMeasurementCanvas(
   const down = (p: Point, alt: boolean) => {
     if (mode !== "plan" || busy || readonly) return false;
     setChoices([]);
-    if (drag.current?.type === "create") return up(p, alt, true);
+    if (drag.current?.type === "create") {
+      const next = candidate(p, alt);
+      if (!validMeasurement(next)) {
+        useStore
+          .getState()
+          .notify(
+            "Escolha um ponto final distinto dentro dos limites do editor.",
+          );
+        return true;
+      }
+      drag.current = { ...drag.current, original: next, type: "offset" };
+      setPreview({ ...next, offset: 0 });
+      setTarget(null);
+      return true;
+    }
+    if (drag.current?.type === "offset") return up(p, alt, true);
     const active = doc.model.measurements.find((m) => m.id === select);
     if (active)
       for (const end of ["a", "b"] as const) {
@@ -291,8 +312,9 @@ export function useMeasurementCanvas(
   const up = (p: Point, alt: boolean, confirmCreate = false) => {
     const g = drag.current;
     if (!g) return false;
-    // Releasing the first click (even after moving) only leaves the preview.
-    if (g.type === "create" && !confirmCreate) return true;
+    // Only the third press confirms creation; releases never confirm a point.
+    if ((g.type === "create" || g.type === "offset") && !confirmCreate)
+      return true;
     if (busy || readonly) {
       cancel();
       return true;
@@ -307,11 +329,11 @@ export function useMeasurementCanvas(
       useStore
         .getState()
         .notify(
-          "A medida precisa de dois pontos distintos dentro dos limites do editor.",
+          "A medida e sua linha de cota precisam ficar dentro dos limites do editor, com pontos distintos.",
         );
-      if (g.type === "create") return true;
+      if (g.type === "create" || g.type === "offset") return true;
     } else if (
-      g.type === "create" ||
+      g.type === "offset" ||
       JSON.stringify(next) !== JSON.stringify(g.original)
     ) {
       void useStore
@@ -352,8 +374,12 @@ export function useMeasurementCanvas(
     move,
     up,
     cancel,
-    isDragging: () => !!drag.current && drag.current.type !== "create",
+    isDragging: () =>
+      !!drag.current &&
+      drag.current.type !== "create" &&
+      drag.current.type !== "offset",
     creating: drag.current?.type === "create",
+    placing: drag.current?.type === "offset",
     leave: () => {
       if (!drag.current) {
         setTarget(null);
@@ -365,13 +391,14 @@ export function useMeasurementCanvas(
         <Shape
           sceneFunc={(ctx) => {
             for (const m of rendered) {
+              const line = measurementGeometry(m);
               const a = {
-                x: m.a.x * camera.scale + camera.x,
-                y: m.a.y * camera.scale + camera.y,
+                x: line.a.x * camera.scale + camera.x,
+                y: line.a.y * camera.scale + camera.y,
               };
               const b = {
-                x: m.b.x * camera.scale + camera.x,
-                y: m.b.y * camera.scale + camera.y,
+                x: line.b.x * camera.scale + camera.x,
+                y: line.b.y * camera.scale + camera.y,
               };
               ctx.save();
               ctx.strokeStyle =
@@ -380,6 +407,32 @@ export function useMeasurementCanvas(
               ctx.beginPath();
               ctx.moveTo(a.x, a.y);
               ctx.lineTo(b.x, b.y);
+              // Witness lines join the measured anchors to the parallel cota.
+              if (m.offset) {
+                const sign = Math.sign(m.offset);
+                for (const [anchor, end] of [
+                  [m.a, a],
+                  [m.b, b],
+                ] as const) {
+                  ctx.moveTo(
+                    anchor.x * camera.scale + camera.x,
+                    anchor.y * camera.scale + camera.y,
+                  );
+                  ctx.lineTo(
+                    end.x + line.normal.x * sign * 4,
+                    end.y + line.normal.y * sign * 4,
+                  );
+                }
+              }
+              // Diagonal end marks use a constant screen size at every zoom.
+              if (m.a.x !== m.b.x || m.a.y !== m.b.y) {
+                const tx = (line.normal.y + line.normal.x) * 4;
+                const ty = (-line.normal.x + line.normal.y) * 4;
+                for (const end of [a, b]) {
+                  ctx.moveTo(end.x - tx, end.y - ty);
+                  ctx.lineTo(end.x + tx, end.y + ty);
+                }
+              }
               ctx.stroke();
               const editing = drag.current;
               const showEditingLabel =
@@ -413,7 +466,9 @@ export function useMeasurementCanvas(
             .filter(
               (m) =>
                 m.id === select ||
-                (m.id === preview?.id && drag.current?.type === "create"),
+                (m.id === preview?.id &&
+                  (drag.current?.type === "create" ||
+                    drag.current?.type === "offset")),
             )
             .flatMap((m) =>
               (["a", "b"] as const).map((end) => (

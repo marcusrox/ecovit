@@ -454,8 +454,9 @@ function Properties({ doc }: { doc: Project }) {
           <br />
           Ctrl+Y: refazer.
           <br />
-          Medida: clique no ponto inicial e depois no ponto final. Alt suspende
-          a atração. Arraste o corpo para mover ou uma ponta para ajustar.
+          Medida: clique no ponto inicial, no ponto final e depois posicione a
+          linha da cota com um terceiro clique. Alt suspende a atração. Arraste
+          o corpo para mover ou uma ponta para ajustar.
         </p>
         <p>
           Portas e janelas: escolha o tipo nas propriedades. Alternar orientação

@@ -1678,7 +1678,7 @@ export function Canvas({
                       : tool === "wall"
                         ? "Arraste para desenhar · Esc cancela"
                         : tool === "measure"
-                          ? `${measurements.creating ? "Clique no ponto final" : "Clique no ponto inicial"} · Alt suspende atração · Esc cancela`
+                          ? `${measurements.placing ? "Clique para posicionar a linha da cota" : measurements.creating ? "Clique no ponto final" : "Clique no ponto inicial"} · ${measurements.placing ? "Mova o mouse para ajustar o afastamento" : "Alt suspende atração"} · Esc cancela`
                           : ""}
           </span>
         </div>

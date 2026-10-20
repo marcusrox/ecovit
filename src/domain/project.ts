@@ -42,7 +42,13 @@ export type ReferenceImage = {
   opacity: number;
   visible: boolean;
 };
-export type Measurement = { id: string; floorId: string; a: Point; b: Point };
+export type Measurement = {
+  id: string;
+  floorId: string;
+  a: Point;
+  b: Point;
+  offset?: number;
+};
 export type SlabOpening = { id: string; contour: Point[] };
 export type Slab = {
   id: string;
@@ -109,7 +115,7 @@ export type Tool =
   "select" | "wall" | "slab" | "measure" | "furniture" | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 15;
+  schemaVersion: 16;
   project: {
     id: string;
     name: string;
@@ -199,7 +205,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 15,
+    schemaVersion: 16,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),

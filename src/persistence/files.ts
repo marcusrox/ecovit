@@ -1,4 +1,5 @@
 import { validateReference } from "../domain/reference-image";
+import { validMeasurement } from "../domain/measurements";
 import {
   validateElement,
   validateCustomAsset,
@@ -144,7 +145,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(15),
+    schemaVersion: z.literal(16),
     project: z
       .object({
         id,
@@ -295,7 +296,15 @@ const schema = z
           )
           .max(4),
         measurements: z.array(
-          z.object({ id, floorId: id, a: point, b: point }).strict(),
+          z
+            .object({
+              id,
+              floorId: id,
+              a: point,
+              b: point,
+              offset: z.number().int().min(-LIMIT).max(LIMIT).optional(),
+            })
+            .strict(),
         ),
         slabs: z
           .array(
@@ -389,7 +398,8 @@ export function validateProject(
       value.schemaVersion === 11 ||
       value.schemaVersion === 12 ||
       value.schemaVersion === 13 ||
-      value.schemaVersion === 14) &&
+      value.schemaVersion === 14 ||
+      value.schemaVersion === 15) &&
     "model" in value &&
     value.model &&
     typeof value.model === "object"
@@ -403,6 +413,17 @@ export function validateProject(
     )
       throw new Error("Arquivo inválido: campos em formato anterior.");
     if (
+      "measurements" in value.model &&
+      Array.isArray(value.model.measurements) &&
+      value.model.measurements.some(
+        (m: unknown) => m && typeof m === "object" && "offset" in m,
+      )
+    )
+      throw new Error(
+        "Arquivo inválido: afastamento de medida em formato anterior.",
+      );
+    if (
+      value.schemaVersion < 15 &&
       "imageElements" in value.model &&
       Array.isArray(value.model.imageElements) &&
       value.model.imageElements.some(
@@ -424,7 +445,7 @@ export function validateProject(
       throw new Error("Arquivo inválido: aparência em formato anterior.");
     value = {
       ...value,
-      schemaVersion: 15,
+      schemaVersion: 16,
       model: {
         ...value.model,
         ...(value.schemaVersion === 9 ? { measurements: [] } : {}),
@@ -439,10 +460,10 @@ export function validateProject(
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 15
+    value.schemaVersion !== 16
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 15; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 16; demais formatos não são convertidos.",
     );
   const parsed = schema.safeParse(value);
   if (!parsed.success)
@@ -510,12 +531,8 @@ export function validateProject(
   }
   for (const measurement of doc.model.measurements) {
     take(measurement.id);
-    if (
-      !floors.has(measurement.floorId) ||
-      (measurement.a.x === measurement.b.x &&
-        measurement.a.y === measurement.b.y)
-    )
-      throw new Error("Medida sem comprimento ou com pavimento inválido.");
+    if (!floors.has(measurement.floorId) || !validMeasurement(measurement))
+      throw new Error("Medida com geometria ou pavimento inválido.");
   }
   const slabFloors = new Set<string>();
   let lastSlabFloor = -1;

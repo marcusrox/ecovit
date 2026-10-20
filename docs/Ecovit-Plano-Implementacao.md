@@ -27,7 +27,7 @@
 | [M4.3 — Comparação visual](marcos/M4.3-Comparacao-de-Pavimentos.md) | Referência de pavimento adjacente em Planta | RF-08; CT-15; EX-80–85 | Implementado e aceito pelo solicitante |
 | [M5 — Consulta e conclusão da primeira versão](marcos/M5-Quantitativos-e-Projetos.md) | Quantitativos, duplicação de projetos e cenários restantes | RF-10/11/12 e cenários do PRD | Implementado e aceito pelo solicitante |
 | [M6 — Preferências do Ecovit](marcos/M6-Preferencias.md) | Preferências de rótulos, comprimento/altura das paredes e reorganização do status/ajuda do canvas | BL-07; RF-09/10/14 | Implementado e aceito pelo solicitante |
-| [M7 — Medidas independentes](marcos/M7-Medidas.md) | Segmentos de medição livres em Planta, atração geométrica e persistência por pavimento | BL-03; RF-15, integração com RF-02/08/09/11/12/14 | Implementado e aceito pelo solicitante |
+| [M7 — Medidas independentes](marcos/M7-Medidas.md) | Medidas livres em Planta, atração geométrica e persistência por pavimento | BL-03; RF-15, integração com RF-02/08/09/11/12/14 | Implementado e aceito pelo solicitante, incluindo criação por três cliques com afastamento |
 | [M8 — Imagem de referência por pavimento](marcos/M8-Imagem-de-Referencia.md) | Uma imagem de fundo calibrada, posição/rotação, opacidade e interface compacta | BL-02; RF-16, integração com RF-02/08/09/11/12 | Implementado e aceito pelo solicitante |
 | [M9 — Tipos de portas e janelas](marcos/M9-Esquadrias.md) | Nove variantes e símbolos em Planta com botão único de orientação cíclica | BL-08; RF-06; [Elementos construtivos](arquitetura/Elementos-Construtivos.md#vãos-e-aparência-de-esquadrias); CT-17 | Implementado e aceito pelo solicitante |
 | [M10 — Mobiliários](marcos/M10-Mobiliarios.md) | Acervo integrado com 59 opções, ocorrências editáveis em Planta e upload incorporado ao arquivo | BL-01; RF-17; [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) | Entrega inicial aceita; ampliações do acervo, bloco de contenção em vista plana, espelhamento e ajustes de interface implementados, com teste manual e aceite específicos pendentes |
@@ -905,6 +905,8 @@ Critérios da entrega; verificação do Codex e teste manual do solicitante são
 6. Conferir legibilidade do cabeçalho, diálogo e faixa inferior no monitor habitual; informar problemas e aceite funcional do M6. Falhas artificiais e estados injetados ficam nas verificações do Codex, sem exigir alterações nas configurações pessoais.
 
 ## 14. M7 — Medidas independentes
+
+Registro legado da entrega inicial. O comportamento vigente, incluindo a criação por três cliques e o afastamento, e suas verificações/aceite pertencem ao [arquivo de M7](marcos/M7-Medidas.md); os parágrafos abaixo preservam a referência da entrega inicial aceita.
 
 **Estado: implementado e aceito pelo solicitante, incluindo a criação por dois cliques.** Origem: BL-03. Requisito: PRD RF-15, com integração aos fluxos RF-02/08/09/11/12/14; contratos: Arquitetura §25. Os aceites anteriores, inclusive M6, permanecem preservados.
 

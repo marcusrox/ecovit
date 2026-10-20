@@ -6,17 +6,18 @@ Este documento descreve contratos de software vigentes. Regras geométricas/cons
 
 ## Formato e leitores vigentes
 
-Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=15; leitura aceita somente envelopes 9–15. O envelope não versiona as regras construtivas: a composição vigente é nominal-v10. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; registros locais incompatíveis permanecem identificados sem exclusão automática. Não executar geradores nominal-v1–v8 nem manter migrações abandonadas.
+Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=16; leitura aceita somente envelopes 9–16. O envelope não versiona as regras construtivas: a composição vigente é nominal-v10. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; registros locais incompatíveis permanecem identificados sem exclusão automática. Não executar geradores nominal-v1–v8 nem manter migrações abandonadas.
 
-| Envelope lido | Normalização em memória para 15 |
+| Envelope lido | Normalização em memória para 16 |
 |---|---|
 | 9 | Acrescentar measurements, referenceImages, imageElements e customImageAssets vazios |
 | 10 | Acrescentar referenceImages, imageElements e customImageAssets vazios |
 | 11–12 | Acrescentar imageElements e customImageAssets vazios |
 | 13–14 | Preservar ocorrências/recursos e geometria; sem espelhamento quando os campos estão ausentes |
-| 15 | Validar diretamente o contrato vigente, incluindo flags opcionais de espelhamento |
+| 15 | Preservar flags opcionais de espelhamento; medidas sem afastamento |
+| 16 | Validar diretamente o contrato vigente, incluindo afastamento opcional das medidas |
 
-Preservar a origem, IDs internos, ajustes e aparência genérica opcional das esquadrias; não inferir tipo físico. Recusar campos novos disfarçados como formato anterior, UUIDs duplicados, referências órfãs, combinações inválidas e dados desconhecidos. Normalização não deve modificar o objeto original nem o arquivo fonte. O formato 14 introduziu dimensões independentes de mobiliários; arquivos 13 preservam sua geometria. O formato 15 acrescenta flipX/flipY opcionais booleanos por ocorrência; ausência significa false. Recusar esses campos em envelopes 9–14, mesmo com false, e valores não booleanos em 15. Leitura normaliza somente em memória, sem alterar a origem; gravação posterior usa 15. Aplicativos que só leem até 14 recusam os novos arquivos, sem perda silenciosa do espelhamento. Detalhes dos tipos têm fonte nos documentos de elementos.
+Preservar a origem, IDs internos, ajustes e aparência genérica opcional das esquadrias; não inferir tipo físico. Recusar campos novos disfarçados como formato anterior, UUIDs duplicados, referências órfãs, combinações inválidas e dados desconhecidos. Normalização não deve modificar o objeto original nem o arquivo fonte. O formato 14 introduziu dimensões independentes de mobiliários; arquivos 13 preservam sua geometria. O formato 15 acrescenta flipX/flipY opcionais booleanos por ocorrência; ausência significa false. Recusar esses campos em envelopes 9–14, mesmo com false, e valores não booleanos nos formatos vigentes. O formato 16 acrescenta `offset` opcional inteiro com sinal em cada medida; ausência significa zero, preservando medidas antigas sobre seus segmentos. Recusar esse campo em envelopes 9–15, inclusive zero; validar também os limites da linha deslocada. Leitura normaliza somente em memória, sem alterar a origem; gravação posterior usa 16. Aplicativos que só leem até 15 recusam arquivos 16, sem perda silenciosa do afastamento. Detalhes dos tipos têm fonte nos documentos de elementos.
 
 ## Envelope e validade
 

@@ -78,6 +78,7 @@ async function createMeasurement(
   page: Page,
   a: [number, number],
   b: [number, number],
+  line: [number, number] = b,
 ) {
   const before = (await state(page)).model.measurements;
   const from = await point(page, ...a),
@@ -88,6 +89,14 @@ async function createMeasurement(
   await page.mouse.move(to.x, to.y, { steps: 8 });
   expect((await state(page)).model.measurements).toEqual(before);
   await page.mouse.click(to.x, to.y);
+  expect((await state(page)).model.measurements).toEqual(before);
+  await expect(
+    page.getByText(/^Clique para posicionar a linha da cota ·/),
+  ).toBeVisible();
+  const position = await point(page, ...line);
+  await page.mouse.move(position.x, position.y, { steps: 4 });
+  expect((await state(page)).model.measurements).toEqual(before);
+  await page.mouse.click(position.x, position.y);
   await expect
     .poll(async () => (await state(page)).model.measurements.length)
     .toBe(before.length + 1);
@@ -170,7 +179,7 @@ test("M7 diagonal livre, seleção, corpo/alças, histórico, preferências e tr
   const output = parseFile(
     await readFile((await (await download).path())!, "utf8"),
   );
-  expect(output.schemaVersion).toBe(15);
+  expect(output.schemaVersion).toBe(16);
   expect(output.model.measurements).toEqual(
     (await state(page)).model.measurements,
   );
@@ -248,7 +257,7 @@ test("M7 atração inicial/final, Alt, cancelamentos e independência da parede"
   }
 });
 
-test("M7 dois cliques, prévia sem gravação, ponto coincidente e navegação", async ({
+test("M7 três cliques, prévia sem gravação, ponto coincidente e navegação", async ({
   page,
 }) => {
   await open(page);
@@ -276,6 +285,11 @@ test("M7 dois cliques, prévia sem gravação, ponto coincidente e navegação",
     .not.toBe(scale);
   const end = await point(page, 30500, 42500);
   await page.mouse.click(end.x, end.y);
+  expect(await state(page)).toEqual(before);
+  await expect(
+    page.getByText(/^Clique para posicionar a linha da cota ·/),
+  ).toBeVisible();
+  await page.mouse.click(end.x, end.y);
   await expect
     .poll(async () => (await state(page)).model.measurements.length)
     .toBe(1);
@@ -301,13 +315,94 @@ test("M7 dois cliques, prévia sem gravação, ponto coincidente e navegação",
   await createMeasurement(page, [40000, 10000], [50000, 20000]);
 });
 
+test("M7 cota afastada: três cliques, seleção da linha visível, histórico e transporte", async ({
+  page,
+}, info) => {
+  await open(page, true);
+  const before = await state(page);
+  const history = () =>
+    page.evaluate(async () => {
+      const path = "/src/state/store.ts";
+      return (await import(path)).useStore.getState().history.past.length;
+    });
+  const count = await history();
+  await measure(page).click();
+  await createMeasurement(page, [5000, 0], [25000, 0], [20000, -6000]);
+  const m = (await state(page)).model.measurements[0];
+  expect(m).toMatchObject({
+    a: { x: 5000, y: 0 },
+    b: { x: 25000, y: 0 },
+    offset: -6000,
+  });
+  expect(await history()).toBe(count + 1);
+  expect((await state(page)).generated).toEqual(before.generated);
+  await expect.poll(() => texts(page)).toContain("200 cm");
+  await page.screenshot({ path: `.tools/m7-offset-${info.project.name}.png` });
+  await page.getByRole("button", { name: "Selecionar", exact: true }).click();
+  await drag(page, [15000, -6000], [16000, -5000]);
+  expect((await state(page)).model.measurements[0]).toMatchObject({
+    a: { x: 6000, y: 1000 },
+    b: { x: 26000, y: 1000 },
+    offset: -6000,
+  });
+  await page.getByRole("button", { name: "Desfazer", exact: true }).click();
+  expect((await state(page)).model.measurements).toEqual([m]);
+  await page.getByRole("button", { name: "Refazer", exact: true }).click();
+  const moved = (await state(page)).model.measurements;
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Baixar projeto" }).click();
+  const output = parseFile(
+    await readFile((await (await download).path())!, "utf8"),
+  );
+  expect(output.model.measurements).toEqual(moved);
+  await page.reload();
+  await page
+    .getByRole("button", { name: /M7 Medidas independentes/ })
+    .first()
+    .click();
+  await expect(page.getByRole("status")).toContainText("Salvo");
+  expect((await state(page)).model.measurements).toEqual(moved);
+});
+
+test("M7 afastamento transitório cancela sem histórico e permite escolher qualquer lado", async ({
+  page,
+}) => {
+  await open(page);
+  const before = await state(page);
+  for (const action of ["escape", "blur", "outside", "mode"]) {
+    await measure(page).click();
+    const a = await point(page, 10000, 15000),
+      b = await point(page, 30000, 15000),
+      c = await point(page, 20000, 5000);
+    await page.mouse.click(a.x, a.y);
+    await page.mouse.click(b.x, b.y);
+    await page.mouse.move(c.x, c.y);
+    await expect(
+      page.getByText(/^Clique para posicionar a linha da cota ·/),
+    ).toBeVisible();
+    expect(await state(page)).toEqual(before);
+    if (action === "escape") await page.keyboard.press("Escape");
+    if (action === "blur")
+      await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+    if (action === "outside") await page.mouse.click(2, 2);
+    if (action === "mode") {
+      await page.getByRole("button", { name: "Fiada", exact: true }).click();
+      await page.getByRole("button", { name: "Planta", exact: true }).click();
+    }
+    expect(await state(page)).toEqual(before);
+  }
+  await measure(page).click();
+  await createMeasurement(page, [10000, 10000], [30000, 10000], [20000, 15000]);
+  expect((await state(page)).model.measurements[0].offset).toBe(5000);
+});
+
 test("M7 pavimentos, somente leitura e apresentação nas três resoluções", async ({
   page,
   context,
 }, info) => {
   await open(page);
   await measure(page).click();
-  await createMeasurement(page, [500, 2500], [30500, 42500]);
+  await createMeasurement(page, [500, 2500], [30500, 42500], [5000, 20000]);
   await page.evaluate(async () => {
     const path = "/src/state/store.ts",
       floors = "/src/domain/floors.ts";
@@ -322,6 +417,9 @@ test("M7 pavimentos, somente leitura e apresentação nas três resoluções", a
       );
   });
   expect((await state(page)).model.measurements).toHaveLength(2);
+  expect((await state(page)).model.measurements[1].offset).toBe(
+    (await state(page)).model.measurements[0].offset,
+  );
   await page.getByRole("button", { name: "Selecionar", exact: true }).click();
   await page
     .getByLabel("Selecionar elemento", { exact: true })

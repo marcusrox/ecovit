@@ -171,7 +171,7 @@ test("M4.2 criação, fechamento explícito, vazios, movimento, espessura e tran
   await opening(page);
   const before = await exported(page),
     slab = before.model.slabs[0];
-  expect(before.schemaVersion).toBe(15);
+  expect(before.schemaVersion).toBe(16);
   expect(slab.openings).toHaveLength(1);
   await page
     .getByLabel("Selecionar elemento", { exact: true })
@@ -187,9 +187,13 @@ test("M4.2 criação, fechamento explícito, vazios, movimento, espessura e tran
   await page
     .getByRole("button", { name: "Aplicar espessura", exact: true })
     .click();
-  await expect(page.getByLabel("Propriedades da laje")).toContainText(
-    "Face inferior: -14,01 cm",
-  );
+  await expect(
+    page
+      .getByLabel("Propriedades da laje")
+      .locator("dt")
+      .filter({ hasText: /^Face inferior$/ })
+      .locator("+ dd"),
+  ).toHaveText("-14,01 cm");
   const saved = await exported(page);
   await page.reload();
   await page

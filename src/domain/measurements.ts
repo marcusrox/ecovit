@@ -16,11 +16,38 @@ export const roundedPoint = (p: Point): Point => ({
   x: Math.round(p.x),
   y: Math.round(p.y),
 });
+// Signed perpendicular distance in project units; endpoints always remain the
+// measured anchors. Derived drawing points need not lie on the integer grid.
+export function measurementGeometry(
+  m: Pick<Measurement, "a" | "b" | "offset">,
+) {
+  const length = measurementLength(m);
+  const normal = length
+    ? { x: -(m.b.y - m.a.y) / length, y: (m.b.x - m.a.x) / length }
+    : { x: 0, y: 1 };
+  const offset = m.offset ?? 0;
+  return {
+    normal,
+    a: { x: m.a.x + normal.x * offset, y: m.a.y + normal.y * offset },
+    b: { x: m.b.x + normal.x * offset, y: m.b.y + normal.y * offset },
+  };
+}
+export function measurementOffset(m: Pick<Measurement, "a" | "b">, p: Point) {
+  const { normal } = measurementGeometry(m);
+  return Math.round((p.x - m.a.x) * normal.x + (p.y - m.a.y) * normal.y);
+}
 export function validMeasurement(m: Measurement) {
+  const line = measurementGeometry(m);
   return (
     [m.a.x, m.a.y, m.b.x, m.b.y].every(
       (n) => Number.isSafeInteger(n) && Math.abs(n) <= LIMIT,
-    ) && measurementLength(m) > 0
+    ) &&
+    measurementLength(m) > 0 &&
+    Number.isSafeInteger(m.offset ?? 0) &&
+    Math.abs(m.offset ?? 0) <= LIMIT &&
+    [line.a.x, line.a.y, line.b.x, line.b.y].every(
+      (n) => Number.isFinite(n) && Math.abs(n) <= LIMIT,
+    )
   );
 }
 export function projection(p: Point, a: Point, b: Point): Point {
@@ -43,8 +70,15 @@ export const nearMeasurement = (
   m: Measurement,
   tolerance: number,
 ) => {
-  const q = projection(p, m.a, m.b);
-  return Math.hypot(p.x - q.x, p.y - q.y) <= tolerance;
+  const line = measurementGeometry(m);
+  return [
+    [line.a, line.b],
+    [m.a, line.a],
+    [m.b, line.b],
+  ].some(([a, b]) => {
+    const q = projection(p, a, b);
+    return Math.hypot(p.x - q.x, p.y - q.y) <= tolerance;
+  });
 };
 export type MeasurementTargets = {
   vertices: Point[];

@@ -1,6 +1,6 @@
 # Ecovit — Arquitetura Técnica
 
-**Versão documental:** 1.35. Referência do software vigente: aplicativo 0.15.1, envelope 15 e composição nominal-v10. [Compatibilidade suportada](arquitetura/Persistencia-e-Compatibilidade.md#formato-e-leitores-vigentes).
+**Versão documental:** 1.35. Referência do software vigente: aplicativo 0.15.1, envelope 16 e composição nominal-v10. [Compatibilidade suportada](arquitetura/Persistencia-e-Compatibilidade.md#formato-e-leitores-vigentes).
 
 ## Responsabilidades da documentação
 
@@ -22,7 +22,7 @@ Uma decisão de programação não estabelece uma regra construtiva. Antes de mu
 | [Editor e interação](arquitetura/Editor-e-Interacao.md) | Planta/Fiada, câmera, seleção, gestos, camadas e comparação de pavimentos |
 | [Estado, histórico e operações](arquitetura/Estado-Historico-e-Operacoes.md) | Intenção/resultado/sessão, atomicidade, histórico e critério único de recálculo |
 | [Motor e diagnósticos](arquitetura/Motor-e-Diagnosticos.md) | Pipeline nominal-v10, pavimentos, ajustes, encontros, alturas e diagnósticos |
-| [Persistência e compatibilidade](arquitetura/Persistencia-e-Compatibilidade.md) | Envelope, leitores 9–15, validação, armazenamento, transporte e bloqueios |
+| [Persistência e compatibilidade](arquitetura/Persistencia-e-Compatibilidade.md) | Envelope, leitores 9–16, validação, armazenamento, transporte e bloqueios |
 | [Medidas e imagens](arquitetura/Medidas-e-Imagens.md) | Medidas, referências raster, mobiliários, recursos, calibração e cache |
 | [Interface e iconografia](arquitetura/Interface-e-Iconografia.md) | Lucide centralizado, acessibilidade, preferências, status e componentes comuns |
 | [Quantitativos](arquitetura/Quantitativos.md) | Projeção das peças finais, perdas e consulta independente |
