@@ -90,107 +90,122 @@ export function SlabProperties({
         {opening ? `Abertura ${slab.openings.indexOf(opening) + 1}` : "Laje"} ·{" "}
         {doc.model.floors[0].name}
       </h2>
-      <p className={styles.muted}>
-        Face superior: {display(doc.model.floors[0].level)} cm
-        <br />
-        Face inferior: {display(doc.model.floors[0].level - slab.thickness)} cm
-      </p>
-      <label className={styles.field}>
-        Espessura da laje (cm)
-        <input
-          aria-label="Espessura da laje (cm)"
-          disabled={disabled}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setText(display(slab.thickness));
-          }}
-        />
-      </label>
-      <div className={styles.slabActions}>
-        <button
-          className={styles.iconButton}
-          aria-label="Aplicar espessura"
-          title="Aplicar espessura"
-          data-tooltip="Aplicar espessura"
-          disabled={disabled}
-          onClick={() => {
-            try {
-              void useStore
+      <div className={styles.propertyInfo}>
+        <dl className={styles.propertyFacts}>
+          <dt>Face superior</dt>
+          <dd>{display(doc.model.floors[0].level)} cm</dd>
+          <dt>Face inferior</dt>
+          <dd>{display(doc.model.floors[0].level - slab.thickness)} cm</dd>
+        </dl>
+      </div>
+      <section className={styles.propertyGroup} aria-label="Dimensões da laje">
+        <h3>Dimensões</h3>
+        <label className={styles.field}>
+          Espessura da laje (cm)
+          <input
+            aria-label="Espessura da laje (cm)"
+            disabled={disabled}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setText(display(slab.thickness));
+            }}
+          />
+        </label>
+        <div className={styles.slabActions}>
+          <button
+            className={styles.iconButton}
+            aria-label="Aplicar espessura"
+            title="Aplicar espessura"
+            data-tooltip="Aplicar espessura"
+            disabled={disabled}
+            onClick={() => {
+              try {
+                void useStore
+                  .getState()
+                  .commit(
+                    putSlab(doc, { ...slab, thickness: cm(text) }),
+                    "slab",
+                  );
+              } catch (e) {
+                useStore.getState().notify((e as Error).message);
+              }
+            }}
+          >
+            <Icon name="apply" />
+          </button>
+          <button
+            className={styles.iconButton}
+            aria-label="Cancelar espessura"
+            title="Cancelar espessura"
+            data-tooltip="Cancelar espessura"
+            disabled={disabled}
+            onClick={() => setText(display(slab.thickness))}
+          >
+            <Icon name="close" />
+          </button>
+        </div>
+      </section>
+      <section
+        className={styles.propertyGroup}
+        aria-label="Contorno e aberturas da laje"
+      >
+        <h3>Contorno e aberturas</h3>
+        <label className={styles.field}>
+          Selecionar elemento da laje
+          <select
+            aria-label="Selecionar elemento da laje"
+            disabled={busy}
+            value={selected === slab.id ? slab.id : (opening?.id ?? "")}
+            onChange={(e) => {
+              useStore
                 .getState()
-                .commit(putSlab(doc, { ...slab, thickness: cm(text) }), "slab");
-            } catch (e) {
-              useStore.getState().notify((e as Error).message);
-            }
-          }}
-        >
-          <Icon name="apply" />
-        </button>
-        <button
-          className={styles.iconButton}
-          aria-label="Cancelar espessura"
-          title="Cancelar espessura"
-          data-tooltip="Cancelar espessura"
-          disabled={disabled}
-          onClick={() => setText(display(slab.thickness))}
-        >
-          <Icon name="close" />
-        </button>
-      </div>
-      <label className={styles.field}>
-        Selecionar elemento da laje
-        <select
-          aria-label="Selecionar elemento da laje"
-          disabled={busy}
-          value={selected === slab.id ? slab.id : (opening?.id ?? "")}
-          onChange={(e) => {
-            useStore
-              .getState()
-              .inspect({ slabDraft: null, slabEditing: false });
-            useStore.getState().choose(e.target.value);
-          }}
-        >
-          <option value={slab.id}>Laje · {doc.model.floors[0].name}</option>
-          {slab.openings.map((o, i) => (
-            <option key={o.id} value={o.id}>
-              Abertura {i + 1} · Laje
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className={styles.slabActions}>
-        <button
-          className={styles.iconButton}
-          aria-label="Adicionar abertura"
-          title="Adicionar abertura"
-          data-tooltip="Adicionar abertura"
-          disabled={disabled}
-          onClick={() => draw(crypto.randomUUID())}
-        >
-          <Icon name="plus" />
-        </button>
-        <button
-          className={styles.iconButton}
-          aria-label="Redesenhar contorno"
-          title="Redesenhar contorno"
-          data-tooltip="Redesenhar contorno"
-          disabled={disabled}
-          onClick={() => draw(opening?.id)}
-        >
-          <Icon name="redraw" />
-        </button>
-        <button
-          className={styles.iconButton}
-          aria-label={opening ? "Excluir abertura" : "Excluir laje"}
-          title={opening ? "Excluir abertura" : "Excluir laje"}
-          data-tooltip={opening ? "Excluir abertura" : "Excluir laje"}
-          disabled={disabled}
-          onClick={deleteSlabSelection}
-        >
-          <Icon name="delete" />
-        </button>
-      </div>
-      <p className={styles.muted}>
+                .inspect({ slabDraft: null, slabEditing: false });
+              useStore.getState().choose(e.target.value);
+            }}
+          >
+            <option value={slab.id}>Laje · {doc.model.floors[0].name}</option>
+            {slab.openings.map((o, i) => (
+              <option key={o.id} value={o.id}>
+                Abertura {i + 1} · Laje
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className={styles.slabActions}>
+          <button
+            className={styles.iconButton}
+            aria-label="Adicionar abertura"
+            title="Adicionar abertura"
+            data-tooltip="Adicionar abertura"
+            disabled={disabled}
+            onClick={() => draw(crypto.randomUUID())}
+          >
+            <Icon name="plus" />
+          </button>
+          <button
+            className={styles.iconButton}
+            aria-label="Redesenhar contorno"
+            title="Redesenhar contorno"
+            data-tooltip="Redesenhar contorno"
+            disabled={disabled}
+            onClick={() => draw(opening?.id)}
+          >
+            <Icon name="redraw" />
+          </button>
+          <button
+            className={styles.iconButton}
+            aria-label={opening ? "Excluir abertura" : "Excluir laje"}
+            title={opening ? "Excluir abertura" : "Excluir laje"}
+            data-tooltip={opening ? "Excluir abertura" : "Excluir laje"}
+            disabled={disabled}
+            onClick={deleteSlabSelection}
+          >
+            <Icon name="delete" />
+          </button>
+        </div>
+      </section>
+      <p className={styles.note}>
         Arraste o corpo para mover. As alças deslocam arestas perpendicularmente
         na malha. Para acrescentar ou retirar cantos, redesenhe o contorno.
       </p>

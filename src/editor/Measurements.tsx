@@ -45,15 +45,15 @@ export function MeasurementProperties({ doc }: { doc: LocalProject }) {
     <aside className={styles.properties} aria-label="Propriedades da medida">
       <div className={styles.panelTitle}>MEDIDA SELECIONADA</div>
       <h2>Medida {doc.model.measurements.indexOf(m) + 1}</h2>
-      <p>
+      <p className={styles.propertyInfo}>
         Comprimento: <strong>{measurementText(m)}</strong>
       </p>
-      <p>
+      <p className={styles.note}>
         Arraste o corpo para mover ou uma ponta para ajustar. Alt suspende a
         atração.
       </p>
       <button
-        className={styles.iconText}
+        className={`${styles.iconText} ${styles.danger}`}
         disabled={busy || readonly}
         onClick={() => {
           void useStore.getState().commit(removeElement(doc, m.id), "measure");

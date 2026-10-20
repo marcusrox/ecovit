@@ -239,176 +239,185 @@ export function FiadaPanel() {
           Contorno azul tracejado: fiada de referência
         </p>
       </details>
-      <h3>Canaletas</h3>
-      {!!bands.length && (
-        <label className={styles.field}>
-          Selecionar faixa
-          <select
-            aria-label="Selecionar faixa de canaleta"
-            disabled={s.busy}
-            value={band?.id ?? ""}
-            onChange={(e) => s.inspect({ channelBand: e.target.value || null })}
-          >
-            <option value="">Selecione uma faixa…</option>
-            {bands.map((b) => (
-              <option key={b.id} value={b.id}>
-                Parede {doc.model.walls.findIndex((w) => w.id === b.wallId) + 1}{" "}
-                · topo {display(b.top - doc.model.floors[0].level)} cm
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-      {band && (
-        <section>
-          <p>
-            Alcance: toda a faixa da parede{" "}
-            {doc.model.walls.findIndex((w) => w.id === band.wallId) + 1} na
-            fiada {band.course}, incluindo trechos separados por aberturas.{" "}
-            {band.cells.length} células de canaleta realçadas.
-          </p>
-          <p>
-            {new Set(band.cells.flatMap((c) => c.origins)).size} origem(ns)
-            automática(s) coincidente(s).
-          </p>
-          <button
-            disabled={blocked || !!s.preview}
-            onClick={() =>
-              void s.commit(suppressBand(doc, band.wallId, band.top))
-            }
-          >
-            Remover faixa de canaleta
-          </button>
-        </section>
-      )}
-      {!bands.length && <p>Nenhuma canaleta nesta fiada.</p>}
-      {doc.adjustments.channels.map((a) => (
-        <section key={a.id}>
-          <p>
-            Canaleta suprimida · parede{" "}
-            {doc.model.walls.findIndex((w) => w.id === a.wallId) + 1} · cota
-            absoluta {display(a.top)} cm
-            {a.scope?.kind === "range"
-              ? ` · trecho herdado ${display(a.scope.from)}–${display(a.scope.to)} cm`
-              : " · parede inteira"}
-          </p>
-          <button
-            disabled={blocked || !!s.preview}
-            onClick={() => void s.commit(restoreSuppression(doc, a.id))}
-          >
-            Restaurar faixa suprimida
-          </button>
-        </section>
-      ))}
-      <GroutPanel />
-      <h3>Encontros</h3>
-      {generated?.components
-        .filter((c) => c.junctions.length)
-        .map((c, i) => (
-          <button
-            className={styles.junctionButton}
-            aria-pressed={s.component === c.id}
-            key={c.id}
-            onClick={() =>
-              s.inspect({
-                component: c.id,
-                preview: null,
-                focus: { x: c.x, y: c.y },
-              })
-            }
-          >
-            Conjunto {i + 1} ·{" "}
-            {[
-              ...new Set(
-                c.junctions.map((j) => (j.kind === "cross" ? "cruz" : j.kind)),
-              ),
-            ].join("/")}
-          </button>
-        ))}
-      {component && (
-        <section>
-          <p>
-            {component.wallIds.length} parede(s) no conjunto. A prévia inclui
-            todos os encontros afetados.
-          </p>
-          {s.course !== 1 ? (
-            <button onClick={() => s.inspect({ course: 1, preview: null })}>
-              Altere o encontro na primeira fiada
+      <section className={styles.propertyGroup} aria-label="Canaletas">
+        <h3>Canaletas</h3>
+        {!!bands.length && (
+          <label className={styles.field}>
+            Selecionar faixa
+            <select
+              aria-label="Selecionar faixa de canaleta"
+              disabled={s.busy}
+              value={band?.id ?? ""}
+              onChange={(e) =>
+                s.inspect({ channelBand: e.target.value || null })
+              }
+            >
+              <option value="">Selecione uma faixa…</option>
+              {bands.map((b) => (
+                <option key={b.id} value={b.id}>
+                  Parede{" "}
+                  {doc.model.walls.findIndex((w) => w.id === b.wallId) + 1} ·
+                  topo {display(b.top - doc.model.floors[0].level)} cm
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {band && (
+          <section>
+            <p>
+              Alcance: toda a faixa da parede{" "}
+              {doc.model.walls.findIndex((w) => w.id === band.wallId) + 1} na
+              fiada {band.course}, incluindo trechos separados por aberturas.{" "}
+              {band.cells.length} células de canaleta realçadas.
+            </p>
+            <p>
+              {new Set(band.cells.flatMap((c) => c.origins)).size} origem(ns)
+              automática(s) coincidente(s).
+            </p>
+            <button
+              disabled={blocked || !!s.preview}
+              onClick={() =>
+                void s.commit(suppressBand(doc, band.wallId, band.top))
+              }
+            >
+              Remover faixa de canaleta
             </button>
-          ) : component.alternative ? (
-            <>
-              <button
-                disabled={blocked}
-                onClick={() => {
-                  try {
-                    s.inspect({ preview: generateFloor(candidate()) });
-                  } catch (e) {
-                    s.notify(String(e));
-                  }
-                }}
-              >
-                Prévia da alternativa {component.phase === 0 ? "B" : "A"}
+          </section>
+        )}
+        {!bands.length && <p>Nenhuma canaleta nesta fiada.</p>}
+        {doc.adjustments.channels.map((a) => (
+          <section key={a.id}>
+            <p>
+              Canaleta suprimida · parede{" "}
+              {doc.model.walls.findIndex((w) => w.id === a.wallId) + 1} · cota
+              absoluta {display(a.top)} cm
+              {a.scope?.kind === "range"
+                ? ` · trecho herdado ${display(a.scope.from)}–${display(a.scope.to)} cm`
+                : " · parede inteira"}
+            </p>
+            <button
+              disabled={blocked || !!s.preview}
+              onClick={() => void s.commit(restoreSuppression(doc, a.id))}
+            >
+              Restaurar faixa suprimida
+            </button>
+          </section>
+        ))}
+      </section>
+      <GroutPanel />
+      <section className={styles.propertyGroup} aria-label="Encontros">
+        <h3>Encontros</h3>
+        {generated?.components
+          .filter((c) => c.junctions.length)
+          .map((c, i) => (
+            <button
+              className={styles.junctionButton}
+              aria-pressed={s.component === c.id}
+              key={c.id}
+              onClick={() =>
+                s.inspect({
+                  component: c.id,
+                  preview: null,
+                  focus: { x: c.x, y: c.y },
+                })
+              }
+            >
+              Conjunto {i + 1} ·{" "}
+              {[
+                ...new Set(
+                  c.junctions.map((j) =>
+                    j.kind === "cross" ? "cruz" : j.kind,
+                  ),
+                ),
+              ].join("/")}
+            </button>
+          ))}
+        {component && (
+          <section>
+            <p>
+              {component.wallIds.length} parede(s) no conjunto. A prévia inclui
+              todos os encontros afetados.
+            </p>
+            {s.course !== 1 ? (
+              <button onClick={() => s.inspect({ course: 1, preview: null })}>
+                Altere o encontro na primeira fiada
               </button>
-              {s.preview && (
-                <div>
-                  <p>Prévia — todos os cantos destacados serão alterados.</p>
-                  <button
-                    disabled={blocked}
-                    onClick={() => void s.commit(candidate())}
-                  >
-                    Confirmar alternativa
-                  </button>
-                  <button onClick={() => s.inspect({ preview: null })}>
-                    Cancelar prévia
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <p>Sem alternativa de composição disponível.</p>
-          )}
-        </section>
-      )}
-      {doc.adjustments.junctions.map((a) => (
-        <section key={a.id}>
-          <p>
-            Escolha de encontro ·{" "}
-            {a.binding === "pending" ? "pendente" : "aplicada"} · x=
-            {display(a.anchor?.x ?? 0)}, y={display(a.anchor?.y ?? 0)} cm
-          </p>
+            ) : component.alternative ? (
+              <>
+                <button
+                  disabled={blocked}
+                  onClick={() => {
+                    try {
+                      s.inspect({ preview: generateFloor(candidate()) });
+                    } catch (e) {
+                      s.notify(String(e));
+                    }
+                  }}
+                >
+                  Prévia da alternativa {component.phase === 0 ? "B" : "A"}
+                </button>
+                {s.preview && (
+                  <div>
+                    <p>Prévia — todos os cantos destacados serão alterados.</p>
+                    <button
+                      disabled={blocked}
+                      onClick={() => void s.commit(candidate())}
+                    >
+                      Confirmar alternativa
+                    </button>
+                    <button onClick={() => s.inspect({ preview: null })}>
+                      Cancelar prévia
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p>Sem alternativa de composição disponível.</p>
+            )}
+          </section>
+        )}
+        {doc.adjustments.junctions.map((a) => (
+          <section key={a.id}>
+            <p>
+              Escolha de encontro ·{" "}
+              {a.binding === "pending" ? "pendente" : "aplicada"} · x=
+              {display(a.anchor?.x ?? 0)}, y={display(a.anchor?.y ?? 0)} cm
+            </p>
+            <button
+              disabled={blocked || s.course !== 1}
+              onClick={() =>
+                void s.commit({
+                  ...doc,
+                  adjustments: {
+                    ...doc.adjustments,
+                    junctions: doc.adjustments.junctions.filter(
+                      (b) => b.id !== a.id,
+                    ),
+                  },
+                })
+              }
+            >
+              Descartar escolha de encontro
+            </button>
+          </section>
+        ))}
+        {doc.adjustments.junctions.length > 0 && (
           <button
             disabled={blocked || s.course !== 1}
             onClick={() =>
               void s.commit({
                 ...doc,
-                adjustments: {
-                  ...doc.adjustments,
-                  junctions: doc.adjustments.junctions.filter(
-                    (b) => b.id !== a.id,
-                  ),
-                },
+                adjustments: { ...doc.adjustments, junctions: [] },
               })
             }
           >
-            Descartar escolha de encontro
+            Retornar encontros ao automático
           </button>
-        </section>
-      ))}
-      {doc.adjustments.junctions.length > 0 && (
-        <button
-          disabled={blocked || s.course !== 1}
-          onClick={() =>
-            void s.commit({
-              ...doc,
-              adjustments: { ...doc.adjustments, junctions: [] },
-            })
-          }
-        >
-          Retornar encontros ao automático
-        </button>
-      )}
+        )}
+      </section>
       {opening && (
-        <section>
+        <section className={styles.propertyGroup}>
           <h3>Vão selecionado</h3>
           <p>
             Base {display(opening.base)} · topo{" "}
@@ -422,40 +431,46 @@ export function FiadaPanel() {
           </button>
         </section>
       )}
-      <h3>Diagnósticos</h3>
-      {!doc.generationState.diagnostics.length && (
-        <p>Nenhuma pendência geométrica nominal.</p>
-      )}
-      {doc.generationState.diagnostics.map((d, i) => (
-        <button
-          className={styles.diagnostic}
-          key={i}
-          disabled={s.busy}
-          onClick={() => {
-            if (d.floorId) s.switchFloor(d.floorId);
-            s.inspect({
-              course: Math.min(
-                Math.max(
-                  1,
-                  s.doc?.generated?.floors.find((f) => f.floorId === d.floorId)
-                    ?.courses.length ?? 1,
+      <section
+        className={styles.propertyGroup}
+        aria-label="Diagnósticos da fiada"
+      >
+        <h3>Diagnósticos</h3>
+        {!doc.generationState.diagnostics.length && (
+          <p>Nenhuma pendência geométrica nominal.</p>
+        )}
+        {doc.generationState.diagnostics.map((d, i) => (
+          <button
+            className={styles.diagnostic}
+            key={i}
+            disabled={s.busy}
+            onClick={() => {
+              if (d.floorId) s.switchFloor(d.floorId);
+              s.inspect({
+                course: Math.min(
+                  Math.max(
+                    1,
+                    s.doc?.generated?.floors.find(
+                      (f) => f.floorId === d.floorId,
+                    )?.courses.length ?? 1,
+                  ),
+                  d.course,
                 ),
-                d.course,
-              ),
-              focus: { x: d.x, y: d.y },
-              diagnosticWalls: d.wallIds,
-              preview: null,
-            });
-          }}
-        >
-          <strong>
-            {d.severity === "error" ? "Pendência" : "Informação"} ·{" "}
-            {s.doc?.model.floors.find((f) => f.id === d.floorId)?.name} · fiada{" "}
-            {d.course}
-          </strong>
-          <span>{d.message}</span>
-        </button>
-      ))}
+                focus: { x: d.x, y: d.y },
+                diagnosticWalls: d.wallIds,
+                preview: null,
+              });
+            }}
+          >
+            <strong>
+              {d.severity === "error" ? "Pendência" : "Informação"} ·{" "}
+              {s.doc?.model.floors.find((f) => f.id === d.floorId)?.name} ·
+              fiada {d.course}
+            </strong>
+            <span>{d.message}</span>
+          </button>
+        ))}
+      </section>
     </aside>
   );
 }

@@ -375,39 +375,53 @@ export function ImageElementProperties({ doc }: { doc: LocalProject }) {
       <div className={styles.panelTitle}>MOBILIÁRIOS</div>
       <h2>{e.name}</h2>
       <fieldset disabled={busy || readonly}>
-        <label>
-          Nome
-          <input
-            value={name}
-            maxLength={200}
-            onChange={(v) => setName(v.target.value)}
-          />
-        </label>
-        <label>
-          Largura (cm)
-          <input
-            value={width}
-            onChange={(v) => size(v.target.value, "width")}
-            inputMode="decimal"
-          />
-        </label>
-        <label>
-          Profundidade (cm)
-          <input
-            value={depth}
-            onChange={(v) => size(v.target.value, "depth")}
-            inputMode="decimal"
-          />
-        </label>
-        <label>
-          Rotação (graus)
-          <input
-            value={angle}
-            onChange={(v) => setAngle(v.target.value)}
-            inputMode="decimal"
-          />
-        </label>
-        <button className={styles.iconText} onClick={() => void apply()}>
+        <section
+          className={styles.propertyGroup}
+          aria-label="Identificação do mobiliário"
+        >
+          <label>
+            Nome
+            <input
+              value={name}
+              maxLength={200}
+              onChange={(v) => setName(v.target.value)}
+            />
+          </label>
+        </section>
+        <section
+          className={styles.propertyGroup}
+          aria-label="Dimensões e rotação do mobiliário"
+        >
+          <h3>Dimensões e rotação</h3>
+          <label>
+            Largura (cm)
+            <input
+              value={width}
+              onChange={(v) => size(v.target.value, "width")}
+              inputMode="decimal"
+            />
+          </label>
+          <label>
+            Profundidade (cm)
+            <input
+              value={depth}
+              onChange={(v) => size(v.target.value, "depth")}
+              inputMode="decimal"
+            />
+          </label>
+          <label>
+            Rotação (graus)
+            <input
+              value={angle}
+              onChange={(v) => setAngle(v.target.value)}
+              inputMode="decimal"
+            />
+          </label>
+        </section>
+        <button
+          className={`${styles.iconText} ${styles.propertyApply}`}
+          onClick={() => void apply()}
+        >
           <Icon name="apply" />
           Aplicar imagem
         </button>
@@ -499,7 +513,7 @@ export function ImageElementProperties({ doc }: { doc: LocalProject }) {
           </button>
         </div>
       </fieldset>
-      <p className={styles.furnitureNote}>
+      <p className={`${styles.furnitureNote} ${styles.propertyInfo}`}>
         Cantos mantêm a proporção atual. Alças quadradas ajustam só largura ou
         profundidade e podem deformar a imagem. Arraste o corpo para mover.
         Dimensões genéricas, sem validação física.

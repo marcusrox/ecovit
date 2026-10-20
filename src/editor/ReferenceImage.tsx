@@ -162,7 +162,7 @@ export function ReferenceImageProperties() {
   }
   return (
     <section
-      className={styles.referenceImage}
+      className={`${styles.referenceImage} ${styles.propertyGroup}`}
       aria-label="Imagem de referência"
     >
       <h3>Imagem de referência</h3>

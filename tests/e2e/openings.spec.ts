@@ -157,12 +157,27 @@ test("M3.1 três tipos, corpo, duas alças, campos, excluir/desfazer e transport
   await page.getByRole("button", { name: "Desfazer", exact: true }).click();
   expect((await exported(page)).model.openings).toEqual(changed.model.openings);
   await page.getByRole("button", { name: "Fiada", exact: true }).click();
-  const cam = await page.getByTestId("drawing").getAttribute("data-camera");
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
+  // Alternar o modo muda a altura da área de desenho; a câmera conserva
+  // escala e ponto central, não a translação em pixels.
+  const view = () =>
+    page.getByTestId("drawing").evaluate((el) => {
+      const camera = JSON.parse(el.getAttribute("data-camera")!);
+      return {
+        x: Number(((el.clientWidth / 2 - camera.x) / camera.scale).toFixed(6)),
+        y: Number(((el.clientHeight / 2 - camera.y) / camera.scale).toFixed(6)),
+        scale: camera.scale,
+      };
+    });
+  const cam = await view();
   await page.getByLabel("Número da fiada").fill("31");
   await page.getByRole("button", { name: "Planta", exact: true }).click();
-  expect(await page.getByTestId("drawing").getAttribute("data-camera")).toBe(
-    cam,
-  );
+  await expect.poll(view).toEqual(cam);
   await page.screenshot({ path: ".tools/m3-plan.png" });
   await page.reload();
   await page.getByRole("button", { name: /M3.1.*cópia/ }).click();

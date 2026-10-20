@@ -231,66 +231,74 @@ function Properties({ doc }: { doc: Project }) {
         <>
           <h2>Parede {doc.model.walls.indexOf(wall) + 1}</h2>
           <p className={styles.muted}>Referência pela face externa</p>
-          <label className={styles.field}>
-            Extremidade a alterar
-            <select
+          <section
+            className={styles.propertyGroup}
+            aria-label="Dimensões da parede"
+          >
+            <h3>Dimensões</h3>
+            <label className={styles.field}>
+              Extremidade a alterar
+              <select
+                disabled={disabled}
+                aria-label="Extremidade a alterar"
+                value={end}
+                onChange={(e) => setEnd(e.target.value as "a" | "b")}
+              >
+                <option value="a">A — início do desenho</option>
+                <option value="b">B — final do desenho</option>
+              </select>
+            </label>
+            <Numeric
+              key={`${wall.id}-${length(wall)}-${end}`}
+              label="Comprimento"
+              value={length(wall)}
+              commit={setLength}
+              positive
               disabled={disabled}
-              aria-label="Extremidade a alterar"
-              value={end}
-              onChange={(e) => setEnd(e.target.value as "a" | "b")}
-            >
-              <option value="a">A — início do desenho</option>
-              <option value="b">B — final do desenho</option>
-            </select>
-          </label>
-          <Numeric
-            key={`${wall.id}-${length(wall)}-${end}`}
-            label="Comprimento"
-            value={length(wall)}
-            commit={setLength}
-            positive
-            disabled={disabled}
-          />
-          {!!alternatives.length && (
-            <div className={styles.alternatives}>
-              <p>Escolha uma medida na malha:</p>
-              {alternatives.map((n) => (
-                <button
-                  disabled={disabled}
-                  key={n}
-                  onClick={() => setLength(n)}
-                >
-                  {display(n)} cm
-                </button>
-              ))}
+            />
+            {!!alternatives.length && (
+              <div className={styles.alternatives}>
+                <p>Escolha uma medida na malha:</p>
+                {alternatives.map((n) => (
+                  <button
+                    disabled={disabled}
+                    key={n}
+                    onClick={() => setLength(n)}
+                  >
+                    {display(n)} cm
+                  </button>
+                ))}
+              </div>
+            )}
+            <Numeric
+              module={doc.project.base.height}
+              label="Altura da parede"
+              value={wall.height}
+              positive
+              disabled={disabled}
+              commit={(height) =>
+                void useStore.getState().commit({
+                  ...doc,
+                  model: {
+                    ...doc.model,
+                    walls: doc.model.walls.map((w) =>
+                      w.id === wall.id ? { ...w, height } : w,
+                    ),
+                  },
+                })
+              }
+            />
+          </section>
+          <section className={styles.propertyInfo} aria-label="Dados da parede">
+            <div className={styles.measure}>
+              <span>Espessura</span>
+              <b>{display(doc.project.base.width)} cm</b>
             </div>
-          )}
-          <Numeric
-            module={doc.project.base.height}
-            label="Altura da parede"
-            value={wall.height}
-            positive
-            disabled={disabled}
-            commit={(height) =>
-              void useStore.getState().commit({
-                ...doc,
-                model: {
-                  ...doc.model,
-                  walls: doc.model.walls.map((w) =>
-                    w.id === wall.id ? { ...w, height } : w,
-                  ),
-                },
-              })
-            }
-          />
-          <div className={styles.measure}>
-            <span>Espessura</span>
-            <b>{display(doc.project.base.width)} cm</b>
-          </div>
-          <div className={styles.measure}>
-            <span>Orientação</span>
-            <b>{wall.a.y === wall.b.y ? "Horizontal" : "Vertical"}</b>
-          </div>
+            <div className={styles.measure}>
+              <span>Orientação</span>
+              <b>{wall.a.y === wall.b.y ? "Horizontal" : "Vertical"}</b>
+            </div>
+          </section>
           <button
             className={styles.danger}
             disabled={disabled}
@@ -318,83 +326,93 @@ function Properties({ doc }: { doc: Project }) {
       ) : (
         <>
           <h2>{floor.name}</h2>
-          <label className={styles.field}>
-            Nome do pavimento
-            <input
-              aria-label="Nome do pavimento"
-              key={floor.id + floor.name}
-              defaultValue={floor.name}
-              maxLength={100}
-              disabled={disabled}
-              onBlur={(e) => {
-                try {
-                  void useStore.getState().commit(
-                    editFloor(useStore.getState().doc!, floor.id, {
-                      name: e.target.value,
-                    }),
-                    "floor",
-                  );
-                } catch (err) {
-                  useStore.getState().notify((err as Error).message);
-                  e.target.value = floor.name;
-                }
-              }}
-            />
-          </label>
-          {root.model.floors.length > 1 && (
+          <section
+            className={styles.propertyGroup}
+            aria-label="Identificação do pavimento"
+          >
             <label className={styles.field}>
-              Referência de pavimento
-              <select
-                aria-label="Comparar pavimento"
-                title="Comparar pavimento"
-                disabled={busy}
-                value={floorReference}
-                onChange={(e) =>
-                  useStore.getState().inspect({
-                    floorReference: e.target.value as FloorReference,
-                  })
-                }
-              >
-                <option value="none">Sem referência</option>
-                {(["below", "above"] as const).map((direction) => {
-                  const neighbor = resolveFloorReference(
-                    root,
-                    doc.viewFloorId,
-                    direction,
-                  );
-                  return (
-                    neighbor && (
-                      <option key={direction} value={direction}>
-                        {direction === "below" ? "Inferior" : "Superior"} —{" "}
-                        {neighbor.name} · {display(neighbor.level)} cm
-                      </option>
-                    )
-                  );
-                })}
-              </select>
+              Nome do pavimento
+              <input
+                aria-label="Nome do pavimento"
+                key={floor.id + floor.name}
+                defaultValue={floor.name}
+                maxLength={100}
+                disabled={disabled}
+                onBlur={(e) => {
+                  try {
+                    void useStore.getState().commit(
+                      editFloor(useStore.getState().doc!, floor.id, {
+                        name: e.target.value,
+                      }),
+                      "floor",
+                    );
+                  } catch (err) {
+                    useStore.getState().notify((err as Error).message);
+                    e.target.value = floor.name;
+                  }
+                }}
+              />
             </label>
-          )}
+            {root.model.floors.length > 1 && (
+              <label className={styles.field}>
+                Referência de pavimento
+                <select
+                  aria-label="Comparar pavimento"
+                  title="Comparar pavimento"
+                  disabled={busy}
+                  value={floorReference}
+                  onChange={(e) =>
+                    useStore.getState().inspect({
+                      floorReference: e.target.value as FloorReference,
+                    })
+                  }
+                >
+                  <option value="none">Sem referência</option>
+                  {(["below", "above"] as const).map((direction) => {
+                    const neighbor = resolveFloorReference(
+                      root,
+                      doc.viewFloorId,
+                      direction,
+                    );
+                    return (
+                      neighbor && (
+                        <option key={direction} value={direction}>
+                          {direction === "below" ? "Inferior" : "Superior"} —{" "}
+                          {neighbor.name} · {display(neighbor.level)} cm
+                        </option>
+                      )
+                    );
+                  })}
+                </select>
+              </label>
+            )}
+          </section>
           <ReferenceImageProperties key={floor.id} />
-          <p className={styles.muted}>Referências verticais do desenho</p>
-          <Numeric
-            label="Cota do pavimento"
-            module={doc.project.base.height}
-            value={floor.level}
-            disabled={disabled}
-            commit={(n) => updateFloor("level", n)}
-          />
-          <Numeric
-            module={doc.project.base.height}
-            label="Altura de novas paredes"
-            value={floor.defaultHeight}
-            positive
-            disabled={disabled}
-            commit={(n) => updateFloor("defaultHeight", n)}
-          />
-          <p className={styles.note}>
-            Valores iniciais de desenho. A altura padrão vale apenas para novas
-            paredes.
-          </p>
+          <section
+            className={styles.propertyGroup}
+            aria-label="Referências verticais do desenho"
+          >
+            <h3>Referências verticais</h3>
+            <Numeric
+              label="Cota do pavimento"
+              module={doc.project.base.height}
+              value={floor.level}
+              disabled={disabled}
+              commit={(n) => updateFloor("level", n)}
+            />
+            <Numeric
+              module={doc.project.base.height}
+              label="Altura de novas paredes"
+              value={floor.defaultHeight}
+              positive
+              disabled={disabled}
+              commit={(n) => updateFloor("defaultHeight", n)}
+            />
+            <p className={styles.note}>
+              Valores iniciais de desenho. A altura padrão vale apenas para
+              novas paredes.
+            </p>
+          </section>
         </>
       )}
       <div className={styles.panelFoot}>
@@ -518,14 +536,12 @@ export default function App() {
     null,
   );
   const changeTool = useCallback((t: Tool) => {
-    useStore
-      .getState()
-      .inspect({
-        imageDraft: null,
-        imageOpacity: null,
-        imageRequest: null,
-        furnitureDraft: null,
-      });
+    useStore.getState().inspect({
+      imageDraft: null,
+      imageOpacity: null,
+      imageRequest: null,
+      furnitureDraft: null,
+    });
     setTool(t);
   }, []);
   useEffect(() => {
@@ -881,13 +897,11 @@ export default function App() {
                     disabled={busy || readonly}
                     onClick={() => {
                       changeTool("select");
-                      useStore
-                        .getState()
-                        .inspect({
-                          slabDraft: null,
-                          slabEditing: false,
-                          pendingOpening: null,
-                        });
+                      useStore.getState().inspect({
+                        slabDraft: null,
+                        slabEditing: false,
+                        pendingOpening: null,
+                      });
                       setFurnitureCatalog(true);
                     }}
                   >

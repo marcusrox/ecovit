@@ -37,7 +37,7 @@ export function GroutPanel() {
     if (s.groutCell && !selected) s.inspect({ groutCell: null });
   }, [s, selected]);
   return (
-    <section>
+    <section className={styles.propertyGroup} aria-label="Graute vertical">
       <h3>Graute vertical</h3>
       {!Object.entries(d.project.groutSettings).some(
         ([key, value]) => key !== "distance" && value === true,

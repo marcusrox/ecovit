@@ -46,6 +46,20 @@ Verificar imports/paths/glifos restantes, centralização e ausência de sobrepo
 
 React oferece suporte a TypeScript; Konva tem integração declarativa com React e eventos para formas. A escolha é uma decisão de adequação ao produto, não uma garantia de desempenho sem medição. Referências: [React e TypeScript](https://react.dev/learn/typescript), [react-konva](https://konvajs.org/docs/react/index.html).
 
+## Painéis de propriedades à direita
+
+### Campos com unidade
+
+Campos compostos que exibem unidade dentro da caixa reutilizam exclusivamente `.unitInput`, tanto nos painéis quanto nas Configurações do projeto. A regra compartilhada reserva espaço para a unidade sem quebra e deixa o input ocupar a largura restante. O contêiner recebe o mesmo contorno verde de 2 px e afastamento de 3 px dos demais controles por `:focus-within`, envolvendo valor e unidade. Suprimir o contorno individual apenas do input interno evita o recorte por `overflow: hidden` e a linha sobre a unidade; o foco real, a edição e o acesso por teclado continuam no input. Campos simples com unidade no rótulo conservam o foco padrão na própria caixa. Não duplicar essas regras por tela.
+
+### Organização visual
+
+Pavimento, parede, vãos, mobiliários, medidas, laje/aberturas, inspeção de fiadas e diagnósticos compartilham a apresentação compacta de `App.module.css`. Preservar a largura lateral existente e as fontes pequenas: títulos de entidade em 17 px, campos, subtítulos e informações auxiliares em 11 px. Cabeçalho com separador, rótulos em seminegrito e espaçamento regular distinguem identificação, edição e consulta. Títulos longos quebram sem ultrapassar o painel; a rolagem vertical mantém todos os controles acessíveis.
+
+`propertyGroup` agrupa campos relacionados com fundo verde muito claro, borda suave, cantos arredondados, padding de 10 px e intervalo de 10 px. Identificação, dimensões, representação, referências verticais e operações de contorno ficam em blocos distintos conforme o elemento. `propertyInfo` separa dados de consulta e orientações das entradas editáveis; tijolo-base mantém seu bloco próprio. Nos vãos, `propertyFacts` alinha rótulos/valores em duas colunas e distingue topo em edição de topo salvo. Unidades não quebram e ficam alinhadas à direita dos campos. A imagem de referência mantém Mostrar, Ajustar e Mais ações na mesma linha.
+
+Aplicar vão/imagem recebem o verde principal; cancelar e navegar conservam aparência neutra, exclusões usam o estilo de perigo existente e ações relacionadas têm espaçamento explícito. Preservar a linha de quatro ícones dos mobiliários, seus estados e dicas. Inspeção separa canaletas, graute, encontros e diagnósticos; cada diagnóstico detalhado ocupa um bloco com ações empilhadas. Fechar diagnósticos reutiliza `Icon/close` com nome e dica acessíveis. Dicas do cabeçalho abrem abaixo e alinhadas à direita. Essa organização não altera operações, validações, seleção, histórico ou persistência.
+
 ## Preferências de apresentação
 
 Preferências de apresentação permanecem separadas do documento de projeto e de suas configurações construtivas. `src/state/preferences.ts` mantém estado Zustand próprio e registro local no localStorage, chave `ecovit:preferences:v1`, com booleanos door/window/opening/wall/measure, inicialmente true. Validar a leitura; ausência, conteúdo inválido ou falha de leitura usam padrões seguros, sem impedir abertura do aplicativo. Não criar tabela no banco de projetos, serviço, conta ou dependência. O estado em memória acompanha a aplicação, sem reinicializar ao trocar/fechar projeto; ler o registro na inicialização. Sincronização em tempo real entre abas não integra M6.

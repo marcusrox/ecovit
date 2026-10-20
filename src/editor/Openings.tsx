@@ -258,7 +258,11 @@ function OpeningForm({
         coordenada.
       </p>
       {o.kind !== "opening" && (
-        <section aria-label="Representação da esquadria">
+        <section
+          className={styles.propertyGroup}
+          aria-label="Representação da esquadria"
+        >
+          <h3>Representação</h3>
           <label className={styles.field}>
             Tipo da esquadria
             <select
@@ -395,34 +399,49 @@ function OpeningForm({
           }
         }}
       >
-        {Object.entries(values).map(([label, value]) => (
-          <Field
-            key={label}
-            label={label}
-            value={value}
-            set={(v) => field(label, v)}
-            disabled={disabled}
-          />
-        ))}
-        <p className={styles.note}>
-          Topo:{" "}
-          {(() => {
-            try {
-              return display(
-                cm(values["Base do vão"]) + cm(values["Altura do vão"]),
-              );
-            } catch {
-              return "—";
-            }
-          })()}{" "}
-          cm · início da alvenaria: {display(f.level - f.level)} cm. Altura de
-          fiada: {display(h)} cm.
-        </p>
-        <p className={styles.note}>
-          Fiadas atingidas: {Math.floor((f.level + o.base - f.level) / h) + 1}–
-          {Math.ceil((f.level + o.base + o.height - f.level) / h)} · topo salvo{" "}
-          {display(o.base + o.height)} cm.
-        </p>
+        <section
+          className={styles.propertyGroup}
+          aria-label="Dimensões e posição do vão"
+        >
+          <h3>Dimensões e posição</h3>
+          {Object.entries(values).map(([label, value]) => (
+            <Field
+              key={label}
+              label={label}
+              value={value}
+              set={(v) => field(label, v)}
+              disabled={disabled}
+            />
+          ))}
+        </section>
+        <div className={styles.propertyInfo}>
+          <dl className={styles.propertyFacts}>
+            <dt>Topo em edição</dt>
+            <dd>
+              {(() => {
+                try {
+                  return display(
+                    cm(values["Base do vão"]) + cm(values["Altura do vão"]),
+                  );
+                } catch {
+                  return "—";
+                }
+              })()}{" "}
+              cm
+            </dd>
+            <dt>Início da alvenaria</dt>
+            <dd>{display(f.level - f.level)} cm</dd>
+            <dt>Altura de fiada</dt>
+            <dd>{display(h)} cm</dd>
+            <dt>Fiadas atingidas</dt>
+            <dd>
+              {Math.floor((f.level + o.base - f.level) / h) + 1}–
+              {Math.ceil((f.level + o.base + o.height - f.level) / h)}
+            </dd>
+            <dt>Topo salvo</dt>
+            <dd>{display(o.base + o.height)} cm</dd>
+          </dl>
+        </div>
         {!!options.length && (
           <Suggestions
             items={options}
@@ -437,30 +456,36 @@ function OpeningForm({
             {error}
           </p>
         )}
-        <button type="submit" disabled={disabled}>
-          Aplicar vão
-        </button>
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => {
-            if (pending) {
-              s.inspect({ pendingOpening: null });
-              s.choose(null);
-            } else {
-              setValues({
-                "Posição do vão": display(o.offset),
-                "Largura do vão": display(o.width),
-                "Base do vão": display(o.base),
-                "Altura do vão": display(o.height),
-              });
-            }
-            setOptions([]);
-            setError("");
-          }}
-        >
-          Cancelar edição
-        </button>
+        <div className={styles.propertyActions}>
+          <button
+            className={styles.propertyApply}
+            type="submit"
+            disabled={disabled}
+          >
+            Aplicar vão
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => {
+              if (pending) {
+                s.inspect({ pendingOpening: null });
+                s.choose(null);
+              } else {
+                setValues({
+                  "Posição do vão": display(o.offset),
+                  "Largura do vão": display(o.width),
+                  "Base do vão": display(o.base),
+                  "Altura do vão": display(o.height),
+                });
+              }
+              setOptions([]);
+              setError("");
+            }}
+          >
+            Cancelar edição
+          </button>
+        </div>
       </form>
       {!pending && (
         <button
@@ -954,7 +979,15 @@ export function Diagnostics({
     <aside className={styles.properties} aria-label="Diagnósticos do projeto">
       <div className={styles.panelTitle}>
         <span>DIAGNÓSTICOS</span>
-        <button onClick={close}>Fechar diagnósticos</button>
+        <button
+          className={styles.iconButton}
+          aria-label="Fechar diagnósticos"
+          title="Fechar diagnósticos"
+          data-tooltip="Fechar diagnósticos"
+          onClick={close}
+        >
+          <Icon name="close" />
+        </button>
       </div>
       <p>
         {doc.generationState.status === "current"
@@ -965,7 +998,7 @@ export function Diagnostics({
         <p>Nenhuma pendência nominal.</p>
       )}
       {doc.generationState.diagnostics.map((d, i) => (
-        <section key={i} className={styles.note}>
+        <section key={i} className={`${styles.note} ${styles.propertyGroup}`}>
           <strong>
             {d.severity !== "error"
               ? "Informação"
@@ -1025,7 +1058,7 @@ export function Diagnostics({
               )
               .join(", ")}
           </small>
-          <div>
+          <div className={styles.propertyActions}>
             {(!!d.levelIds?.length || d.code === "grout-distance-off-grid") && (
               <button
                 disabled={s.busy}
