@@ -144,7 +144,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(14),
+    schemaVersion: z.literal(15),
     project: z
       .object({
         id,
@@ -254,6 +254,8 @@ const schema = z
                 width: z.number().finite().positive(),
                 depth: z.number().finite().positive(),
                 angle: z.number().finite(),
+                flipX: z.boolean().optional(),
+                flipY: z.boolean().optional(),
               })
               .strict(),
           )
@@ -386,7 +388,8 @@ export function validateProject(
       value.schemaVersion === 10 ||
       value.schemaVersion === 11 ||
       value.schemaVersion === 12 ||
-      value.schemaVersion === 13) &&
+      value.schemaVersion === 13 ||
+      value.schemaVersion === 14) &&
     "model" in value &&
     value.model &&
     typeof value.model === "object"
@@ -400,6 +403,17 @@ export function validateProject(
     )
       throw new Error("Arquivo inválido: campos em formato anterior.");
     if (
+      "imageElements" in value.model &&
+      Array.isArray(value.model.imageElements) &&
+      value.model.imageElements.some(
+        (element: unknown) =>
+          element &&
+          typeof element === "object" &&
+          ("flipX" in element || "flipY" in element),
+      )
+    )
+      throw new Error("Arquivo inválido: espelhamento em formato anterior.");
+    if (
       value.schemaVersion < 12 &&
       "openings" in value.model &&
       Array.isArray(value.model.openings) &&
@@ -410,7 +424,7 @@ export function validateProject(
       throw new Error("Arquivo inválido: aparência em formato anterior.");
     value = {
       ...value,
-      schemaVersion: 14,
+      schemaVersion: 15,
       model: {
         ...value.model,
         ...(value.schemaVersion === 9 ? { measurements: [] } : {}),
@@ -425,10 +439,10 @@ export function validateProject(
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 14
+    value.schemaVersion !== 15
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 14; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 15; demais formatos não são convertidos.",
     );
   const parsed = schema.safeParse(value);
   if (!parsed.success)

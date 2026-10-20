@@ -170,7 +170,7 @@ test("M7 diagonal livre, seleção, corpo/alças, histórico, preferências e tr
   const output = parseFile(
     await readFile((await (await download).path())!, "utf8"),
   );
-  expect(output.schemaVersion).toBe(14);
+  expect(output.schemaVersion).toBe(15);
   expect(output.model.measurements).toEqual(
     (await state(page)).model.measurements,
   );

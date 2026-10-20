@@ -1,10 +1,11 @@
 import { test, expect, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { createProject, type Project } from "../../src/domain/project";
-import { imageCatalog } from "../../src/domain/image-catalog";
+import { catalogItem, imageCatalog } from "../../src/domain/image-catalog";
 import {
   elementCorners,
   elementSideHandle,
+  standardElement,
 } from "../../src/domain/image-elements";
 async function state(page: Page) {
   return page.evaluate(async () => {
@@ -51,11 +52,11 @@ async function at(page: Page, x: number, y: number) {
     y: box.y + camera.y + y * camera.scale,
   };
 }
-async function insert(page: Page, name = "Sofá") {
+async function insert(page: Page, name = "Sofá", category = "Sala") {
   await page.getByRole("button", { name: "Mobiliários", exact: true }).click();
   await page.getByLabel("Buscar no acervo").fill(name);
   await page
-    .getByRole("button", { name: `Inserir ${name} · Sala`, exact: true })
+    .getByRole("button", { name: `Inserir ${name} · ${category}`, exact: true })
     .click();
   const p = await at(page, 25000, 20000);
   await page.mouse.move(p.x, p.y);
@@ -69,6 +70,266 @@ async function insert(page: Page, name = "Sofá") {
   return e;
 }
 
+for (const kind of ["catalog", "custom"] as const) {
+  test(`M10 espelhamento ${kind}: renderização girada, histórico, cópia, arquivo e readonly`, async ({
+    page,
+    context,
+  }, info) => {
+    test.setTimeout(90000);
+    await page.addInitScript(() => {
+      const records = new Map<
+        HTMLCanvasElement,
+        { a: number; b: number; c: number; d: number; x: number; y: number }
+      >();
+      const draw = CanvasRenderingContext2D.prototype.drawImage;
+      CanvasRenderingContext2D.prototype.drawImage = function (
+        this: CanvasRenderingContext2D,
+        ...args: Parameters<typeof draw>
+      ) {
+        if (this.canvas.isConnected && args.length === 9) {
+          const t = this.getTransform();
+          const width = Number(args[7]),
+            height = Number(args[8]);
+          records.set(this.canvas, {
+            a: t.a,
+            b: t.b,
+            c: t.c,
+            d: t.d,
+            x: t.e + (t.a * width) / 2 + (t.c * height) / 2,
+            y: t.f + (t.b * width) / 2 + (t.d * height) / 2,
+          });
+        }
+        return draw.apply(this, args);
+      } as typeof draw;
+      Object.assign(window, {
+        mirrorDraw: () =>
+          [...records].filter(([canvas]) => canvas.isConnected).at(-1)?.[1],
+      });
+    });
+    await open(page);
+    if (kind === "catalog") await insert(page, "Sofá em L");
+    else {
+      const data = await page.evaluate(() => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 160;
+        canvas.height = 100;
+        const ctx = canvas.getContext("2d")!;
+        ctx.fillStyle = "#b4563d";
+        ctx.fillRect(5, 5, 60, 35);
+        ctx.fillStyle = "#496b45";
+        ctx.fillRect(100, 50, 50, 45);
+        return canvas.toDataURL("image/png").split(",")[1];
+      });
+      await page
+        .getByRole("button", { name: "Mobiliários", exact: true })
+        .click();
+      await page.getByText("Imagem personalizada", { exact: true }).click();
+      await page.getByLabel("Arquivo PNG ou JPEG").setInputFiles({
+        name: "assimetrica.png",
+        mimeType: "image/png",
+        buffer: Buffer.from(data, "base64"),
+      });
+      await page.getByLabel("Largura (cm)", { exact: true }).fill("160");
+      await page
+        .getByRole("button", { name: "Usar assimetrica.png", exact: true })
+        .click();
+      const p = await at(page, 25000, 20000);
+      await page.mouse.click(p.x, p.y);
+      await settled(page);
+      await page
+        .getByLabel("Selecionar elemento", { exact: true })
+        .selectOption((await state(page)).doc.model.imageElements[0].id);
+    }
+    const panel = page.getByRole("complementary", {
+      name: "Propriedades do mobiliário",
+    });
+    await panel.getByLabel("Rotação (graus)").fill("37");
+    await panel
+      .getByRole("button", { name: "Aplicar imagem", exact: true })
+      .click();
+    await settled(page);
+    const before = await state(page),
+      original = before.doc.model.imageElements[0];
+    const probe = () =>
+      page.evaluate(() => {
+        const t = (
+          window as unknown as {
+            mirrorDraw: () => {
+              a: number;
+              b: number;
+              c: number;
+              d: number;
+              x: number;
+              y: number;
+            };
+          }
+        ).mirrorDraw();
+        if (!t) return null;
+        const angle = (37 * Math.PI) / 180;
+        return {
+          sx: Math.sign(t.a * Math.cos(angle) + t.b * Math.sin(angle)),
+          sy: Math.sign(-t.c * Math.sin(angle) + t.d * Math.cos(angle)),
+          x: t.x,
+          y: t.y,
+        };
+      });
+    await expect.poll(async () => (await probe())?.sx).toBe(1);
+    const center = (await probe())!;
+    const horizontal = panel.getByRole("button", {
+      name: "Espelhar horizontalmente",
+      exact: true,
+    });
+    const vertical = panel.getByRole("button", {
+      name: "Espelhar verticalmente",
+      exact: true,
+    });
+    await horizontal.click();
+    await settled(page);
+    await expect(horizontal).toHaveAttribute("aria-pressed", "true");
+    await expect(horizontal).toBeFocused();
+    await expect.poll(async () => (await probe())?.sx).toBe(-1);
+    expect((await probe())!.sy).toBe(1);
+    expect((await probe())!.x).toBeCloseTo(center.x, 3);
+    expect((await probe())!.y).toBeCloseTo(center.y, 3);
+    expect((await state(page)).history.past).toHaveLength(
+      before.history.past.length + 1,
+    );
+    await page.getByRole("button", { name: /Desfazer/ }).click();
+    await settled(page);
+    await page
+      .getByLabel("Selecionar elemento", { exact: true })
+      .selectOption(original.id);
+    await expect(horizontal).toHaveAttribute("aria-pressed", "false");
+    await page.getByRole("button", { name: /Refazer/ }).click();
+    await settled(page);
+    await page
+      .getByLabel("Selecionar elemento", { exact: true })
+      .selectOption(original.id);
+    await vertical.click();
+    await settled(page);
+    await expect.poll(async () => (await probe())?.sy).toBe(-1);
+    await horizontal.press("Space");
+    await settled(page);
+    await expect.poll(async () => (await probe())?.sx).toBe(1);
+    expect((await probe())!.sy).toBe(-1);
+    await horizontal.click();
+    await settled(page);
+    await expect.poll(async () => (await probe())?.sx).toBe(-1);
+    const mirrored = (await state(page)).doc.model.imageElements[0];
+    expect(mirrored).toEqual({ ...original, flipX: true, flipY: true });
+    expect((await state(page)).doc.generated).toEqual(before.doc.generated);
+    expect((await state(page)).doc.model.customImageAssets).toEqual(
+      before.doc.model.customImageAssets,
+    );
+    for (const [width, height] of [
+      [1366, 768],
+      [1280, 720],
+      [900, 680],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await horizontal.scrollIntoViewIfNeeded();
+      await expect(horizontal).toBeVisible();
+      await expect(vertical).toBeVisible();
+      const actions = [
+        horizontal,
+        vertical,
+        panel.getByRole("button", { name: "Duplicar imagem", exact: true }),
+        panel.getByRole("button", { name: "Excluir imagem", exact: true }),
+      ];
+      const rows = [];
+      for (const button of actions) {
+        const alignment = await button.evaluate((el) => {
+          const box = el.getBoundingClientRect(),
+            svg = el.querySelector("svg")!.getBoundingClientRect();
+          return {
+            y: box.y,
+            dx: Math.abs(svg.x + svg.width / 2 - box.x - box.width / 2),
+            dy: Math.abs(svg.y + svg.height / 2 - box.y - box.height / 2),
+            width: svg.width,
+            height: svg.height,
+            text: el.textContent?.trim(),
+          };
+        });
+        rows.push(alignment.y);
+        expect(alignment.dx).toBeLessThanOrEqual(1);
+        expect(alignment.dy).toBeLessThanOrEqual(1);
+        expect(alignment).toMatchObject({
+          width: 18,
+          height: 18,
+          text: "",
+        });
+        await expect(button.locator("svg")).toHaveAttribute(
+          "aria-hidden",
+          "true",
+        );
+      }
+      expect(Math.max(...rows) - Math.min(...rows)).toBeLessThanOrEqual(1);
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      await panel.screenshot({
+        path: `.tools/mirror-${kind}-${info.project.name}-${width}.png`,
+      });
+    }
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await panel
+      .getByRole("button", { name: "Duplicar imagem", exact: true })
+      .click();
+    await settled(page);
+    const current = (await state(page)).doc;
+    expect(current.model.imageElements[1]).toMatchObject({
+      flipX: true,
+      flipY: true,
+      source: original.source,
+    });
+    const event = page.waitForEvent("download");
+    await page
+      .getByRole("button", { name: "Baixar projeto", exact: true })
+      .click();
+    const text = await readFile((await (await event).path())!, "utf8");
+    expect(JSON.parse(text).schemaVersion).toBe(15);
+    await page.reload();
+    await page
+      .getByRole("button", { name: /M10 teste/ })
+      .first()
+      .click();
+    await settled(page);
+    expect((await state(page)).doc.model).toEqual(current.model);
+    const other = await context.newPage();
+    await other.goto("/");
+    await other
+      .getByRole("button", { name: /M10 teste/ })
+      .first()
+      .click();
+    await expect(other.getByRole("status")).toContainText("Somente leitura");
+    await other
+      .getByLabel("Selecionar elemento", { exact: true })
+      .selectOption(original.id);
+    await expect(
+      other.getByRole("button", {
+        name: "Espelhar horizontalmente",
+        exact: true,
+      }),
+    ).toBeDisabled();
+    await expect(
+      other.getByRole("button", {
+        name: "Espelhar verticalmente",
+        exact: true,
+      }),
+    ).toBeDisabled();
+    await other.close();
+    await page.getByTestId("import-file").setInputFiles({
+      name: "espelhado.ecovit",
+      mimeType: "application/json",
+      buffer: Buffer.from(text),
+    });
+    await settled(page);
+    expect((await state(page)).doc.model).toEqual(current.model);
+  });
+}
+
 test("M10 catálogo, inserção/cancelamento, propriedades, histórico e exportação compacta", async ({
   page,
 }) => {
@@ -79,7 +340,7 @@ test("M10 catálogo, inserção/cancelamento, propriedades, histórico e exporta
     name: "Mobiliários",
   });
   await expect(dialog.getByRole("button", { name: /^Inserir / })).toHaveCount(
-    8,
+    10,
   );
   await dialog.getByRole("button", { name: "Paisagismo", exact: true }).click();
   await expect(dialog.getByRole("button", { name: /^Inserir / })).toHaveCount(
@@ -124,7 +385,7 @@ test("M10 catálogo, inserção/cancelamento, propriedades, histórico e exporta
   const file = await event;
   const text = await readFile((await file.path())!, "utf8"),
     output = JSON.parse(text);
-  expect(output.schemaVersion).toBe(14);
+  expect(output.schemaVersion).toBe(15);
   expect(output.model.customImageAssets).toEqual([]);
   expect(text).not.toContain("data:image");
   expect(Buffer.byteLength(text)).toBeLessThan(10000);
@@ -483,6 +744,157 @@ test("M10 alças quadradas independentes, cantos proporcionais e transporte da d
   expect((await state(page)).doc.model.imageElements[0]).toEqual(e);
 });
 
+for (const group of [
+  {
+    name: "ampliação de oito itens",
+    ids: [
+      "sofa-em-l",
+      "escrivaninha",
+      "cadeira-escritorio",
+      "berco",
+      "banheira",
+      "churrasqueira",
+      "bicicleta",
+      "aparador",
+    ],
+  },
+  {
+    name: "Arquitetura",
+    ids: imageCatalog
+      .filter((i) => i.category === "Arquitetura")
+      .map((i) => i.id),
+  },
+])
+  test(`M10 ${group.name}: busca, inserção, reabertura e transporte de referências`, async ({
+    page,
+  }, info) => {
+    test.setTimeout(90000);
+    await open(page);
+    const initial = (await state(page)).doc;
+    const ids = group.ids;
+    if (group.name === "Arquitetura") {
+      await page
+        .getByRole("button", { name: "Mobiliários", exact: true })
+        .click();
+      const dialog = page.getByRole("dialog", {
+        name: "Mobiliários",
+        exact: true,
+      });
+      await dialog
+        .getByRole("button", { name: "Arquitetura", exact: true })
+        .click();
+      await expect(
+        dialog.getByRole("button", { name: /^Inserir / }),
+      ).toHaveCount(11);
+      await expect
+        .poll(() =>
+          dialog
+            .locator("img")
+            .evaluateAll((images) =>
+              images.every(
+                (image) =>
+                  (image as HTMLImageElement).complete &&
+                  (image as HTMLImageElement).naturalWidth > 0,
+              ),
+            ),
+        )
+        .toBe(true);
+      await dialog.screenshot({
+        path: `.tools/architecture-${info.project.name}.png`,
+      });
+      await page.keyboard.press("Escape");
+    }
+    for (const id of ids) {
+      const item = imageCatalog.find((i) => i.id === id)!;
+      const element = await insert(page, item.name, item.category);
+      expect(element.source).toEqual({
+        kind: "catalog",
+        itemId: id,
+        revision: item.revision,
+      });
+      expect(element.width).toBe(item.width);
+      expect(element.depth).toBe(item.depth);
+    }
+    const current = (await state(page)).doc;
+    expect(current.model.imageElements).toHaveLength(ids.length);
+    expect(current.model.customImageAssets).toEqual([]);
+    expect(current.generated).toEqual(initial.generated);
+    expect(current.generationState).toEqual(initial.generationState);
+    const event = page.waitForEvent("download");
+    await page
+      .getByRole("button", { name: "Baixar projeto", exact: true })
+      .click();
+    const file = await event;
+    const text = await readFile((await file.path())!, "utf8");
+    expect(text).not.toContain("data:image");
+    expect(Buffer.byteLength(text)).toBeLessThan(20000);
+    await page.reload();
+    await page
+      .getByRole("button", { name: /M10 teste/ })
+      .first()
+      .click();
+    await settled(page);
+    expect((await state(page)).doc.model.imageElements).toEqual(
+      current.model.imageElements,
+    );
+    await page.getByTestId("import-file").setInputFiles({
+      name: "m10-ampliacao.ecovit",
+      mimeType: "application/json",
+      buffer: Buffer.from(text),
+    });
+    await settled(page);
+    const imported = (await state(page)).doc;
+    expect(imported.project.id).not.toBe(current.project.id);
+    expect(imported.model.imageElements).toEqual(current.model.imageElements);
+  });
+
+test("M10 bloco de contenção: revisão plana e histórica coexistem", async ({
+  page,
+}) => {
+  await open(page);
+  const d = (await state(page)).doc;
+  const old = standardElement(
+    catalogItem("bloco-concreto-contencao", 1)!,
+    d.model.floors[0].id,
+  );
+  d.model.imageElements.push(old);
+  await page.getByTestId("import-file").setInputFiles({
+    name: "bloco-historico.ecovit",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(d)),
+  });
+  await settled(page);
+  const current = await insert(
+    page,
+    "Bloco de concreto para contenção",
+    "Arquitetura",
+  );
+  expect(current.source).toEqual({
+    kind: "catalog",
+    itemId: "bloco-concreto-contencao",
+    revision: 2,
+  });
+  const elements = (await state(page)).doc.model.imageElements;
+  expect(elements[0]).toEqual(old);
+  for (const revision of [1, 2]) {
+    expect(
+      await page.evaluate(async (url) => {
+        const image = new Image();
+        image.src = url;
+        await image.decode();
+        return image.naturalWidth;
+      }, `/catalog/m10/bloco-concreto-contencao-r${revision}.png`),
+    ).toBe(1600);
+  }
+  await page.reload();
+  await page
+    .getByRole("button", { name: /M10 teste/ })
+    .first()
+    .click();
+  await settled(page);
+  expect((await state(page)).doc.model.imageElements).toEqual(elements);
+});
+
 test("M10 acervo transparente e revisão visual nas três resoluções", async ({
   page,
 }, info) => {
@@ -506,7 +918,7 @@ test("M10 acervo transparente e revisão visual nas três resoluções", async (
         solid ||= pixels[n] > 8;
       }
       return { empty, solid };
-    }, `/catalog/m10/${i.asset}-r1.png`);
+    }, `/catalog/m10/${i.asset}-r${i.revision}.png`);
     expect(result, i.id).toEqual({ empty: true, solid: true });
   }
   await page.getByRole("button", { name: "Mobiliários", exact: true }).click();

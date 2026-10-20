@@ -107,6 +107,8 @@ function ObjectBitmap({
       width={width}
       height={height}
       rotation={element.angle}
+      scaleX={element.flipX ? -1 : 1}
+      scaleY={element.flipY ? -1 : 1}
       opacity={ghost ? 0.65 : 1}
     />
   );
@@ -409,42 +411,93 @@ export function ImageElementProperties({ doc }: { doc: LocalProject }) {
           <Icon name="apply" />
           Aplicar imagem
         </button>
-        <button
-          className={styles.iconText}
-          onClick={() => {
-            const next = {
-              ...e,
-              source: { ...e.source },
-              id: crypto.randomUUID(),
-              x: e.x + 1000,
-              y: e.y + 1000,
-            };
-            try {
-              validateElement(next, doc.model.customImageAssets);
+        <div className={styles.furnitureActions}>
+          {(["flipX", "flipY"] as const).map((axis) => (
+            <button
+              key={axis}
+              className={styles.iconButton}
+              aria-label={
+                axis === "flipX"
+                  ? "Espelhar horizontalmente"
+                  : "Espelhar verticalmente"
+              }
+              title={
+                axis === "flipX"
+                  ? "Espelhar horizontalmente"
+                  : "Espelhar verticalmente"
+              }
+              data-tooltip={
+                axis === "flipX"
+                  ? "Espelhar horizontalmente"
+                  : "Espelhar verticalmente"
+              }
+              aria-pressed={!!e[axis]}
+              onClick={(event) => {
+                const button = event.currentTarget;
+                setError("");
+                void useStore
+                  .getState()
+                  .commit(
+                    setImageElement(doc, { ...e, [axis]: !e[axis] }),
+                    "furniture",
+                  )
+                  .then(() =>
+                    requestAnimationFrame(() => {
+                      if (
+                        button.isConnected &&
+                        document.activeElement === document.body
+                      )
+                        button.focus({ preventScroll: true });
+                    }),
+                  );
+              }}
+            >
+              <Icon
+                name={axis === "flipX" ? "flipHorizontal" : "flipVertical"}
+              />
+            </button>
+          ))}
+          <button
+            className={styles.iconButton}
+            aria-label="Duplicar imagem"
+            title="Duplicar imagem"
+            data-tooltip="Duplicar imagem"
+            onClick={() => {
+              const next = {
+                ...e,
+                source: { ...e.source },
+                id: crypto.randomUUID(),
+                x: e.x + 1000,
+                y: e.y + 1000,
+              };
+              try {
+                validateElement(next, doc.model.customImageAssets);
+                void useStore
+                  .getState()
+                  .commit(setImageElement(doc, next), "furniture");
+                useStore.getState().choose(next.id);
+              } catch (err) {
+                setError(String(err));
+              }
+            }}
+          >
+            <Icon name="copy" />
+          </button>
+          <button
+            className={styles.iconButton}
+            aria-label="Excluir imagem"
+            title="Excluir imagem"
+            data-tooltip="Excluir imagem"
+            onClick={() => {
               void useStore
                 .getState()
-                .commit(setImageElement(doc, next), "furniture");
-              useStore.getState().choose(next.id);
-            } catch (err) {
-              setError(String(err));
-            }
-          }}
-        >
-          <Icon name="copy" />
-          Duplicar imagem
-        </button>
-        <button
-          className={styles.iconText}
-          onClick={() => {
-            void useStore
-              .getState()
-              .commit(setImageElement(doc, null, e.id), "furniture");
-            useStore.getState().choose(null);
-          }}
-        >
-          <Icon name="delete" />
-          Excluir imagem
-        </button>
+                .commit(setImageElement(doc, null, e.id), "furniture");
+              useStore.getState().choose(null);
+            }}
+          >
+            <Icon name="delete" />
+          </button>
+        </div>
       </fieldset>
       <p className={styles.furnitureNote}>
         Cantos mantêm a proporção atual. Alças quadradas ajustam só largura ou

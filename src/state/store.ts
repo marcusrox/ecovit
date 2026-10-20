@@ -325,13 +325,12 @@ export const useStore = create<State>((set, get) => {
       })),
     open: async (requested, fresh = false) => {
       if (retired || get().busy) return;
-      // A delayed/repeated open must not compete with the lock already owned
-      // by this store, or replace unsaved work with an older stored document.
-      const ownedRelease =
-        get().doc?.project.id === requested.project.id ? release : null;
-      if (ownedRelease && !fresh) return;
       const id =
         typeof requested === "string" ? requested : requested.project.id;
+      // A delayed/repeated open must not compete with the lock already owned
+      // by this store, or replace unsaved work with an older stored document.
+      const ownedRelease = get().doc?.project.id === id ? release : null;
+      if (ownedRelease && !fresh) return;
       set({ busy: true, openingProjectId: id, message: "" });
       let nextRelease: (() => void) | null = null;
       try {
@@ -340,7 +339,7 @@ export const useStore = create<State>((set, get) => {
           await new Promise<void>((resolve) =>
             requestAnimationFrame(() => setTimeout(resolve, 0)),
           );
-        nextRelease = await acquireProject(id);
+        nextRelease = ownedRelease ?? (await acquireProject(id));
         let doc =
           fresh && typeof requested !== "string"
             ? validateProject(requested)

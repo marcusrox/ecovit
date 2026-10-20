@@ -29,6 +29,10 @@
   opacity: 0.45;
   cursor: default;
 }
+:global(html[data-opening-project]),
+:global(html[data-opening-project] *) {
+  cursor: wait !important;
+}
 .icon {
   display: block;
   flex: none;
@@ -413,6 +417,27 @@ button.iconButton {
 .projectCard:hover:not(:disabled) {
   border-color: #a5b496;
   background: #fff;
+}
+.projectOpeningCard:disabled {
+  opacity: 1;
+  background: #f0f4e9;
+}
+.openingSpinner {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  animation: projectOpeningSpin 1s linear infinite;
+}
+@keyframes projectOpeningSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .openingSpinner {
+    animation: none;
+  }
 }
 .projectIcon {
   display: grid;
@@ -1271,6 +1296,7 @@ button.iconButton {
   padding: 5px;
 }
 .fiadaToolbar button[aria-pressed="true"],
+.furnitureProperties button[aria-pressed="true"],
 .junctionButton[aria-pressed="true"] {
   background: #245d49;
   color: white;
@@ -1939,6 +1965,24 @@ button.iconButton {
 }
 .furnitureProperties button {
   max-width: 100%;
+}
+.furnitureActions {
+  position: relative;
+  display: flex;
+  gap: 8px;
+}
+.furnitureActions button.iconButton {
+  position: static;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+}
+.furnitureActions .iconButton[data-tooltip]::after {
+  left: 0;
+  transform: none;
+  max-width: 100%;
+  white-space: normal;
 }
 .furnitureDialog label {
   display: grid;

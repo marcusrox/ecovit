@@ -271,5 +271,231 @@
       "revision": 1,
       "prompt": "Generate ONE standalone production PNG asset for Ecovit furniture floor plans. Reference contact sheet is STYLE REFERENCE ONLY, not an edit target. Subject: one horizontal rectangular light oak dining table with EXACTLY SIX matching chairs: TWO chairs along the upper long side, TWO along the lower long side, ONE at the left short end and ONE at the right short end, all facing the table. Empty tabletop. Chairs have light oak frames and soft beige upholstered seats. Overall footprint including all six chairs approximately 260 cm wide by 190 cm deep. Strict true ORTHOGRAPHIC TOP VIEW, directly overhead at 90 degrees, NO perspective, no isometric view, no vertical front elevations or visible chair legs. Every chair and the whole table entirely visible inside the frame, clearly countable, evenly arranged with subtle gaps between table and seats. Match the approved reference: refined softly colored architectural plan illustration, thin warm-gray contours, muted light oak, ivory/beige upholstery, very restrained realistic material texture and internal shading. All objects form ONE furniture arrangement, not separate cells or a collage. Genuinely transparent alpha background, no ground, no external cast shadows, no decorative objects, text, labels, logos, border or watermark. Tight framing with small clear margins. Preserve the full group silhouette and consistent scale among chairs."
     }
-  ]
+  ],
+  "expansion": {
+    "reference": "docs/images/M10-Ampliacao-Acervo-Previa.png",
+    "method": "Built-in image_gen tool",
+    "background": "transparent alpha",
+    "generationTemplate": "Use case: stylized-concept. Create ONE standalone production furniture PNG for Ecovit 2D floor plans. The input board is an approved STYLE AND SUBJECT reference ONLY, do not reproduce the board. Subject: {subject}. Intended generic footprint width {widthCm} cm, depth {depthCm} cm, silhouette aspect ratio approximately {widthCm}:{depthCm}. Strict true orthographic TOP VIEW, camera exactly 90 degrees overhead. Match the approved board and existing Ecovit library: refined colored architectural plan illustration, crisp thin warm-gray outlines, muted beige/light oak/ivory/sage/stainless gray palette as appropriate, soft realistic material finish, delicate textures and restrained internal tonal shading. Exactly one complete isolated furniture object, centered, tightly framed with narrow TRANSPARENT margins. Actual transparent alpha background, including any empty cutout around or inside the silhouette. No backdrop, no floor, no grid, no title, no number, no label, no watermark, no brand logo, no text, no external shadow, no people, no scene, no extra furniture. No perspective or isometric projection, no front elevation, no visible vertical furniture faces, no clipping. This is a final individual asset, NOT a contact sheet.",
+    "items": [
+      {
+        "id": "sofa-em-l",
+        "name": "Sofá em L",
+        "category": "Sala",
+        "widthCm": 280,
+        "depthCm": 200,
+        "subject": "beige upholstered L sectional sofa, matching cell 01 of the approved reference; three-seat back along top, arm at left and right, broad chaise extending downward on the RIGHT; unmistakable L-shaped footprint",
+        "revision": 1
+      },
+      {
+        "id": "escrivaninha",
+        "name": "Escrivaninha",
+        "category": "Quarto",
+        "widthCm": 140,
+        "depthCm": 70,
+        "subject": "rectangular light oak desk matching cell 02 of the approved reference, one small CLOSED plain silver laptop and sage notebook on its surface, absolutely NO logo or text anywhere, no chair",
+        "revision": 1
+      },
+      {
+        "id": "cadeira-escritorio",
+        "name": "Cadeira de escritório",
+        "category": "Quarto",
+        "widthCm": 65,
+        "depthCm": 75,
+        "subject": "sage upholstered swivel office chair matching cell 03, rounded seat and backrest at top, two padded armrests, five-spoke gray base partly exposed as seen directly overhead",
+        "revision": 1
+      },
+      {
+        "id": "berco",
+        "name": "Berço",
+        "category": "Quarto",
+        "widthCm": 135,
+        "depthCm": 75,
+        "subject": "light oak baby crib matching cell 04, long axis HORIZONTAL, safety rails/slats surrounding an ivory mattress, sage blanket neatly covering its right end, no baby, no pillow or loose toys",
+        "revision": 1
+      },
+      {
+        "id": "banheira",
+        "name": "Banheira",
+        "category": "Banheiro",
+        "widthCm": 170,
+        "depthCm": 80,
+        "subject": "freestanding oval ivory white bathtub matching cell 05, long axis HORIZONTAL, visible inner basin and small metal drain, no water, no person, no bathroom scenery",
+        "revision": 1
+      },
+      {
+        "id": "churrasqueira",
+        "name": "Churrasqueira",
+        "category": "Varanda",
+        "widthCm": 140,
+        "depthCm": 70,
+        "subject": "compact rectangular barbecue unit matching cell 06, long axis HORIZONTAL, light gray stone perimeter, recessed dark metal cooking grate at center and narrow stone work surfaces at left and right; overhead footprint ONLY, no chimney or elevation, no flames or food",
+        "revision": 1
+      },
+      {
+        "id": "bicicleta",
+        "name": "Bicicleta",
+        "category": "Outros",
+        "widthCm": 65,
+        "depthCm": 180,
+        "subject": "one bicycle matching cell 07, aligned VERTICALLY with front at TOP, true directly overhead view showing handlebar extending left/right, brown saddle, slim sage frame, pedals and two tires seen edge-on as narrow longitudinal lines; absolutely NOT a side elevation, wheels must NOT appear as large circles",
+        "revision": 1,
+        "finishingPrompt": "Edit this exact bicycle asset. Preserve the bicycle itself completely: same overhead orthographic view, identical handlebar, frame, brown saddle, sage paint, metallic details, pedals, wheels, proportions and orientation. Remove ONLY the blurry glow/background/smudges surrounding the bicycle. Produce a precise clean isolated cutout with genuinely transparent alpha everywhere outside the physical bicycle silhouette and in all gaps between its parts. NO exterior shadow, NO blurry halo, NO color glow, NO background haze, NO backdrop pixels. All edges clean with normal tiny antialiasing only. The empty space around the handlebar, beside the frame, between pedals, and around tires must be completely transparent. Do not replace transparency with white, black, gray or checkerboard. Do not add anything, change the bicycle style or include text. This is a production PNG for placement on an architectural plan."
+      },
+      {
+        "id": "aparador",
+        "name": "Aparador",
+        "category": "Sala",
+        "widthCm": 140,
+        "depthCm": 40,
+        "subject": "slim rectangular light oak console cabinet matching cell 08, long axis HORIZONTAL, empty wooden top surface with delicate wood grain and subtle rear edge; overhead view ONLY, no visible front doors, legs or vertical faces",
+        "revision": 1
+      }
+    ]
+  },
+  "architecture": {
+    "historicalItems": [
+      {
+        "id": "bloco-concreto-contencao",
+        "name": "Bloco de concreto para contenção",
+        "category": "Arquitetura",
+        "revision": 1,
+        "widthCm": 40,
+        "depthCm": 20,
+        "source": "sources/bloco-concreto-contencao-r1.svg"
+      }
+    ],
+    "method": "Original deterministic SVG artwork rasterized to PNG using Chromium; no image editing or generative service at runtime.",
+    "source": "scripts/generate-architecture-catalog.mjs",
+    "references": "Five stair layout sketches attached by the requester; layout inspiration only, no copied pixels, logos, text or watermarks.",
+    "style": "Neutral orthographic plan, thin gray outlines, muted concrete fill, transparent background.",
+    "dimensions": "Generic editable illustrative footprints; not construction dimensions or structural verification.",
+    "stairs": "Exactly 16 tread rectangles per stair; landings excluded. Direction arrow follows the path from the starting dot.",
+    "items": [
+      {
+        "id": "escada-reta-16",
+        "name": "Escada reta (16 degraus)",
+        "category": "Arquitetura",
+        "revision": 1,
+        "widthCm": 100,
+        "depthCm": 448,
+        "source": "sources/escada-reta-16-r1.svg",
+        "flights": [
+          16
+        ],
+        "treads": 16
+      },
+      {
+        "id": "escada-u-16",
+        "name": "Escada em U (16 degraus)",
+        "category": "Arquitetura",
+        "revision": 1,
+        "widthCm": 220,
+        "depthCm": 324,
+        "source": "sources/escada-u-16-r1.svg",
+        "flights": [
+          8,
+          8
+        ],
+        "treads": 16
+      },
+      {
+        "id": "escada-u-assimetrica-16",
+        "name": "Escada em U assimétrica (16 degraus)",
+        "category": "Arquitetura",
+        "revision": 1,
+        "widthCm": 220,
+        "depthCm": 380,
+        "source": "sources/escada-u-assimetrica-16-r1.svg",
+        "flights": [
+          10,
+          6
+        ],
+        "treads": 16
+      },
+      {
+        "id": "escada-l-16",
+        "name": "Escada em L (16 degraus)",
+        "category": "Arquitetura",
+        "revision": 1,
+        "widthCm": 324,
+        "depthCm": 324,
+        "source": "sources/escada-l-16-r1.svg",
+        "flights": [
+          8,
+          8
+        ],
+        "treads": 16
+      },
+      {
+        "id": "escada-u-tres-lances-16",
+        "name": "Escada em U com 3 lances (16 degraus)",
+        "category": "Arquitetura",
+        "revision": 1,
+        "widthCm": 212,
+        "depthCm": 424,
+        "source": "sources/escada-u-tres-lances-16-r1.svg",
+        "flights": [
+          4,
+          8,
+          4
+        ],
+        "treads": 16
+      },
+      {
+        "id": "caminho-placas-concreto",
+        "name": "Caminho de placas de concreto",
+        "category": "Arquitetura",
+        "revision": 1,
+        "widthCm": 80,
+        "depthCm": 400,
+        "source": "sources/caminho-placas-concreto-r1.svg"
+      },
+      {
+        "id": "caminho-blocos-concreto",
+        "name": "Caminho de blocos intertravados",
+        "category": "Arquitetura",
+        "revision": 1,
+        "widthCm": 120,
+        "depthCm": 240,
+        "source": "sources/caminho-blocos-concreto-r1.svg"
+      },
+      {
+        "id": "bloco-concreto-contencao",
+        "name": "Bloco de concreto para contenção",
+        "category": "Arquitetura",
+        "revision": 2,
+        "widthCm": 40,
+        "depthCm": 20,
+        "source": "sources/bloco-concreto-contencao-r2.svg"
+      },
+      {
+        "id": "rampa-reta",
+        "name": "Rampa reta",
+        "category": "Arquitetura",
+        "revision": 1,
+        "widthCm": 100,
+        "depthCm": 400,
+        "source": "sources/rampa-reta-r1.svg"
+      },
+      {
+        "id": "floreira-concreto",
+        "name": "Floreira de concreto",
+        "category": "Arquitetura",
+        "revision": 1,
+        "widthCm": 120,
+        "depthCm": 40,
+        "source": "sources/floreira-concreto-r1.svg"
+      },
+      {
+        "id": "banco-concreto",
+        "name": "Banco de concreto",
+        "category": "Arquitetura",
+        "revision": 1,
+        "widthCm": 140,
+        "depthCm": 40,
+        "source": "sources/banco-concreto-r1.svg"
+      }
+    ]
+  }
 }

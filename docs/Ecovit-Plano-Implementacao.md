@@ -14,7 +14,7 @@
 
 | Marco | Resultado | Referências | Situação final |
 |---|---|---|---|
-| [M1 — Planta editável e persistência](marcos/M1-Planta-e-Persistencia.md) | Projetos, paredes, histórico e arquivo nativo | RF-01/02/03/08/09/11/12 | Implementado e aceito pelo solicitante |
+| [M1 — Planta editável e persistência](marcos/M1-Planta-e-Persistencia.md) | Projetos, paredes, histórico e arquivo nativo | RF-01/02/03/08/09/11/12 | Implementado e aceito, incluindo a correção de abertura e reabertura |
 | [M2 — Composição e inspeção de fiadas](marcos/M2-Composicao.md) | Catálogo nominal, retas, L/U/T/contornos, fases, diagnóstico e inspeção | RF-01/03/04/05/09/10/11/12; CT-01–06 | Implementado e aceito pelo solicitante |
 | [M3.1 — Vãos](marcos/M3-Vaos-Canaletas-Grautes.md) | Portas, janelas, vãos e padrões de inserção | RF-04/06/09/10/12; CT-07/08 | Implementado e aceito pelo solicitante |
 | [M3.2 — Canaletas](marcos/M3-Vaos-Canaletas-Grautes.md) | Níveis globais, faixas locais, supressão/restauração | RF-04/07/09/10/12; CT-09 | Implementado e aceito pelo solicitante |
@@ -30,7 +30,7 @@
 | [M7 — Medidas independentes](marcos/M7-Medidas.md) | Segmentos de medição livres em Planta, atração geométrica e persistência por pavimento | BL-03; RF-15, integração com RF-02/08/09/11/12/14 | Implementado e aceito pelo solicitante |
 | [M8 — Imagem de referência por pavimento](marcos/M8-Imagem-de-Referencia.md) | Uma imagem de fundo calibrada, posição/rotação, opacidade e interface compacta | BL-02; RF-16, integração com RF-02/08/09/11/12 | Implementado e aceito pelo solicitante |
 | [M9 — Tipos de portas e janelas](marcos/M9-Esquadrias.md) | Nove variantes e símbolos em Planta com botão único de orientação cíclica | BL-08; RF-06; [Elementos construtivos](arquitetura/Elementos-Construtivos.md#vãos-e-aparência-de-esquadrias); CT-17 | Implementado e aceito pelo solicitante |
-| [M10 — Mobiliários](marcos/M10-Mobiliarios.md) | Acervo integrado com 40 opções, ocorrências editáveis em Planta e upload incorporado ao arquivo | BL-01; RF-17; [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) | Implementado e aceito pelo solicitante |
+| [M10 — Mobiliários](marcos/M10-Mobiliarios.md) | Acervo integrado com 59 opções, ocorrências editáveis em Planta e upload incorporado ao arquivo | BL-01; RF-17; [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) | Entrega inicial aceita; ampliações do acervo, bloco de contenção em vista plana, espelhamento e ajustes de interface implementados, com teste manual e aceite específicos pendentes |
 
 Persistência, integridade e verificação acompanham cada entrega. M4 depende de M3; M5 depende de M4. Os subitens de M4 têm seus próprios critérios, verificações e aceites.
 
@@ -1075,4 +1075,4 @@ Roteiro de referência para o servidor habitual da porta 5173:
 
 **Limitações:** o formato exato do cursor depende do sistema/navegador (ampulheta ou círculo). A validação e o motor permanecem síncronos; o estado é pintado antes, mas o indicador pode parar de animar durante processamento pesado. Não há percentual, cancelamento da abertura ou nova garantia de tempo; projetos grandes continuam sujeitos ao custo de conferência/decodificação/cálculo. Movimento reduzido conserva texto e indicador estático.
 
-**Teste manual e aceite do solicitante: pendentes.** No servidor habitual da porta 5173, clicar num projeto representativo e conferir o feedback imediato, o cursor de espera e sua restauração ao entrar no editor. Repetir com projeto maior e conferir nome/aviso legíveis. Testar a vista salva ao reabrir. Informar problemas de espera ou feedback; testes automáticos e revisão visual do Codex são separados desse aceite.
+**Aceite da correção de abertura e reabertura: recebido.** O solicitante declarou ter testado a abertura e a reabertura dos projetos, confirmou o funcionamento correto e aprovou explicitamente a correção. Registro consolidado no [M1](marcos/M1-Planta-e-Persistencia.md#revisão-da-abertura-de-projetos-existentes--rf-12). Não foram informados resultados individuais dos demais passos do roteiro; as verificações automáticas e a revisão visual do Codex permanecem separadas do teste manual declarado.

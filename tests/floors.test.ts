@@ -296,7 +296,7 @@ describe("M4.1 — contratos e isolamento EX-56–64", () => {
       "compatíveis",
     );
   });
-  it.each([1, 2, 3, 4, 5, 6, 7, 8, 15, 99])(
+  it.each([1, 2, 3, 4, 5, 6, 7, 8, 16, 99])(
     "EX-63 recusa envelope %i sem conversão",
     (version) => {
       const d = project();

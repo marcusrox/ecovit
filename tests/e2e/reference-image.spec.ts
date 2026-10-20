@@ -173,7 +173,7 @@ test("M8 calibração, ajuste compacto, âncora, histórico, opacidade e arquivo
   const output = parseFile(
     await readFile((await (await download).path())!, "utf8"),
   );
-  expect(output.schemaVersion).toBe(14);
+  expect(output.schemaVersion).toBe(15);
   expect(output.model.referenceImages).toEqual(
     (await state(page)).doc.model.referenceImages,
   );

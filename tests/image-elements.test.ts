@@ -29,6 +29,7 @@ import {
   parseFile,
   serializeFile,
   validateProject,
+  importedCopy,
 } from "../src/persistence/files";
 import {
   duplicateFloor,
@@ -56,14 +57,34 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-it("M10-A01 catálogo tem oito categorias e 40 opções com referências únicas e dimensões genéricas", () => {
-  expect(imageCategories).toHaveLength(8);
-  expect(imageCatalog).toHaveLength(40);
-  expect(new Set(imageCatalog.map((i) => i.id)).size).toBe(40);
+it("M10-A01 catálogo tem nove categorias e 59 opções com referências únicas e dimensões genéricas", () => {
+  expect(imageCategories).toHaveLength(9);
+  expect(imageCatalog).toHaveLength(59);
+  expect(new Set(imageCatalog.map((i) => i.id)).size).toBe(59);
   expect(imageCatalog.filter((i) => i.asset === "armario")).toHaveLength(2);
   expect(
-    imageCatalog.every((i) => i.width > 0 && i.depth > 0 && i.revision === 1),
+    imageCatalog.every(
+      (i) =>
+        i.width > 0 &&
+        i.depth > 0 &&
+        Number.isInteger(i.revision) &&
+        i.revision > 0,
+    ),
   ).toBe(true);
+});
+it("bloco de contenção insere r2 e conserva r1 em arquivos existentes", () => {
+  const d = project();
+  const latest = imageCatalog.find((i) => i.id === "bloco-concreto-contencao")!;
+  expect(latest.revision).toBe(2);
+  for (const revision of [1, 2]) {
+    const item = catalogItem(latest.id, revision)!;
+    expect(item).toMatchObject({ width: 4000, depth: 2000, revision });
+    d.model.imageElements.push(standardElement(item, d.model.floors[0].id));
+  }
+  expect(catalogItem(latest.id, 3)).toBeUndefined();
+  expect(parseFile(serializeFile(d).text).model.imageElements).toEqual(
+    d.model.imageElements,
+  );
 });
 it("M10-A04 atração angular cobre os oito múltiplos de 45°, contorno 360/0 e ângulos livres", () => {
   for (const angle of [0, 45, 90, 135, 180, 225, 270, 315]) {
@@ -187,7 +208,7 @@ it("M10-A08 lê envelope 13 preservando ocorrências e bytes sem modificar a ori
   const old = { ...d, schemaVersion: 13 },
     original = JSON.stringify(old);
   const restored = validateProject(old);
-  expect(restored.schemaVersion).toBe(14);
+  expect(restored.schemaVersion).toBe(15);
   expect(restored.model).toEqual(d.model);
   expect(JSON.stringify(old)).toBe(original);
 });
@@ -248,7 +269,7 @@ it("M10-A08 leitura 9–12 normaliza coleções vazias sem modificar origem ou a
     if (version === 9) delete old.model.measurements;
     const original = JSON.stringify(old),
       restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(14);
+    expect(restored.schemaVersion).toBe(15);
     expect(restored.model.imageElements).toEqual([]);
     expect(JSON.stringify(old)).toBe(original);
     old.model.imageElements = [];
@@ -316,3 +337,121 @@ it("M10-A05/11/12 histórico visual preserva resultado atual e desatualizado, fa
     .commit(setImageElement(before!, null, e.id), "furniture");
   expect(useStore.getState().doc).toBe(before);
 });
+
+it.each([
+  [false, false],
+  [true, false],
+  [false, true],
+  [true, true],
+])(
+  "espelhamento X=%s/Y=%s conserva geometria, bytes, cópias e transporte",
+  (flipX, flipY) => {
+    const d = project(),
+      a = asset();
+    d.model.customImageAssets = [a];
+    const original = {
+      ...sofa(d),
+      x: 12345,
+      y: -6789,
+      width: 18500,
+      depth: 9100,
+      angle: 37,
+    };
+    d.model.imageElements = [
+      { ...original, flipX, flipY },
+      {
+        ...original,
+        id: crypto.randomUUID(),
+        source: { kind: "custom", assetId: a.id },
+        flipX,
+        flipY,
+      },
+    ];
+    for (const element of d.model.imageElements) {
+      expect(elementCorners(element)).toEqual(elementCorners(original));
+      expect(hitImageElement(element, { x: original.x, y: original.y })).toBe(
+        true,
+      );
+    }
+    const decoded = parseFile(serializeFile(d).text);
+    expect(decoded.model).toEqual(d.model);
+    expect(decoded.schemaVersion).toBe(15);
+    expect(importedCopy(decoded).model).toEqual(d.model);
+    const floors = duplicateFloor(
+      decoded,
+      decoded.model.floors[0].id,
+      28000,
+      "Superior",
+    );
+    expect(
+      floors.model.imageElements
+        .slice(2)
+        .every((e) => e.flipX === flipX && e.flipY === flipY),
+    ).toBe(true);
+    expect(floors.model.customImageAssets).toEqual([a]);
+  },
+);
+
+it("formato 14 mantém a aparência sem espelhamento; campos novos disfarçados e flags inválidas são recusados", () => {
+  const d = project();
+  d.model.imageElements = [sofa(d)];
+  const old = { ...d, schemaVersion: 14 },
+    before = JSON.stringify(old);
+  const decoded = validateProject(old);
+  expect(decoded.schemaVersion).toBe(15);
+  expect(decoded.model).toEqual(d.model);
+  expect(JSON.stringify(old)).toBe(before);
+  for (const flag of [true, false, "true", 1, null]) {
+    const bad = {
+      ...old,
+      model: { ...old.model, imageElements: [{ ...sofa(d), flipX: flag }] },
+    };
+    expect(() => validateProject(bad)).toThrow(/anterior/);
+  }
+  for (const axis of ["flipX", "flipY"])
+    for (const flag of ["true", 1, null]) {
+      expect(() =>
+        validateProject({
+          ...d,
+          model: { ...d.model, imageElements: [{ ...sofa(d), [axis]: flag }] },
+        }),
+      ).toThrow();
+    }
+});
+
+it.each([false, true])(
+  "espelhar integra histórico sem calcular; desatualizado=%s",
+  async (stale) => {
+    await useStore.getState().open(project(), true);
+    const initial = useStore.getState().doc!,
+      e = sofa(initial);
+    await useStore.getState().commit(setImageElement(initial, e), "furniture");
+    if (stale)
+      useStore.setState({
+        doc: {
+          ...useStore.getState().doc!,
+          generated: null,
+          generationState: { status: "outdated", diagnostics: [] },
+        },
+      });
+    const before = useStore.getState().doc!;
+    const spy = vi.spyOn(engine, "generate");
+    spy.mockClear();
+    await useStore
+      .getState()
+      .commit(
+        setImageElement(before, { ...e, flipX: true, flipY: true }),
+        "furniture",
+      );
+    expect(useStore.getState().doc!.generated).toEqual(before.generated);
+    await useStore.getState().undo();
+    expect(useStore.getState().doc!.model.imageElements).toEqual([e]);
+    await useStore.getState().undo(true);
+    expect(useStore.getState().doc!.model.imageElements[0]).toMatchObject({
+      flipX: true,
+      flipY: true,
+    });
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  },
+);

@@ -25,6 +25,8 @@ export type ImageElement = {
   width: number;
   depth: number;
   angle: number;
+  flipX?: boolean;
+  flipY?: boolean;
 };
 export type ReferenceImage = {
   floorId: string;
@@ -107,7 +109,7 @@ export type Tool =
   "select" | "wall" | "slab" | "measure" | "furniture" | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 14;
+  schemaVersion: 15;
   project: {
     id: string;
     name: string;
@@ -197,7 +199,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 14,
+    schemaVersion: 15,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),

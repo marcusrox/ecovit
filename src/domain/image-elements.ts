@@ -110,6 +110,8 @@ export function validateElement(
     e.width <= 0 ||
     e.depth <= 0 ||
     Math.abs(e.angle) > 360 ||
+    (e.flipX !== undefined && typeof e.flipX !== "boolean") ||
+    (e.flipY !== undefined && typeof e.flipY !== "boolean") ||
     elementCorners(e).some(
       (p) => Math.abs(p.x) > LIMIT || Math.abs(p.y) > LIMIT,
     )
