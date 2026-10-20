@@ -109,9 +109,10 @@ it("M7 formato 16 preserva afastamento em arquivo/cópia/pavimento e lê 15 sem 
   });
   const old = JSON.parse(JSON.stringify(d));
   old.schemaVersion = 15;
+    Reflect.deleteProperty(old.model, "terrain");
   delete old.model.measurements[0].offset;
   const original = JSON.stringify(old);
-  expect(validateProject(old).schemaVersion).toBe(16);
+  expect(validateProject(old).schemaVersion).toBe(17);
   expect(JSON.stringify(old)).toBe(original);
   expect(
     measurementGeometry(validateProject(old).model.measurements[0]).a,
@@ -284,6 +285,7 @@ it("M7 validação, transporte, envelope 9 e cópias de pavimento preservam inte
     };
   };
   legacy.schemaVersion = 9;
+    Reflect.deleteProperty(legacy.model, "terrain");
   delete legacy.model.imageElements;
   delete legacy.model.customImageAssets;
   delete legacy.model.referenceImages;

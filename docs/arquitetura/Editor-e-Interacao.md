@@ -6,7 +6,7 @@ Este documento descreve contratos de software vigentes. Regras geométricas/cons
 
 ## Canvas, Planta e Fiada
 
-Um Stage Konva representa a área do desenho. Usa camadas do mesmo espaço de edição para referência raster, malha, geometria, mobiliários e interação/seleção, conforme os contratos de cada elemento. São camadas do mesmo espaço de edição, sem canvases visíveis separados para Planta e Fiada.
+Um Stage Konva representa a área do desenho. Usa camadas do mesmo espaço de edição para referência raster, malha, geometria, mobiliários e interação/seleção, conforme os contratos de cada elemento. São camadas do mesmo espaço de edição, sem canvases visíveis separados para Planta e Fiada. Zoom/enquadramento aceitam escala de 0,000001 a 0,12 pixel por unidade interna; o limite inferior permite enquadrar perímetros grandes de terreno e é aceito também na restauração da câmera local.
 
 Controles, campos e explicações serão elementos HTML acessíveis fora ou sobre o canvas. Não desenhar formulários dentro do canvas.
 
@@ -31,6 +31,18 @@ Planta e Fiada compartilham geometria, câmera e seleção por identificador. N�
 Implementar estados explícitos simples: inativo, desenhando, movendo, redimensionando e navegando. Usar uma união TypeScript e funções; não adicionar biblioteca de máquina de estados inicialmente.
 
 Tratar mouse solto fora do canvas, perda de foco e Escape para evitar gestos presos. Priorizar alças e seleção sobre início de novo desenho. Ignorar atalhos de canvas durante edição de campos.
+
+## Terreno — M11
+
+Comportamento em [RF-18](../Ecovit-PRD.md#rf-18--terreno); escopo e aceite no [M11](../marcos/M11-Terreno.md). Um terreno pertence ao projeto, compartilhado entre pavimentos; não é referência de pavimento adjacente.
+
+Integrar desenho e ajuste aos estados transitórios do editor existente. Pontos no espaço XY, sem restrição ortogonal ou modular; adotar a precisão interna de 0,1 mm, com validação geométrica independente do zoom. A tolerância visual do alvo inicial serve ao clique de fechamento, sem alterar a validade do polígono. Comprimentos são derivados por distância euclidiana; não persistir textos ou comprimentos redundantes. Validar candidatos completos antes de confirmar e reutilizar predicados de anéis adequados, sem impor regras construtivas de lajes ao terreno.
+
+Preenchimento recortado ao perímetro, com escala do material no espaço do projeto independente da caixa envolvente e do zoom. Textura acompanha a translação; mudar vértices não redimensiona seu detalhe. Usar recursos locais reutilizáveis ou composição determinística equivalente, sem serviço remoto durante edição. Materiais procedurais originais em src/editor/terrain-textures.ts, revisão 1: grama, terra, areia, brita e piso intertravado. Cada tile de 800 × 800 pixels cobre 4 × 4 m nominais, com marcas que atravessam e reaparecem nas bordas. A escala é uma convenção visual; peças de piso não são itens de catálogo construtivo. A origem da textura pertence ao terreno e acompanha sua translação, conservando-se ao editar vértices. Evitar rasterizar toda a extensão em pixels ou criar um nó por repetição; limitar trabalho à região visível e reaproveitar recursos em memória.
+
+Inserir a representação abaixo da referência raster e manter interação/alças acima das demais camadas. Assegurar acesso explícito às propriedades quando elementos opacos impedem seleção direta; o botão Terreno e o seletor de elementos acessam a entidade mesmo sob objetos opacos. Ajustar habilita as alças e a translação, com cancelamento e confirmação atômica por gesto. Não incluir terreno entre os insumos do motor ou alvos de atração existentes implicitamente.
+
+src/editor/Terrain.tsx integra criação por cliques, ajuste e propriedades. Prévia fica em terrainDraft, terrainEditing e estado local; não se persiste. Uma seleção simples não move o objeto. A camada de preenchimento fica antes da referência de M8; alças, contorno selecionado, medidas transitórias e rótulo de área ficam na camada de interação. A referência opaca pode ocultar a textura, conservando o acesso às propriedades. O rótulo tem tamanho de tela fixo, fundo claro e âncora interior calculada por varredura de faixas horizontais do polígono; a área é derivada da geometria com soma exata e não integra os quantitativos construtivos.
 
 ## Gestos e prévias de paredes
 

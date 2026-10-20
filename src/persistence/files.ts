@@ -1,3 +1,4 @@
+import { validateTerrain, MAX_TERRAIN_POINTS } from "../domain/terrain";
 import { validateReference } from "../domain/reference-image";
 import { validMeasurement } from "../domain/measurements";
 import {
@@ -145,7 +146,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(16),
+    schemaVersion: z.literal(17),
     project: z
       .object({
         id,
@@ -173,6 +174,16 @@ const schema = z
       .strict(),
     model: z
       .object({
+        terrain: z
+          .object({
+            id,
+            contour: z.array(point).min(3).max(MAX_TERRAIN_POINTS),
+            material: z.enum(["grass", "earth", "sand", "gravel", "pavers"]),
+            revision: z.literal(1),
+            textureOrigin: point,
+          })
+          .strict()
+          .nullable(),
         floors: z
           .array(
             z
@@ -399,12 +410,14 @@ export function validateProject(
       value.schemaVersion === 12 ||
       value.schemaVersion === 13 ||
       value.schemaVersion === 14 ||
-      value.schemaVersion === 15) &&
+      value.schemaVersion === 15 ||
+      value.schemaVersion === 16) &&
     "model" in value &&
     value.model &&
     typeof value.model === "object"
   ) {
     if (
+      "terrain" in value.model ||
       (value.schemaVersion < 11 && "referenceImages" in value.model) ||
       (value.schemaVersion < 13 &&
         ("imageElements" in value.model ||
@@ -413,6 +426,7 @@ export function validateProject(
     )
       throw new Error("Arquivo inválido: campos em formato anterior.");
     if (
+      value.schemaVersion < 16 &&
       "measurements" in value.model &&
       Array.isArray(value.model.measurements) &&
       value.model.measurements.some(
@@ -445,9 +459,10 @@ export function validateProject(
       throw new Error("Arquivo inválido: aparência em formato anterior.");
     value = {
       ...value,
-      schemaVersion: 16,
+      schemaVersion: 17,
       model: {
         ...value.model,
+        terrain: null,
         ...(value.schemaVersion === 9 ? { measurements: [] } : {}),
         ...(value.schemaVersion < 11 ? { referenceImages: [] } : {}),
         ...(value.schemaVersion < 13
@@ -460,10 +475,10 @@ export function validateProject(
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 16
+    value.schemaVersion !== 17
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 16; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 17; demais formatos não são convertidos.",
     );
   const parsed = schema.safeParse(value);
   if (!parsed.success)
@@ -504,6 +519,10 @@ export function validateProject(
     ids.add(id);
   };
   take(doc.project.id);
+  if (doc.model.terrain) {
+    take(doc.model.terrain.id);
+    validateTerrain(doc.model.terrain);
+  }
   const floors = new Map(doc.model.floors.map((f) => [f.id, f]));
   for (let i = 0; i < doc.model.floors.length; i++) {
     const f = doc.model.floors[i];

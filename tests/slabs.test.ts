@@ -410,7 +410,7 @@ describe("CT-13 / EX-65–74", () => {
     expect(copy.openings[0].id).not.toBe(slab.openings[0].id);
     const changed = editFloor(copied, copy.floorId, { level: -2100 });
     expect(changed.model.slabs.find((s) => s.id === copy.id)).toEqual(copy);
-    expect(validateProject(changed).schemaVersion).toBe(16);
+    expect(validateProject(changed).schemaVersion).toBe(17);
     expect(removeFloor(copied, copy.floorId).model.slabs).toEqual([slab]);
     const local = floorView(copied, copy.floorId);
     expect(local.model.slabs).toEqual([copy]);

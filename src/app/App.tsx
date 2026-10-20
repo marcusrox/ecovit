@@ -1,3 +1,4 @@
+import { TerrainProperties } from "../editor/Terrain";
 import { ReferenceImageProperties } from "../editor/ReferenceImage";
 import { FloorControls } from "./Floors";
 import { PreferencesDialog } from "./Preferences";
@@ -434,6 +435,12 @@ function Properties({ doc }: { doc: Project }) {
           catálogo do aplicativo.
         </p>
         <p>
+          Terreno: clique nos pontos livres e no primeiro para fechar. O trecho
+          mostra sua medida e o terreno mostra a área em m². Nas propriedades,
+          escolha a aparência; Ajustar permite mover o conjunto ou seus pontos.
+          É o mesmo terreno em todos os pavimentos.
+        </p>
+        <p>
           Imagem: marque um trecho longo de distância conhecida e informe seu
           tamanho em cm. Ajustar libera posição e ângulo; Concluir salva. A
           escala não corrige perspectiva.
@@ -542,6 +549,8 @@ export default function App() {
       imageOpacity: null,
       imageRequest: null,
       furnitureDraft: null,
+      terrainDraft: null,
+      terrainEditing: false,
     });
     setTool(t);
   }, []);
@@ -593,11 +602,23 @@ export default function App() {
         s.select
       ) {
         e.preventDefault();
-        if (s.imageDraft || s.slabDraft || s.slabEditing || s.furnitureDraft)
+        if (
+          s.imageDraft ||
+          s.slabDraft ||
+          s.slabEditing ||
+          s.furnitureDraft ||
+          s.terrainDraft ||
+          s.terrainEditing
+        )
           return;
         if (s.pendingOpening) s.inspect({ pendingOpening: null });
         else if (s.doc.model.imageElements.some((i) => i.id === s.select)) {
           void s.commit(setImageElement(s.doc, null, s.select), "furniture");
+        } else if (s.doc.model.terrain?.id === s.select) {
+          void s.commit(
+            { ...s.doc, model: { ...s.doc.model, terrain: null } },
+            "terrain",
+          );
         } else if (deleteSlabSelection()) return;
         else void s.commit(removeElement(s.doc, s.select));
         s.choose(null);
@@ -848,6 +869,23 @@ export default function App() {
                 >
                   <Icon name="wall" /> Parede
                 </button>
+                {mode === "plan" && (
+                  <button
+                    className={`${styles.iconText} ${tool === "terrain" ? styles.active : ""}`}
+                    aria-pressed={
+                      tool === "terrain" ||
+                      (!!doc.model.terrain && selected === doc.model.terrain.id)
+                    }
+                    disabled={busy || (readonly && !doc.model.terrain)}
+                    onClick={() => {
+                      changeTool(doc.model.terrain ? "select" : "terrain");
+                      useStore.getState().choose(doc.model.terrain?.id ?? null);
+                    }}
+                  >
+                    <Icon name="terrain" />
+                    Terreno
+                  </button>
+                )}
                 <span className={styles.divider} />
                 {mode === "plan" && (
                   <button
@@ -911,7 +949,8 @@ export default function App() {
                   </button>
                 )}
                 {mode === "plan" &&
-                  (!!editingDoc!.model.slabs.length ||
+                  (!!editingDoc!.model.terrain ||
+                    !!editingDoc!.model.slabs.length ||
                     !!editingDoc!.model.imageElements.length ||
                     !!editingDoc!.model.measurements.length ||
                     !!editingDoc!.model.openings.length) && (
@@ -919,6 +958,7 @@ export default function App() {
                       aria-label="Selecionar elemento"
                       disabled={busy}
                       value={
+                        editingDoc!.model.terrain?.id === selected ||
                         editingDoc!.model.openings.some(
                           (o) => o.id === selected,
                         ) ||
@@ -947,6 +987,11 @@ export default function App() {
                       }}
                     >
                       <option value="">Selecionar elemento…</option>
+                      {editingDoc!.model.terrain && (
+                        <option value={editingDoc!.model.terrain.id}>
+                          Terreno do projeto
+                        </option>
+                      )}
                       {!!editingDoc!.model.imageElements.length && (
                         <optgroup label="Mobiliários">
                           {editingDoc!.model.imageElements.map((e) => (
@@ -1035,7 +1080,11 @@ export default function App() {
                 settings={() => setSettings(true)}
               />
             ) : mode === "plan" ? (
-              editingDoc!.model.measurements.some((m) => m.id === selected) ? (
+              editingDoc!.model.terrain?.id === selected ? (
+                <TerrainProperties doc={editingDoc!} />
+              ) : editingDoc!.model.measurements.some(
+                  (m) => m.id === selected,
+                ) ? (
                 <MeasurementProperties doc={editingDoc!} />
               ) : editingDoc!.model.imageElements.some(
                   (e) => e.id === selected,

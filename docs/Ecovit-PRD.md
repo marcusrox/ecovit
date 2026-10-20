@@ -479,6 +479,22 @@ Essa preferência é independente das opções globais de rótulos. Não altera 
 
 **Fora de M10:** demais itens das capturas além do núcleo, edição/recorte de arte, remoção de fundo, agrupamentos, ordenação manual de camadas, biblioteca personalizada global, 3D, geração de imagens por IA dentro do aplicativo, projetos de instalações e verificação de colisão/circulação. M8 conserva sua imagem de referência separada e seu fluxo de calibração. O aceite global da M10 abrange o escopo implementado, conforme [M10](marcos/M10-Mobiliarios.md).
 
+### RF-18 — Terreno
+
+**Estado: implementado, verificado pelo Codex e aceito pelo solicitante, com registro no [M11](marcos/M11-Terreno.md).** Um terreno por projeto, compartilhado em Planta entre todos os pavimentos.
+
+Em Planta, desenhar o perímetro por cliques em pontos livres, sem restrição ortogonal ou modular. Enquanto o cursor se move, mostrar o segmento entre o último ponto fixado e o próximo ponto, com comprimento euclidiano nas unidades de medida do editor. Clicar no primeiro ponto fecha o polígono e cria o terreno, desde que haja pelo menos três vértices distintos, área não nula e contorno simples sem cruzamentos, sobreposições ou contatos entre arestas não adjacentes. Aceitar concavidade. Antes de fechar, o desenho é apenas uma prévia cancelável.
+
+Oferecer grama, terra, areia, brita e piso intertravado. Preencher a região com material de escala visual consistente no espaço do projeto, por repetição contínua ou composição equivalente recortada pelo contorno. Aumentar o terreno deve aumentar a cobertura da textura, sem esticar uma imagem única. Evitar costuras visíveis e padrões grosseiros que comprometam a aparência natural.
+
+Desenhar o terreno abaixo da imagem de referência de RF-16 e manter a ordem dos demais elementos. A referência conserva sua opacidade: uma imagem opaca pode encobrir o terreno. Garantir acesso às propriedades mesmo sob outros elementos. Selecionar não habilita deslocamento acidental; nas propriedades, Ajustar habilita mover o terreno inteiro ou arrastar seus vértices existentes, com prévia e medidas das arestas afetadas. Edição inválida não substitui o contorno confirmado. A textura acompanha a translação e conserva escala ao mudar a forma. Mover o terreno não move os demais elementos.
+
+**Organização:** um terreno por projeto, visível na Planta de todos os pavimentos, com um material único e grama inicial. Troca/duplicação/remoção de pavimento não duplica nem remove o terreno. Não mostrar em Fiada nem duplicar na comparação de pavimentos. Incluir o contorno no enquadramento. Exibir o rótulo “Terreno · <área> m²”, com área plana calculada pelo polígono, independente do sentido do desenho e com duas casas decimais em português. Atualizar o rótulo nas prévias válidas e nas edições confirmadas; mantê-lo legível no zoom. As propriedades também mostram a área. Posicionar a âncora dentro do terreno, inclusive em contornos côncavos. O rótulo é uma informação visual, sem volume ou quantitativo construtivo.
+
+Criação, material, edição e exclusão integram histórico, salvamento local, cópia de projeto e arquivo `.ecovit`; cada gesto confirmado corresponde a uma operação. Prévia/cancelamento não gravam. Não modificar composição, diagnósticos ou quantitativos construtivos nem disparar o motor. Somente leitura permite consulta. Arquivos já suportados sem terreno continuam abrindo, conforme [Persistência e compatibilidade](arquitetura/Persistencia-e-Compatibilidade.md#formato-e-leitores-vigentes).
+
+Recorte plano e visual, sem topografia, terraplenagem, georreferenciamento, recuos legais ou validação estrutural. Sem furos, curvas, múltiplas regiões/materiais, upload de textura ou inclusão/remoção de vértices após criar neste marco; ajustar a posição dos vértices existentes faz parte da entrega. Tarefas, critérios de aceite, verificações e limitações no M11.
+
 ## 7. Modelo de domínio e diretrizes de implementação
 
 | Entidade | Responsabilidade |

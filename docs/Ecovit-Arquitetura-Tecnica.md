@@ -1,6 +1,6 @@
 # Ecovit — Arquitetura Técnica
 
-**Versão documental:** 1.35. Referência do software vigente: aplicativo 0.15.1, envelope 16 e composição nominal-v10. [Compatibilidade suportada](arquitetura/Persistencia-e-Compatibilidade.md#formato-e-leitores-vigentes).
+**Versão documental:** 1.36. Referência do software vigente: aplicativo 0.16.0, envelope 17 e composição nominal-v10. [Compatibilidade suportada](arquitetura/Persistencia-e-Compatibilidade.md#formato-e-leitores-vigentes).
 
 ## Responsabilidades da documentação
 
@@ -17,12 +17,12 @@ Uma decisão de programação não estabelece uma regra construtiva. Antes de mu
 
 | Referência | Contratos principais |
 |---|---|
-| [Modelo e geometria](arquitetura/Modelo-e-Geometria.md) | Unidades, precisão, identidades e referências compartilhadas |
+| [Modelo e geometria](arquitetura/Modelo-e-Geometria.md) | Unidades, precisão, identidades, terreno global e referências compartilhadas |
 | [Elementos construtivos](arquitetura/Elementos-Construtivos.md) | Pavimentos, paredes, vãos, lajes e operações sobre seus dependentes |
 | [Editor e interação](arquitetura/Editor-e-Interacao.md) | Planta/Fiada, câmera, seleção, gestos, camadas e comparação de pavimentos |
 | [Estado, histórico e operações](arquitetura/Estado-Historico-e-Operacoes.md) | Intenção/resultado/sessão, atomicidade, histórico e critério único de recálculo |
 | [Motor e diagnósticos](arquitetura/Motor-e-Diagnosticos.md) | Pipeline nominal-v10, pavimentos, ajustes, encontros, alturas e diagnósticos |
-| [Persistência e compatibilidade](arquitetura/Persistencia-e-Compatibilidade.md) | Envelope, leitores 9–16, validação, armazenamento, transporte e bloqueios |
+| [Persistência e compatibilidade](arquitetura/Persistencia-e-Compatibilidade.md) | Envelope, leitores 9–17, validação, armazenamento, transporte e bloqueios |
 | [Medidas e imagens](arquitetura/Medidas-e-Imagens.md) | Medidas, referências raster, mobiliários, recursos, calibração e cache |
 | [Interface e iconografia](arquitetura/Interface-e-Iconografia.md) | Lucide centralizado, acessibilidade, preferências, status e componentes comuns |
 | [Quantitativos](arquitetura/Quantitativos.md) | Projeção das peças finais, perdas e consulta independente |
@@ -201,7 +201,7 @@ O cartão escolhido mostra seu nome e “Abrindo projeto…” com status acess�
 
 ### Visualização local por projeto
 
-`src/editor/useProjectCamera.ts` mantém câmera e dimensões do canvas fora do documento. Preferência em `localStorage`, chave `ecovit:project-view:v1:<projectId>`, valor `{ centerX, centerY, scale }`: centro em coordenadas do desenho e escala em pixels por unidade interna. Aceitar somente números finitos e escala entre 0,0015 e 0,12; ausência/invalidez/erro de leitura usa câmera inicial. Restaurar o centro com as dimensões reais medidas por ResizeObserver; redimensionamento conserva centro e escala.
+`src/editor/useProjectCamera.ts` mantém câmera e dimensões do canvas fora do documento. Preferência em `localStorage`, chave `ecovit:project-view:v1:<projectId>`, valor `{ centerX, centerY, scale }`: centro em coordenadas do desenho e escala em pixels por unidade interna. Aceitar somente números finitos e escala entre 0,000001 e 0,12; ausência/invalidez/erro de leitura usa câmera inicial. Restaurar o centro com as dimensões reais medidas por ResizeObserver; redimensionamento conserva centro e escala.
 
 Gravar após zoom, Enquadrar, foco programático e redimensionamento; no deslocamento, somente ao terminar o gesto. Ao desmontar o canvas e em pagehide, guardar a câmera mais recente como proteção adicional. Sem temporizadores ou gravação de cada movimento do mouse. Esta escrita síncrona pequena é independente de saveProject, bloqueio do documento, updatedAt, histórico e cálculo; também se aplica em somente leitura. Erro de gravação é exibido na área de mensagens do canvas, conservando a navegação em memória. Uma preferência por projeto, sem chaves por pavimento/modo e sem transporte, migração de envelope ou sincronização entre abas; última gravação local prevalece.
 

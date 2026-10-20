@@ -97,3 +97,9 @@ A borda/fundo do cartão pertence ao contêiner da linha; o botão de abertura/e
 Cartão comum de 80 px incluindo borda, com conteúdo principal de no mínimo 78 px e padding vertical de 14 px; intervalo entre slots de 8 px também fecha durante o fade out. Ícone de projeto conserva 48/24 px; Novo projeto conserva posição, dimensões e interação. Nome ocupa uma linha com reticências/title completo; metadados na linha seguinte e explicação de incompatibilidade com quebra natural. Sem novo ícone, versão de arquivo, cálculo ou persistência.
 
 Os efeitos de exclusão na lista seguem o contrato atômico de [Persistência e compatibilidade](Persistencia-e-Compatibilidade.md). Não duplicar aqui a trava, validação ou escrita no banco. Padrões de interação do canvas e alvos técnicos pertencem a [Editor e interação](Editor-e-Interacao.md).
+
+## Terreno
+
+A barra mantém 3 px entre colunas e 4 px entre linhas de ferramentas. Planta/Fiada têm altura mínima de 30 px como os demais controles; essa regularidade evita mudança de meio pixel da câmera ao quebrar a linha da barra.
+
+Terreno usa Icon/terrain→LandPlot no mapa central, acompanhado de rótulo na barra de ferramentas. Com terreno existente, o mesmo botão abre suas propriedades, inclusive em somente leitura. A lista Selecionar elemento também oferece Terreno do projeto. Propriedades compactas com área, cinco botões de material com miniaturas procedurais e aria-pressed, Ajustar/Concluir ajuste e Excluir terreno, reusando os estilos existentes e estados busy/readonly. Rótulo de área em Planta e medidas transitórias não dependem das preferências de rótulos dos outros elementos. Ajuda do editor descreve criação, área e ajuste do terreno global.

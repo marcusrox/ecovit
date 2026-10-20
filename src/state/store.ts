@@ -42,6 +42,7 @@ const changedInputs = (previous: Project, next: Project) =>
     {
       ...previous.model,
       openings: constructionOpenings(previous.model.openings),
+      terrain: undefined,
       measurements: undefined,
       referenceImages: undefined,
       imageElements: undefined,
@@ -62,6 +63,7 @@ const changedInputs = (previous: Project, next: Project) =>
     {
       ...next.model,
       openings: constructionOpenings(next.model.openings),
+      terrain: undefined,
       measurements: undefined,
       referenceImages: undefined,
       imageElements: undefined,
@@ -79,6 +81,8 @@ const changedInputs = (previous: Project, next: Project) =>
     next.project.groutSettings,
   ]);
 type Inspection = {
+  terrainDraft: { points: Point[] } | null;
+  terrainEditing: boolean;
   furnitureDraft: { element: ImageElement; asset?: CustomImageAsset } | null;
   imageRequest: string | null;
   imageDraft: ImageDraft | null;
@@ -106,6 +110,8 @@ type Inspection = {
   diagnosticWalls: string[];
 };
 const inspection: Inspection = {
+  terrainDraft: null,
+  terrainEditing: false,
   furnitureDraft: null,
   imageDraft: null,
   imageRequest: null,
@@ -151,7 +157,8 @@ type State = Inspection & {
       | "slab"
       | "measure"
       | "image"
-      | "furniture",
+      | "furniture"
+      | "terrain",
   ) => Promise<void>;
   undo: (redo?: boolean) => Promise<void>;
   notify: (message: string) => void;
@@ -160,7 +167,7 @@ type State = Inspection & {
 };
 export const useStore = create<State>((set, get) => {
   async function persist(doc: Project, calculate = true) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.15.1" } };
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.16.0" } };
     set({ doc });
     set({ busy: true, saved: "saving" });
     let saveFailed = false;
@@ -262,6 +269,8 @@ export const useStore = create<State>((set, get) => {
           },
           ...(change.mode && change.mode !== s.mode
             ? {
+                terrainDraft: null,
+                terrainEditing: false,
                 furnitureDraft: null,
                 slabDraft: null,
                 slabEditing: false,
@@ -316,6 +325,8 @@ export const useStore = create<State>((set, get) => {
         diagnosticWalls: [],
         ...(select !== s.select
           ? {
+              terrainDraft: null,
+              terrainEditing: false,
               slabDraft: null,
               slabEditing: false,
               imageDraft: null,
@@ -398,6 +409,8 @@ export const useStore = create<State>((set, get) => {
       release = null;
       set({
         doc: null,
+        terrainDraft: null,
+        terrainEditing: false,
         furnitureDraft: null,
         imageDraft: null,
         imageRequest: null,
@@ -573,7 +586,7 @@ export const useStore = create<State>((set, get) => {
               : s.doc.generationState,
             metadata: {
               ...candidate.metadata,
-              appVersion: "0.15.1",
+              appVersion: "0.16.0",
               updatedAt: new Date().toISOString(),
             },
           },
@@ -627,6 +640,10 @@ export const useStore = create<State>((set, get) => {
     undo: async (redo = false) => {
       const s = get();
       if (retired || !s.doc || s.busy || s.readonly) return;
+      if (s.terrainDraft || s.terrainEditing) {
+        set({ terrainDraft: null, terrainEditing: false });
+        return;
+      }
       if (s.furnitureDraft) {
         set({ furnitureDraft: null });
         return;

@@ -13,11 +13,11 @@ Zustand coordena documento confirmado, resultado gerado e estado transitório de
 | Operação | Persistência e histórico | Composição |
 |---|---|---|
 | Mudança de insumos construtivos: base/configurações, geometria de pavimentos/paredes/vãos/lajes ou ajustes | Salvar intenção, registrar uma operação | Invalidar e recalcular o projeto inteiro |
-| Renomeação; edição exclusiva de medidas, referência raster ou mobiliários; aparência de esquadrias | Salvar e registrar uma operação quando houver mudança | Preservar resultado e diagnósticos, inclusive já desatualizados |
+| Renomeação; edição exclusiva de medidas, referência raster, terreno ou mobiliários; aparência de esquadrias | Salvar e registrar uma operação quando houver mudança | Preservar resultado e diagnósticos, inclusive já desatualizados |
 | Seleção, câmera, troca de pavimento/fiada, hover, prévia e consulta de quantitativos | Não salvar nem registrar intenção | Não recalcular |
 | Preferências globais de apresentação | Gravar somente no armazenamento de preferências | Não recalcular |
 
-A comparação de insumos exclui measurements, referenceImages, imageElements, customImageAssets e opening.appearance; nomes dos pavimentos também são excluídos, mantendo id/level/defaultHeight. Mudança de altura padrão segue a comparação construtiva existente. Uma edição visual não promove resultado desatualizado a atual. Não classificar uma operação pela aparência do gesto; comparar os insumos reais antes/depois.
+A comparação de insumos exclui terrain, measurements, referenceImages, imageElements, customImageAssets e opening.appearance; nomes dos pavimentos também são excluídos, mantendo id/level/defaultHeight. Mudança de altura padrão segue a comparação construtiva existente. Uma edição visual não promove resultado desatualizado a atual. Não classificar uma operação pela aparência do gesto; comparar os insumos reais antes/depois.
 
 ## Fluxo sequencial
 
@@ -26,6 +26,8 @@ Após confirmar e validar um candidato construtivo: registrar a intenção, marc
 Alterações não construtivas salvam sem invalidar resultado. Uma operação completa de usuário é atômica; prévias, cancelamentos e ausência de mudança não gravam, não alteram metadados e não geram histórico. IDs da prévia não devem materializar UUIDs definitivos a cada movimento.
 
 ## Histórico e cancelamento
+
+Terreno usa terrainDraft e terrainEditing transitórios; Desfazer os cancela antes de consumir histórico. Criação válida, troca de material, cada arraste concluído e exclusão passam pelo commit normal com comando terrain, sem alterar insumos construtivos. Escape, blur e mudança de ferramenta/contexto descartam a prévia; soltar fora descarta o arraste.
 
 Antes de viajar no histórico, Desfazer cancela uma prévia ativa sem consumir uma operação. Histórico tem no máximo 50 intenções, sem peças derivadas; desfazer/refazer restaura IDs e dependências e recalcula apenas quando os insumos construtivos mudam. Não persistir histórico entre sessões. Criar/duplicar/excluir pavimento ajusta ativo e referências de sessão sem restaurar preferências transitórias descartadas.
 

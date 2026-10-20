@@ -289,6 +289,7 @@ export function mergeFloorView(
     project: local.project,
     model: {
       ...root.model,
+      terrain: local.model.terrain,
       floors: sorted(
         root.model.floors.map((f) => (f.id === id ? local.model.floors[0] : f)),
       ),

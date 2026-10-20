@@ -1388,6 +1388,7 @@ button.iconButton {
 }
 .editorApp .tools {
   gap: 3px;
+  row-gap: 4px;
   flex-wrap: wrap;
   min-width: 0;
 }
@@ -1406,6 +1407,9 @@ button.iconButton {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+.editorApp .fiadaToolbar > button {
+  min-height: 30px;
 }
 .editorApp .fiadaToolbar input {
   width: 44px;
@@ -2238,4 +2242,42 @@ button.iconButton {
   .furnitureGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+.terrainMaterials {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.terrainMaterials button {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  min-width: 0;
+  font-size: 11px;
+}
+.terrainMaterials canvas {
+  width: 64px;
+  height: 40px;
+  border-radius: 3px;
+}
+.terrainMaterials button[aria-pressed="true"] {
+  border-color: #52734a;
+  background: #e6efdf;
+  box-shadow: inset 0 0 0 1px #52734a;
+}
+
+.terrainProperties fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.terrainProperties legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-weight: 600;
 }

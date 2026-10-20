@@ -1,5 +1,6 @@
+import { useTerrainCanvas } from "./Terrain";
 import { useReferenceImageCanvas } from "./ReferenceImage";
-import { useProjectCamera } from "./useProjectCamera";
+import { MIN_CAMERA_SCALE, useProjectCamera } from "./useProjectCamera";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Circle, Text, Shape } from "react-konva";
 import {
@@ -136,6 +137,7 @@ export function Canvas({
     walls = doc.model.walls;
   const imageCanvas = useReferenceImageCanvas(camera, size);
   const imageDraft = useStore((s) => s.imageDraft);
+  const terrain = useTerrainCanvas(doc, tool, setTool, camera, host);
   const furniture = useImageElements(doc, tool, camera, host, setTool);
   const slabs = useSlabCanvas(doc, tool, setTool, camera);
   const measurements = useMeasurementCanvas(
@@ -443,7 +445,7 @@ export function Canvas({
     point = { x: size.width / 2, y: size.height / 2 },
   ) => {
     const w = world(point),
-      scale = Math.max(0.0015, Math.min(0.12, camera.scale * factor));
+      scale = Math.max(MIN_CAMERA_SCALE, Math.min(0.12, camera.scale * factor));
     setCamera({ scale, x: point.x - w.x * scale, y: point.y - w.y * scale });
   };
   const fit = () => {
@@ -456,10 +458,13 @@ export function Canvas({
     );
     if (
       mode === "plan" &&
-      (imageCanvas.bounds.length || furniture.bounds.length)
+      (imageCanvas.bounds.length ||
+        furniture.bounds.length ||
+        doc.model.terrain)
     ) {
       const points = [
         ...imageCanvas.bounds,
+        ...(doc.model.terrain?.contour ?? []),
         ...(mode === "plan" ? furniture.bounds : []),
         ...(box
           ? [
@@ -488,7 +493,7 @@ export function Canvas({
       maxX = box.x + box.width,
       maxY = box.y + box.height;
     const scale = Math.max(
-      0.0015,
+      MIN_CAMERA_SCALE,
       Math.min(
         0.06,
         (size.width - 160) / (maxX - minX),
@@ -549,6 +554,7 @@ export function Canvas({
     mode === "plan" &&
     tool !== "select" &&
     tool !== "measure" &&
+    tool !== "terrain" &&
     !busy &&
     !readonly &&
     !panning &&
@@ -604,6 +610,7 @@ export function Canvas({
             gesture.current ||
             measurements.isDragging() ||
             furniture.isDragging() ||
+            terrain.isDragging() ||
             busy ||
             (e.target as HTMLElement).closest("button")
           )
@@ -678,6 +685,8 @@ export function Canvas({
             return;
           }
           if (readonly) return;
+          if (terrain.down(p)) return;
+          if (tool === "terrain") return;
           if (imageCanvas.down(p)) return;
           if (furniture.down(p)) return;
           if (tool === "furniture") return;
@@ -808,6 +817,7 @@ export function Canvas({
             return;
           }
           const chosen = forcedWall ?? hits.find((w) => w.id === hostWallId);
+          if (!hits.length && !openings.length && terrain.selectAt(p)) return;
           useStore.getState().choose(chosen?.id ?? hits[0]?.id ?? null);
           if (hits.length > 1 && !chosen) setChoices(hits);
           else if (chosen ?? hits[0]) {
@@ -824,6 +834,7 @@ export function Canvas({
           if (e.button === 1) e.preventDefault();
         }}
         onLostPointerCapture={() => {
+          terrain.cancel();
           furniture.cancel();
           measurements.cancel();
           cancel();
@@ -831,6 +842,11 @@ export function Canvas({
         }}
         onMouseMove={(e) => {
           setMouseScreen(pointer(e.clientX, e.clientY));
+          if (
+            gesture.current?.type !== "pan" &&
+            terrain.move(world(pointer(e.clientX, e.clientY)))
+          )
+            return;
           if (
             gesture.current?.type !== "pan" &&
             furniture.move(world(pointer(e.clientX, e.clientY)))
@@ -855,6 +871,12 @@ export function Canvas({
           }
         }}
         onMouseUp={(e) => {
+          if (
+            e.button === 0 &&
+            gesture.current?.type !== "pan" &&
+            terrain.up(world(pointer(e.clientX, e.clientY)))
+          )
+            return;
           if (
             e.button === 0 &&
             gesture.current?.type !== "pan" &&
@@ -1017,13 +1039,19 @@ export function Canvas({
           height={size.height}
           onWheel={(e) => {
             e.evt.preventDefault();
-            if (!busy && !gesture.current && !measurements.isDragging())
+            if (
+              !busy &&
+              !gesture.current &&
+              !measurements.isDragging() &&
+              !terrain.isDragging()
+            )
               zoom(
                 e.evt.deltaY < 0 ? 1.12 : 1 / 1.12,
                 pointer(e.evt.clientX, e.evt.clientY),
               );
           }}
         >
+          {terrain.layer}
           {imageCanvas.layer}
           <Layer listening={false}>{grid}</Layer>
           {reference && (
@@ -1545,6 +1573,7 @@ export function Canvas({
           {measurements.layer}
           {furniture.controls}
           {imageCanvas.markers}
+          {terrain.controls}
         </Stage>
         {measurements.menu}
       </div>
@@ -1554,11 +1583,13 @@ export function Canvas({
         !doc.model.measurements.length &&
         !doc.model.referenceImages.length &&
         !doc.model.imageElements.length &&
+        !doc.model.terrain &&
         !imageDraft &&
         referenceEmpty &&
         tool !== "slab" &&
         tool !== "measure" &&
         tool !== "furniture" &&
+        tool !== "terrain" &&
         !preview && (
           <div className={styles.canvasHint}>
             <span>SEU PROJETO COMEÇA AQUI</span>
@@ -1661,25 +1692,27 @@ export function Canvas({
           <span>
             {readonly
               ? "Somente leitura"
-              : imageCanvas.hint
-                ? imageCanvas.hint
-                : furniture.hint
-                  ? furniture.hint
-                  : mode === "course"
-                    ? groutMode
-                      ? groutHover
-                        ? groutPresent(groutHover)
-                          ? "Remover graute · eixo completo"
-                          : "Adicionar graute · eixo completo"
-                        : "Clique num furo · Esc encerra Graute"
-                      : ""
-                    : tool === "furniture"
-                      ? "Clique para posicionar a imagem · Esc cancela"
-                      : tool === "wall"
-                        ? "Arraste para desenhar · Esc cancela"
-                        : tool === "measure"
-                          ? `${measurements.placing ? "Clique para posicionar a linha da cota" : measurements.creating ? "Clique no ponto final" : "Clique no ponto inicial"} · ${measurements.placing ? "Mova o mouse para ajustar o afastamento" : "Alt suspende atração"} · Esc cancela`
-                          : ""}
+              : terrain.hint
+                ? terrain.hint
+                : imageCanvas.hint
+                  ? imageCanvas.hint
+                  : furniture.hint
+                    ? furniture.hint
+                    : mode === "course"
+                      ? groutMode
+                        ? groutHover
+                          ? groutPresent(groutHover)
+                            ? "Remover graute · eixo completo"
+                            : "Adicionar graute · eixo completo"
+                          : "Clique num furo · Esc encerra Graute"
+                        : ""
+                      : tool === "furniture"
+                        ? "Clique para posicionar a imagem · Esc cancela"
+                        : tool === "wall"
+                          ? "Arraste para desenhar · Esc cancela"
+                          : tool === "measure"
+                            ? `${measurements.placing ? "Clique para posicionar a linha da cota" : measurements.creating ? "Clique no ponto final" : "Clique no ponto inicial"} · ${measurements.placing ? "Mova o mouse para ajustar o afastamento" : "Alt suspende atração"} · Esc cancela`
+                            : ""}
           </span>
         </div>
         <div className={styles.zoom}>

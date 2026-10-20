@@ -49,6 +49,13 @@ export type Measurement = {
   b: Point;
   offset?: number;
 };
+export type Terrain = {
+  id: string;
+  contour: Point[];
+  material: "grass" | "earth" | "sand" | "gravel" | "pavers";
+  revision: 1;
+  textureOrigin: Point;
+};
 export type SlabOpening = { id: string; contour: Point[] };
 export type Slab = {
   id: string;
@@ -112,10 +119,16 @@ export const defaultGroutSettings = (enabled = true): GroutSettings => ({
 export const defaultChannelLevels = (): ChannelLevel[] =>
   [11200, 22400].map((top) => ({ id: crypto.randomUUID(), top }));
 export type Tool =
-  "select" | "wall" | "slab" | "measure" | "furniture" | Opening["kind"];
+  | "select"
+  | "wall"
+  | "slab"
+  | "measure"
+  | "furniture"
+  | "terrain"
+  | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 16;
+  schemaVersion: 17;
   project: {
     id: string;
     name: string;
@@ -128,6 +141,7 @@ export type Project = {
     groutSettings: GroutSettings;
   };
   model: {
+    terrain: Terrain | null;
     floors: {
       id: string;
       name: string;
@@ -205,7 +219,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 16,
+    schemaVersion: 17,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -218,6 +232,7 @@ export function createProject(
       groutSettings: defaultGroutSettings(),
     },
     model: {
+      terrain: null,
       floors: [
         {
           id: crypto.randomUUID(),
@@ -237,7 +252,7 @@ export function createProject(
     adjustments: { junctions: [], grout: [], channels: [] },
     generated: null,
     generationState: { status: "outdated", diagnostics: [] },
-    metadata: { createdAt: now, updatedAt: now, appVersion: "0.15.1" },
+    metadata: { createdAt: now, updatedAt: now, appVersion: "0.16.0" },
   };
 }
 export const snap = (n: number, module: number) =>

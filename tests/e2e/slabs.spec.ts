@@ -171,7 +171,7 @@ test("M4.2 criação, fechamento explícito, vazios, movimento, espessura e tran
   await opening(page);
   const before = await exported(page),
     slab = before.model.slabs[0];
-  expect(before.schemaVersion).toBe(16);
+  expect(before.schemaVersion).toBe(17);
   expect(slab.openings).toHaveLength(1);
   await page
     .getByLabel("Selecionar elemento", { exact: true })
@@ -699,6 +699,7 @@ test("M4.2/M4.1: seletor unificado agrupa elementos do ativo e cancela prévia s
       path: `.tools/m42-elements-${info.project.name}-${width}.png`,
     });
   }
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await selector.focus();
   await page.keyboard.press("Home");
   await page.keyboard.press("ArrowDown");

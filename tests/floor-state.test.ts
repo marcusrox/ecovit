@@ -172,6 +172,7 @@ it.each([false, true])(
     expect(s.readonly).toBe(readonly);
     expect(s.doc!.model).toEqual({
       ...original.model,
+      terrain: null,
       measurements: [],
       referenceImages: [], imageElements: [], customImageAssets: [],
     });
@@ -205,6 +206,7 @@ it.each([false, true])(
     const s = useStore.getState();
     expect(s.doc?.model).toEqual({
       ...original.model,
+      terrain: null,
       measurements: [],
       referenceImages: [], imageElements: [], customImageAssets: [],
     });
@@ -220,6 +222,7 @@ it.each([false, true])(
     expect(s.message).toContain("Cálculo não concluído: Falha simulada");
     expect(parseFile(serializeFile(s.doc!).text).model).toEqual({
       ...original.model,
+      terrain: null,
       measurements: [],
       referenceImages: [], imageElements: [], customImageAssets: [],
     });

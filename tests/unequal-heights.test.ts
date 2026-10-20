@@ -147,6 +147,7 @@ it("EX-78/79: projeto real preserva desenho e compõe 40+2 fiadas", () => {
     doc = parseFile(legacyText);
   expect(doc.model).toEqual({
     ...original.model,
+      terrain: null,
     measurements: [],
     referenceImages: [], imageElements: [], customImageAssets: [],
   });

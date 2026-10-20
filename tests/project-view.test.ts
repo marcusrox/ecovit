@@ -24,7 +24,7 @@ it("recusa preferências corrompidas, coordenadas inválidas e zoom fora dos lim
     "[]",
     '{"centerX":"0","centerY":0,"scale":0.012}',
     '{"centerX":1e999,"centerY":0,"scale":0.012}',
-    ...[0, -1, 0.001, 0.13, null].map((scale) =>
+    ...[0, -1, 0.0000001, 0.13, null].map((scale) =>
       JSON.stringify({ centerX: 0, centerY: 0, scale }),
     ),
   ]) {
@@ -37,4 +37,12 @@ it("recusa preferências corrompidas, coordenadas inválidas e zoom fora dos lim
     },
   });
   expect(readProjectView("a")).toBeNull();
+});
+
+it("M11 restaura enquadramento de terreno grande e mantém limites finitos", () => {
+  for (const scale of [0.000001, 0.0005, 0.001, 0.12]) {
+    const value = { centerX: 500000, centerY: -250000, scale };
+    vi.stubGlobal("localStorage", { getItem: () => JSON.stringify(value) });
+    expect(readProjectView("terreno")).toEqual(value);
+  }
 });

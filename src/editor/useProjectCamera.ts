@@ -6,6 +6,8 @@ import {
   useState,
 } from "react";
 
+export const MIN_CAMERA_SCALE = 0.000001;
+
 type Camera = { x: number; y: number; scale: number };
 type Size = { width: number; height: number };
 type View = { centerX: number; centerY: number; scale: number };
@@ -19,7 +21,7 @@ export function readProjectView(id: string): View | null {
       Number.isFinite(v.centerX) &&
       Number.isFinite(v.centerY) &&
       Number.isFinite(v.scale) &&
-      v.scale >= 0.0015 &&
+      v.scale >= MIN_CAMERA_SCALE &&
       v.scale <= 0.12
     )
       return { centerX: v.centerX, centerY: v.centerY, scale: v.scale };
