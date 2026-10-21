@@ -1,4 +1,5 @@
 import { LIMIT, type Point, type Terrain } from "./project";
+import { validateCompass } from "./terrain-compass";
 
 export const TERRAIN_MATERIALS = {
   grass: "Grama",
@@ -122,6 +123,7 @@ export function validateTerrainContour(points: Point[], closed = true) {
     throw new Error("O terreno precisa ter área maior que zero.");
 }
 export function validateTerrain(terrain: Terrain) {
+  if (terrain.compass) validateCompass(terrain.compass);
   if (!(terrain.material in TERRAIN_MATERIALS) || terrain.revision !== 1)
     throw new Error("Material ou revisão de terreno não suportados.");
   if (

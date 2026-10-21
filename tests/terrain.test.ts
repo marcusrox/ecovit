@@ -242,7 +242,7 @@ it("M11 translação mantém área, material e fase da textura; inválidos não 
   expect(original).toEqual(before);
   expect(() => validateTerrain({ ...original, revision: 2 as 1 })).toThrow();
 });
-it("M11 formato 17 conserva terreno e lê 9–16 sem mutação ou campos novos disfarçados", () => {
+it("M11 formato vigente conserva terreno e lê 9–16 sem mutação ou campos novos disfarçados", () => {
   const d = fixture();
   d.model.terrain = terrain();
   const text = serializeFile(d).text;
@@ -260,7 +260,7 @@ it("M11 formato 17 conserva terreno e lê 9–16 sem mutação ou campos novos d
     }
     const before = JSON.stringify(old);
     expect(validateProject(old).model.terrain).toBeNull();
-    expect(validateProject(old).schemaVersion).toBe(17);
+    expect(validateProject(old).schemaVersion).toBe(18);
     expect(JSON.stringify(old)).toBe(before);
     expect(() =>
       validateProject({ ...old, model: { ...old.model, terrain: null } }),
@@ -290,6 +290,57 @@ it("M11 formato 17 conserva terreno e lê 9–16 sem mutação ou campos novos d
       },
     }),
   ).toThrow();
+});
+it("M11 alterações da rosa preservam resultado e não chamam motor, com histórico e falha de salvamento", async () => {
+  const d = fixture();
+  d.model.terrain = terrain();
+  await useStore.getState().open(d, true);
+  const spy = vi.spyOn(engine, "generate");
+  spy.mockClear();
+  const before = useStore.getState().doc!;
+  const next = {
+    ...before,
+    model: {
+      ...before.model,
+      terrain: {
+        ...before.model.terrain!,
+        compass: {
+          visible: true,
+          center: { x: -20000, y: 5000 },
+          size: 5000,
+          angle: 123,
+        },
+      },
+    },
+  };
+  await useStore.getState().commit(next, "terrain");
+  expect(useStore.getState().doc!.generated).toEqual(before.generated);
+  await useStore.getState().undo();
+  expect(useStore.getState().doc!.model.terrain!.compass).toBeUndefined();
+  await useStore.getState().undo(true);
+  expect(useStore.getState().doc!.model.terrain!.compass).toEqual(
+    next.model.terrain.compass,
+  );
+  vi.mocked(saveProject).mockRejectedValueOnce(new Error("quota"));
+  await useStore.getState().commit(
+    {
+      ...next,
+      model: {
+        ...next.model,
+        terrain: {
+          ...next.model.terrain,
+          compass: { ...next.model.terrain.compass, visible: false },
+        },
+      },
+    },
+    "terrain",
+  );
+  expect(useStore.getState().saved).toBe("error");
+  expect(spy).not.toHaveBeenCalled();
+  expect(
+    parseFile(serializeFile(useStore.getState().doc!).text).model.terrain!
+      .compass!.visible,
+  ).toBe(false);
 });
 it.each(Object.keys(TERRAIN_MATERIALS) as Terrain["material"][])(
   "M11 aparência %s preserva intenção em arquivo e cópia de projeto",

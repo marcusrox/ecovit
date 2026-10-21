@@ -49,12 +49,19 @@ export type Measurement = {
   b: Point;
   offset?: number;
 };
+export type TerrainCompass = {
+  visible: boolean;
+  center: Point;
+  size: number;
+  angle: number;
+};
 export type Terrain = {
   id: string;
   contour: Point[];
   material: "grass" | "earth" | "sand" | "gravel" | "pavers" | "soft";
   revision: 1;
   textureOrigin: Point;
+  compass?: TerrainCompass;
 };
 export type SlabOpening = { id: string; contour: Point[] };
 export type Slab = {
@@ -128,7 +135,7 @@ export type Tool =
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 17;
+  schemaVersion: 18;
   project: {
     id: string;
     name: string;
@@ -219,7 +226,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 17,
+    schemaVersion: 18,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),

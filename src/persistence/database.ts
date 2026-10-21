@@ -14,7 +14,9 @@ export const listProjects = async () =>
   (await projects.orderBy("updatedAt").reverse().toArray()).map((row) => ({
     id: row.id,
     name: row.doc.project.name,
-    compatible: [9, 10, 11, 12, 13, 14, 15, 16, 17].includes(row.doc.schemaVersion),
+    compatible: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(
+      row.doc.schemaVersion,
+    ),
     updatedAt: row.updatedAt,
     walls: row.doc.model.walls.length,
   }));

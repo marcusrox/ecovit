@@ -28,6 +28,7 @@ import { useStore } from "../state/store";
 import { usePreferences } from "../state/preferences";
 import { Icon } from "../ui/Icon";
 import { terrainTexture, TERRAIN_TILE_WORLD } from "./terrain-textures";
+import { initialCompass, compassSelectionId } from "../domain/terrain-compass";
 import styles from "../ui/App.module.css";
 
 type Camera = { x: number; y: number; scale: number };
@@ -59,6 +60,44 @@ export function TerrainProperties({ doc }: { doc: LocalProject }) {
       </p>
       <fieldset disabled={busy || readonly}>
         <legend>Aparência</legend>
+        <div className={styles.propertyGroup}>
+          <label>
+            <input
+              type="checkbox"
+              checked={terrain.compass?.visible ?? false}
+              onChange={(e) => {
+                const compass = terrain.compass ?? initialCompass(terrain);
+                useStore.getState().inspect({ terrainEditing: false });
+                useStore
+                  .getState()
+                  .choose(
+                    e.target.checked ? compassSelectionId(terrain) : terrain.id,
+                  );
+                void useStore.getState().commit(
+                  {
+                    ...doc,
+                    model: {
+                      ...doc.model,
+                      terrain: {
+                        ...terrain,
+                        compass: { ...compass, visible: e.target.checked },
+                      },
+                    },
+                  },
+                  "terrain",
+                );
+              }}
+            />{" "}
+            Mostrar rosa dos ventos
+          </label>
+          {terrain.compass?.visible && (
+            <p className={styles.note}>
+              Na ferramenta Selecionar, arraste a rosa para mover, os cantos
+              para mudar o tamanho e a alça externa para girar. Esc cancela o
+              gesto.
+            </p>
+          )}
+        </div>
         <div className={styles.terrainMaterials}>
           {Object.entries(TERRAIN_MATERIALS).map(([key, name]) => (
             <button

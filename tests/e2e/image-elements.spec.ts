@@ -289,7 +289,7 @@ for (const kind of ["catalog", "custom"] as const) {
       .getByRole("button", { name: "Baixar projeto", exact: true })
       .click();
     const text = await readFile((await (await event).path())!, "utf8");
-    expect(JSON.parse(text).schemaVersion).toBe(17);
+    expect(JSON.parse(text).schemaVersion).toBe(18);
     await page.reload();
     await page
       .getByRole("button", { name: /M10 teste/ })
@@ -385,7 +385,7 @@ test("M10 catálogo, inserção/cancelamento, propriedades, histórico e exporta
   const file = await event;
   const text = await readFile((await file.path())!, "utf8"),
     output = JSON.parse(text);
-  expect(output.schemaVersion).toBe(17);
+  expect(output.schemaVersion).toBe(18);
   expect(output.model.customImageAssets).toEqual([]);
   expect(text).not.toContain("data:image");
   expect(Buffer.byteLength(text)).toBeLessThan(10000);

@@ -109,10 +109,10 @@ it("M7 formato 16 preserva afastamento em arquivo/cópia/pavimento e lê 15 sem 
   });
   const old = JSON.parse(JSON.stringify(d));
   old.schemaVersion = 15;
-    Reflect.deleteProperty(old.model, "terrain");
+  Reflect.deleteProperty(old.model, "terrain");
   delete old.model.measurements[0].offset;
   const original = JSON.stringify(old);
-  expect(validateProject(old).schemaVersion).toBe(17);
+  expect(validateProject(old).schemaVersion).toBe(18);
   expect(JSON.stringify(old)).toBe(original);
   expect(
     measurementGeometry(validateProject(old).model.measurements[0]).a,
@@ -201,6 +201,69 @@ it("M7 atração prioriza vértices, Alt libera, zoom conserva tolerância e emp
   });
 });
 
+it("M7 atrai aos vértices globais do terreno em qualquer pavimento, sem atrair arestas ou rosa", () => {
+  const d = fixture(),
+    floor = d.model.floors[0].id;
+  const contour = [
+    { x: -10000, y: -5000 },
+    { x: 40000, y: -5000 },
+    { x: 40000, y: 30000 },
+    { x: 15000, y: 15000 },
+    { x: -10000, y: 30000 },
+  ];
+  d.model.terrain = {
+    id: crypto.randomUUID(),
+    contour,
+    textureOrigin: contour[0],
+    material: "soft",
+    revision: 1,
+    compass: {
+      visible: true,
+      center: { x: -30000, y: 10000 },
+      size: 5000,
+      angle: 45,
+    },
+  };
+  const original = structuredClone(d);
+  const other = duplicateFloor(d, floor, 28000, "Superior");
+  for (const floorId of [floor, other.model.floors[1].id]) {
+    const targets = measurementTargets(other, floorId);
+    expect(targets.vertices).toEqual(contour);
+    expect(targets.segments).toHaveLength(0);
+    for (const scale of [0.01, 0.1, 1]) {
+      for (const vertex of contour) {
+        const near = { x: vertex.x + 8 / scale, y: vertex.y };
+        expect(attractMeasurement(near, targets, scale)).toEqual({
+          point: vertex,
+          snapped: true,
+        });
+        expect(attractMeasurement(near, targets, scale, true)).toEqual({
+          point: near,
+          snapped: false,
+        });
+        expect(
+          attractMeasurement(
+            { x: vertex.x + 10 / scale, y: vertex.y },
+            targets,
+            scale,
+          ).snapped,
+        ).toBe(false);
+      }
+    }
+    expect(attractMeasurement({ x: 0, y: -5000 }, targets, 1).snapped).toBe(
+      false,
+    );
+    expect(
+      attractMeasurement(d.model.terrain.compass!.center, targets, 1).snapped,
+    ).toBe(false);
+  }
+  expect(d).toEqual(original);
+  expect(
+    measurementTargets({ ...d, model: { ...d.model, terrain: null } }, floor)
+      .vertices,
+  ).toEqual([]);
+});
+
 it("M7 alvos de faces, vãos, lajes, aberturas e outras medidas só no ativo", () => {
   const d = fixture(),
     floor = d.model.floors[0].id;
@@ -285,7 +348,7 @@ it("M7 validação, transporte, envelope 9 e cópias de pavimento preservam inte
     };
   };
   legacy.schemaVersion = 9;
-    Reflect.deleteProperty(legacy.model, "terrain");
+  Reflect.deleteProperty(legacy.model, "terrain");
   delete legacy.model.imageElements;
   delete legacy.model.customImageAssets;
   delete legacy.model.referenceImages;

@@ -1,6 +1,6 @@
 # Ecovit
 
-Editor local de plantas com paredes ortogonais, malha de meio tijolo, medidas independentes e composição nominal de fiadas. Terreno único por projeto com perímetro livre, cinco aparências e área em m²; botão Terreno para desenhar/selecionar, Ajustar nas propriedades para mover ou editar os pontos. Aplicativo 0.16.0, arquivo versão 17 e composição nominal-v10.
+Editor local de plantas com paredes ortogonais, malha de meio tijolo, medidas independentes e composição nominal de fiadas. Terreno único por projeto com perímetro livre, seis aparências, área em m² e rosa dos ventos opcional; botão Terreno para desenhar/selecionar, Ajustar nas propriedades para mover ou editar os pontos. Aplicativo 0.16.0, arquivo versão 18 e composição nominal-v10.
 
 | Marco | Funcionalidade | Estado |
 |---|---|---|

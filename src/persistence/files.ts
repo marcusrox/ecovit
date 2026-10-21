@@ -146,7 +146,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(17),
+    schemaVersion: z.literal(18),
     project: z
       .object({
         id,
@@ -188,6 +188,15 @@ const schema = z
             ]),
             revision: z.literal(1),
             textureOrigin: point,
+            compass: z
+              .object({
+                visible: z.boolean(),
+                center: point,
+                size: positive,
+                angle: z.number().finite().min(0).lt(360),
+              })
+              .strict()
+              .optional(),
           })
           .strict()
           .nullable(),
@@ -479,13 +488,31 @@ export function validateProject(
     };
   }
   if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 17
+  ) {
+    if (
+      "model" in value &&
+      value.model &&
+      typeof value.model === "object" &&
+      "terrain" in value.model &&
+      value.model.terrain &&
+      typeof value.model.terrain === "object" &&
+      "compass" in value.model.terrain
+    )
+      throw new Error("Arquivo inválido: rosa dos ventos em formato anterior.");
+    value = { ...value, schemaVersion: 18 };
+  }
+  if (
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 17
+    value.schemaVersion !== 18
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 17; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 18; demais formatos não são convertidos.",
     );
   const parsed = schema.safeParse(value);
   if (!parsed.success)

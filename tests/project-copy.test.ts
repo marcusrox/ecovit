@@ -82,6 +82,23 @@ function fixture() {
 }
 it("EX-93: cópia persistida independente, intenção/referências/pendências intactas", async () => {
   const source = fixture();
+  source.model.terrain = {
+    id: crypto.randomUUID(),
+    material: "grass",
+    revision: 1,
+    textureOrigin: { x: 0, y: 0 },
+    contour: [
+      { x: 0, y: 0 },
+      { x: 10000, y: 0 },
+      { x: 0, y: 10000 },
+    ],
+    compass: {
+      visible: true,
+      center: { x: -5000, y: 15000 },
+      size: 5000,
+      angle: 35,
+    },
+  };
   await saveProject(source);
   const copy = await duplicateProject(source.project.id, "  Minha cópia  ");
   expect(copy.project.id).not.toBe(source.project.id);
@@ -92,7 +109,11 @@ it("EX-93: cópia persistida independente, intenção/referências/pendências i
   expect(copy.metadata.appVersion).toBe("0.16.0");
   expect(await loadProject(source.project.id)).toEqual(source);
   expect(await loadProject(copy.project.id)).toEqual(copy);
+  expect(
+    (await listProjects()).find((p) => p.id === copy.project.id)?.compatible,
+  ).toBe(true);
   copy.model.walls[0].a.x = 1250;
+  copy.model.terrain!.compass!.angle = 210;
   copy.adjustments.junctions[0].binding = "active";
   copy.generated = null;
   copy.generationState = { status: "outdated", diagnostics: [] };

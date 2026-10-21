@@ -1,4 +1,5 @@
 import { useTerrainCanvas } from "./Terrain";
+import { useTerrainCompass } from "./TerrainCompass";
 import { useReferenceImageCanvas } from "./ReferenceImage";
 import { MIN_CAMERA_SCALE, useProjectCamera } from "./useProjectCamera";
 import type Konva from "konva";
@@ -144,6 +145,7 @@ export function Canvas({
   const imageCanvas = useReferenceImageCanvas(camera, size);
   const imageDraft = useStore((s) => s.imageDraft);
   const terrain = useTerrainCanvas(doc, tool, setTool, camera, host);
+  const compass = useTerrainCompass(doc, tool, camera, host);
   const furniture = useImageElements(doc, tool, camera, host, setTool);
   useLayoutEffect(() => {
     const element = host.current;
@@ -502,6 +504,7 @@ export function Canvas({
       const points = [
         ...imageCanvas.bounds,
         ...(doc.model.terrain?.contour ?? []),
+        ...compass.bounds,
         ...(mode === "plan" ? furniture.bounds : []),
         ...(box
           ? [
@@ -648,6 +651,7 @@ export function Canvas({
             measurements.isDragging() ||
             furniture.isDragging() ||
             terrain.isDragging() ||
+            compass.isDragging() ||
             busy ||
             (e.target as HTMLElement).closest("button")
           )
@@ -722,6 +726,7 @@ export function Canvas({
             return;
           }
           if (readonly) return;
+          if (compass.down(p)) return;
           if (terrain.down(p, e.altKey)) return;
           if (tool === "terrain") return;
           if (imageCanvas.down(p)) return;
@@ -872,6 +877,7 @@ export function Canvas({
         }}
         onLostPointerCapture={() => {
           terrain.cancel();
+          compass.cancel();
           furniture.cancel();
           measurements.cancel();
           cancel();
@@ -879,6 +885,11 @@ export function Canvas({
         }}
         onMouseMove={(e) => {
           setMouseScreen(pointer(e.clientX, e.clientY));
+          if (
+            gesture.current?.type !== "pan" &&
+            compass.move(world(pointer(e.clientX, e.clientY)))
+          )
+            return;
           if (
             gesture.current?.type !== "pan" &&
             terrain.move(world(pointer(e.clientX, e.clientY)), e.altKey)
@@ -908,6 +919,12 @@ export function Canvas({
           }
         }}
         onMouseUp={(e) => {
+          if (
+            e.button === 0 &&
+            gesture.current?.type !== "pan" &&
+            compass.up(world(pointer(e.clientX, e.clientY)))
+          )
+            return;
           if (
             e.button === 0 &&
             gesture.current?.type !== "pan" &&
@@ -1081,7 +1098,8 @@ export function Canvas({
               !busy &&
               !gesture.current &&
               !measurements.isDragging() &&
-              !terrain.isDragging()
+              !terrain.isDragging() &&
+              !compass.isDragging()
             )
               zoom(
                 e.evt.deltaY < 0 ? 1.12 : 1 / 1.12,
@@ -1612,6 +1630,7 @@ export function Canvas({
           {furniture.controls}
           {imageCanvas.markers}
           {terrain.controls}
+          {compass.layer}
         </Stage>
         {measurements.menu}
       </div>

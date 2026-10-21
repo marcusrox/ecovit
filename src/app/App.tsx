@@ -1,4 +1,5 @@
 import { TerrainProperties } from "../editor/Terrain";
+import { compassSelectionId } from "../domain/terrain-compass";
 import { ReferenceImageProperties } from "../editor/ReferenceImage";
 import { FloorControls } from "./Floors";
 import { PreferencesDialog } from "./Preferences";
@@ -440,7 +441,9 @@ function Properties({ doc }: { doc: Project }) {
           indicando o ângulo alinhado. Alt suspende a atração. O terreno mostra
           a área em m². Nas propriedades, escolha a aparência; Ajustar permite
           mover o conjunto ou seus pontos. É o mesmo terreno em todos os
-          pavimentos.
+          pavimentos. Ative a rosa dos ventos nas propriedades do terreno. Em
+          Selecionar, arraste seu corpo para posicionar, os cantos para mudar o
+          tamanho e a alça externa para girar.
         </p>
         <p>
           Imagem: marque um trecho longo de distância conhecida e informe seu
@@ -632,6 +635,24 @@ export default function App() {
         if (s.pendingOpening) s.inspect({ pendingOpening: null });
         else if (s.doc.model.imageElements.some((i) => i.id === s.select)) {
           void s.commit(setImageElement(s.doc, null, s.select), "furniture");
+        } else if (
+          s.doc.model.terrain?.compass &&
+          compassSelectionId(s.doc.model.terrain) === s.select
+        ) {
+          const terrain = s.doc.model.terrain;
+          void s.commit(
+            {
+              ...s.doc,
+              model: {
+                ...s.doc.model,
+                terrain: {
+                  ...terrain,
+                  compass: { ...terrain.compass!, visible: false },
+                },
+              },
+            },
+            "terrain",
+          );
         } else if (s.doc.model.terrain?.id === s.select) {
           void s.commit(
             { ...s.doc, model: { ...s.doc.model, terrain: null } },
@@ -1159,6 +1180,9 @@ export default function App() {
                       disabled={busy}
                       value={
                         editingDoc!.model.terrain?.id === selected ||
+                        (!!editingDoc!.model.terrain?.compass?.visible &&
+                          compassSelectionId(editingDoc!.model.terrain) ===
+                            selected) ||
                         editingDoc!.model.openings.some(
                           (o) => o.id === selected,
                         ) ||
@@ -1190,6 +1214,13 @@ export default function App() {
                       {editingDoc!.model.terrain && (
                         <option value={editingDoc!.model.terrain.id}>
                           Terreno do projeto
+                        </option>
+                      )}
+                      {editingDoc!.model.terrain?.compass?.visible && (
+                        <option
+                          value={compassSelectionId(editingDoc!.model.terrain)!}
+                        >
+                          Rosa dos ventos
                         </option>
                       )}
                       {!!editingDoc!.model.imageElements.length && (
@@ -1281,7 +1312,9 @@ export default function App() {
                 settings={() => setSettings(true)}
               />
             ) : mode === "plan" ? (
-              editingDoc!.model.terrain?.id === selected ? (
+              editingDoc!.model.terrain?.id === selected ||
+              (!!editingDoc!.model.terrain?.compass &&
+                compassSelectionId(editingDoc!.model.terrain) === selected) ? (
                 <TerrainProperties doc={editingDoc!} />
               ) : editingDoc!.model.measurements.some(
                   (m) => m.id === selected,

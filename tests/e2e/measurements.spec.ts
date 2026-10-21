@@ -7,7 +7,7 @@ import {
 } from "../../src/domain/project";
 import { parseFile } from "../../src/persistence/files";
 
-async function open(page: Page, wall = false) {
+async function open(page: Page, wall = false, terrain = false) {
   await page.addInitScript(() => {
     const contexts = new Map<HTMLCanvasElement, string[]>();
     const clear = CanvasRenderingContext2D.prototype.clearRect,
@@ -35,6 +35,27 @@ async function open(page: Page, wall = false) {
     width: 1250,
     height: 700,
   });
+  if (terrain) {
+    d.model.terrain = {
+      id: crypto.randomUUID(),
+      material: "soft",
+      revision: 1,
+      textureOrigin: { x: 0, y: 0 },
+      contour: [
+        { x: 0, y: 0 },
+        { x: 40000, y: 0 },
+        { x: 40000, y: 30000 },
+        { x: 20000, y: 20000 },
+        { x: 0, y: 30000 },
+      ],
+    };
+    d.model.floors.push({
+      ...d.model.floors[0],
+      id: crypto.randomUUID(),
+      name: "Superior",
+      level: 28000,
+    });
+  }
   if (wall)
     d.model.walls.push(
       makeWall(
@@ -110,6 +131,98 @@ async function texts(page: Page) {
   );
 }
 
+test("M7 encaixa criação e alças nos vértices do terreno, com Alt e zoom em outro pavimento", async ({
+  page,
+}) => {
+  await open(page, false, true);
+  const before = await state(page);
+  const near = async (x: number, y: number): Promise<[number, number]> => {
+    const camera = JSON.parse(
+      (await page.getByTestId("drawing").getAttribute("data-camera"))!,
+    );
+    return [x + 6 / camera.scale, y];
+  };
+  await measure(page).click();
+  await createMeasurement(
+    page,
+    await near(0, 0),
+    await near(40000, 30000),
+    [20000, 5000],
+  );
+  let m = (await state(page)).model.measurements[0];
+  expect(m.a).toEqual({ x: 0, y: 0 });
+  expect(m.b).toEqual({ x: 40000, y: 30000 });
+  await page.getByRole("button", { name: "Selecionar", exact: true }).click();
+  await drag(page, [m.b.x, m.b.y], await near(20000, 20000));
+  m = (await state(page)).model.measurements[0];
+  expect(m.a).toEqual({ x: 0, y: 0 });
+  expect(m.b).toEqual({ x: 20000, y: 20000 });
+  await page.getByRole("button", { name: "Desfazer", exact: true }).click();
+  expect((await state(page)).model.measurements[0].b).toEqual({
+    x: 40000,
+    y: 30000,
+  });
+  await page
+    .getByLabel("Pavimento", { exact: true })
+    .selectOption(before.model.floors[1].id);
+  const zoomAt = await point(page, 20000, 15000);
+  await page.mouse.move(zoomAt.x, zoomAt.y);
+  await page.mouse.wheel(0, -120);
+  await measure(page).click();
+  await createMeasurement(
+    page,
+    await near(0, 30000),
+    await near(40000, 0),
+    [20000, 5000],
+  );
+  const upper = (await state(page)).model.measurements.find(
+    (m) => m.floorId === before.model.floors[1].id,
+  )!;
+  expect(upper.a).toEqual({ x: 0, y: 30000 });
+  expect(upper.b).toEqual({ x: 40000, y: 0 });
+  await page.keyboard.down("Alt");
+  await createMeasurement(
+    page,
+    await near(0, 0),
+    await near(20000, 20000),
+    [20000, 10000],
+  );
+  await page.keyboard.up("Alt");
+  const free = (await state(page)).model.measurements.at(-1)!;
+  expect(free.a).not.toEqual({ x: 0, y: 0 });
+  expect(free.b).not.toEqual({ x: 20000, y: 20000 });
+  const saved = await state(page);
+  expect(saved.model.terrain).toEqual(before.model.terrain);
+  expect(saved.generated).toEqual(before.generated);
+  // Moving a referenced terrain later does not move the confirmed measurements.
+  await page.evaluate(async () => {
+    const path = "/src/state/store.ts",
+      s = (await import(path)).useStore.getState(),
+      d = s.doc;
+    await s.commit(
+      {
+        ...d,
+        model: {
+          ...d.model,
+          terrain: {
+            ...d.model.terrain,
+            contour: d.model.terrain.contour.map(
+              (p: { x: number; y: number }) => ({
+                x: p.x + 1000,
+                y: p.y + 1000,
+              }),
+            ),
+          },
+        },
+      },
+      "terrain",
+    );
+  });
+  expect((await state(page)).model.measurements).toEqual(
+    saved.model.measurements,
+  );
+});
+
 test("M7 diagonal livre, seleção, corpo/alças, histórico, preferências e transporte", async ({
   page,
 }) => {
@@ -179,7 +292,7 @@ test("M7 diagonal livre, seleção, corpo/alças, histórico, preferências e tr
   const output = parseFile(
     await readFile((await (await download).path())!, "utf8"),
   );
-  expect(output.schemaVersion).toBe(17);
+  expect(output.schemaVersion).toBe(18);
   expect(output.model.measurements).toEqual(
     (await state(page)).model.measurements,
   );

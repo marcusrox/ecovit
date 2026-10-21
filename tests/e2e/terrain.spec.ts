@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { createProject, type Project } from "../../src/domain/project";
 import { terrainArea, terrainAreaText } from "../../src/domain/terrain";
 import { parseFile } from "../../src/persistence/files";
+import { compassCorners, compassPoint } from "../../src/domain/terrain-compass";
 
 const panel = (page: Page) =>
   page.getByRole("complementary", { name: "Propriedades do terreno" });
@@ -121,6 +122,221 @@ async function draw(page: Page) {
   await expect(panel(page)).toBeVisible();
   await expect(page.getByRole("status")).toContainText("Salvo");
 }
+
+test("M11 rosa opcional: mover, tamanho, giro, seleção própria e histórico", async ({
+  page,
+}, info) => {
+  await open(page);
+  await draw(page);
+  const checkbox = page.getByRole("checkbox", {
+    name: "Mostrar rosa dos ventos",
+  });
+  await expect(checkbox).not.toBeChecked();
+  const base = await state(page),
+    past = await history(page);
+  await checkbox.check();
+  await expect(page.getByRole("status")).toContainText("Salvo");
+  let c = (await state(page)).model.terrain!.compass!;
+  await expect.poll(() => texts(page)).toContain("N");
+  await drag(
+    page,
+    [c.center.x, c.center.y],
+    [c.center.x + 10000, c.center.y - 7000],
+  );
+  c = (await state(page)).model.terrain!.compass!;
+  expect(c.center.x).toBeGreaterThan(25000);
+  expect(c.center.y).toBeLessThan(10000);
+  const center = c.center,
+    oldSize = c.size;
+  const corner = compassCorners(c)[2],
+    larger = compassPoint(c, c.size, c.size);
+  await drag(page, [corner.x, corner.y], [larger.x, larger.y]);
+  c = (await state(page)).model.terrain!.compass!;
+  expect(c.size).toBeGreaterThan(oldSize * 1.9);
+  expect(c.center).toEqual(center);
+  const camera = JSON.parse(
+    (await page.getByTestId("drawing").getAttribute("data-camera"))!,
+  );
+  const start = compassPoint(c, 0, -c.size / 2 - 24 / camera.scale),
+    end = compassPoint(c, c.size / 2 + 24 / camera.scale, 0);
+  await drag(page, [start.x, start.y], [end.x, end.y]);
+  c = (await state(page)).model.terrain!.compass!;
+  expect(c.angle).toBeGreaterThan(88);
+  expect(c.angle).toBeLessThan(92);
+  expect(c.center).toEqual(center);
+  expect((await state(page)).model.terrain!.contour).toEqual(
+    base.model.terrain!.contour,
+  );
+  expect((await state(page)).generated).toEqual(base.generated);
+  expect(await history(page)).toBe(past + 4);
+  await page.keyboard.press("Control+z");
+  expect((await state(page)).model.terrain!.compass!.angle).toBe(0);
+  await page.keyboard.press("Control+y");
+  expect((await state(page)).model.terrain!.compass).toEqual(c);
+  // Removing only the selected rose must preserve the terrain and its transform.
+  await page
+    .getByLabel("Selecionar elemento", { exact: true })
+    .selectOption(`compass:${base.model.terrain!.id}`);
+  await page.keyboard.press("Delete");
+  expect((await state(page)).model.terrain!.compass).toEqual({
+    ...c,
+    visible: false,
+  });
+  await page.keyboard.press("Control+z");
+  for (const [width, height] of [
+    [1366, 768],
+    [1280, 720],
+    [900, 680],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
+    await page
+      .getByLabel("Selecionar elemento", { exact: true })
+      .selectOption(`compass:${base.model.terrain!.id}`);
+    await expect(checkbox).toBeInViewport();
+    expect(await panel(page).getByRole("spinbutton").count()).toBe(0);
+    await page.screenshot({ path: info.outputPath(`rosa-${width}.png`) });
+  }
+});
+
+test("M11 rosa: visibilidade, pavimentos, arquivo, recarga e readonly", async ({
+  page,
+  context,
+}) => {
+  const d = createProject("Rosa persistente", {
+    length: 2500,
+    width: 1250,
+    height: 700,
+  });
+  d.model.floors.push({
+    ...d.model.floors[0],
+    id: crypto.randomUUID(),
+    name: "Superior",
+    level: 28000,
+  });
+  await open(page, d);
+  await draw(page);
+  const checkbox = page.getByRole("checkbox", {
+    name: "Mostrar rosa dos ventos",
+  });
+  await checkbox.check();
+  await expect(page.getByRole("status")).toContainText("Salvo");
+  const compass = (await state(page)).model.terrain!.compass!;
+  await checkbox.uncheck();
+  await expect.poll(() => texts(page)).not.toContain("N");
+  expect((await state(page)).model.terrain!.compass).toEqual({
+    ...compass,
+    visible: false,
+  });
+  await checkbox.check();
+  await page
+    .getByLabel("Pavimento", { exact: true })
+    .selectOption(d.model.floors[1].id);
+  await expect.poll(() => texts(page)).toContain("N");
+  expect((await state(page)).model.terrain!.compass).toEqual(compass);
+  await page.getByRole("button", { name: "Fiada", exact: true }).click();
+  await expect.poll(() => texts(page)).not.toContain("N");
+  await page.getByRole("button", { name: "Planta", exact: true }).click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Baixar projeto" }).click();
+  expect(
+    parseFile(await readFile((await (await download).path())!, "utf8")).model
+      .terrain!.compass,
+  ).toEqual(compass);
+  await page.reload();
+  await page
+    .getByRole("button", { name: /Rosa persistente/ })
+    .first()
+    .click();
+  await expect(page.getByRole("status")).toContainText("Salvo");
+  expect((await state(page)).model.terrain!.compass).toEqual(compass);
+  const other = await context.newPage();
+  await instrument(other);
+  await other.goto("/");
+  await other
+    .getByRole("button", { name: /Rosa persistente/ })
+    .first()
+    .click();
+  await expect(other.getByRole("status")).toContainText("Somente leitura");
+  await other.getByRole("button", { name: "Terreno", exact: true }).click();
+  await expect(
+    other.getByRole("checkbox", { name: "Mostrar rosa dos ventos" }),
+  ).toBeDisabled();
+  const before = await state(other);
+  await click(other, compass.center.x, compass.center.y);
+  expect(await state(other)).toEqual(before);
+  await expect.poll(() => texts(other)).toContain("N");
+  await other.close();
+});
+
+test("M11 rosa: cancelamento, enquadramento fora do terreno e importação inválida íntegra", async ({
+  page,
+}) => {
+  await open(page);
+  await draw(page);
+  await page.getByRole("checkbox", { name: "Mostrar rosa dos ventos" }).check();
+  await expect(page.getByRole("status")).toContainText("Salvo");
+  const before = await state(page),
+    past = await history(page),
+    c = before.model.terrain!.compass!;
+  const p = await point(page, c.center.x, c.center.y);
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
+  await page.mouse.move(p.x + 50, p.y + 30);
+  await page.keyboard.press("Escape");
+  await page.mouse.up();
+  expect(await state(page)).toEqual(before);
+  expect(await history(page)).toBe(past);
+  await page.getByRole("button", { name: "Terreno", exact: true }).click();
+  await page.getByRole("button", { name: "Ajustar", exact: true }).click();
+  await drag(page, [2000, 2000], [5000, 5000]);
+  expect((await state(page)).model.terrain!.compass).toEqual(c);
+  await page.getByRole("button", { name: "Concluir ajuste" }).click();
+  const saved = await state(page);
+  await page.getByTestId("import-file").setInputFiles({
+    name: "rosa-invalida.ecovit",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({
+        ...saved,
+        model: {
+          ...saved.model,
+          terrain: { ...saved.model.terrain, compass: { ...c, size: 0 } },
+        },
+      }),
+    ),
+  });
+  expect(await state(page)).toEqual(saved);
+  // Fit must include a visible rose positioned outside the polygon.
+  await page.evaluate(async () => {
+    const path = "/src/state/store.ts",
+      s = (await import(path)).useStore.getState(),
+      d = s.doc;
+    await s.commit(
+      {
+        ...d,
+        model: {
+          ...d.model,
+          terrain: {
+            ...d.model.terrain,
+            compass: {
+              ...d.model.terrain.compass,
+              center: { x: -50000, y: -20000 },
+            },
+          },
+        },
+      },
+      "terrain",
+    );
+  });
+  await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
+  const box = (await page.getByTestId("drawing").boundingBox())!,
+    center = await point(page, -50000, -20000);
+  expect(center.x).toBeGreaterThan(box.x);
+  expect(center.x).toBeLessThan(box.x + box.width);
+  expect(center.y).toBeGreaterThan(box.y);
+  expect(center.y).toBeLessThan(box.y + box.height);
+});
 
 test("M11 desenho livre com medida dinâmica, fechamento, label e cancelamento sem resíduos", async ({
   page,

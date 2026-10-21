@@ -91,6 +91,8 @@ export function measurementTargets(
 ): MeasurementTargets {
   const vertices: Point[] = [],
     segments: [Point, Point][] = [];
+  // Terrain is global to the project; only its confirmed vertices are anchors.
+  if (doc.model.terrain) vertices.push(...doc.model.terrain.contour);
   const ring = (points: Point[]) =>
     points.forEach((p, i) => {
       vertices.push(p);
