@@ -31,7 +31,7 @@
 | [M8 — Imagem de referência por pavimento](marcos/M8-Imagem-de-Referencia.md) | Uma imagem de fundo calibrada, posição/rotação, opacidade e interface compacta | BL-02; RF-16, integração com RF-02/08/09/11/12 | Implementado e aceito pelo solicitante |
 | [M9 — Tipos de portas e janelas](marcos/M9-Esquadrias.md) | Nove variantes e símbolos em Planta com botão único de orientação cíclica | BL-08; RF-06; [Elementos construtivos](arquitetura/Elementos-Construtivos.md#vãos-e-aparência-de-esquadrias); CT-17 | Implementado e aceito pelo solicitante |
 | [M10 — Mobiliários](marcos/M10-Mobiliarios.md) | Acervo integrado com 59 opções, ocorrências editáveis em Planta e upload incorporado ao arquivo | BL-01; RF-17; [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) | Entrega inicial aceita; ampliações do acervo, bloco de contenção em vista plana, espelhamento e ajustes de interface implementados, com teste manual e aceite específicos pendentes |
-| [M11 — Terreno](marcos/M11-Terreno.md) | Terreno global com perímetro livre, aparências, área em m² e ajuste de pontos/posição | RF-18; integração com RF-02/08/09/11/12/16 | Entrega original, Verde suave e rótulo superior/controlável implementados e aceitos |
+| [M11 — Terreno](marcos/M11-Terreno.md) | Terreno global com perímetro livre, aparências, área em m² e ajuste de pontos/posição | RF-18; integração com RF-02/08/09/11/12/16 | Entrega original, Verde suave e rótulo superior/controlável aceitos; reutilização das texturas e atração angular na criação implementadas, verificadas pelo Codex e aceitas pelo solicitante |
 
 Persistência, integridade e verificação acompanham cada entrega. M4 depende de M3; M5 depende de M4. Os subitens de M4 têm seus próprios critérios, verificações e aceites.
 

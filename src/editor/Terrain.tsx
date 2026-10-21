@@ -17,6 +17,7 @@ import {
 import {
   terrainAreaText,
   terrainContains,
+  terrainDrawingDirection,
   terrainLabelPoint,
   translateTerrain,
   validateTerrain,
@@ -144,7 +145,8 @@ export function useTerrainCanvas(
     vertex: number;
   } | null>(null);
   const [preview, setPreview] = useState<Terrain | null>(null);
-  const [cursor, setCursor] = useState<Point | null>(null);
+  const [rawCursor, setRawCursor] = useState<Point | null>(null);
+  const [altHeld, setAltHeld] = useState(false);
   const terrain = preview ?? doc.model.terrain;
   const active = mode === "plan" && !readonly && !busy;
   const editing = active && terrainEditing && select === doc.model.terrain?.id;
@@ -152,7 +154,8 @@ export function useTerrainCanvas(
   const cancel = useCallback(() => {
     drag.current = null;
     setPreview(null);
-    setCursor(null);
+    setRawCursor(null);
+    setAltHeld(false);
     useStore.getState().inspect({ terrainDraft: null, terrainEditing: false });
   }, []);
   useEffect(() => {
@@ -167,6 +170,17 @@ export function useTerrainCanvas(
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") cancel();
+      if (
+        e.key === "Alt" &&
+        useStore.getState().terrainDraft &&
+        !document.querySelector("dialog[open]") &&
+        !(e.target as HTMLElement).closest(
+          "input,textarea,select,[contenteditable]",
+        )
+      ) {
+        e.preventDefault();
+        setAltHeld(e.type === "keydown");
+      }
     };
     const outside = (e: MouseEvent) => {
       if (drag.current && !host.current?.contains(e.target as Node)) cancel();
@@ -179,22 +193,32 @@ export function useTerrainCanvas(
         cancel();
     };
     window.addEventListener("keydown", key);
+    window.addEventListener("keyup", key);
     window.addEventListener("blur", cancel);
     window.addEventListener("mouseup", outside);
     window.addEventListener("mousedown", clickOutside);
     return () => {
       window.removeEventListener("keydown", key);
+      window.removeEventListener("keyup", key);
       window.removeEventListener("blur", cancel);
       window.removeEventListener("mouseup", outside);
       window.removeEventListener("mousedown", clickOutside);
     };
   }, [cancel, host]);
   const points = terrainDraft?.points ?? [];
-  const closePoint = (p: Point) =>
-    points.length >= 3 &&
-    Math.hypot(p.x - points[0].x, p.y - points[0].y) * camera.scale <= 10
-      ? points[0]
-      : rounded(p);
+  const drawingTarget = (p: Point, alt: boolean) => {
+    // Closing has priority over directional attraction, including while Alt is held.
+    if (
+      points.length >= 3 &&
+      Math.hypot(p.x - points[0].x, p.y - points[0].y) * camera.scale <= 10
+    )
+      return { point: points[0], angle: null };
+    return points.length
+      ? terrainDrawingDirection(points[points.length - 1], p, alt)
+      : { point: rounded(p), angle: null };
+  };
+  const target = rawCursor ? drawingTarget(rawCursor, altHeld) : null;
+  const cursor = target?.point ?? null;
   const candidate = (p: Point) => {
     const g = drag.current!;
     if (g.vertex < 0)
@@ -212,9 +236,10 @@ export function useTerrainCanvas(
   };
   const notify = (e: unknown) =>
     useStore.getState().notify(e instanceof Error ? e.message : String(e));
-  const down = (p: Point) => {
+  const down = (p: Point, alt: boolean) => {
     if (creating) {
-      const point = closePoint(p);
+      setAltHeld(alt);
+      const point = drawingTarget(p, alt).point;
       if (points.length >= 3 && point === points[0]) {
         try {
           validateTerrainContour(points);
@@ -246,7 +271,7 @@ export function useTerrainCanvas(
           useStore
             .getState()
             .inspect({ terrainDraft: { points: [...points, point] } });
-          setCursor(point);
+          setRawCursor(point);
         } catch (e) {
           notify(e);
         }
@@ -266,9 +291,10 @@ export function useTerrainCanvas(
     }
     return false;
   };
-  const move = (p: Point) => {
+  const move = (p: Point, alt: boolean) => {
     if (creating) {
-      setCursor(closePoint(p));
+      setRawCursor(p);
+      setAltHeld(alt);
       return true;
     }
     if (editing && drag.current) {
@@ -317,7 +343,7 @@ export function useTerrainCanvas(
     ? [...points, ...(cursor && points.length ? [cursor] : [])]
     : [];
   const hint = creating
-    ? `Clique ${points.length ? "no próximo ponto ou no primeiro para fechar" : "no primeiro ponto"} · Esc cancela`
+    ? `Clique ${points.length ? "no próximo ponto ou no primeiro para fechar" : "no primeiro ponto"} · Alt suspende atração · Esc cancela`
     : editing
       ? "Arraste o terreno ou um ponto · Concluir ajuste ou Esc encerra"
       : "";
@@ -457,7 +483,7 @@ export function useTerrainCanvas(
                 if (cursor && points.length) {
                   const a = points[points.length - 1];
                   text(
-                    `${display(Math.hypot(cursor.x - a.x, cursor.y - a.y))} cm`,
+                    `${display(Math.hypot(cursor.x - a.x, cursor.y - a.y))} cm${target?.angle != null ? ` · ${target.angle}°` : ""}`,
                     { x: (a.x + cursor.x) / 2, y: (a.y + cursor.y) / 2 },
                     -16,
                   );

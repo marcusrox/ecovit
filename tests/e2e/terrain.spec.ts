@@ -171,6 +171,183 @@ test("M11 desenho livre com medida dinâmica, fechamento, label e cancelamento s
   expect((await state(page)).model.terrain).toEqual(edited);
 });
 
+test("M11 atração nas oito direções, indicador e cancelamento em três resoluções", async ({
+  page,
+}, info) => {
+  await open(page);
+  const before = await state(page);
+  const past = await history(page);
+  for (const [width, height] of [
+    [1366, 768],
+    [1280, 720],
+    [900, 680],
+  ]) {
+    await page.setViewportSize({ width, height });
+    const origin = await page.getByTestId("drawing").evaluate((host) => {
+      const camera = JSON.parse(host.getAttribute("data-camera")!);
+      return {
+        x: Math.round((host.clientWidth / 2 - camera.x) / camera.scale),
+        y: Math.round((host.clientHeight / 2 - camera.y) / camera.scale),
+      };
+    });
+    for (const angle of [0, 45, 90, 135, 180, 225, 270, 315]) {
+      await page.getByRole("button", { name: "Terreno", exact: true }).click();
+      await click(page, origin.x, origin.y);
+      const radians = ((angle + 3) * Math.PI) / 180;
+      const x = origin.x + 10000 * Math.cos(radians),
+        y = origin.y + 10000 * Math.sin(radians);
+      await move(page, x, y);
+      await expect
+        .poll(async () =>
+          (await texts(page)).some((text) => text.endsWith(` · ${angle}°`)),
+        )
+        .toBe(true);
+      if (angle === 45)
+        await page.screenshot({
+          path: info.outputPath(`atracao-${width}.png`),
+        });
+      await click(page, x, y);
+      const points = await page.evaluate(async () => {
+        const path = "/src/state/store.ts";
+        return (await import(path)).useStore.getState().terrainDraft.points as {
+          x: number;
+          y: number;
+        }[];
+      });
+      const dx = points[1].x - points[0].x,
+        dy = points[1].y - points[0].y;
+      if (angle % 90 === 0) expect(angle % 180 === 0 ? dy : dx).toBe(0);
+      else expect(Math.abs(dx)).toBe(Math.abs(dy));
+      expect(((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360).toBeCloseTo(
+        angle,
+      );
+      await page.keyboard.press("Escape");
+      // Reset the tool explicitly: Escape cancels only the draft.
+      await page
+        .getByRole("button", { name: "Selecionar", exact: true })
+        .click();
+    }
+  }
+  expect(await state(page)).toEqual(before);
+  expect(await history(page)).toBe(past);
+});
+
+test("M11 Alt sem mover o mouse, ângulo livre, zoom e fechamento prioritário", async ({
+  page,
+}) => {
+  await open(page);
+  const past = await history(page);
+  const angleVisible = async () =>
+    (await texts(page)).some((text) => / · \d+°$/.test(text));
+  await page.getByRole("button", { name: "Terreno", exact: true }).click();
+  await click(page, 0, 0);
+  await move(page, 30000, 1000);
+  await expect.poll(angleVisible).toBe(true);
+  await page.keyboard.down("Alt");
+  await expect.poll(angleVisible).toBe(false);
+  await page.keyboard.up("Alt");
+  await expect.poll(angleVisible).toBe(true);
+  await move(page, 30000, 6000);
+  await expect.poll(angleVisible).toBe(false);
+  await move(page, 30000, 1000);
+  await page.keyboard.down("Alt");
+  await click(page, 30000, 1000);
+  await page.keyboard.up("Alt");
+  await move(page, 30000, 30000);
+  await expect
+    .poll(async () =>
+      (await texts(page)).some((text) => text.endsWith(" · 90°")),
+    )
+    .toBe(true);
+  await click(page, 30000, 30000);
+  await click(page, 1000, 30000);
+  expect(await history(page)).toBe(past);
+  expect((await state(page)).model.terrain).toBeNull();
+  // Zoom between vertices; closure uses the raw pointer's 10 px target.
+  const p = await point(page, 0, 0);
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.wheel(0, -120);
+  await move(page, 200, 200);
+  await expect.poll(angleVisible).toBe(false);
+  await page.keyboard.down("Alt");
+  await click(page, 200, 200);
+  await page.keyboard.up("Alt");
+  await expect(panel(page)).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("Salvo");
+  const terrain = (await state(page)).model.terrain!;
+  expect(terrain.contour).toHaveLength(4);
+  expect(terrain.contour[0]).toEqual({ x: 0, y: 0 });
+  expect(terrain.contour[1].y).toBeGreaterThan(500);
+  expect(terrain.contour[1].x).toBe(terrain.contour[2].x);
+  expect(terrain.contour[2].y).toBe(terrain.contour[3].y);
+  expect(await history(page)).toBe(past + 1);
+  await page.keyboard.press("Control+z");
+  expect((await state(page)).model.terrain).toBeNull();
+  await page.keyboard.press("Control+y");
+  expect((await state(page)).model.terrain).toEqual(terrain);
+});
+
+test("M11 reutiliza texturas ao reabrir propriedades e trocar materiais sem alterar as prévias", async ({
+  page,
+}) => {
+  let gradients = 0;
+  await open(page);
+  await page.evaluate(() => {
+    const original = CanvasRenderingContext2D.prototype.createRadialGradient;
+    let count = 0;
+    CanvasRenderingContext2D.prototype.createRadialGradient = function (
+      ...args
+    ) {
+      count++;
+      return original.apply(this, args);
+    };
+    Object.assign(window, { textureGradients: () => count });
+  });
+  const count = () =>
+    page.evaluate(() =>
+      (
+        window as unknown as { textureGradients: () => number }
+      ).textureGradients(),
+    );
+  const previews = () =>
+    panel(page)
+      .locator("canvas")
+      .evaluateAll((canvases) =>
+        canvases.map((canvas) => (canvas as HTMLCanvasElement).toDataURL()),
+      );
+  await draw(page);
+  await expect(panel(page).locator("canvas")).toHaveCount(6);
+  const images = await previews();
+  gradients = await count();
+  expect(gradients).toBeGreaterThan(0);
+  const before = await state(page);
+  const past = await history(page);
+  for (let i = 0; i < 3; i++) {
+    // Click outside the terrain to unmount the panel, then select its body.
+    await click(page, -5000, -5000);
+    await expect(panel(page)).toBeHidden();
+    await click(page, 20000, 15000);
+    await expect(panel(page)).toBeVisible();
+    expect(await previews()).toEqual(images);
+    expect(await count()).toBe(gradients);
+  }
+  expect(await state(page)).toEqual(before);
+  expect(await history(page)).toBe(past);
+  for (const name of [
+    "Terra",
+    "Areia",
+    "Brita",
+    "Piso intertravado",
+    "Verde suave",
+    "Grama",
+  ]) {
+    await panel(page).getByRole("button", { name, exact: true }).click();
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    expect(await count()).toBe(gradients);
+    expect(await previews()).toEqual(images);
+  }
+});
+
 test("M11 materiais, movimento, pavimentos, arquivo e somente leitura", async ({
   page,
   context,

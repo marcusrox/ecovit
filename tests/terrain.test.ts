@@ -15,6 +15,7 @@ import {
   terrainArea,
   terrainAreaText,
   terrainContains,
+  terrainDrawingDirection,
   terrainLabelPoint,
   translateTerrain,
   validateTerrain,
@@ -58,6 +59,67 @@ beforeEach(() => {
   useStore.getState().close();
   vi.mocked(saveProject).mockResolvedValue(1);
   vi.mocked(saveProject).mockClear();
+});
+
+it.each([
+  [0, 10000, 0],
+  [45, 7071, 7071],
+  [90, 0, 10000],
+  [135, -7071, 7071],
+  [180, -10000, 0],
+  [225, -7071, -7071],
+  [270, 0, -10000],
+  [315, 7071, -7071],
+])(
+  "M11 atração em %i° inclui limite de 5° e mantém comprimento nominal",
+  (angle, x, y) => {
+    const origin = { x: -1234, y: 5678 };
+    for (const delta of [-5, -4, 0, 4, 5]) {
+      const radians = ((angle + delta) * Math.PI) / 180;
+      const result = terrainDrawingDirection(origin, {
+        x: origin.x + 10000 * Math.cos(radians),
+        y: origin.y + 10000 * Math.sin(radians),
+      });
+      expect(result).toEqual({
+        point: { x: origin.x + x, y: origin.y + y },
+        angle,
+      });
+      expect(
+        Math.abs(
+          Math.hypot(result.point.x - origin.x, result.point.y - origin.y) -
+            10000,
+        ),
+      ).toBeLessThan(1);
+    }
+    for (const delta of [-5.01, 5.01]) {
+      const radians = ((angle + delta) * Math.PI) / 180;
+      const target = {
+        x: origin.x + 10000 * Math.cos(radians),
+        y: origin.y + 10000 * Math.sin(radians),
+      };
+      expect(terrainDrawingDirection(origin, target)).toEqual({
+        point: { x: Math.round(target.x), y: Math.round(target.y) },
+        angle: null,
+      });
+    }
+  },
+);
+
+it("M11 Alt conserva posição livre; segmento nulo não indica ângulo", () => {
+  const origin = { x: 200, y: -300 };
+  expect(
+    terrainDrawingDirection(origin, { x: 10200.2, y: 55.7 }, true),
+  ).toEqual({ point: { x: 10200, y: 56 }, angle: null });
+  expect(terrainDrawingDirection(origin, origin)).toEqual({
+    point: origin,
+    angle: null,
+  });
+  expect(
+    terrainDrawingDirection(origin, { x: 200.1, y: -299.9 }).angle,
+  ).toBeNull();
+  // Integer precision must preserve an exact diagonal even at a rounding boundary.
+  const { point } = terrainDrawingDirection(origin, { x: 200.5, y: -299.5 });
+  expect(point.x - origin.x).toBe(point.y - origin.y);
 });
 it("M11 anéis livres convexos/côncavos, área exata e âncora superior independente do sentido", () => {
   const triangle = ring([

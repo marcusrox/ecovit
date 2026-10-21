@@ -436,9 +436,11 @@ function Properties({ doc }: { doc: Project }) {
         </p>
         <p>
           Terreno: clique nos pontos livres e no primeiro para fechar. O trecho
-          mostra sua medida e o terreno mostra a área em m². Nas propriedades,
-          escolha a aparência; Ajustar permite mover o conjunto ou seus pontos.
-          É o mesmo terreno em todos os pavimentos.
+          mostra sua medida e atrai direções a cada 45° quando próximo (até 5°),
+          indicando o ângulo alinhado. Alt suspende a atração. O terreno mostra
+          a área em m². Nas propriedades, escolha a aparência; Ajustar permite
+          mover o conjunto ou seus pontos. É o mesmo terreno em todos os
+          pavimentos.
         </p>
         <p>
           Imagem: marque um trecho longo de distância conhecida e informe seu

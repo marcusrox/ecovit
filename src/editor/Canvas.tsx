@@ -722,7 +722,7 @@ export function Canvas({
             return;
           }
           if (readonly) return;
-          if (terrain.down(p)) return;
+          if (terrain.down(p, e.altKey)) return;
           if (tool === "terrain") return;
           if (imageCanvas.down(p)) return;
           if (furniture.down(p)) return;
@@ -881,7 +881,7 @@ export function Canvas({
           setMouseScreen(pointer(e.clientX, e.clientY));
           if (
             gesture.current?.type !== "pan" &&
-            terrain.move(world(pointer(e.clientX, e.clientY)))
+            terrain.move(world(pointer(e.clientX, e.clientY)), e.altKey)
           )
             return;
           if (

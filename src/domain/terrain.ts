@@ -9,6 +9,44 @@ export const TERRAIN_MATERIALS = {
   soft: "Verde suave",
 } as const;
 export const MAX_TERRAIN_POINTS = 256;
+
+/** Drawing aid relative to the plan axes (+X right, +Y down), not a contour rule. */
+export function terrainDrawingDirection(
+  origin: Point,
+  target: Point,
+  suspended = false,
+): { point: Point; angle: number | null } {
+  const free = { x: Math.round(target.x), y: Math.round(target.y) };
+  const dx = target.x - origin.x,
+    dy = target.y - origin.y,
+    length = Math.hypot(dx, dy);
+  if (suspended || length === 0) return { point: free, angle: null };
+  const degrees = (Math.atan2(dy, dx) * 180) / Math.PI;
+  const nearest = Math.round(degrees / 45) * 45;
+  if (Math.abs(degrees - nearest) > 5 + 1e-10)
+    return { point: free, angle: null };
+  const angle = ((nearest % 360) + 360) % 360;
+  const [ux, uy] = [
+    [1, 0],
+    [1, 1],
+    [0, 1],
+    [-1, 1],
+    [-1, 0],
+    [-1, -1],
+    [0, -1],
+    [1, -1],
+  ][angle / 45];
+  const step = Math.round(length / Math.hypot(ux, uy));
+  const point = {
+    x: origin.x + step * ux,
+    y: origin.y + step * uy,
+  };
+  return {
+    point,
+    angle: point.x === origin.x && point.y === origin.y ? null : angle,
+  };
+}
+
 const cross = (a: Point, b: Point, c: Point) =>
   BigInt(b.x - a.x) * BigInt(c.y - a.y) - BigInt(b.y - a.y) * BigInt(c.x - a.x);
 const equal = (a: Point, b: Point) => a.x === b.x && a.y === b.y;

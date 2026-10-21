@@ -3,7 +3,15 @@ import type { Terrain } from "../domain/project";
 // Original procedural materials, revision 1. A tile covers 4 × 4 nominal metres.
 // All marks wrap at tile boundaries; neither the image nor its scale depends on the ring.
 export const TERRAIN_TILE_WORLD = 40_000;
+// Revision 1 tiles are shared by the terrain and its previews. Consumers only
+// read these canvases; keeping one per material bounds memory across projects.
+const textures: Partial<Record<Terrain["material"], HTMLCanvasElement>> = {};
+
 export function terrainTexture(material: Terrain["material"]) {
+  return (textures[material] ??= createTerrainTexture(material));
+}
+
+function createTerrainTexture(material: Terrain["material"]) {
   const tile = document.createElement("canvas");
   tile.width = tile.height = 800;
   const ctx = tile.getContext("2d")!;
