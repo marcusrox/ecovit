@@ -4,7 +4,7 @@
 
 Registro consolidado da entrega. Versões e verificações referem-se ao marco; o comportamento e os formatos vigentes são definidos nas referências por assunto. Aceite global não atribui resultado individual a roteiros manuais.
 
-**Estado:** M3.1, M3.2 e M3.3 implementados e aceitos.
+**Estado:** M3.1, M3.2 e M3.3 originais implementados e aceitos. Seleção individual em Fiada e restauração de grautes implementadas; aceite específico pendente do solicitante.
 
 ## Alcance e referências
 
@@ -39,6 +39,8 @@ PRD §14, [Motor e diagnósticos](../arquitetura/Motor-e-Diagnosticos.md#canalet
 | M3-A14 | Hover +/− e clique afetam eixo completo; cor escura, vazios sem alvo; remoção não é compensada pelo motor — EX-22/32/33. |
 | M3-A15 | Chrome/Edge, bases padrão/personalizada, rotações, referências e limites defensivos; regressões M2 preservadas onde novos elementos estejam desativados. |
 | M3-A16 | Novos projetos recebem os valores da tabela normativa do PRD §14; Aplicar/Cancelar/restaurar, persistência e histórico corretos; defaults não alteram vãos existentes; recálculo preserva ajustes. |
+| M3-A17 | Clique normal em Fiada seleciona uma parede; célula compartilhada oferece escolha. Conjunto continua pelo painel Encontros, com primeira fiada para edição. Graute vertical filtra furos/interação/ajustes pela parede, conserva opção de pavimento inteiro e informa eixos compartilhados. Seleção não altera documento/histórico. |
+| M3-A18 | Restaurar parede/pavimento confirma alcance, contagens e compartilhados; remove inclusões/exclusões e pendentes em todas as fiadas do alcance, preservando demais ajustes/pavimentos/configurações. Cancelar/Escape não muda dados; confirmar salva/recalcula em uma operação desfazível. Categorias desligadas, ausência de ajustes, bloqueios e somente leitura têm comportamento explícito conforme RF-07. |
 
 ## M3.1 — Vãos: verificações e aceite
 
@@ -57,3 +59,15 @@ Fontes: [canaletas](../../tests/channels.test.ts) e [fluxos de canaletas](../../
 Tipos, lint e build passaram. Foram registrados 125 testes de domínio/persistência e 72 casos de navegador, 36 por navegador Chrome/Edge, com verificações específicas de identidade e diagnósticos. Cobertura: M3-A13/14 e partes de A07–10/15/16 referentes a grautes. EX-22/32/33/34 verificam eixos por malha, categorias independentes, exclusões sem compensação e intervalos interrompidos por vãos. Aceite global recebido; a execução assistida pelo Codex e o aceite do solicitante são evidências distintas.
 
 Carga observada: 100 paredes, 200 eixos e 300 intervalos; 2.995 ms Chrome / 2.521 ms Edge para abertura/importação/geração/salvamento. Algumas verificações concorreram na máquina; não é tempo isolado do motor nem garantia para quatro pavimentos. Fontes: [grautes](../../tests/grout.test.ts) e [fluxos de grautes](../../tests/e2e/grout.spec.ts).
+
+### Seleção individual e restauração — M3-A17/A18
+
+**Alcance implementado:** seleção individual pela alvenaria real em Fiada, escolha de parede em célula compartilhada e manutenção dos conjuntos pelo painel Encontros. Graute vertical acompanha a parede, com seletor acessível e opção para todas as paredes do ativo. Ações Restaurar nesta parede… e Restaurar no pavimento… com confirmação, contagens, aviso de eixo compartilhado e respeito às categorias atuais. Remoção de ajustes por alcance, incluindo pendentes, sem modificar os demais ajustes; recálculo pelo fluxo existente, um passo no histórico, persistência e recuperação de falha. Contratos em RF-04/07 e nas arquiteturas de Editor e Estado. Sem alteração do motor construtivo, dependências ou envelope 18.
+
+**Verificação do Codex:** tipos, lint e build passaram; suíte integral de domínio/persistência com 402 testes em 31 arquivos, incluindo cinco casos novos de escopo, associação de furos, histórico, arquivo, somente leitura e falha de armazenamento. Os cinco foram revalidados após ajuste dos tipos dos testes, sem duplicar a cobertura. Build conserva os avisos conhecidos de anotações do Zod e tamanho do bundle.
+
+Foram aprovados 84 casos de navegador em 5 minutos, 42 por Chrome/Edge, nos arquivos de restauração, grautes, canaletas, Fiada, cruz, comparação de pavimentos e alturas diferentes. Incluem oito execuções dos quatro fluxos novos: seleção individual/conjuntos/filtro, restauração por parede/cancelamento/Escape/compartilhados, restauração do pavimento com categorias desligadas/pendentes e consulta em somente leitura. Histórico, reabertura, preservação de outros andares e ausência de mutação na seleção conferidos. Revisão visual de seleção e diálogo em 1366×768, 1280×720 e 900×680, com foco por teclado e ausência de excesso horizontal. Sessões isoladas e servidor próprio na porta 5174; porta 5173 preservada. Logs completos em `.tools/grout-restore/`, ignorados pelo Git. Não representa execução da suíte inteira de navegador. Fontes: [domínio e estado](../../tests/grout-restore.test.ts) e [fluxos de seleção/restauração](../../tests/e2e/grout-restoration.spec.ts).
+
+**Limitações e aceite:** aceites anteriores preservados. A restauração usa os padrões atuais, sem recuperação de uma distribuição automática histórica ou alteração das configurações; ajuste compartilhado é removido integralmente. Não há nova validação física, auditoria completa de acessibilidade ou garantia de desempenho. Teste manual e aceite específicos de M3-A17/A18 pendentes do solicitante.
+
+**Roteiro manual:** selecionar paredes em Fiada e escolher uma no encontro; conferir filtro dos furos e a seleção de Conjunto pelo painel. Incluir/remover grautes, restaurar uma parede e depois o pavimento, verificando contagens, compartilhados e preservação do outro andar. Cancelar/Escape, confirmar, desfazer/refazer e reabrir. Conferir também com categorias desligadas e em somente leitura.

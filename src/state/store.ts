@@ -158,7 +158,8 @@ type State = Inspection & {
       | "measure"
       | "image"
       | "furniture"
-      | "terrain",
+      | "terrain"
+      | "restore-grouts",
   ) => Promise<void>;
   undo: (redo?: boolean) => Promise<void>;
   notify: (message: string) => void;
@@ -323,6 +324,14 @@ export const useStore = create<State>((set, get) => {
       set((s) => ({
         select,
         diagnosticWalls: [],
+        ...(s.mode === "course"
+          ? {
+              component: null,
+              preview: null,
+              channelBand: null,
+              groutCell: null,
+            }
+          : {}),
         ...(select !== s.select
           ? {
               terrainDraft: null,
@@ -517,69 +526,95 @@ export const useStore = create<State>((set, get) => {
             JSON.stringify(s.doc.adjustments)
         )
           return;
+        if (
+          command === "restore-grouts" &&
+          (JSON.stringify(candidate.project) !==
+            JSON.stringify(s.doc.project) ||
+            JSON.stringify(candidate.model) !== JSON.stringify(s.doc.model) ||
+            JSON.stringify(candidate.adjustments.channels) !==
+              JSON.stringify(s.doc.adjustments.channels) ||
+            JSON.stringify(candidate.adjustments.junctions) !==
+              JSON.stringify(s.doc.adjustments.junctions) ||
+            candidate.adjustments.grout.some(
+              (a) =>
+                JSON.stringify(a) !==
+                JSON.stringify(
+                  s.doc!.adjustments.grout.find((old) => old.id === a.id),
+                ),
+            ) ||
+            s.doc.adjustments.grout.some(
+              (a) =>
+                !candidate.adjustments.grout.some((next) => next.id === a.id) &&
+                a.floorId !== s.activeFloorId,
+            ))
+        )
+          throw new Error(
+            "Restaure somente ajustes de graute do pavimento ativo.",
+          );
         const changed = changedInputs(s.doc, candidate);
         const doc = validateProject(
           {
             ...(command === "resize"
               ? reconcileOpenings(s.doc, candidate)
               : candidate),
-            adjustments: !changed
-              ? candidate.adjustments
-              : {
-                  ...candidate.adjustments,
-                  grout: candidate.adjustments.grout
-                    .map((a) => ({
-                      ...a,
-                      wallIds: a.wallIds.filter((id) =>
-                        candidate.model.walls.some((w) => w.id === id),
-                      ),
-                    }))
-                    .filter((a) => a.wallIds.length),
-                  channels: candidate.adjustments.channels.filter((a) =>
-                    candidate.model.walls.some((w) => w.id === a.wallId),
-                  ),
-                  junctions: candidate.adjustments.junctions
-                    .map((a) => {
-                      const wallIds = a.wallIds.filter((id) =>
-                        candidate.model.walls.some((w) => w.id === id),
-                      );
-                      const applicable =
-                        wallIds.length === a.wallIds.length &&
-                        signature(
-                          candidate.model.walls.filter((w) =>
-                            wallIds.includes(w.id),
-                          ),
-                        ) === a.signature;
-                      const geometryChanged =
-                        wallIds.length !== a.wallIds.length ||
-                        wallIds.some(
-                          (id) =>
-                            s.doc!.model.walls.find((w) => w.id === id)
-                              ?.height !==
-                            candidate.model.walls.find((w) => w.id === id)
-                              ?.height,
-                        ) ||
-                        signature(
-                          s.doc!.model.walls.filter((w) =>
-                            a.wallIds.includes(w.id),
-                          ),
-                        ) !==
+            adjustments:
+              !changed || command === "restore-grouts"
+                ? candidate.adjustments
+                : {
+                    ...candidate.adjustments,
+                    grout: candidate.adjustments.grout
+                      .map((a) => ({
+                        ...a,
+                        wallIds: a.wallIds.filter((id) =>
+                          candidate.model.walls.some((w) => w.id === id),
+                        ),
+                      }))
+                      .filter((a) => a.wallIds.length),
+                    channels: candidate.adjustments.channels.filter((a) =>
+                      candidate.model.walls.some((w) => w.id === a.wallId),
+                    ),
+                    junctions: candidate.adjustments.junctions
+                      .map((a) => {
+                        const wallIds = a.wallIds.filter((id) =>
+                          candidate.model.walls.some((w) => w.id === id),
+                        );
+                        const applicable =
+                          wallIds.length === a.wallIds.length &&
                           signature(
                             candidate.model.walls.filter((w) =>
                               wallIds.includes(w.id),
                             ),
-                          );
-                      return {
-                        ...a,
-                        wallIds,
-                        binding:
-                          !geometryChanged || applicable
-                            ? a.binding
-                            : ("pending" as const),
-                      };
-                    })
-                    .filter((a) => a.wallIds.length),
-                },
+                          ) === a.signature;
+                        const geometryChanged =
+                          wallIds.length !== a.wallIds.length ||
+                          wallIds.some(
+                            (id) =>
+                              s.doc!.model.walls.find((w) => w.id === id)
+                                ?.height !==
+                              candidate.model.walls.find((w) => w.id === id)
+                                ?.height,
+                          ) ||
+                          signature(
+                            s.doc!.model.walls.filter((w) =>
+                              a.wallIds.includes(w.id),
+                            ),
+                          ) !==
+                            signature(
+                              candidate.model.walls.filter((w) =>
+                                wallIds.includes(w.id),
+                              ),
+                            );
+                        return {
+                          ...a,
+                          wallIds,
+                          binding:
+                            !geometryChanged || applicable
+                              ? a.binding
+                              : ("pending" as const),
+                        };
+                      })
+                      .filter((a) => a.wallIds.length),
+                  },
             generated: changed ? null : s.doc.generated,
             generationState: changed
               ? { status: "outdated", diagnostics: [] }

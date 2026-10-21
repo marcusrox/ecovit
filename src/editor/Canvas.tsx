@@ -187,6 +187,9 @@ export function Canvas({
     panning || spaceHeld,
   );
   const output = compositionPreview ?? doc.generated;
+  const courseWall =
+    mode === "course" ? walls.find((w) => w.id === selected) : undefined;
+  const courseChoicePoint = useRef<Point | null>(null);
   const markers = useMemo(
     () => (output && mode === "course" ? courseCells(doc, output, course) : []),
     [doc, output, mode, course],
@@ -200,11 +203,31 @@ export function Canvas({
     module * camera.scale >= 9
       ? markers.find(
           (c) =>
+            (!courseWall || c.wallIds.includes(courseWall.id)) &&
             Math.hypot(p.x - c.x - module / 2, p.y - c.y - module / 2) *
               camera.scale <=
-            Math.min(9, module * camera.scale * 0.4),
+              Math.min(9, module * camera.scale * 0.4),
         )
       : undefined;
+  const chooseCourseWall = (id: string | null, p?: Point) => {
+    useStore.getState().choose(id);
+    const bands =
+      p && id
+        ? output?.channels?.filter(
+            (b) =>
+              b.course === course &&
+              b.wallId === id &&
+              b.cells.some(
+                (c) =>
+                  p.x >= c.x &&
+                  p.x < c.x + module &&
+                  p.y >= c.y &&
+                  p.y < c.y + module,
+              ),
+          )
+        : [];
+    useStore.getState().inspect({ channelBand: bands?.[0]?.id ?? null });
+  };
   const groutPresent = (p: Point) => {
     const row = output?.courses[course - 1],
       axis = output?.grouts?.find((a) => groutId(a) === groutId(p));
@@ -691,38 +714,22 @@ export function Canvas({
               if (hits.length > 1) setOpeningChoices(hits);
               return;
             }
-            useStore.getState().choose(null);
-            const output = compositionPreview ?? doc.generated;
-            const piece = output?.courses[course - 1]?.pieces.find(
-              (b) =>
-                p.x >= b.x &&
-                p.x < b.x + b.width &&
-                p.y >= b.y &&
-                p.y < b.y + b.height,
+            const cell = markers.find(
+              (c) =>
+                p.x >= c.x &&
+                p.x < c.x + module &&
+                p.y >= c.y &&
+                p.y < c.y + module,
             );
-            const comp = output?.components.find((c) =>
-              piece?.wallIds.some((id) => c.wallIds.includes(id)),
+            const candidates = walls.filter((w) =>
+              cell?.wallIds.includes(w.id),
             );
-            const bands =
-              piece && isChannel(piece)
-                ? (output?.channels?.filter(
-                    (b) =>
-                      b.course === course &&
-                      b.cells.some(
-                        (c) =>
-                          p.x >= c.x &&
-                          p.x < c.x + module &&
-                          p.y >= c.y &&
-                          p.y < c.y + module,
-                      ),
-                  ) ?? [])
-                : [];
-            if (bands.length > 1) setChannelChoices(bands.map((b) => b.id));
-            useStore.getState().inspect({
-              component: comp?.id ?? null,
-              channelBand: bands[0]?.id ?? null,
-              preview: null,
-            });
+            courseChoicePoint.current = p;
+            chooseCourseWall(
+              candidates.length === 1 ? candidates[0].id : null,
+              p,
+            );
+            if (candidates.length > 1) setChoices(candidates);
             return;
           }
           if (readonly) return;
@@ -1363,12 +1370,41 @@ export function Canvas({
                   if (ghost === "next") render(course, true);
                 }}
               />
+              {courseWall &&
+                courseWall.height >= course * doc.project.base.height &&
+                output?.courses[course - 1]?.pieces
+                  .filter((p) => p.wallIds.includes(courseWall.id))
+                  .map((p) => {
+                    const b = bounds(courseWall, module),
+                      x = Math.max(b.x, p.x),
+                      y = Math.max(b.y, p.y);
+                    const width = Math.min(b.x + b.width, p.x + p.width) - x,
+                      height = Math.min(b.y + b.height, p.y + p.height) - y;
+                    return width > 0 && height > 0 ? (
+                      <Rect
+                        key={`selected-wall-${p.id}`}
+                        x={x * camera.scale + camera.x}
+                        y={y * camera.scale + camera.y}
+                        width={width * camera.scale}
+                        height={height * camera.scale}
+                        fill="rgba(36,93,73,0.10)"
+                        stroke="#245d49"
+                        strokeWidth={2}
+                      />
+                    ) : null;
+                  })}
               {groutMode &&
                 !groutBlocked &&
                 (groutHover ?? selectedGrout) &&
                 (() => {
                   const c = groutHover ?? selectedGrout!;
-                  if (!markers.some((m) => groutId(m) === groutId(c)))
+                  if (
+                    !markers.some(
+                      (m) =>
+                        groutId(m) === groutId(c) &&
+                        (!courseWall || m.wallIds.includes(courseWall.id)),
+                    )
+                  )
                     return null;
                   return (
                     <>
@@ -1693,8 +1729,15 @@ export function Canvas({
             <button
               key={w.id}
               onClick={() => {
-                useStore.getState().choose(w.id);
-                setHostWallId(w.id);
+                if (mode === "course")
+                  chooseCourseWall(
+                    w.id,
+                    courseChoicePoint.current ?? undefined,
+                  );
+                else {
+                  useStore.getState().choose(w.id);
+                  setHostWallId(w.id);
+                }
                 setChoices([]);
               }}
             >

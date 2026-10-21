@@ -17,7 +17,46 @@ export type GroutAxis = Point & {
 export function activeGrout(axis: GroutAxis, bottom: number, top: number) {
   return axis.intervals.some((i) => i.bottom < top && i.top > bottom);
 }
-export function courseCells(doc: Project, result: Composition, course: number) {
+export function groutAdjustmentsInScope(
+  doc: Project,
+  floorId: string,
+  wallId?: string,
+) {
+  if (
+    !doc.model.floors.some((f) => f.id === floorId) ||
+    (wallId &&
+      !doc.model.walls.some((w) => w.id === wallId && w.floorId === floorId))
+  )
+    throw new Error("Parede ou pavimento indisponível para restaurar grautes.");
+  return doc.adjustments.grout.filter(
+    (a) => a.floorId === floorId && (!wallId || a.wallIds.includes(wallId)),
+  );
+}
+
+export function restoreAutomaticGrouts<T extends Project>(
+  doc: T,
+  floorId: string,
+  wallId?: string,
+): T {
+  const ids = new Set(
+    groutAdjustmentsInScope(doc, floorId, wallId).map((a) => a.id),
+  );
+  if (!ids.size) return doc;
+  return {
+    ...doc,
+    adjustments: {
+      ...doc.adjustments,
+      grout: doc.adjustments.grout.filter((a) => !ids.has(a.id)),
+    },
+  };
+}
+
+export function courseCells(
+  doc: Project,
+  result: Composition,
+  course: number,
+  wallId?: string,
+) {
   const m = doc.project.base.width,
     cells = new Map<
       string,
@@ -46,7 +85,9 @@ export function courseCells(doc: Project, result: Composition, course: number) {
         };
         cells.set(groutId(cell), cell);
       }
-  return [...cells.values()].sort((a, b) => a.y - b.y || a.x - b.x);
+  return [...cells.values()]
+    .filter((c) => !wallId || c.wallIds.includes(wallId))
+    .sort((a, b) => a.y - b.y || a.x - b.x);
 }
 export function toggleGrout<T extends Project>(
   doc: T,

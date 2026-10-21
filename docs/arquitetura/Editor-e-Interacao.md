@@ -24,6 +24,10 @@ Renderizar apenas a fiada ativa e, opcionalmente, uma fiada adjacente como refer
 
 Encontros só são editáveis na primeira fiada. A opção escolhida é armazenada no projeto e aplicada pelo motor a toda a altura correspondente. Grauteamentos são editados como trechos verticais do pavimento, respeitando intervalos interrompidos por vãos; não como pontos isolados de cada fiada.
 
+Seleção normal usa as células reais da fiada e suas associações geométricas a paredes, não todos os proprietários da peça nem o componente conectado. Uma parede candidata seleciona seu ID; múltiplas abrem o seletor de parede; nenhuma limpa a seleção. Realçar somente as interseções das peças atuais com os limites da parede selecionada, sem atingir vazios ou prolongar paredes menores. Preservar a prioridade de seleção de vãos e a seleção da faixa de canaleta correspondente à parede escolhida. O botão Conjunto no painel Encontros seleciona o componente e desliga a ferramenta Graute; escolher parede limpa componente, prévia, faixa e furo anteriores.
+
+O campo Parede dos grautes usa o mesmo ID de seleção, com opção para todas as paredes do pavimento. `courseCells` filtra por associação de cada célula à parede, preservando todos os proprietários de eixos compartilhados. Aplicar o filtro à escolha acessível de furo, hover/clique do canvas e lista de ajustes; a ferramenta Graute mantém seu clique de inclusão/exclusão. Ações de restauração ficam nesse painel, com diálogo HTML modal, foco inicial em Cancelar e retorno ao acionador ou ao seletor se a ação ficou indisponível. O diálogo identifica projeto/pavimento/parede por ID e fecha se o contexto deixar de ser válido; contagens incluem ajustes pendentes. Texto, bloqueios e efeitos seguem RF-07, sem novos ícones.
+
 Planta e Fiada compartilham geometria, câmera e seleção por identificador. Nós Konva são uma representação descartável, nunca o formato nativo do projeto.
 
 ### Estado dos gestos

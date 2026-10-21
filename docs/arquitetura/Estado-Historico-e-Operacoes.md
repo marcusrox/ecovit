@@ -25,6 +25,8 @@ Após confirmar e validar um candidato construtivo: registrar a intenção, marc
 
 Alterações não construtivas salvam sem invalidar resultado. Uma operação completa de usuário é atômica; prévias, cancelamentos e ausência de mudança não gravam, não alteram metadados e não geram histórico. IDs da prévia não devem materializar UUIDs definitivos a cada movimento.
 
+Restauração de grautes usa `restore-grouts`: remover inclusões/exclusões do pavimento ativo, opcionalmente limitadas aos registros cujo `wallIds` contém a parede escolhida. Remover registros compartilhados integralmente, sem fracionar o eixo. Preservar literalmente todos os demais ajustes, inclusive pendentes, e os demais insumos. O comando valida que só houve remoções de graute do pavimento ativo, sem mudanças de geometria/configuração/canaletas/encontros, e dispensa a reconciliação geral de ajustes. Seguir o fluxo construtivo normal de uma intenção, um passo no histórico, salvamento, geração do projeto inteiro e salvamento do resultado; não introduzir recálculo parcial nem formato de arquivo novo. Alcance vazio retorna o documento original sem operação. Falha de armazenamento conserva intenção em memória e download pelo tratamento existente.
+
 ## Histórico e cancelamento
 
 Terreno usa terrainDraft e terrainEditing transitórios; Desfazer os cancela antes de consumir histórico. Criação válida, troca de material, cada arraste concluído e exclusão passam pelo commit normal com comando terrain, sem alterar insumos construtivos. Escape, blur e mudança de ferramenta/contexto descartam a prévia; soltar fora descarta o arraste.

@@ -315,13 +315,17 @@ export function FiadaPanel() {
               className={styles.junctionButton}
               aria-pressed={s.component === c.id}
               key={c.id}
-              onClick={() =>
+              onClick={() => {
+                s.choose(null);
                 s.inspect({
                   component: c.id,
+                  groutMode: false,
+                  groutCell: null,
+                  channelBand: null,
                   preview: null,
                   focus: { x: c.x, y: c.y },
-                })
-              }
+                });
+              }}
             >
               Conjunto {i + 1} ·{" "}
               {[

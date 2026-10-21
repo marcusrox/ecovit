@@ -288,9 +288,7 @@ test("M3.2 célula compartilhada escolhe parede e referência não recebe remoç
   await load(page, d);
   await course(page, 16);
   await click(page, 625, 625);
-  await page
-    .getByRole("button", { name: /Parede 2 · canaleta na fiada 16/ })
-    .click();
+  await page.getByRole("button", { name: /Parede 2 · 100 cm/ }).click();
   await page
     .getByRole("button", { name: "Remover faixa de canaleta", exact: true })
     .click();

@@ -1865,6 +1865,21 @@ button.iconButton {
 .copyDialog::backdrop {
   background: #14291d66;
 }
+.groutRestoreDialog {
+  width: min(440px, calc(100vw - 32px));
+  box-sizing: border-box;
+}
+.groutActions {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+.groutDialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
 .quantityScreen {
   position: fixed;
   inset: 0;
