@@ -39,7 +39,7 @@ Persistência, integridade e verificação acompanham cada entrega. M4 depende d
 
 [Apresentação e operação](marcos/Apresentacao-e-Operacao.md) reúne interface, iconografia e limites operacionais que não pertencem a um único marco, incluindo o favicon implementado e a organização visual dos painéis e o foco padronizado dos campos com unidade implementados e aceitos. Os demais aceites específicos pendentes permanecem separados dos aceites globais.
 
-A primeira exibição do canvas com câmera restaurada e feedback mantido até o desenho estar pronto está implementada e verificada pela suíte completa, com os testes afetados revalidados após correções; resultados consolidados e aceite específico pendente constam de [M5](marcos/M5-Quantitativos-e-Projetos.md#1211-abertura-até-o-primeiro-desenho--rf-1214).
+A primeira exibição do canvas com câmera restaurada e feedback mantido até o desenho estar pronto está implementada e verificada pela suíte completa, com os testes afetados revalidados após correções; resultados consolidados e aceite específico recebido do solicitante constam de [M5](marcos/M5-Quantitativos-e-Projetos.md#1211-abertura-até-o-primeiro-desenho--rf-1214).
 
 O [registro de M5](marcos/M5-Quantitativos-e-Projetos.md) preserva também a situação dos ajustes posteriores de exclusão de projetos, cartões e cabeçalho, inclusive os aceites específicos ainda pendentes. M1–M10 aprovados não implica aprovação automática dessas alterações.
 
@@ -1061,7 +1061,7 @@ Roteiro de referência para o servidor habitual da porta 5173:
 
 **Limitações:** preferência restrita ao navegador/origem e ao ID local do projeto; limpar os dados do navegador remove a preferência. Cópias/importações com novo ID começam sem visualização salva. Não sincroniza abas/dispositivos nem transporta câmera no arquivo. Com áreas de trabalho diferentes, conserva centro e zoom, não a extensão total visível. Última gravação por uma aba prevalece. Encerramento abrupto durante arraste pode recuperar somente o último gesto concluído.
 
-**Teste manual do solicitante: pendente.** No servidor habitual da porta 5173, abrir um projeto, aproximar e deslocar para uma região reconhecível, sair pela lista e reabrir; repetir após atualizar a página e com janela de outro tamanho. Alternar dois projetos com vistas diferentes e conferir independência; usar Enquadrar e reabrir. Informar problemas observados; os testes automáticos não constituem aceite do solicitante.
+**Aceite específico da abertura:** recebido, com teste de abertura dos projetos declarado pelo solicitante, conforme [M5](marcos/M5-Quantitativos-e-Projetos.md#1211-abertura-até-o-primeiro-desenho--rf-1214). Não foram informados resultados individuais dos demais cenários; o roteiro abaixo permanece como referência. No servidor habitual da porta 5173, abrir um projeto, aproximar e deslocar para uma região reconhecível, sair pela lista e reabrir; repetir após atualizar a página e com janela de outro tamanho. Alternar dois projetos com vistas diferentes e conferir independência; usar Enquadrar e reabrir. Informar problemas observados; os testes automáticos não constituem aceite do solicitante.
 
 ## 17. Complemento de RF-12 — Feedback e fluxo único de abertura
 

@@ -83,8 +83,7 @@ Entregar no aplicativo a tela Quantitativos, resumo do projeto por quatro tipos 
 
 **Adequação das verificações ao contrato vigente:** o cenário de carga com 100 janelas aguarda explicitamente o canvas visível, com limite de 20 s para a abertura, antes de conferir salvamento e contagens; não trata a preparação visual como concluída após a leitura. As 12 combinações de porta/janela/vão, orientação e sentido são casos independentes, conservando todas as verificações geométricas e o limite padrão por caso. As comparações estritas de migração v9 incluem imageElements/customImageAssets vazios e terrain=null, além dos campos anteriores, conforme o formato vigente; preservação de intenção, atualização do resultado, histórico e ausência de escrita em somente leitura foram verificadas. Nenhuma mudança nas regras de migração ou geometria.
 
-
-**Teste manual e aceite específico do solicitante:** pendentes. Abrir um projeto com imagens após salvar zoom e posição, conferir continuidade do feedback e primeiro desenho estável; repetir ao voltar à lista, com outra dimensão de janela e sem preferência salva. Verificações do Codex não representam aceite.
+**Teste manual e aceite específico do solicitante:** recebidos. O solicitante declarou ter testado a abertura dos projetos, confirmou que o resultado ficou como desejava e aprovou a melhoria de manutenção do feedback até o canvas pronto, com zoom e posicionamento salvos na primeira exibição. Não foram informados resultados individuais por projeto, navegador, resolução ou condição de preferência; as verificações do Codex permanecem separadas do teste manual declarado.
 
 ## Verificações consolidadas
 

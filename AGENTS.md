@@ -48,3 +48,11 @@ Os scripts abaixo estão implementados no `package.json`. Consulte o README para
 | `npm run build` | Verificar a compilação de produção |
 
 Em alterações de código, execute as verificações pertinentes e informe o resultado real. Priorize testes de geometria, integridade do arquivo e fluxos essenciais; não crie testes que apenas reproduzam a implementação. Alterações somente de documentação exigem revisão de consistência, não instalação de dependências ou execução de testes do aplicativo.
+
+### Execução eficiente e acompanhamento de testes
+
+- Reduzir o consumo de tokens pelo acompanhamento, sem reduzir cobertura. Quando solicitada a suíte completa, executar todos os testes e navegadores previstos; não omitir casos, enfraquecer asserções ou ampliar limites de tempo apenas para obter aprovação.
+- Salvar stdout/stderr completos em log local ignorado pelo Git, preservando o código de saída. Preferir relatórios compactos já disponíveis no runner; trazer à conversa somente totais, duração, falhas e trechos necessários ao diagnóstico. Consultar detalhes e traces de forma direcionada, sem reler ou retransmitir todo o log.
+- Manter a execução em uma sessão de processo e usar esperas longas compatíveis com as ferramentas e instruções vigentes. Evitar consultas curtas repetidas e retomadas do modelo apenas para narrar progresso inalterado. Manter a comunicação exigida, com atualizações concisas sobre mudanças relevantes.
+- Antes de interromper uma execução silenciosa, conferir os tempos esperados dos testes de carga e evidências de atividade. Ausência de novas linhas não comprova travamento. Evitar concorrência de cargas pesadas que cause disputa de recursos e falhas de tempo artificiais.
+- Após corrigir falhas, reexecutar os arquivos afetados e suas regressões pertinentes; repetir toda a suíte quando o alcance da mudança exigir. Informar o que foi executado integralmente e o que foi revalidado, contando cenários distintos sem somar repetições como cobertura adicional.
