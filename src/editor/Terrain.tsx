@@ -24,6 +24,7 @@ import {
   TERRAIN_MATERIALS,
 } from "../domain/terrain";
 import { useStore } from "../state/store";
+import { usePreferences } from "../state/preferences";
 import { Icon } from "../ui/Icon";
 import { terrainTexture, TERRAIN_TILE_WORLD } from "./terrain-textures";
 import styles from "../ui/App.module.css";
@@ -134,6 +135,7 @@ export function useTerrainCanvas(
   camera: Camera,
   host: RefObject<HTMLDivElement | null>,
 ) {
+  const showLabel = usePreferences((s) => s.labels.terrain);
   const { mode, readonly, busy, select, terrainDraft, terrainEditing } =
     useStore();
   const drag = useRef<{
@@ -400,8 +402,12 @@ export function useTerrainCanvas(
               };
               if (terrain) {
                 const label = terrainLabelPoint(terrain.contour);
-                if (valid)
-                  text(`Terreno · ${terrainAreaText(terrain.contour)}`, label);
+                if (valid && showLabel)
+                  text(
+                    `Terreno · ${terrainAreaText(terrain.contour)}`,
+                    label,
+                    -18,
+                  );
                 if (select === terrain.id || editing)
                   line(terrain.contour, true, valid ? "#245d49" : "#a82c2c");
                 if (editing)

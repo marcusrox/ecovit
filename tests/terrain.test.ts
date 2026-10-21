@@ -11,6 +11,7 @@ import {
   type Terrain,
 } from "../src/domain/project";
 import {
+  TERRAIN_MATERIALS,
   terrainArea,
   terrainAreaText,
   terrainContains,
@@ -58,7 +59,7 @@ beforeEach(() => {
   vi.mocked(saveProject).mockResolvedValue(1);
   vi.mocked(saveProject).mockClear();
 });
-it("M11 anéis livres convexos/côncavos, área exata e âncora interior independente do sentido", () => {
+it("M11 anéis livres convexos/côncavos, área exata e âncora superior independente do sentido", () => {
   const triangle = ring([
     [-20000, -10000],
     [10000, -10000],
@@ -80,7 +81,14 @@ it("M11 anéis livres convexos/côncavos, área exata e âncora interior indepen
   ]);
   validateTerrainContour(concave);
   expect(terrainArea(concave)).toBe(28);
-  expect(terrainContains(terrainLabelPoint(concave), concave)).toBe(true);
+  expect(terrainContains({ x: 5000, y: 50000 }, concave)).toBe(true);
+  expect(terrainContains({ x: 50000, y: 50000 }, concave)).toBe(false);
+  expect(terrainLabelPoint(concave)).toEqual({ x: 50000, y: 0 });
+  expect(terrainLabelPoint([...concave].reverse())).toEqual(
+    terrainLabelPoint(concave),
+  );
+  expect(terrainLabelPoint(triangle)).toEqual({ x: -5000, y: -10000 });
+  expect(terrainLabelPoint(rectangle)).toEqual({ x: 25000, y: 0 });
   // A tiny triangle at the arithmetic bounds still has a positive exact area.
   const far = ring([
     [LIMIT, LIMIT],
@@ -221,6 +229,20 @@ it("M11 formato 17 conserva terreno e lê 9–16 sem mutação ou campos novos d
     }),
   ).toThrow();
 });
+it.each(Object.keys(TERRAIN_MATERIALS) as Terrain["material"][])(
+  "M11 aparência %s preserva intenção em arquivo e cópia de projeto",
+  (material) => {
+    const doc = fixture();
+    doc.model.terrain = { ...terrain(), material };
+    const before = structuredClone(doc);
+    validateTerrain(doc.model.terrain);
+    expect(parseFile(serializeFile(doc).text)).toEqual(doc);
+    const copy = importedCopy(doc);
+    expect(copy.model).toEqual(doc.model);
+    expect(copy.project.id).not.toBe(doc.project.id);
+    expect(doc).toEqual(before);
+  },
+);
 it("M11 terreno global preservado em cópias/remoção e edição da vista de qualquer pavimento", () => {
   let d = fixture();
   d.model.terrain = terrain();
@@ -255,7 +277,10 @@ it.each([false, true])(
     const spy = vi.spyOn(engine, "generate");
     const next = {
       ...original,
-      model: { ...original.model, terrain: terrain() },
+      model: {
+        ...original.model,
+        terrain: { ...terrain(), material: "soft" as const },
+      },
     };
     await useStore.getState().commit(next, "terrain");
     expect(useStore.getState().doc!.generated).toEqual(original.generated);

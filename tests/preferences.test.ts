@@ -51,6 +51,7 @@ it("usa padrões visíveis em armazenamento ausente, inválido ou inacessível",
       true,
       true,
       true,
+      true,
     ]);
   }
   vi.stubGlobal("localStorage", {
@@ -59,6 +60,7 @@ it("usa padrões visíveis em armazenamento ausente, inválido ou inacessível",
     },
   });
   expect(Object.values(readPreferences())).toEqual([
+    true,
     true,
     true,
     true,
@@ -84,6 +86,7 @@ it("preserva preferência na sessão após falha e permite salvar em nova tentat
     opening: true,
     wall: false,
     measure: true,
+    terrain: true,
   });
   expect(usePreferences.getState().error).toContain("não foi salva");
   vi.stubGlobal("localStorage", {
@@ -98,6 +101,7 @@ it("preserva preferência na sessão após falha e permite salvar em nova tentat
     opening: true,
     wall: false,
     measure: true,
+    terrain: true,
   });
   expect(storage.size).toBe(1);
   expect(storage.has(preferencesKey)).toBe(true);
@@ -119,5 +123,31 @@ it("M7 acrescenta Medidas sem redefinir escolhas de M6", () => {
     opening: false,
     wall: false,
     measure: true,
+    terrain: true,
   });
+});
+
+it("Terreno preserva preferências antigas e sua visibilidade salva independentemente", () => {
+  const legacy = {
+    door: false,
+    window: true,
+    opening: false,
+    wall: false,
+    measure: false,
+  };
+  let stored = JSON.stringify(legacy);
+  vi.stubGlobal("localStorage", {
+    getItem: () => stored,
+    setItem: (_key: string, value: string) => {
+      stored = value;
+    },
+  });
+  expect(readPreferences()).toEqual({ ...legacy, terrain: true });
+  usePreferences.setState({ labels: readPreferences(), error: "" });
+  usePreferences.getState().setLabel("terrain", false);
+  expect(readPreferences()).toEqual({ ...legacy, terrain: false });
+  stored = JSON.stringify({ ...legacy, terrain: "false" });
+  expect(Object.values(readPreferences()).every((visible) => visible)).toBe(
+    true,
+  );
 });

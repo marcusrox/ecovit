@@ -178,7 +178,14 @@ const schema = z
           .object({
             id,
             contour: z.array(point).min(3).max(MAX_TERRAIN_POINTS),
-            material: z.enum(["grass", "earth", "sand", "gravel", "pavers"]),
+            material: z.enum([
+              "grass",
+              "earth",
+              "sand",
+              "gravel",
+              "pavers",
+              "soft",
+            ]),
             revision: z.literal(1),
             textureOrigin: point,
           })

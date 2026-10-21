@@ -26,12 +26,12 @@
 | [M4.2 — Lajes](marcos/M4.2-Lajes.md) | Lajes/aberturas, edição e extensão AH de alturas | RF-13; CT-13/14; EX-65–79; D42-01 | Implementado e aceito pelo solicitante |
 | [M4.3 — Comparação visual](marcos/M4.3-Comparacao-de-Pavimentos.md) | Referência de pavimento adjacente em Planta | RF-08; CT-15; EX-80–85 | Implementado e aceito pelo solicitante |
 | [M5 — Consulta e conclusão da primeira versão](marcos/M5-Quantitativos-e-Projetos.md) | Quantitativos, duplicação de projetos e cenários restantes | RF-10/11/12 e cenários do PRD | Implementado e aceito pelo solicitante |
-| [M6 — Preferências do Ecovit](marcos/M6-Preferencias.md) | Preferências de rótulos, comprimento/altura das paredes e reorganização do status/ajuda do canvas | BL-07; RF-09/10/14 | Implementado e aceito pelo solicitante |
+| [M6 — Preferências do Ecovit](marcos/M6-Preferencias.md) | Preferências de rótulos, comprimento/altura das paredes e reorganização do status/ajuda do canvas | BL-07; RF-09/10/14 | Entrega original e controle do rótulo de Terreno implementados e aceitos |
 | [M7 — Medidas independentes](marcos/M7-Medidas.md) | Medidas livres em Planta, atração geométrica e persistência por pavimento | BL-03; RF-15, integração com RF-02/08/09/11/12/14 | Implementado e aceito pelo solicitante, incluindo criação por três cliques com afastamento |
 | [M8 — Imagem de referência por pavimento](marcos/M8-Imagem-de-Referencia.md) | Uma imagem de fundo calibrada, posição/rotação, opacidade e interface compacta | BL-02; RF-16, integração com RF-02/08/09/11/12 | Implementado e aceito pelo solicitante |
 | [M9 — Tipos de portas e janelas](marcos/M9-Esquadrias.md) | Nove variantes e símbolos em Planta com botão único de orientação cíclica | BL-08; RF-06; [Elementos construtivos](arquitetura/Elementos-Construtivos.md#vãos-e-aparência-de-esquadrias); CT-17 | Implementado e aceito pelo solicitante |
 | [M10 — Mobiliários](marcos/M10-Mobiliarios.md) | Acervo integrado com 59 opções, ocorrências editáveis em Planta e upload incorporado ao arquivo | BL-01; RF-17; [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) | Entrega inicial aceita; ampliações do acervo, bloco de contenção em vista plana, espelhamento e ajustes de interface implementados, com teste manual e aceite específicos pendentes |
-| [M11 — Terreno](marcos/M11-Terreno.md) | Terreno global com perímetro livre, cinco materiais, área em m² e ajuste de pontos/posição | RF-18; integração com RF-02/08/09/11/12/16 | Implementado, verificado pelo Codex e aceito pelo solicitante |
+| [M11 — Terreno](marcos/M11-Terreno.md) | Terreno global com perímetro livre, aparências, área em m² e ajuste de pontos/posição | RF-18; integração com RF-02/08/09/11/12/16 | Entrega original, Verde suave e rótulo superior/controlável implementados e aceitos |
 
 Persistência, integridade e verificação acompanham cada entrega. M4 depende de M3; M5 depende de M4. Os subitens de M4 têm seus próprios critérios, verificações e aceites.
 
@@ -43,7 +43,7 @@ A primeira exibição do canvas com câmera restaurada e feedback mantido até o
 
 O [registro de M5](marcos/M5-Quantitativos-e-Projetos.md) preserva também a situação dos ajustes posteriores de exclusão de projetos, cartões e cabeçalho, inclusive os aceites específicos ainda pendentes. M1–M10 aprovados não implica aprovação automática dessas alterações.
 
-BL-01/02/03/06/07/08 estão implementados; BL-04/05 permanecem sem escopo de implementação aprovado, conforme o backlog. M11 está implementado e aceito pelo solicitante; seu arquivo reúne verificações, limitações e registro do aceite.
+BL-01/02/03/06/07/08 estão implementados; BL-04/05 permanecem sem escopo de implementação aprovado, conforme o backlog. A entrega original de M11, Verde suave e o controle/posição superior do rótulo de terreno estão implementados e aceitos pelo solicitante. Seu arquivo reúne verificações, limitações e aceites.
 
 ## Verificação da reorganização
 

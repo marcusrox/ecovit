@@ -4,7 +4,7 @@
 
 Registro consolidado da entrega. Versões e verificações referem-se ao marco; o comportamento e os formatos vigentes são definidos nas referências por assunto. Aceite global não atribui resultado individual a roteiros manuais.
 
-**Estado:** implementado e aceito pelo solicitante. Origem: BL-07 e reorganização do status/ajuda aprovada pelo solicitante; requisitos: PRD RF-09/10/14 e §8; contratos técnicos: [Interface e iconografia](../arquitetura/Interface-e-Iconografia.md#preferências-de-apresentação). Marco próprio por acrescentar preferências e ajustes de apresentação do aplicativo, separado das entregas concluídas de M5. Aprovação das definições não constitui aceite funcional.
+**Estado:** entrega original e extensão do controle de rótulo de Terreno implementadas e aceitas pelo solicitante. Origem: BL-07 e reorganização do status/ajuda aprovada pelo solicitante; requisitos: PRD RF-09/10/14 e §8; contratos técnicos: [Interface e iconografia](../arquitetura/Interface-e-Iconografia.md#preferências-de-apresentação). Marco próprio por acrescentar preferências e ajustes de apresentação do aplicativo, separado das entregas concluídas de M5. Aprovação das definições não constitui aceite funcional.
 
 ## 13.1. Alcance definido
 
@@ -14,7 +14,7 @@ Inclui também concentrar o status no canto inferior esquerdo do canvas, removen
 
 ## 13.2. Definições fechadas
 
-Definições de produto consolidadas no RF-14: quatro controles por tipo, inicialmente visíveis; rótulo inteiro para aberturas; A/B e comprimento/altura para paredes; aplicação imediata e Fechar; persistência no navegador para todos os projetos; falha de gravação mantém escolha na sessão com aviso. Seleção não reexibe texto oculto, propriedades e informações temporárias continuam disponíveis. Preferência comum aos modos onde os textos aparecem, com o novo rótulo de parede somente em Planta, sem novos textos na referência de pavimento. Sem pendências de definição de produto para este recorte.
+Definições de produto consolidadas no RF-14: controles por tipo, inicialmente visíveis; rótulo inteiro para aberturas; A/B e comprimento/altura para paredes; aplicação imediata e Fechar; persistência no navegador para todos os projetos; falha de gravação mantém escolha na sessão com aviso. Seleção não reexibe texto oculto, propriedades e informações temporárias continuam disponíveis. Preferência comum aos modos onde os textos aparecem, com o novo rótulo de parede somente em Planta, sem novos textos na referência de pavimento. Sem pendências de definição de produto para este recorte.
 
 Detalhes do rótulo de parede (medida externa A/B, altura própria, formato, orientação e atualização) no RF-14; armazenamento, separação do documento e ícones na [Interface e iconografia](../arquitetura/Interface-e-Iconografia.md#preferências-de-apresentação).
 
@@ -32,7 +32,7 @@ Critérios da entrega; verificação do Codex e teste manual do solicitante são
 | ID | Resultado verificável |
 |---|---|
 | M6-A01 | Diálogo compacto “Preferências do Ecovit”, grupo “Visibilidade dos rótulos”, engrenagem ao lado do ícone de ajustes existente, nome acessível, dica, teclado e retorno de foco; renomeação em andamento preservada. |
-| M6-A02 | Portas/Janelas/Vãos/Paredes têm checkboxes independentes; aberturas ocultam o rótulo inteiro, Paredes oculta A/B e comprimento/altura. Desenho, alças e demais tipos preservados; reexibir restaura os textos. |
+| M6-A02 | Portas/Janelas/Vãos/Paredes/Medidas/Terreno têm checkboxes independentes; aberturas ocultam o rótulo inteiro, Paredes oculta A/B e comprimento/altura. Desenho, alças e demais tipos preservados; reexibir restaura os textos. |
 | M6-A03 | Alterar preferências não altera geometria, composição, quantitativos, intenção salva, arquivo `.ecovit` ou histórico do projeto. |
 | M6-A04 | Todos visíveis sem preferências salvas; alteração imediata, Fechar/Escape sem reversão, escolha preservada ao trocar projeto e recarregar no mesmo navegador, independente do arquivo importado. |
 | M6-A05 | Cabeçalho e área legíveis nas resoluções de referência da [Interface e iconografia](../arquitetura/Interface-e-Iconografia.md#iconografia), inclusive com nome longo; iconografia consistente e fluxos existentes de configurações/navegação preservados. |
@@ -57,3 +57,7 @@ Critérios da entrega; verificação do Codex e teste manual do solicitante são
 Tipos, lint e build aprovados. Suíte de domínio/persistência da entrega: 301 testes em 21 arquivos; 48 casos distintos em Chrome/Edge. Cobertura: apresentação efetiva dos rótulos, persistência local, falha de armazenamento, readonly, histórico intacto, status e ajuda. Revisão visual nas três resoluções. Fontes: [preferências](../../tests/preferences.test.ts) e [fluxos](../../tests/e2e/preferences.spec.ts).
 
 Referências de rastreabilidade preservadas: M6-A01–12.
+
+## Controle do rótulo de Terreno — RF-14/18
+
+**Implementado e aceito pelo solicitante:** checkbox Terreno no grupo de visibilidade, com aplicação imediata, preferência local e migração dos registros anteriores preservando as demais escolhas. A extensão usa o fluxo de M6, inclusive em somente leitura e sem modificar o documento de projeto. Contratos em RF-14 e Interface e iconografia; escopo consolidado, verificações e registro do teste manual e aceite específico no [M11](M11-Terreno.md#rótulo-superior-e-preferência-de-visibilidade). O aceite original de M6 permanece preservado.

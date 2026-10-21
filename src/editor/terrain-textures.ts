@@ -18,10 +18,13 @@ export function terrainTexture(material: Terrain["material"]) {
     sand: [221, 204, 163],
     gravel: [166, 166, 158],
     pavers: [184, 181, 169],
+    soft: [238, 243, 232],
   };
   const [r, g, b] = bases[material];
   ctx.fillStyle = `rgb(${r},${g},${b})`;
   ctx.fillRect(0, 0, 800, 800);
+  // Verde suave is a uniform visual fill; keep the existing contour renderer.
+  if (material === "soft") return tile;
   const wrap = (
     x: number,
     y: number,

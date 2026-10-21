@@ -6,6 +6,7 @@ export const TERRAIN_MATERIALS = {
   sand: "Areia",
   gravel: "Brita",
   pavers: "Piso intertravado",
+  soft: "Verde suave",
 } as const;
 export const MAX_TERRAIN_POINTS = 256;
 const cross = (a: Point, b: Point, c: Point) =>
@@ -116,27 +117,13 @@ export function terrainContains(p: Point, points: Point[]) {
   }
   return inside;
 }
-/** An interior anchor, including concave rings whose centroid can lie outside. */
+/** Top centre of the terrain bounds; screen spacing belongs to the renderer. */
 export function terrainLabelPoint(points: Point[]): Point {
-  const levels = [...new Set(points.map((p) => p.y))].sort((a, b) => a - b);
-  let best = { x: points[0].x, y: points[0].y },
-    width = -1;
-  for (let i = 1; i < levels.length; i++) {
-    const y = (levels[i - 1] + levels[i]) / 2;
-    const xs: number[] = [];
-    points.forEach((a, j) => {
-      const b = points[(j + 1) % points.length];
-      if (a.y > y !== b.y > y)
-        xs.push(a.x + ((y - a.y) * (b.x - a.x)) / (b.y - a.y));
-    });
-    xs.sort((a, b) => a - b);
-    for (let j = 0; j + 1 < xs.length; j += 2) {
-      const w = xs[j + 1] - xs[j];
-      if (w > width) {
-        width = w;
-        best = { x: (xs[j] + xs[j + 1]) / 2, y };
-      }
-    }
-  }
-  return best;
+  return {
+    x:
+      (Math.min(...points.map((p) => p.x)) +
+        Math.max(...points.map((p) => p.x))) /
+      2,
+    y: Math.min(...points.map((p) => p.y)),
+  };
 }

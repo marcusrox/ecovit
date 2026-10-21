@@ -31,6 +31,7 @@ export function PreferencesDialog({ close }: { close: () => void }) {
             ["opening", "Vãos"],
             ["wall", "Paredes"],
             ["measure", "Medidas"],
+            ["terrain", "Terreno"],
           ] as [LabelType, string][]
         ).map(([type, label]) => (
           <label key={type}>

@@ -21,15 +21,22 @@ async function history(page: Page) {
 async function instrument(page: Page) {
   await page.addInitScript(() => {
     const texts = new Map<HTMLCanvasElement, string[]>();
+    const positions = new Map<HTMLCanvasElement, { x: number; y: number }[]>();
     const clear = CanvasRenderingContext2D.prototype.clearRect,
       fill = CanvasRenderingContext2D.prototype.fillText;
     CanvasRenderingContext2D.prototype.clearRect = function (...args) {
       texts.set(this.canvas, []);
+      positions.set(this.canvas, []);
       return clear.apply(this, args);
     };
     CanvasRenderingContext2D.prototype.fillText = function (...args) {
       const list = texts.get(this.canvas) ?? [];
       list.push(args[0]);
+      if (args[0].startsWith("Terreno ·")) {
+        const points = positions.get(this.canvas) ?? [];
+        points.push({ x: args[1], y: args[2] });
+        positions.set(this.canvas, points);
+      }
       texts.set(this.canvas, list);
       return fill.apply(this, args);
     };
@@ -50,6 +57,10 @@ async function instrument(page: Page) {
         [...texts.entries()]
           .filter(([canvas]) => canvas.isConnected)
           .flatMap(([, text]) => text),
+      terrainLabelPositions: () =>
+        [...positions.entries()]
+          .filter(([canvas]) => canvas.isConnected)
+          .flatMap(([, points]) => points),
       terrainTransforms: transforms,
     });
   });
@@ -185,6 +196,7 @@ test("M11 materiais, movimento, pavimentos, arquivo e somente leitura", async ({
     "Brita",
     "Piso intertravado",
     "Grama",
+    "Verde suave",
   ]) {
     await panel(page).getByRole("button", { name, exact: true }).click();
     await expect(
@@ -533,4 +545,201 @@ test("M11 contorno côncavo com diagonal conserva área e recorta a textura", as
   });
   expect(coverage).toEqual([255, 0]);
   await page.screenshot({ path: info.outputPath("terreno-concavo.png") });
+});
+
+for (const [width, height] of [
+  [1366, 768],
+  [1280, 720],
+  [900, 680],
+]) {
+  test(`M11 Verde suave: preenchimento liso e controles em ${width}×${height}`, async ({
+    page,
+  }, info) => {
+    await open(page);
+    await draw(page);
+    await page.setViewportSize({ width, height });
+    await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
+    const before = await state(page);
+    const button = panel(page).getByRole("button", {
+      name: "Verde suave",
+      exact: true,
+    });
+    await button.click();
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    expect((await state(page)).model.terrain).toEqual({
+      ...before.model.terrain,
+      material: "soft",
+    });
+    expect((await state(page)).generated).toEqual(before.generated);
+    const preview = await button.locator("canvas").evaluate((canvas) => {
+      const ctx = (canvas as HTMLCanvasElement).getContext("2d")!;
+      return [...ctx.getImageData(32, 20, 1, 1).data];
+    });
+    expect(preview).toEqual([238, 243, 232, 255]);
+    await page.getByRole("button", { name: "Desfazer", exact: true }).click();
+    await page.getByRole("button", { name: "Terreno", exact: true }).click();
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    expect((await state(page)).model.terrain!.material).toBe("grass");
+    await page.getByRole("button", { name: "Refazer", exact: true }).click();
+    await page.getByRole("button", { name: "Terreno", exact: true }).click();
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
+    const samples = () =>
+      page.getByTestId("drawing").evaluate((host) => {
+        const camera = JSON.parse(host.getAttribute("data-camera")!);
+        const canvas = host.querySelector<HTMLCanvasElement>(
+          ".konvajs-content canvas",
+        )!;
+        const ratio = canvas.width / canvas.clientWidth;
+        const ctx = canvas.getContext("2d")!;
+        return [
+          [10543, 7311],
+          [27432, 21321],
+          [-1000, -1000],
+        ].map(([x, y]) => [
+          ...ctx.getImageData(
+            Math.floor((camera.x + x * camera.scale) * ratio),
+            Math.floor((camera.y + y * camera.scale) * ratio),
+            1,
+            1,
+          ).data,
+        ]);
+      });
+    await expect.poll(samples).toEqual([
+      [238, 243, 232, 255],
+      [238, 243, 232, 255],
+      [0, 0, 0, 0],
+    ]);
+    expect(
+      await panel(page).evaluate((el) => el.scrollWidth <= el.clientWidth),
+    ).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await expect(
+      panel(page).getByRole("button", { name: "Ajustar", exact: true }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: info.outputPath(`verde-suave-${width}.png`),
+    });
+  });
+}
+
+test("M11 rótulo superior: preferência persistida, prévia, readonly e três resoluções", async ({
+  page,
+  context,
+}, info) => {
+  await open(page);
+  await draw(page);
+  const label = "Terreno · 12,00 m²";
+  const snapshot = (target: Page) =>
+    target.evaluate(async () => {
+      const path = "/src/state/store.ts";
+      const { doc, history } = (await import(path)).useStore.getState();
+      return JSON.stringify({ doc, history });
+    });
+  const before = await snapshot(page);
+  const preferences = (target: Page) =>
+    target.getByRole("button", { name: "Preferências do Ecovit", exact: true });
+  const positionError = () =>
+    page.getByTestId("drawing").evaluate((host) => {
+      const camera = JSON.parse(host.getAttribute("data-camera")!);
+      const positions = (
+        window as unknown as {
+          terrainLabelPositions: () => { x: number; y: number }[];
+        }
+      ).terrainLabelPositions();
+      if (positions.length !== 1) return 1e9;
+      return Math.max(
+        Math.abs(positions[0].x - (camera.x + 20000 * camera.scale)),
+        Math.abs(positions[0].y - (camera.y - 17)),
+      );
+    });
+  await expect.poll(positionError).toBeLessThan(0.01);
+  await preferences(page).click();
+  const checkbox = page.getByRole("checkbox", { name: "Terreno", exact: true });
+  await expect(checkbox).toBeChecked();
+  await checkbox.uncheck();
+  await page.keyboard.press("Escape");
+  await expect.poll(() => texts(page)).not.toContain(label);
+  expect(await snapshot(page)).toBe(before);
+  await page.getByRole("button", { name: "Terreno", exact: true }).click();
+  await expect(panel(page)).toContainText("12,00 m²");
+  await panel(page)
+    .getByRole("button", { name: "Ajustar", exact: true })
+    .click();
+  const start = await point(page, 20000, 15000);
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x + 20, start.y + 10, { steps: 3 });
+  await expect
+    .poll(async () =>
+      (await texts(page)).some((value) => value.endsWith(" cm")),
+    )
+    .toBe(true);
+  await expect.poll(() => texts(page)).not.toContain(label);
+  await page.keyboard.press("Escape");
+  await page.mouse.up();
+  expect(await snapshot(page)).toBe(before);
+  await page.reload();
+  await page
+    .getByRole("button", { name: /M11 Terreno/ })
+    .first()
+    .click();
+  await expect(page.getByRole("status")).toContainText("Salvo");
+  await expect.poll(() => texts(page)).not.toContain(label);
+  await preferences(page).click();
+  await expect(checkbox).not.toBeChecked();
+  await checkbox.check();
+  await page.keyboard.press("Escape");
+  await expect.poll(() => texts(page)).toContain(label);
+  for (const [width, height] of [
+    [1366, 768],
+    [1280, 720],
+    [900, 680],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
+    await expect.poll(positionError).toBeLessThan(0.01);
+    await page.screenshot({
+      path: `.tools/terrain-label-${info.project.name}-${width}.png`,
+    });
+    await preferences(page).click();
+    await expect(checkbox).toBeInViewport();
+    await expect(
+      page.getByRole("button", { name: "Fechar", exact: true }),
+    ).toBeInViewport();
+    await page.screenshot({
+      path: `.tools/terrain-label-preferences-${info.project.name}-${width}.png`,
+    });
+    await page.keyboard.press("Escape");
+  }
+  const other = await context.newPage();
+  await instrument(other);
+  await other.goto("/");
+  await other
+    .getByRole("button", { name: /M11 Terreno/ })
+    .first()
+    .click();
+  await expect(other.getByRole("status")).toContainText("Somente leitura");
+  const storedSnapshot = () =>
+    other.evaluate(async () => {
+      const path = "/src/persistence/database.ts";
+      return JSON.stringify(
+        await (await import(path)).db.table("projects").toArray(),
+      );
+    });
+  const stored = await storedSnapshot();
+  const readonlyBefore = await snapshot(other);
+  await expect.poll(() => texts(other)).toContain(label);
+  await preferences(other).click();
+  await other.getByRole("checkbox", { name: "Terreno", exact: true }).uncheck();
+  await other.keyboard.press("Escape");
+  await expect.poll(() => texts(other)).not.toContain(label);
+  expect(await snapshot(other)).toBe(readonlyBefore);
+  expect(await storedSnapshot()).toBe(stored);
+  await other.close();
 });

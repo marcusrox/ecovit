@@ -13,7 +13,8 @@ export function readHighQualityImages(): boolean {
   }
   return true;
 }
-export type LabelType = "door" | "window" | "opening" | "wall" | "measure";
+export type LabelType =
+  "door" | "window" | "opening" | "wall" | "measure" | "terrain";
 export type LabelPreferences = Record<LabelType, boolean>;
 const defaults: LabelPreferences = {
   door: true,
@@ -21,6 +22,7 @@ const defaults: LabelPreferences = {
   opening: true,
   wall: true,
   measure: true,
+  terrain: true,
 };
 
 export function readPreferences(): LabelPreferences {
@@ -33,7 +35,7 @@ export function readPreferences(): LabelPreferences {
       typeof value === "object" &&
       Object.keys(defaults).every(
         (key) =>
-          (key === "measure" && !(key in value)) ||
+          ((key === "measure" || key === "terrain") && !(key in value)) ||
           typeof (value as Record<string, unknown>)[key] === "boolean",
       )
     )

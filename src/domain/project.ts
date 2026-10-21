@@ -52,7 +52,7 @@ export type Measurement = {
 export type Terrain = {
   id: string;
   contour: Point[];
-  material: "grass" | "earth" | "sand" | "gravel" | "pavers";
+  material: "grass" | "earth" | "sand" | "gravel" | "pavers" | "soft";
   revision: 1;
   textureOrigin: Point;
 };
