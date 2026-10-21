@@ -62,6 +62,7 @@ export function useProjectCamera(id: string, panning: boolean) {
   );
   const [error, setError] = useState("");
   const measured = useRef(false);
+  const [ready, setReady] = useState(false);
   const dimensions = useRef(size);
   const latest = useRef({ camera, size });
   useLayoutEffect(() => {
@@ -79,6 +80,7 @@ export function useProjectCamera(id: string, panning: boolean) {
           y: c.y + (next.height - previous.height) / 2,
         }));
       measured.current = true;
+      setReady(true);
       dimensions.current = next;
       setSize(next);
     },
@@ -104,5 +106,5 @@ export function useProjectCamera(id: string, panning: boolean) {
     if (!measured.current || panning) return;
     setError(saveProjectView(id, camera, size));
   }, [id, camera, size, panning]);
-  return { camera, setCamera, size, resize, error };
+  return { camera, setCamera, size, resize, error, ready };
 }

@@ -2281,3 +2281,11 @@ button.iconButton {
   margin-bottom: 8px;
   font-weight: 600;
 }
+
+/* Keep the project list visible while the editor lays out and paints underneath. */
+.openingHome {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: auto;
+}

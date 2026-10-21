@@ -98,12 +98,12 @@ test("M3.4 centro da cruz mantém célula nas quatro metades e parede inclui in�
     }
   }
 });
-test("M3.4 portas, janelas e vãos incluem célula da cruz em ambos eixos/sentidos", async ({
-  page,
-}) => {
-  for (const vertical of [false, true])
-    for (const kind of ["Porta", "Janela", "Vão"])
-      for (const reverse of [false, true]) {
+for (const vertical of [false, true])
+  for (const kind of ["Porta", "Janela", "Vão"])
+    for (const reverse of [false, true]) {
+      test(`M3.4 ${kind} inclui célula da cruz: ${vertical ? "vertical" : "horizontal"}, sentido ${reverse ? "inverso" : "direto"}`, async ({
+        page,
+      }) => {
         await load(page, vertical);
         await page.getByRole("button", { name: kind, exact: true }).click();
         const start: [number, number] = vertical ? [625, 5875] : [5875, 625],
@@ -125,5 +125,5 @@ test("M3.4 portas, janelas e vãos incluem célula da cruz em ambos eixos/sentid
         expect(o.width).toBe(reverse ? 3750 : 5000);
         expect(o.offset).toBeLessThanOrEqual(5000);
         expect(o.offset + o.width).toBeGreaterThanOrEqual(6250);
-      }
-});
+      });
+    }

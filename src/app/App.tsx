@@ -486,12 +486,27 @@ export default function App() {
   const slabEditing = useStore((s) => s.slabEditing);
   const editingDoc = useEditingProject();
   const doc = useStore((s) => s.doc),
-    busy = useStore((s) => s.busy),
-    openingProjectId = useStore((s) => s.openingProjectId),
+    storeBusy = useStore((s) => s.busy),
+    storeOpeningProjectId = useStore((s) => s.openingProjectId),
     readonly = useStore((s) => s.readonly),
     saved = useStore((s) => s.saved),
     message = useStore((s) => s.message),
     history = useStore((s) => s.history);
+  const [readyProjectId, setReadyProjectId] = useState<string | null>(null);
+  const preparingCanvas = !!doc && readyProjectId !== doc.project.id;
+  const openingProjectId =
+    storeOpeningProjectId ?? (preparingCanvas ? doc.project.id : null);
+  const busy = storeBusy || preparingCanvas;
+  const homeScroll = useRef(0);
+  useLayoutEffect(() => {
+    if (doc) return;
+    const remember = () => {
+      homeScroll.current = window.scrollY;
+    };
+    remember();
+    window.addEventListener("scroll", remember);
+    return () => window.removeEventListener("scroll", remember);
+  }, [doc]);
   useLayoutEffect(() => {
     if (!openingProjectId) return;
     document.documentElement.dataset.openingProject = "true";
@@ -556,6 +571,7 @@ export default function App() {
   }, []);
   useEffect(() => {
     if (!doc) {
+      setReadyProjectId(null);
       void listProjects()
         .then(setProjects)
         .catch(() =>
@@ -659,8 +675,199 @@ export default function App() {
       if (input.current) input.current.value = "";
     }
   };
-  return (
-    <div className={`${styles.app} ${doc ? styles.editorApp : styles.homeApp}`}>
+  const homeHeader = (
+    <div className={styles.headerActions}>
+      <span className={styles.localBadge}>Salvo neste navegador</span>
+      <button
+        disabled={busy || importing}
+        onClick={() => input.current?.click()}
+        className={styles.iconText}
+      >
+        <Icon name="upload" /> Carregar .ecovit
+      </button>
+    </div>
+  );
+  const home = (
+    <main className={styles.home}>
+      <div className={styles.homeIntro}>
+        <div>
+          <span className={styles.eyebrow}>DO PRIMEIRO TRAÇO AO PROJETO</span>
+          <h1>
+            Ideias que se <em>encaixam.</em>
+          </h1>
+        </div>
+        <p>
+          Desenhe sua planta com tijolos ecológicos.
+          <br />
+          Uma malha precisa, um espaço para criar.
+        </p>
+      </div>
+      <div className={styles.listHeading}>
+        <h2 id="projects-title">Seu espaço de projetos</h2>
+        <span>
+          {projects.length}{" "}
+          {projects.length === 1 ? "projeto salvo" : "projetos salvos"}
+        </span>
+      </div>
+      <div className={styles.homeGrid}>
+        <button
+          className={styles.newCard}
+          disabled={busy || importing}
+          onClick={() => {
+            setFormError("");
+            setCreating(true);
+          }}
+        >
+          <span className={styles.bigPlus} aria-hidden="true">
+            <Icon name="plus" size="feature" />
+          </span>
+          <strong>Novo projeto</strong>
+          <span>Escolha o tijolo-base e dê forma à sua próxima ideia.</span>
+          <b className={styles.iconText}>
+            Criar planta <Icon name="next" />
+          </b>
+        </button>
+        <section
+          className={styles.projectList}
+          aria-labelledby="projects-title"
+        >
+          {!projects.length ? (
+            <div className={styles.empty}>
+              <span aria-hidden="true">
+                <Icon name="home" size="feature" />
+              </span>
+              <h3>Um espaço para suas ideias</h3>
+              <p>
+                Os projetos salvos neste navegador
+                <br />
+                aparecerão aqui.
+              </p>
+            </div>
+          ) : (
+            projects.map((p) => (
+              <div
+                className={`${styles.projectSlot} ${fadingProjects.includes(p.id) ? styles.projectRowExiting : ""}`}
+                key={p.id}
+                inert={fadingProjects.includes(p.id)}
+                onAnimationEnd={(event) => {
+                  if (
+                    event.target !== event.currentTarget ||
+                    !fadingProjects.includes(p.id)
+                  )
+                    return;
+                  setProjects((current) =>
+                    current.filter((project) => project.id !== p.id),
+                  );
+                  setFadingProjects((current) =>
+                    current.filter((id) => id !== p.id),
+                  );
+                }}
+              >
+                <div className={styles.projectRow}>
+                  <button
+                    disabled={busy}
+                    key={p.id}
+                    className={`${styles.projectCard} ${openingProjectId === p.id ? styles.projectOpeningCard : ""}`}
+                    aria-expanded={
+                      !p.compatible ? incompatibleProject === p.id : undefined
+                    }
+                    aria-describedby={
+                      !p.compatible && incompatibleProject === p.id
+                        ? `project-compatibility-${p.id}`
+                        : undefined
+                    }
+                    onClick={() => {
+                      if (!p.compatible) {
+                        setIncompatibleProject(p.id);
+                        return;
+                      }
+                      void useStore.getState().open(p.id);
+                    }}
+                  >
+                    <span className={styles.projectIcon} aria-hidden="true">
+                      {openingProjectId === p.id ? (
+                        <span className={styles.openingSpinner}>
+                          <Icon name="saving" size="card" />
+                        </span>
+                      ) : (
+                        <Icon name="plan" size="card" />
+                      )}
+                    </span>
+                    <span className={styles.projectInfo}>
+                      <strong title={p.name}>{p.name}</strong>
+                      {openingProjectId === p.id ? (
+                        <small role="status">Abrindo projeto…</small>
+                      ) : (
+                        <small>
+                          {!p.compatible && (
+                            <span>Formato incompatível · </span>
+                          )}
+                          {p.walls} {p.walls === 1 ? "parede" : "paredes"} ·
+                          Atualizado em{" "}
+                          {new Date(p.updatedAt).toLocaleDateString("pt-BR")}
+                        </small>
+                      )}
+                      {!p.compatible && incompatibleProject === p.id && (
+                        <small
+                          id={`project-compatibility-${p.id}`}
+                          role="status"
+                          className={styles.projectCompatibilityMessage}
+                        >
+                          Este projeto usa um formato antigo e não pode ser
+                          aberto nesta versão. Arquivos de marcos anteriores não
+                          são convertidos. Crie um novo projeto.
+                        </small>
+                      )}
+                    </span>
+                  </button>
+                  <div className={styles.projectActions}>
+                    <button
+                      className={styles.iconButton}
+                      aria-label="Duplicar"
+                      data-tooltip="Duplicar"
+                      disabled={busy || !!duplicating || !p.compatible}
+                      title="Duplicar o último estado salvo"
+                      onClick={() => setDuplicating({ id: p.id, name: p.name })}
+                    >
+                      <Icon name="copy" />
+                    </button>
+                    <button
+                      className={`${styles.iconButton} ${styles.deleteProject}`}
+                      aria-label="Excluir"
+                      title="Excluir projeto"
+                      data-tooltip="Excluir"
+                      disabled={busy}
+                      onClick={(event) => {
+                        deleteTrigger.current = event.currentTarget;
+                        setDeleting({ id: p.id, name: p.name });
+                      }}
+                    >
+                      <Icon name="delete" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </section>
+      </div>
+      <p className={styles.localNote}>
+        <span aria-hidden="true">
+          <Icon name="download" />
+        </span>
+        <span>
+          Seus desenhos ficam neste navegador. Baixe o arquivo .ecovit para
+          fazer backup ou levar seu projeto para outro dispositivo.
+        </span>
+      </p>
+    </main>
+  );
+  const editor = (
+    <div
+      inert={preparingCanvas}
+      style={preparingCanvas ? { visibility: "hidden" } : undefined}
+      className={`${styles.app} ${doc ? styles.editorApp : styles.homeApp}`}
+    >
       <input
         type="file"
         ref={input}
@@ -803,16 +1010,7 @@ export default function App() {
             </div>
           </>
         ) : (
-          <div className={styles.headerActions}>
-            <span className={styles.localBadge}>Salvo neste navegador</span>
-            <button
-              disabled={busy || importing}
-              onClick={() => input.current?.click()}
-              className={styles.iconText}
-            >
-              <Icon name="upload" /> Carregar .ecovit
-            </button>
-          </div>
+          homeHeader
         )}
       </header>
       {message && (
@@ -1069,6 +1267,7 @@ export default function App() {
           <main className={styles.workspace}>
             <Canvas
               key={doc.project.id}
+              onReady={setReadyProjectId}
               tool={tool}
               setTool={changeTool}
               side={side}
@@ -1132,187 +1331,7 @@ export default function App() {
           </footer>
         </>
       ) : (
-        <main className={styles.home}>
-          <div className={styles.homeIntro}>
-            <div>
-              <span className={styles.eyebrow}>
-                DO PRIMEIRO TRAÇO AO PROJETO
-              </span>
-              <h1>
-                Ideias que se <em>encaixam.</em>
-              </h1>
-            </div>
-            <p>
-              Desenhe sua planta com tijolos ecológicos.
-              <br />
-              Uma malha precisa, um espaço para criar.
-            </p>
-          </div>
-          <div className={styles.listHeading}>
-            <h2 id="projects-title">Seu espaço de projetos</h2>
-            <span>
-              {projects.length}{" "}
-              {projects.length === 1 ? "projeto salvo" : "projetos salvos"}
-            </span>
-          </div>
-          <div className={styles.homeGrid}>
-            <button
-              className={styles.newCard}
-              disabled={busy || importing}
-              onClick={() => {
-                setFormError("");
-                setCreating(true);
-              }}
-            >
-              <span className={styles.bigPlus} aria-hidden="true">
-                <Icon name="plus" size="feature" />
-              </span>
-              <strong>Novo projeto</strong>
-              <span>Escolha o tijolo-base e dê forma à sua próxima ideia.</span>
-              <b className={styles.iconText}>
-                Criar planta <Icon name="next" />
-              </b>
-            </button>
-            <section
-              className={styles.projectList}
-              aria-labelledby="projects-title"
-            >
-              {!projects.length ? (
-                <div className={styles.empty}>
-                  <span aria-hidden="true">
-                    <Icon name="home" size="feature" />
-                  </span>
-                  <h3>Um espaço para suas ideias</h3>
-                  <p>
-                    Os projetos salvos neste navegador
-                    <br />
-                    aparecerão aqui.
-                  </p>
-                </div>
-              ) : (
-                projects.map((p) => (
-                  <div
-                    className={`${styles.projectSlot} ${fadingProjects.includes(p.id) ? styles.projectRowExiting : ""}`}
-                    key={p.id}
-                    inert={fadingProjects.includes(p.id)}
-                    onAnimationEnd={(event) => {
-                      if (
-                        event.target !== event.currentTarget ||
-                        !fadingProjects.includes(p.id)
-                      )
-                        return;
-                      setProjects((current) =>
-                        current.filter((project) => project.id !== p.id),
-                      );
-                      setFadingProjects((current) =>
-                        current.filter((id) => id !== p.id),
-                      );
-                    }}
-                  >
-                    <div className={styles.projectRow}>
-                      <button
-                        disabled={busy}
-                        key={p.id}
-                        className={`${styles.projectCard} ${openingProjectId === p.id ? styles.projectOpeningCard : ""}`}
-                        aria-expanded={
-                          !p.compatible
-                            ? incompatibleProject === p.id
-                            : undefined
-                        }
-                        aria-describedby={
-                          !p.compatible && incompatibleProject === p.id
-                            ? `project-compatibility-${p.id}`
-                            : undefined
-                        }
-                        onClick={() => {
-                          if (!p.compatible) {
-                            setIncompatibleProject(p.id);
-                            return;
-                          }
-                          void useStore.getState().open(p.id);
-                        }}
-                      >
-                        <span className={styles.projectIcon} aria-hidden="true">
-                          {openingProjectId === p.id ? (
-                            <span className={styles.openingSpinner}>
-                              <Icon name="saving" size="card" />
-                            </span>
-                          ) : (
-                            <Icon name="plan" size="card" />
-                          )}
-                        </span>
-                        <span className={styles.projectInfo}>
-                          <strong title={p.name}>{p.name}</strong>
-                          {openingProjectId === p.id ? (
-                            <small role="status">Abrindo projeto…</small>
-                          ) : (
-                            <small>
-                              {!p.compatible && (
-                                <span>Formato incompatível · </span>
-                              )}
-                              {p.walls} {p.walls === 1 ? "parede" : "paredes"} ·
-                              Atualizado em{" "}
-                              {new Date(p.updatedAt).toLocaleDateString(
-                                "pt-BR",
-                              )}
-                            </small>
-                          )}
-                          {!p.compatible && incompatibleProject === p.id && (
-                            <small
-                              id={`project-compatibility-${p.id}`}
-                              role="status"
-                              className={styles.projectCompatibilityMessage}
-                            >
-                              Este projeto usa um formato antigo e não pode ser
-                              aberto nesta versão. Arquivos de marcos anteriores
-                              não são convertidos. Crie um novo projeto.
-                            </small>
-                          )}
-                        </span>
-                      </button>
-                      <div className={styles.projectActions}>
-                        <button
-                          className={styles.iconButton}
-                          aria-label="Duplicar"
-                          data-tooltip="Duplicar"
-                          disabled={busy || !!duplicating || !p.compatible}
-                          title="Duplicar o último estado salvo"
-                          onClick={() =>
-                            setDuplicating({ id: p.id, name: p.name })
-                          }
-                        >
-                          <Icon name="copy" />
-                        </button>
-                        <button
-                          className={`${styles.iconButton} ${styles.deleteProject}`}
-                          aria-label="Excluir"
-                          title="Excluir projeto"
-                          data-tooltip="Excluir"
-                          disabled={busy}
-                          onClick={(event) => {
-                            deleteTrigger.current = event.currentTarget;
-                            setDeleting({ id: p.id, name: p.name });
-                          }}
-                        >
-                          <Icon name="delete" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </section>
-          </div>
-          <p className={styles.localNote}>
-            <span aria-hidden="true">
-              <Icon name="download" />
-            </span>
-            <span>
-              Seus desenhos ficam neste navegador. Baixe o arquivo .ecovit para
-              fazer backup ou levar seu projeto para outro dispositivo.
-            </span>
-          </p>
-        </main>
+        home
       )}
       {creating && (
         <div className={styles.modalBackdrop}>
@@ -1516,5 +1535,27 @@ export default function App() {
         />
       )}
     </div>
+  );
+  return (
+    <>
+      {editor}
+      {preparingCanvas && (
+        <div
+          className={`${styles.app} ${styles.homeApp} ${styles.openingHome}`}
+          ref={(element) => {
+            if (element) element.scrollTop = homeScroll.current;
+          }}
+        >
+          <header className={styles.header}>
+            <Brand />
+            {homeHeader}
+          </header>
+          {!projects.some((p) => p.id === openingProjectId) && (
+            <p role="status">Abrindo projeto…</p>
+          )}
+          {home}
+        </div>
+      )}
+    </>
   );
 }

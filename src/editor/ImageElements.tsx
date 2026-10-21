@@ -7,6 +7,7 @@ import {
   type FurnitureBitmap,
 } from "./furniture-bitmaps";
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -59,23 +60,28 @@ function ObjectBitmap({
   assets,
   camera,
   ghost = false,
+  onReady,
 }: {
   element: ImageElement;
   assets: CustomImageAsset[];
   camera: Camera;
   ghost?: boolean;
+  onReady?: (id: string) => void;
 }) {
+  const [failed, setFailed] = useState(false);
   const url = elementUrl(element, assets),
     [bitmap, setBitmap] = useState<FurnitureBitmap | null>(null);
   useEffect(() => {
     let live = true;
     setBitmap(null);
+    setFailed(false);
     const resource = acquireFurnitureBitmap(url);
     void resource.promise
       .then((i) => {
         if (live) setBitmap(i);
       })
       .catch(() => {
+        if (live) setFailed(true);
         if (live)
           useStore
             .getState()
@@ -88,6 +94,9 @@ function ObjectBitmap({
       resource.release();
     };
   }, [url]);
+  useLayoutEffect(() => {
+    if (bitmap || failed) onReady?.(element.id);
+  }, [bitmap, failed, element.id, onReady]);
   if (!bitmap) return null;
   const sourceRatio = elementRatio(element, assets);
   const fit = Math.min(sourceRatio / bitmap.crop.width, 1 / bitmap.crop.height);
@@ -533,6 +542,12 @@ export function useImageElements(
   const { select, mode, busy, readonly, furnitureDraft, imageDraft } =
     useStore();
   const bitmapLayer = useRef<Konva.Layer>(null);
+  const [loaded, setLoaded] = useState<Record<string, boolean>>({});
+  const bitmapReady = useCallback((id: string) => {
+    setLoaded((current) =>
+      current[id] ? current : { ...current, [id]: true },
+    );
+  }, []);
   const highQuality = usePreferences((s) => s.highQualityImages);
   useLayoutEffect(() => {
     const layer = bitmapLayer.current;
@@ -779,6 +794,8 @@ export function useImageElements(
       drag.current?.kind === "rotate" && preview
         ? `Rotação: ${preview.angle.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}° · atração a cada 45°`
         : "",
+    ready:
+      mode !== "plan" || doc.model.imageElements.every((e) => loaded[e.id]),
     isDragging: () => !!drag.current,
     bounds: doc.model.imageElements.flatMap(elementCorners),
     layer:
@@ -787,6 +804,7 @@ export function useImageElements(
           {doc.model.imageElements.map((e) => (
             <ObjectBitmap
               key={e.id}
+              onReady={bitmapReady}
               element={preview?.id === e.id ? preview : e}
               assets={doc.model.customImageAssets}
               camera={camera}

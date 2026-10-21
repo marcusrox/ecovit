@@ -399,6 +399,7 @@ export function useReferenceImageCanvas(
     data: string;
     image: HTMLImageElement;
   } | null>(null);
+  const [failedData, setFailedData] = useState<string | null>(null);
   const move = useRef<{ start: Point; image: ReferenceImage } | null>(null);
   useEffect(() => {
     let alive = true;
@@ -409,6 +410,7 @@ export function useReferenceImageCanvas(
         })
         .catch((e) => {
           if (alive) {
+            setFailedData(data ?? null);
             cancelImage();
             useStore.getState().notify((e as Error).message);
           }
@@ -499,6 +501,12 @@ export function useReferenceImageCanvas(
     return true;
   };
   return {
+    ready:
+      mode !== "plan" ||
+      !image?.visible ||
+      !data ||
+      bitmap?.data === data ||
+      failedData === data,
     down: pointClick,
     move: (p: Point) => {
       if (!draft || busy || readonly) return false;

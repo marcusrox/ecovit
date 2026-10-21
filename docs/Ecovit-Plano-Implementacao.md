@@ -39,6 +39,8 @@ Persistência, integridade e verificação acompanham cada entrega. M4 depende d
 
 [Apresentação e operação](marcos/Apresentacao-e-Operacao.md) reúne interface, iconografia e limites operacionais que não pertencem a um único marco, incluindo o favicon implementado e a organização visual dos painéis e o foco padronizado dos campos com unidade implementados e aceitos. Os demais aceites específicos pendentes permanecem separados dos aceites globais.
 
+A primeira exibição do canvas com câmera restaurada e feedback mantido até o desenho estar pronto está implementada e verificada pela suíte completa, com os testes afetados revalidados após correções; resultados consolidados e aceite específico pendente constam de [M5](marcos/M5-Quantitativos-e-Projetos.md#1211-abertura-até-o-primeiro-desenho--rf-1214).
+
 O [registro de M5](marcos/M5-Quantitativos-e-Projetos.md) preserva também a situação dos ajustes posteriores de exclusão de projetos, cartões e cabeçalho, inclusive os aceites específicos ainda pendentes. M1–M10 aprovados não implica aprovação automática dessas alterações.
 
 BL-01/02/03/06/07/08 estão implementados; BL-04/05 permanecem sem escopo de implementação aprovado, conforme o backlog. M11 está implementado e aceito pelo solicitante; seu arquivo reúne verificações, limitações e registro do aceite.

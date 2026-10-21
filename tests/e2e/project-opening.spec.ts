@@ -184,3 +184,146 @@ test("erro mantém a lista e restaura controles/cursor para tentar novamente", a
   await expect(page.getByTestId("drawing")).toBeVisible();
   await expect(page.getByRole("alert")).toHaveCount(0);
 });
+
+for (const [width, height, failBitmap] of [
+  [1366, 768, false],
+  [1280, 720, false],
+  [900, 680, false],
+  [1366, 768, true],
+] as const) {
+  test(`primeiro quadro completo preserva câmera em ${width}×${height}${failBitmap ? " com falha de bitmap" : ""}`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height });
+    await seed(page);
+    await page.evaluate(async () => {
+      const databasePath = "/src/persistence/database.ts";
+      const elementsPath = "/src/domain/image-elements.ts";
+      const catalogPath = "/src/domain/image-catalog.ts";
+      const { db, saveProject } = await import(databasePath);
+      const { standardElement } = await import(elementsPath);
+      const { imageCatalog } = await import(catalogPath);
+      const project = (await db.table("projects").toArray())
+        .map((row: { doc: unknown }) => row.doc)
+        .find(
+          (p: { project: { name: string } }) =>
+            p.project.name === "Abrir casa de teste",
+        );
+      project.model.imageElements.push({
+        ...standardElement(imageCatalog[0], project.model.floors[0].id),
+        x: 14000,
+        y: 9000,
+      });
+      await saveProject(project);
+      localStorage.setItem(
+        `ecovit:project-view:v1:${project.project.id}`,
+        JSON.stringify({ centerX: 14000, centerY: 9000, scale: 0.024 }),
+      );
+    });
+    await page.reload();
+    await page.evaluate((failBitmap) => {
+      const decode = HTMLImageElement.prototype.decode;
+      let calls = 0;
+      let resume = () => {};
+      const gate = new Promise<void>((resolve) => {
+        resume = resolve;
+      });
+      const probe = {
+        waiting: false,
+        first: null as null | {
+          scale: number;
+          centerX: number;
+          centerY: number;
+        },
+      };
+      Object.assign(window, { bitmapProbe: probe, resumeBitmap: resume });
+      HTMLImageElement.prototype.decode = async function () {
+        if (++calls === 2) {
+          probe.waiting = true;
+          await gate;
+          if (failBitmap) throw new Error("Falha de bitmap para teste");
+        }
+        return decode.call(this);
+      };
+      const sample = () => {
+        const drawing = document.querySelector<HTMLElement>(
+          '[data-testid="drawing"]',
+        );
+        if (drawing && getComputedStyle(drawing).visibility === "visible") {
+          const box = drawing.getBoundingClientRect();
+          const camera = JSON.parse(drawing.dataset.camera!);
+          probe.first = {
+            scale: camera.scale,
+            centerX: (box.width / 2 - camera.x) / camera.scale,
+            centerY: (box.height / 2 - camera.y) / camera.scale,
+          };
+        } else requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    }, failBitmap);
+    await page.getByRole("button", { name: /Abrir casa de teste/ }).click();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            (window as unknown as { bitmapProbe: { waiting: boolean } })
+              .bitmapProbe.waiting,
+        ),
+      )
+      .toBe(true);
+    await expect(page.getByTestId("drawing")).toBeHidden();
+    await expect(page.getByRole("status")).toHaveText("Abrindo projeto…");
+    await expect(
+      page.getByRole("button", { name: /Outro projeto/ }),
+    ).toBeDisabled();
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-opening-project",
+      "true",
+    );
+    await page.screenshot({
+      path: `.tools/canvas-preparing-${testInfo.project.name}-${width}.png`,
+    });
+    await page.evaluate(() =>
+      (window as unknown as { resumeBitmap: () => void }).resumeBitmap(),
+    );
+    await expect(page.getByTestId("drawing")).toBeVisible();
+    if (failBitmap)
+      await expect(page.getByRole("alert")).toContainText(
+        "Não foi possível carregar a imagem do mobiliário",
+      );
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            (window as unknown as { bitmapProbe: { first: unknown } })
+              .bitmapProbe.first,
+        ),
+      )
+      .not.toBeNull();
+    const first = await page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            bitmapProbe: {
+              first: { scale: number; centerX: number; centerY: number };
+            };
+          }
+        ).bitmapProbe.first,
+    );
+    expect(first.scale).toBe(0.024);
+    expect(first.centerX).toBeCloseTo(14000, 4);
+    expect(first.centerY).toBeCloseTo(9000, 4);
+    await expect(page.locator("html")).not.toHaveAttribute(
+      "data-opening-project",
+    );
+    await page.screenshot({
+      path: `.tools/canvas-ready-${testInfo.project.name}-${width}.png`,
+    });
+    await page.getByRole("button", { name: "Projetos", exact: true }).click();
+    await page.getByRole("button", { name: /Abrir casa de teste/ }).click();
+    await expect(page.getByTestId("drawing")).toBeVisible();
+    await expect(page.locator("html")).not.toHaveAttribute(
+      "data-opening-project",
+    );
+  });
+}

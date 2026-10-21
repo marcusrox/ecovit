@@ -32,7 +32,7 @@ test("M3.2 carga de 100 janelas com demandas globais coincidentes", async ({
     });
   }
   const start = Date.now();
-  await load(page, d);
+  await load(page, d, 20000);
   const elapsed = Date.now() - start,
     result = await exported(page);
   expect(
@@ -107,13 +107,14 @@ function fixture(window = true) {
     });
   return d;
 }
-async function load(page: Page, d: unknown) {
+async function load(page: Page, d: unknown, timeout = 5000) {
   await page.goto("/");
   await page.getByTestId("import-file").setInputFiles({
     name: "canaletas.ecovit",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(d)),
   });
+  await expect(page.getByTestId("drawing")).toBeVisible({ timeout });
   await expect(page.getByRole("status")).toContainText("Salvo");
 }
 async function exported(page: Page) {

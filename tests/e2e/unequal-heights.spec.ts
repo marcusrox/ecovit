@@ -30,6 +30,9 @@ test("CT-14 importa resultado antigo, preserva desenho, alturas e histórico ao 
     ...original.model,
     measurements: [],
     referenceImages: [],
+    imageElements: [],
+    customImageAssets: [],
+    terrain: null,
   });
   expect(updated.adjustments).toEqual(original.adjustments);
   expect(
@@ -55,6 +58,9 @@ test("CT-14 importa resultado antigo, preserva desenho, alturas e histórico ao 
     ...original.model,
     measurements: [],
     referenceImages: [],
+    imageElements: [],
+    customImageAssets: [],
+    terrain: null,
   });
   expect(reopened.generated).toEqual(updated.generated);
   const drawing = page.getByTestId("drawing"),
@@ -74,6 +80,9 @@ test("CT-14 importa resultado antigo, preserva desenho, alturas e histórico ao 
     ...original.model,
     measurements: [],
     referenceImages: [],
+    imageElements: [],
+    customImageAssets: [],
+    terrain: null,
   });
   await page.getByRole("button", { name: "Refazer", exact: true }).click();
   expect((await exported(page)).model.walls[0].height).toBe(27300);
@@ -141,6 +150,9 @@ for (const readonly of [false, true]) {
       ...original.model,
       measurements: [],
       referenceImages: [],
+      imageElements: [],
+      customImageAssets: [],
+      terrain: null,
     });
     expect(updated.generated!.convention).toBe("nominal-v10");
     expect(

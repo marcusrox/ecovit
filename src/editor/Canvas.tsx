@@ -1,7 +1,8 @@
 import { useTerrainCanvas } from "./Terrain";
 import { useReferenceImageCanvas } from "./ReferenceImage";
 import { MIN_CAMERA_SCALE, useProjectCamera } from "./useProjectCamera";
-import { useEffect, useMemo, useRef, useState } from "react";
+import type Konva from "konva";
+import { useLayoutEffect, useEffect, useMemo, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Circle, Text, Shape } from "react-konva";
 import {
   bounds,
@@ -73,11 +74,13 @@ type Gesture =
   | { type: "pan"; start: Point; camera: Camera; button: 0 | 1 }
   | { type: "grout"; start: Point; cell: Point & { wallIds: string[] } };
 export function Canvas({
+  onReady,
   tool,
   setTool,
   side,
   setSide,
 }: {
+  onReady: (id: string) => void;
   tool: Tool;
   setTool: (t: Tool) => void;
   side: 1 | -1;
@@ -104,6 +107,8 @@ export function Canvas({
       !reference ||
       (!project.model.walls.some((w) => w.floorId === reference.id) &&
         !project.model.slabs.some((s) => s.floorId === reference.id));
+  const stage = useRef<Konva.Stage>(null);
+  const announcedReady = useRef(false);
   const host = useRef<HTMLDivElement>(null),
     gesture = useRef<Gesture | null>(null),
     space = useRef(false);
@@ -117,6 +122,7 @@ export function Canvas({
     setCamera,
     size,
     resize,
+    ready: cameraReady,
     error: viewError,
   } = useProjectCamera(project.project.id, panning);
   const [wallEdit, setWallEdit] = useState<WallEdit | null>(null);
@@ -139,6 +145,37 @@ export function Canvas({
   const imageDraft = useStore((s) => s.imageDraft);
   const terrain = useTerrainCanvas(doc, tool, setTool, camera, host);
   const furniture = useImageElements(doc, tool, camera, host, setTool);
+  useLayoutEffect(() => {
+    const element = host.current;
+    if (element)
+      resize({ width: element.clientWidth, height: element.clientHeight });
+  }, [resize]);
+  useLayoutEffect(() => {
+    if (
+      announcedReady.current ||
+      busy ||
+      !cameraReady ||
+      !furniture.ready ||
+      !imageCanvas.ready
+    )
+      return;
+    const frame = requestAnimationFrame(() => {
+      // React-Konva schedules layer paints; finish them before revealing the editor.
+      stage.current?.draw();
+      announcedReady.current = true;
+      onReady(project.project.id);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [
+    busy,
+    cameraReady,
+    furniture.ready,
+    imageCanvas.ready,
+    camera,
+    size,
+    onReady,
+    project.project.id,
+  ]);
   const slabs = useSlabCanvas(doc, tool, setTool, camera);
   const measurements = useMeasurementCanvas(
     doc,
@@ -1035,6 +1072,7 @@ export function Canvas({
         }}
       >
         <Stage
+          ref={stage}
           width={size.width}
           height={size.height}
           onWheel={(e) => {
