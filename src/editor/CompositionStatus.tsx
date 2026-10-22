@@ -2,13 +2,17 @@ import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
 
 export function CompositionStatus() {
-  const { doc, busy, readonly, retry } = useStore();
+  const { doc, busy, readonly, retry, retainedGroutResult } = useStore();
   if (!doc) return null;
   const outdated = doc.generationState.status === "outdated";
   const message = busy
-    ? "Processando…"
+    ? retainedGroutResult
+      ? "Recalculando grautes…"
+      : "Processando…"
     : outdated
-      ? "Resultado desatualizado"
+      ? retainedGroutResult
+        ? "Desenho anterior · resultado desatualizado"
+        : "Resultado desatualizado"
       : doc.generationState.diagnostics.some((d) => d.severity === "error")
         ? "Atualizado · com pendências"
         : "Composição nominal atualizada";

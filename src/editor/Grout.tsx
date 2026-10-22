@@ -156,8 +156,8 @@ export function GroutPanel() {
   const adjustments = groutAdjustmentsInScope(d, d.viewFloorId, wall?.id);
   const floorAdjustments = groutAdjustmentsInScope(d, d.viewFloorId);
   const cells = useMemo(
-    () => (d.generated ? courseCells(d, d.generated, s.course, wall?.id) : []),
-    [d, s.course, wall?.id],
+    () => (d.generated ? courseCells(d, d.generated, s.course) : []),
+    [d, s.course],
   );
   const selected = cells.find(
     (c) => s.groutCell && groutId(c) === groutId(s.groutCell),
@@ -198,8 +198,8 @@ export function GroutPanel() {
       </label>
       <p className={styles.note}>
         {wall
-          ? `Parede ${d.model.walls.indexOf(wall) + 1} selecionada.`
-          : "Alcance: todas as paredes do pavimento."}
+          ? `Parede ${d.model.walls.indexOf(wall) + 1} selecionada para consultar ajustes e restaurar.`
+          : "Consulta e restauração: todas as paredes do pavimento."}
       </p>
       {!Object.entries(d.project.groutSettings).some(
         ([key, value]) => key !== "distance" && value === true,
@@ -210,8 +210,9 @@ export function GroutPanel() {
         </p>
       )}
       <p>
-        ● Preenchido · ○ Disponível. Inclusão/remoção afeta todos os intervalos
-        de alvenaria do eixo; vazios não recebem graute.
+        No modo Graute, edite furos de qualquer parede do pavimento. ●
+        Preenchido · ○ Disponível. Inclusão/remoção afeta todos os intervalos de
+        alvenaria do eixo; vazios não recebem graute.
       </p>
       {s.groutMode && (
         <>

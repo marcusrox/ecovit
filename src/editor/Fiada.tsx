@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
 import { generateFloor } from "../domain/composition";
 import { display } from "../domain/project";
-import { useStore, useEditingProject } from "../state/store";
+import {
+  useStore,
+  useEditingProject,
+  useCourseDisplayComposition,
+} from "../state/store";
 import styles from "../ui/App.module.css";
 import { Icon } from "../ui/Icon";
 import { restoreSuppression, suppressBand } from "../domain/channels";
 import { GroutPanel } from "./Grout";
 
 export function FiadaToolbar() {
+  const displayComposition = useCourseDisplayComposition();
   const s = useStore(),
     doc = useEditingProject()!,
-    total = doc.generated?.courses.length ?? 0;
+    total = displayComposition?.courses.length ?? 0;
   useEffect(() => {
     if (doc.generated && s.course > Math.max(1, total)) {
       s.inspect({ course: Math.max(1, total) });
@@ -26,7 +31,7 @@ export function FiadaToolbar() {
     )
       s.inspect({ ghost: "none" });
   }, [s, total, doc.generated]);
-  const active = doc.generated?.courses[s.course - 1];
+  const active = displayComposition?.courses[s.course - 1];
   useEffect(() => {
     if (
       s.channelBand &&
@@ -222,11 +227,12 @@ export function FiadaPanel() {
         Modelo nominal: passo igual à altura-base; furos indicam eixos. Confira
         as dimensões do produto utilizado.
       </p>
-      {doc.generationState.status === "outdated" && (
-        <p className={styles.errorText}>
-          Resultado antigo: não representa as últimas alterações.
-        </p>
-      )}
+      {doc.generationState.status === "outdated" &&
+        (!s.busy || !s.retainedGroutResult) && (
+          <p className={styles.errorText}>
+            Resultado antigo: não representa as últimas alterações.
+          </p>
+        )}
       <details>
         <summary>Legenda</summary>
         <p>

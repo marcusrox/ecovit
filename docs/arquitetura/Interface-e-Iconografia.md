@@ -46,6 +46,8 @@ Verificar imports/paths/glifos restantes, centralização e ausência de sobrepo
 
 React oferece suporte a TypeScript; Konva tem integração declarativa com React e eventos para formas. A escolha é uma decisão de adequação ao produto, não uma garantia de desempenho sem medição. Referências: [React e TypeScript](https://react.dev/learn/typescript), [react-konva](https://konvajs.org/docs/react/index.html).
 
+No indicador de composição na parte inferior do canvas, a retenção visual durante recálculo de grautes substitui Processando… por Recalculando grautes…, sem novo ícone ou mensagem na barra de ferramentas. Após falha com desenho retido, mostrar Desenho anterior · resultado desatualizado no mesmo indicador, preservar a mensagem de erro existente e a ação Recalcular. Manter o texto legível nas três resoluções de referência, sem deslocar a barra de ferramentas nem ocultar controles.
+
 ## Painéis de propriedades à direita
 
 ### Campos com unidade

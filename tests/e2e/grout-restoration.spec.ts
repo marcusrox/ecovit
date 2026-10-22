@@ -68,13 +68,11 @@ async function snapshot(page: Page) {
 }
 async function open(page: Page, d = fixture()) {
   await page.goto("/");
-  await page
-    .getByTestId("import-file")
-    .setInputFiles({
-      name: "grautes.ecovit",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(d)),
-    });
+  await page.getByTestId("import-file").setInputFiles({
+    name: "grautes.ecovit",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(d)),
+  });
   await expect(page.getByRole("status")).toContainText("Salvo");
   await page.getByRole("button", { name: "Fiada", exact: true }).click();
 }
@@ -86,6 +84,138 @@ async function click(page: Page, x: number, y: number) {
 }
 const panel = (page: Page) =>
   page.getByRole("region", { name: "Graute vertical" });
+
+test("grautes mantêm paredes e navegação visíveis durante inclusão e remoção, sem editar o resultado antigo", async ({
+  page,
+}, info) => {
+  await open(page, fixture(false));
+  await page.getByRole("button", { name: "Graute", exact: true }).click();
+  for (const [width, height] of [
+    [1366, 768],
+    [1280, 720],
+    [900, 680],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
+    const pixels = () =>
+      page.getByTestId("drawing").evaluate(async (host) => {
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        );
+        const camera = JSON.parse(host.getAttribute("data-camera")!);
+        return [...host.querySelectorAll("canvas")].map((canvas) => {
+          const ratio = canvas.width / canvas.getBoundingClientRect().width;
+          return [
+            ...canvas
+              .getContext("2d")!
+              .getImageData(
+                Math.round((camera.x + 11250 * camera.scale) * ratio),
+                Math.round((camera.y + 100 * camera.scale) * ratio),
+                1,
+                1,
+              ).data,
+          ];
+        });
+      });
+    for (const action of ["include", "exclude"]) {
+      const before = await snapshot(page);
+      const toolbarButton = page.getByRole("button", {
+        name: "Graute",
+        exact: true,
+      });
+      const toolbarBox = await toolbarButton.boundingBox();
+      const drawingBox = await page.getByTestId("drawing").boundingBox();
+      const oldPixels = await pixels();
+      expect(oldPixels.some((p) => p[3] > 0)).toBe(true);
+      await page.evaluate(async () => {
+        const path = "/src/persistence/database.ts";
+        const { db } = await import(path);
+        const table = db.table("projects"),
+          original = table.put;
+        let release!: () => void;
+        const gate = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        (window as unknown as { resumeGroutSave: () => void }).resumeGroutSave =
+          release;
+        table.put = async function (...args: unknown[]) {
+          table.put = original;
+          await gate;
+          return original.apply(this, args);
+        };
+      });
+      await click(page, 625, 10625);
+      await expect(page.getByTestId("composition-status")).toBeVisible();
+      await expect(page.getByTestId("composition-status")).toHaveText(
+        "Recalculando grautes…",
+      );
+      expect(await toolbarButton.boundingBox()).toEqual(toolbarBox);
+      expect(await page.getByTestId("drawing").boundingBox()).toEqual(
+        drawingBox,
+      );
+      await expect(page.getByLabel("Número da fiada")).toBeDisabled();
+      await expect(
+        page.getByRole("button", { name: "Graute", exact: true }),
+      ).toBeDisabled();
+      expect(await pixels()).toEqual(oldPixels);
+      const waiting = await snapshot(page);
+      expect(waiting.doc.generated).toBeNull();
+      expect(waiting.doc.generationState.status).toBe("outdated");
+      expect(waiting.past).toBe(before.past + 1);
+      await click(page, 20625, 625);
+      expect((await snapshot(page)).doc).toEqual(waiting.doc);
+      if (action === "include")
+        await page.screenshot({
+          path: info.outputPath(`recalculando-${width}.png`),
+        });
+      await page.evaluate(() =>
+        (
+          window as unknown as { resumeGroutSave: () => void }
+        ).resumeGroutSave(),
+      );
+      await expect(page.getByRole("status")).toContainText("Salvo");
+      const after = await snapshot(page);
+      expect(after.doc.generationState.status).toBe("current");
+      expect(after.doc.adjustments.grout).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ x: 0, y: 10000, action }),
+        ]),
+      );
+      expect(
+        after.doc.generated!.floors[0].grouts!.some(
+          (g) => g.x === 0 && g.y === 10000,
+        ),
+      ).toBe(action === "include");
+    }
+  }
+  await page.evaluate(async () => {
+    const path = "/src/state/store.ts";
+    const { useStore } = await import(path);
+    const doc = useStore.getState().doc!;
+    useStore.setState({
+      retainedGroutResult: doc.generated,
+      doc: {
+        ...doc,
+        generated: null,
+        generationState: { status: "outdated", diagnostics: [] },
+      },
+      message: "Cálculo não concluído: falha simulada.",
+    });
+  });
+  await expect(page.getByTestId("composition-status")).toHaveText(
+    "Desenho anterior · resultado desatualizado",
+  );
+  await expect(
+    page.getByRole("button", { name: "Graute", exact: true }),
+  ).toBeDisabled();
+  await page.screenshot({
+    path: info.outputPath("resultado-desatualizado-900.png"),
+  });
+  await page.getByRole("button", { name: "Recalcular", exact: true }).click();
+  await expect(page.getByTestId("composition-status")).toHaveText(
+    "Atualizado · com pendências",
+  );
+});
 
 test("Fiada seleciona parede individual, pergunta no encontro e mantém conjuntos no painel", async ({
   page,
@@ -105,10 +235,9 @@ test("Fiada seleciona parede individual, pergunta no encontro e mantém conjunto
   );
   await page.getByRole("button", { name: "Graute", exact: true }).click();
   const holes = page.getByLabel("Selecionar furo de graute");
-  await expect(holes.locator("option")).toHaveCount(33);
-  // Outside the selected wall, even a real hole must not modify another wall.
-  await click(page, 625, 10625);
-  expect((await snapshot(page)).doc).toEqual(before.doc);
+  const holeCount = await holes.locator("option").count();
+  await expect(holes.locator('option[value="0:10000"]')).toHaveCount(1);
+  await expect(holes.locator('option[value="10000:40000"]')).toHaveCount(1);
   await holes.selectOption("0:0");
   await expect(panel(page)).toContainText("Eixo compartilhado");
   await page.getByRole("button", { name: /Conjunto 1/ }).click();
@@ -132,7 +261,7 @@ test("Fiada seleciona parede individual, pergunta no encontro e mantém conjunto
     component: null,
   });
   await page.getByRole("button", { name: "Graute", exact: true }).click();
-  await expect(holes.locator("option")).toHaveCount(25);
+  await expect(holes.locator("option")).toHaveCount(holeCount);
   await page.getByRole("button", { name: "Graute", exact: true }).click();
   for (const [width, height] of [
     [1366, 768],
@@ -154,6 +283,70 @@ test("Fiada seleciona parede individual, pergunta no encontro e mantém conjunto
     doc: before.doc,
     past: before.past,
   });
+});
+
+test("Graute edita outras paredes sem trocar a parede selecionada e permite desfazer", async ({
+  page,
+}) => {
+  const d = fixture(false);
+  await open(page, d);
+  await click(page, 10625, 625);
+  const before = await snapshot(page);
+  const tool = page.getByRole("button", { name: "Graute", exact: true });
+  await tool.click();
+  for (const [x, y, wall] of [
+    [0, 10000, d.model.walls[1].id],
+    [10000, 40000, d.model.walls[2].id],
+  ] as const) {
+    const previous = await snapshot(page);
+    await click(page, x + 625, y + 625);
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    const added = await snapshot(page);
+    expect(added.select).toBe(d.model.walls[0].id);
+    expect(added.doc.adjustments.grout).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ x, y, action: "include", wallIds: [wall] }),
+      ]),
+    );
+    await expect(tool).toHaveAttribute("aria-pressed", "true");
+    await page
+      .getByLabel("Selecionar furo de graute")
+      .selectOption(`${x}:${y}`);
+    await expect(
+      panel(page).getByRole("button", { name: "Remover graute", exact: true }),
+    ).toBeVisible();
+    await click(page, x + 625, y + 625);
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    const removed = await snapshot(page);
+    expect(removed.doc.adjustments.grout).toEqual(
+      added.doc.adjustments.grout.map((a) =>
+        a.x === x && a.y === y && a.wallIds.includes(wall)
+          ? { ...a, action: "exclude" }
+          : a,
+      ),
+    );
+    const others = removed.doc.adjustments.grout.filter(
+      (a) => !(a.x === x && a.y === y && a.wallIds.includes(wall)),
+    );
+    expect(others).toHaveLength(previous.doc.adjustments.grout.length);
+    expect(others).toEqual(
+      expect.arrayContaining(previous.doc.adjustments.grout),
+    );
+  }
+  expect((await snapshot(page)).select).toBe(before.select);
+  const final = await snapshot(page);
+  await page.getByRole("button", { name: "Desfazer", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Salvo");
+  expect((await snapshot(page)).doc.adjustments.grout).toEqual(
+    final.doc.adjustments.grout.map((a) =>
+      a.x === 10000 && a.y === 40000 ? { ...a, action: "include" } : a,
+    ),
+  );
+  await page.getByRole("button", { name: "Refazer", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Salvo");
+  expect((await snapshot(page)).doc.adjustments.grout).toEqual(
+    final.doc.adjustments.grout,
+  );
 });
 
 test("restaurar parede confirma contagens e compartilhados, cancela sem mudar e permite desfazer/reabrir", async ({

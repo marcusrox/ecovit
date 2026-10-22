@@ -36,7 +36,11 @@ import {
   openingDrawRange,
   wallDraw,
 } from "../domain/drawing";
-import { useStore, useEditingProject } from "../state/store";
+import {
+  useStore,
+  useEditingProject,
+  useCourseDisplayComposition,
+} from "../state/store";
 import styles from "../ui/App.module.css";
 import { Icon } from "../ui/Icon";
 import { useSlabCanvas } from "./Slabs";
@@ -186,7 +190,8 @@ export function Canvas({
     host,
     panning || spaceHeld,
   );
-  const output = compositionPreview ?? doc.generated;
+  const displayComposition = useCourseDisplayComposition();
+  const output = compositionPreview ?? displayComposition;
   const courseWall =
     mode === "course" ? walls.find((w) => w.id === selected) : undefined;
   const courseChoicePoint = useRef<Point | null>(null);
@@ -203,10 +208,9 @@ export function Canvas({
     module * camera.scale >= 9
       ? markers.find(
           (c) =>
-            (!courseWall || c.wallIds.includes(courseWall.id)) &&
             Math.hypot(p.x - c.x - module / 2, p.y - c.y - module / 2) *
               camera.scale <=
-              Math.min(9, module * camera.scale * 0.4),
+            Math.min(9, module * camera.scale * 0.4),
         )
       : undefined;
   const chooseCourseWall = (id: string | null, p?: Point) => {
@@ -1254,7 +1258,6 @@ export function Canvas({
             <Layer listening={false}>
               <Shape
                 sceneFunc={(ctx) => {
-                  const output = compositionPreview ?? doc.generated;
                   const axes = new Map(
                     output?.grouts?.map((a) => [groutId(a), a]) ?? [],
                   );
@@ -1274,7 +1277,7 @@ export function Canvas({
                       ctx.save();
                       ctx.globalAlpha = reference
                         ? 0.7
-                        : doc.generationState.status === "outdated"
+                        : doc.generationState.status === "outdated" && !busy
                           ? 0.4
                           : 1;
                       ctx.strokeStyle = reference ? "#4880a1" : "#42392f";
@@ -1398,13 +1401,7 @@ export function Canvas({
                 (groutHover ?? selectedGrout) &&
                 (() => {
                   const c = groutHover ?? selectedGrout!;
-                  if (
-                    !markers.some(
-                      (m) =>
-                        groutId(m) === groutId(c) &&
-                        (!courseWall || m.wallIds.includes(courseWall.id)),
-                    )
-                  )
+                  if (!markers.some((m) => groutId(m) === groutId(c)))
                     return null;
                   return (
                     <>
@@ -1427,7 +1424,7 @@ export function Canvas({
                     </>
                   );
                 })()}
-              {(compositionPreview ?? doc.generated)?.channels
+              {output?.channels
                 ?.find((b) => b.id === selectedBand && b.course === course)
                 ?.cells.map((c) => (
                   <Rect
@@ -1440,7 +1437,7 @@ export function Canvas({
                     strokeWidth={2}
                   />
                 ))}
-              {(compositionPreview ?? doc.generated)?.components
+              {output?.components
                 .filter((c) => c.id === selectedComponent)
                 .flatMap((c) =>
                   c.junctions.map((j, i) => (

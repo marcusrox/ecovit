@@ -10,10 +10,12 @@ import {
   type GroutAdjustment,
 } from "../src/domain/project";
 import { generate, floorView, generateFloor } from "../src/domain/composition";
+import * as composition from "../src/domain/composition";
 import {
   courseCells,
   groutAdjustmentsInScope,
   restoreAutomaticGrouts,
+  toggleGrout,
 } from "../src/domain/grout";
 import { parseFile, serializeFile } from "../src/persistence/files";
 import { useStore } from "../src/state/store";
@@ -69,6 +71,95 @@ beforeEach(() => {
   vi.restoreAllMocks();
   useStore.getState().close();
   vi.mocked(saveProject).mockResolvedValue(1);
+});
+
+it("recálculo exclusivo de grautes mantém referência visual transitória sem salvar resultado antigo", async () => {
+  await useStore.getState().open(fixture(), true);
+  const previous = useStore.getState().doc!;
+  let resume!: () => void;
+  vi.mocked(saveProject).mockImplementationOnce(
+    () =>
+      new Promise<number>((resolve) => {
+        resume = () => resolve(1);
+      }),
+  );
+  const pending = useStore.getState().commit(
+    toggleGrout(
+      floorView(previous, previous.model.floors[0].id),
+      {
+        x: 10000,
+        y: 0,
+        wallIds: [previous.model.walls[0].id],
+      },
+      false,
+    ),
+  );
+  const waiting = useStore.getState();
+  expect(waiting.busy).toBe(true);
+  expect(waiting.retainedGroutResult).toBe(previous.generated);
+  expect(waiting.doc!.generated).toBeNull();
+  expect(parseFile(serializeFile(waiting.doc!).text).generated).toBeNull();
+  const saved = vi.mocked(saveProject).mock.calls.at(-1)![0];
+  expect(saved.generated).toBeNull();
+  resume();
+  await pending;
+  expect(useStore.getState().retainedGroutResult).toBeNull();
+  expect(useStore.getState().doc!.generationState.status).toBe("current");
+  expect(useStore.getState().doc!.generated).not.toEqual(previous.generated);
+  const updated = useStore.getState().doc!;
+  vi.mocked(saveProject).mockImplementationOnce(
+    () =>
+      new Promise<number>((resolve) => {
+        resume = () => resolve(1);
+      }),
+  );
+  const undo = useStore.getState().undo();
+  expect(useStore.getState().retainedGroutResult).toBe(updated.generated);
+  expect(useStore.getState().doc!.generated).toBeNull();
+  resume();
+  await undo;
+  expect(useStore.getState().retainedGroutResult).toBeNull();
+  expect(useStore.getState().doc!.generated).toEqual(previous.generated);
+});
+
+it("falha de cálculo conserva somente referência visual antiga, bloqueia resultado atual e limpa ao trocar geometria ou fechar", async () => {
+  await useStore.getState().open(fixture(), true);
+  const previous = useStore.getState().doc!;
+  const failure = vi.spyOn(composition, "generate").mockImplementation(() => {
+    throw new Error("falha simulada");
+  });
+  await useStore.getState().commit(
+    toggleGrout(
+      previous,
+      {
+        x: 10000,
+        y: 0,
+        wallIds: [previous.model.walls[0].id],
+      },
+      false,
+    ),
+  );
+  expect(useStore.getState()).toMatchObject({
+    busy: false,
+    retainedGroutResult: previous.generated,
+  });
+  expect(useStore.getState().message).toContain("Cálculo não concluído");
+  const failed = useStore.getState().doc!;
+  expect(failed.generationState.status).toBe("outdated");
+  expect(parseFile(serializeFile(failed).text).generated).toBeNull();
+  await useStore.getState().commit({
+    ...failed,
+    model: {
+      ...failed.model,
+      walls: failed.model.walls.map((w, i) =>
+        i ? w : { ...w, height: w.height + 700 },
+      ),
+    },
+  });
+  expect(useStore.getState().retainedGroutResult).toBeNull();
+  failure.mockRestore();
+  useStore.getState().close();
+  expect(useStore.getState().retainedGroutResult).toBeNull();
 });
 
 it("restauração por parede remove inclusões/exclusões e eixo compartilhado, preservando outras paredes, pendentes e pavimentos", () => {

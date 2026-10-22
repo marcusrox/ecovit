@@ -134,6 +134,7 @@ const inspection: Inspection = {
 type State = Inspection & {
   inspect: (change: Partial<Inspection>) => void;
   doc: Project | null;
+  retainedGroutResult: Project["generated"];
   activeFloorId: string | null;
   coursesByFloor: Record<string, number>;
   floorReferencesByFloor: Record<string, FloorReference>;
@@ -167,6 +168,34 @@ type State = Inspection & {
   retry: () => Promise<void>;
 };
 export const useStore = create<State>((set, get) => {
+  function retainGroutResult(previous: Project, next: Project) {
+    if (!changedInputs(previous, next)) return get().retainedGroutResult;
+    // Merging a floor view can reorder records from other floors. Compare
+    // membership by ID here so that ordering alone does not hide the drawing.
+    const byId = <T extends { id: string }>(items: T[]) =>
+      [...items].sort((a, b) => a.id.localeCompare(b.id));
+    const withoutGrouts = (doc: Project): Project => ({
+      ...doc,
+      model: {
+        ...doc.model,
+        floors: byId(doc.model.floors),
+        walls: byId(doc.model.walls),
+        openings: byId(doc.model.openings),
+        slabs: byId(doc.model.slabs),
+      },
+      adjustments: {
+        grout: [],
+        channels: byId(doc.adjustments.channels),
+        junctions: byId(doc.adjustments.junctions),
+      },
+    });
+    if (changedInputs(withoutGrouts(previous), withoutGrouts(next)))
+      return null;
+    return JSON.stringify(byId(previous.adjustments.grout)) !==
+      JSON.stringify(byId(next.adjustments.grout))
+      ? (previous.generated ?? get().retainedGroutResult)
+      : get().retainedGroutResult;
+  }
   async function persist(doc: Project, calculate = true) {
     doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.16.0" } };
     set({ doc });
@@ -212,7 +241,7 @@ export const useStore = create<State>((set, get) => {
             total > 0
               ? `A fiada anterior deixou de existir. Selecionada a fiada ${total}.`
               : "Este pavimento não tem fiadas disponíveis.";
-        set({ doc: current, course });
+        set({ doc: current, course, retainedGroutResult: null });
         await saveProject(current);
         saveFailed = false;
       }
@@ -312,6 +341,7 @@ export const useStore = create<State>((set, get) => {
       });
     },
     doc: null,
+    retainedGroutResult: null,
     history: { past: [], future: [] },
     busy: false,
     openingProjectId: null,
@@ -392,6 +422,7 @@ export const useStore = create<State>((set, get) => {
         set({
           ...inspection,
           doc,
+          retainedGroutResult: null,
           activeFloorId: doc.model.floors[0].id,
           coursesByFloor: {},
           floorReferencesByFloor: {},
@@ -418,6 +449,7 @@ export const useStore = create<State>((set, get) => {
       release = null;
       set({
         doc: null,
+        retainedGroutResult: null,
         terrainDraft: null,
         terrainEditing: false,
         furnitureDraft: null,
@@ -641,6 +673,7 @@ export const useStore = create<State>((set, get) => {
               doc.model.floors[0].id));
         set({
           activeFloorId: active,
+          retainedGroutResult: retainGroutResult(s.doc, doc),
           ...referenceState(doc, active, s),
           coursesByFloor: {
             ...s.coursesByFloor,
@@ -718,6 +751,7 @@ export const useStore = create<State>((set, get) => {
           preview: null,
           pendingOpening: null,
           doc,
+          retainedGroutResult: retainGroutResult(s.doc, doc),
           activeFloorId: active,
           ...referenceState(doc, active, s),
           coursesByFloor: {
@@ -767,5 +801,23 @@ export function useEditingProject() {
   return useMemo(
     () => editingProject({ doc, activeFloorId }),
     [doc, activeFloorId],
+  );
+}
+
+// Display only: the saved document and every editing path keep generated=null
+// until the new calculation has finished.
+export function useCourseDisplayComposition() {
+  const doc = useStore((s) => s.doc),
+    activeFloorId = useStore((s) => s.activeFloorId),
+    retained = useStore((s) => s.retainedGroutResult);
+  return useMemo(
+    () =>
+      doc
+        ? floorView(
+            { ...doc, generated: doc.generated ?? retained },
+            activeFloorId ?? doc.model.floors[0].id,
+          ).generated
+        : null,
+    [doc, activeFloorId, retained],
   );
 }
