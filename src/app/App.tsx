@@ -1,3 +1,4 @@
+import { AccountButton, AccountShell } from "./Account";
 import { TerrainProperties } from "../editor/Terrain";
 import { compassSelectionId } from "../domain/terrain-compass";
 import { ReferenceImageProperties } from "../editor/ReferenceImage";
@@ -41,11 +42,13 @@ import {
   type Tool,
 } from "../domain/project";
 import { download, importedCopy, readFile } from "../persistence/files";
-import { listProjects } from "../persistence/database";
+import { listProjects } from "../persistence/remote";
 import { useStore, useEditingProject } from "../state/store";
 import styles from "../ui/App.module.css";
 import { Icon } from "../ui/Icon";
 
+const listingFailure =
+  "Não foi possível consultar os projetos. A lista pode estar desatualizada; use Atualizar lista para tentar novamente.";
 function Brand() {
   return (
     <div className={styles.brand}>
@@ -483,7 +486,7 @@ function Properties({ doc }: { doc: Project }) {
     </aside>
   );
 }
-export default function App() {
+function EditorApp() {
   const mode = useStore((s) => s.mode);
   const groutMode = useStore((s) => s.groutMode);
   const selected = useStore((s) => s.select),
@@ -574,20 +577,39 @@ export default function App() {
     });
     setTool(t);
   }, []);
+  const [listingState, setListingState] = useState<
+    "loading" | "ready" | "error"
+  >("loading");
+  const listingRequest = useRef(0);
+  const cancelListing = useCallback(() => {
+    listingRequest.current++;
+  }, []);
+  const refreshProjects = useCallback(async () => {
+    const request = ++listingRequest.current;
+    setListingState("loading");
+    try {
+      const result = await listProjects();
+      if (request !== listingRequest.current) return;
+      setProjects(result);
+      setListingState("ready");
+      if (
+        !useStore.getState().doc &&
+        useStore.getState().message === listingFailure
+      )
+        useStore.getState().notify("");
+    } catch {
+      if (request !== listingRequest.current) return;
+      setListingState("error");
+      if (!useStore.getState().doc) useStore.getState().notify(listingFailure);
+    }
+  }, []);
   useEffect(() => {
     if (!doc) {
       setReadyProjectId(null);
-      void listProjects()
-        .then(setProjects)
-        .catch(() =>
-          useStore
-            .getState()
-            .notify(
-              "Armazenamento indisponível. Você ainda pode criar e baixar seu projeto.",
-            ),
-        );
+      void refreshProjects();
     } else setEditorName(doc.project.name);
-  }, [doc]);
+    return cancelListing;
+  }, [doc, refreshProjects, cancelListing]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (document.querySelector("dialog[open]")) {
@@ -671,21 +693,34 @@ export default function App() {
     };
     window.addEventListener("keydown", key);
     window.addEventListener("beforeunload", leave);
+    const offline = () => {
+      const s = useStore.getState();
+      if (s.doc && !s.busy && s.saved === "saved")
+        useStore.setState({
+          readonly: true,
+          saved: "unavailable",
+          message:
+            "Sem conexão. O desenho foi preservado. Use Tentar novamente para conferir o servidor antes de editar.",
+        });
+    };
+    window.addEventListener("offline", offline);
     return () => {
       window.removeEventListener("keydown", key);
       window.removeEventListener("beforeunload", leave);
+      window.removeEventListener("offline", offline);
     };
   }, []);
   const importFile = async (file?: File) => {
     if (!file) return;
+    if (!doc) useStore.getState().notify("");
     setImporting(true);
     try {
       const copy = importedCopy(await readFile(file));
       if (
         doc &&
-        saved === "error" &&
+        ["error", "uncertain", "conflict", "unavailable"].includes(saved) &&
         !window.confirm(
-          "O projeto atual não foi salvo. Baixe uma cópia antes de sair. Continuar mesmo assim?",
+          "O projeto atual não foi salvo. Baixe uma cópia antes de sair. Um pedido pendente pode já ter sido confirmado no servidor. Continuar mesmo assim?",
         )
       )
         return;
@@ -698,11 +733,19 @@ export default function App() {
       if (input.current) input.current.value = "";
     }
   };
+  useEffect(() => {
+    const update = () => {
+      void refreshProjects();
+    };
+    window.addEventListener("ecovit:projects-changed", update);
+    return () => window.removeEventListener("ecovit:projects-changed", update);
+  }, [refreshProjects]);
   const homeHeader = (
     <div className={styles.headerActions}>
-      <span className={styles.localBadge}>Salvo neste navegador</span>
+      <AccountButton />
+      <span className={styles.localBadge}>Projetos privados na conta</span>
       <button
-        disabled={busy || importing}
+        disabled={busy || importing || listingState !== "ready"}
         onClick={() => input.current?.click()}
         className={styles.iconText}
       >
@@ -710,6 +753,15 @@ export default function App() {
       </button>
     </div>
   );
+  const homeProgress = openingProjectId
+    ? "Abrindo projeto…"
+    : importing
+      ? "Importando arquivo…"
+      : listingState === "loading"
+        ? "Atualizando lista…"
+        : "";
+  const homeNotice =
+    message || (listingState === "error" ? listingFailure : "");
   const home = (
     <main className={styles.home}>
       <div className={styles.homeIntro}>
@@ -728,14 +780,60 @@ export default function App() {
       <div className={styles.listHeading}>
         <h2 id="projects-title">Seu espaço de projetos</h2>
         <span>
-          {projects.length}{" "}
-          {projects.length === 1 ? "projeto salvo" : "projetos salvos"}
+          {listingState === "loading"
+            ? ""
+            : listingState === "error"
+              ? "Lista indisponível"
+              : `${projects.length} ${projects.length === 1 ? "projeto salvo" : "projetos salvos"}`}
         </span>
+        <button
+          disabled={busy || importing || listingState === "loading"}
+          onClick={() => void refreshProjects()}
+        >
+          Atualizar lista
+        </button>
+      </div>
+      <div
+        className={styles.homeStatus}
+        role="region"
+        aria-label="Status dos projetos"
+      >
+        <div role="status" aria-atomic="true">
+          {homeProgress && (
+            <div className={styles.homeStatusMessage}>
+              <span className={styles.openingSpinner}>
+                <Icon name="saving" />
+              </span>
+              <span>{homeProgress}</span>
+            </div>
+          )}
+        </div>
+        {!homeProgress && homeNotice ? (
+          <div
+            className={`${styles.homeStatusMessage} ${styles.homeStatusWarning}`}
+            role="alert"
+            aria-atomic="true"
+          >
+            <Icon name="warning" />
+            <span>{homeNotice}</span>
+            {homeNotice !== listingFailure && (
+              <button
+                aria-label="Fechar aviso"
+                className={styles.iconButton}
+                title="Fechar aviso"
+                data-tooltip="Fechar aviso"
+                onClick={() => useStore.getState().notify("")}
+              >
+                <Icon name="close" />
+              </button>
+            )}
+          </div>
+        ) : null}
       </div>
       <div className={styles.homeGrid}>
         <button
           className={styles.newCard}
-          disabled={busy || importing}
+          disabled={busy || importing || listingState !== "ready"}
           onClick={() => {
             setFormError("");
             setCreating(true);
@@ -759,11 +857,17 @@ export default function App() {
               <span aria-hidden="true">
                 <Icon name="home" size="feature" />
               </span>
-              <h3>Um espaço para suas ideias</h3>
+              <h3>
+                {listingState === "ready"
+                  ? "Um espaço para suas ideias"
+                  : listingState === "loading"
+                    ? "Consultando seus projetos…"
+                    : "Lista indisponível"}
+              </h3>
               <p>
-                Os projetos salvos neste navegador
-                <br />
-                aparecerão aqui.
+                {listingState === "ready"
+                  ? "Os projetos salvos na sua conta aparecerão aqui."
+                  : "A lista ainda não foi confirmada pelo servidor. Use Atualizar lista para tentar novamente."}
               </p>
             </div>
           ) : (
@@ -788,7 +892,7 @@ export default function App() {
               >
                 <div className={styles.projectRow}>
                   <button
-                    disabled={busy}
+                    disabled={busy || importing || listingState !== "ready"}
                     key={p.id}
                     className={`${styles.projectCard} ${openingProjectId === p.id ? styles.projectOpeningCard : ""}`}
                     aria-expanded={
@@ -819,7 +923,7 @@ export default function App() {
                     <span className={styles.projectInfo}>
                       <strong title={p.name}>{p.name}</strong>
                       {openingProjectId === p.id ? (
-                        <small role="status">Abrindo projeto…</small>
+                        <small>Abrindo projeto…</small>
                       ) : (
                         <small>
                           {!p.compatible && (
@@ -827,7 +931,15 @@ export default function App() {
                           )}
                           {p.walls} {p.walls === 1 ? "parede" : "paredes"} ·
                           Atualizado em{" "}
-                          {new Date(p.updatedAt).toLocaleDateString("pt-BR")}
+                          <time dateTime={p.updatedAt}>
+                            {new Date(p.updatedAt).toLocaleDateString("pt-BR")}{" "}
+                            às{" "}
+                            {new Date(p.updatedAt).toLocaleTimeString("pt-BR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hourCycle: "h23",
+                            })}
+                          </time>
                         </small>
                       )}
                       {!p.compatible && incompatibleProject === p.id && (
@@ -848,7 +960,13 @@ export default function App() {
                       className={styles.iconButton}
                       aria-label="Duplicar"
                       data-tooltip="Duplicar"
-                      disabled={busy || !!duplicating || !p.compatible}
+                      disabled={
+                        busy ||
+                        importing ||
+                        listingState !== "ready" ||
+                        !!duplicating ||
+                        !p.compatible
+                      }
                       title="Duplicar o último estado salvo"
                       onClick={() => setDuplicating({ id: p.id, name: p.name })}
                     >
@@ -859,7 +977,7 @@ export default function App() {
                       aria-label="Excluir"
                       title="Excluir projeto"
                       data-tooltip="Excluir"
-                      disabled={busy}
+                      disabled={busy || importing || listingState !== "ready"}
                       onClick={(event) => {
                         deleteTrigger.current = event.currentTarget;
                         setDeleting({ id: p.id, name: p.name });
@@ -879,8 +997,8 @@ export default function App() {
           <Icon name="download" />
         </span>
         <span>
-          Seus desenhos ficam neste navegador. Baixe o arquivo .ecovit para
-          fazer backup ou levar seu projeto para outro dispositivo.
+          Seus desenhos ficam privados na sua conta. Baixe o arquivo .ecovit
+          para manter uma cópia sob seu controle.
         </span>
       </p>
     </main>
@@ -909,9 +1027,11 @@ export default function App() {
               disabled={busy || importing}
               onClick={() => {
                 if (
-                  saved === "error" &&
+                  ["error", "uncertain", "conflict", "unavailable"].includes(
+                    saved,
+                  ) &&
                   !window.confirm(
-                    "O trabalho não foi salvo. Baixe uma cópia antes de sair. Continuar?",
+                    "O trabalho não foi salvo. Baixe uma cópia antes de sair. Um pedido pendente pode já ter sido confirmado no servidor. Continuar?",
                   )
                 )
                   return;
@@ -970,30 +1090,33 @@ export default function App() {
               </button>
             </div>
             <span
-              className={`${styles.saveStatus} ${saved === "error" ? styles.errorText : ""}`}
+              className={`${styles.saveStatus} ${["error", "uncertain", "conflict", "unavailable"].includes(saved) ? styles.errorText : ""}`}
               role="status"
             >
               <Icon
                 name={
-                  readonly
-                    ? "readonly"
-                    : saved === "saving"
-                      ? "saving"
-                      : saved === "error"
-                        ? "warning"
-                        : "saved"
+                  saved === "saving"
+                    ? "saving"
+                    : saved === "saved"
+                      ? "saved"
+                      : "warning"
                 }
                 size="compact"
               />
-              {readonly
-                ? "Somente leitura"
-                : saved === "saving"
-                  ? "Salvando…"
-                  : saved === "error"
-                    ? "Não salvo"
-                    : "Salvo no navegador"}
+              {saved === "saving"
+                ? "Salvando…"
+                : saved === "uncertain"
+                  ? "Confirmação pendente"
+                  : saved === "conflict"
+                    ? "Conflito"
+                    : saved === "unavailable"
+                      ? "Sem conexão"
+                      : saved === "error"
+                        ? "Não salvo"
+                        : "Salvo"}
             </span>
             <div className={styles.headerActions}>
+              <AccountButton />
               <Quantities
                 key={doc.project.id}
                 doc={doc}
@@ -1036,28 +1159,59 @@ export default function App() {
           homeHeader
         )}
       </header>
-      {message && (
-        <div className={styles.message} role="alert">
-          <span>{message}</span>
-          {saved === "error" && doc && (
+      {doc &&
+        (message ||
+          ["error", "uncertain", "conflict", "unavailable"].includes(
+            saved,
+          )) && (
+          <div className={styles.message} role="alert">
+            <span>
+              {message ||
+                "Há uma pendência de conexão ou salvamento. Confira antes de continuar editando."}
+            </span>
+            {["error", "uncertain", "conflict", "unavailable"].includes(
+              saved,
+            ) &&
+              doc && (
+                <>
+                  <button
+                    disabled={busy}
+                    onClick={() => void useStore.getState().retry()}
+                  >
+                    Tentar novamente
+                  </button>
+                  <button
+                    disabled={
+                      busy || saved === "uncertain" || saved === "unavailable"
+                    }
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          saved === "conflict"
+                            ? "Abrir a versão remota e descartar esta versão em memória? Baixe uma cópia antes, se quiser preservá-la."
+                            : "Descartar a alteração não salva e voltar ao último estado confirmado?",
+                        )
+                      )
+                        void useStore.getState().discard();
+                    }}
+                  >
+                    {saved === "conflict"
+                      ? "Abrir versão remota"
+                      : "Descartar alteração"}
+                  </button>
+                </>
+              )}
             <button
-              disabled={busy}
-              onClick={() => void useStore.getState().retry()}
+              aria-label="Fechar aviso"
+              className={styles.iconButton}
+              title="Fechar aviso"
+              data-tooltip="Fechar aviso"
+              onClick={() => useStore.getState().notify("")}
             >
-              Tentar salvar
+              <Icon name="close" />
             </button>
-          )}
-          <button
-            aria-label="Fechar aviso"
-            className={styles.iconButton}
-            title="Fechar aviso"
-            data-tooltip="Fechar aviso"
-            onClick={() => useStore.getState().notify("")}
-          >
-            <Icon name="close" />
-          </button>
-        </div>
-      )}
+          </div>
+        )}
       {doc ? (
         <>
           <div className={styles.editorControls}>
@@ -1521,15 +1675,7 @@ export default function App() {
           close={() => setDuplicating(null)}
           saved={() => {
             setDuplicating(null);
-            void listProjects()
-              .then(setProjects)
-              .catch(() =>
-                useStore
-                  .getState()
-                  .notify(
-                    "Cópia salva. Não foi possível atualizar a lista; reabra Projetos.",
-                  ),
-              );
+            void refreshProjects();
           }}
         />
       )}
@@ -1585,12 +1731,17 @@ export default function App() {
             <Brand />
             {homeHeader}
           </header>
-          {!projects.some((p) => p.id === openingProjectId) && (
-            <p role="status">Abrindo projeto…</p>
-          )}
           {home}
         </div>
       )}
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <AccountShell>
+      <EditorApp />
+    </AccountShell>
   );
 }

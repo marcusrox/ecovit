@@ -6,7 +6,7 @@ import {
   deleteProject,
   loadStoredProject,
   saveProject,
-} from "../src/persistence/database";
+} from "./legacy/database";
 
 afterEach(async () => {
   vi.restoreAllMocks();

@@ -6,7 +6,7 @@ import {
   loadProject,
   listProjects,
   duplicateProject,
-} from "../src/persistence/database";
+} from "./legacy/database";
 import { createProject, makeWall } from "../src/domain/project";
 import { addFloor } from "../src/domain/floors";
 import { generate } from "../src/domain/composition";

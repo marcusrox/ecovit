@@ -1,10 +1,15 @@
 import { beforeEach, expect, it, vi } from "vitest";
-vi.mock("../src/persistence/database", () => ({
-  saveProject: vi.fn().mockResolvedValue(1),
+vi.mock("../src/persistence/remote", () => ({
+  forgetProject: vi.fn(),
+  pendingErrorKind: () => "falhou",
+  saveProject: vi.fn().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  }),
   loadProject: vi.fn(),
-  acquireProject: vi.fn().mockResolvedValue(() => {}),
 }));
-import { saveProject, acquireProject } from "../src/persistence/database";
+import { saveProject } from "../src/persistence/remote";
 import { createProject, makeWall } from "../src/domain/project";
 import {
   addFloor,
@@ -35,8 +40,11 @@ beforeEach(() => {
   useStore.setState({ busy: false });
   useStore.getState().close();
   vi.restoreAllMocks();
-  vi.mocked(saveProject).mockReset().mockResolvedValue(1);
-  vi.mocked(acquireProject).mockResolvedValue(() => {});
+  vi.mocked(saveProject).mockReset().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  });
 });
 
 it("EX-80: adjacência por cota e identidade, sem saltar vizinho vazio", () => {
@@ -100,8 +108,8 @@ it.each([false, true])(
   "EX-85: só comparar conserva documento e histórico, readonly=%s",
   async (readonly) => {
     const d = fixture();
-    if (readonly) vi.mocked(acquireProject).mockResolvedValueOnce(null);
     await useStore.getState().open(d, true);
+    if (readonly) useStore.setState({ readonly: true });
     const s = useStore.getState(),
       doc = s.doc!,
       history = s.history,
@@ -218,8 +226,8 @@ it("A05/A06: novo pavimento inicia sem referência; histórico recupera escolha 
 it.each([false, true])(
   "A05/A08: cada pavimento lembra sua direção sem salvar ou historicizar, readonly=%s",
   async (readonly) => {
-    if (readonly) vi.mocked(acquireProject).mockResolvedValueOnce(null);
     await useStore.getState().open(fixture(), true);
+    if (readonly) useStore.setState({ readonly: true });
     const s = useStore.getState(),
       [a, b, c] = s.doc!.model.floors;
     const doc = s.doc,

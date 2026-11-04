@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { blockEditing } from "./auth";
+import { expect, test, type Page } from "./auth";
 import { createProject, type Project } from "../../src/domain/project";
 import { readFile } from "node:fs/promises";
 import { parseFile } from "../../src/persistence/files";
@@ -322,7 +323,7 @@ test("M8 pavimentos, somente leitura e três resoluções", async ({
     .getByRole("button", { name: /M8 Imagem/ })
     .first()
     .click();
-  await expect(second.getByRole("status")).toContainText("Somente leitura");
+  await blockEditing(second);
   await expect(
     second.getByRole("button", { name: "Ajustar", exact: true }),
   ).toBeDisabled();

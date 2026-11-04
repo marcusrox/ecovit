@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": [
+    "server/**/*.ts",
+    "src/domain/**/*.ts",
+    "src/persistence/document.ts",
+    "src/persistence/remote-document.ts"
+  ]
+}

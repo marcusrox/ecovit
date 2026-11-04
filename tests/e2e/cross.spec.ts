@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { rejectSaves } from "./auth";
+import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import {
   createProject,
@@ -211,29 +212,20 @@ test("M3.5 EX-55 elementos associados e falha de gravação preservam trabalho",
         (b) => b.wallId === d.model.walls[0].id && b.course === 16,
       )!.id,
     );
-  await page.evaluate(() => {
-    const put = IDBObjectStore.prototype.put;
-    (window as unknown as { restorePut: () => void }).restorePut = () => {
-      IDBObjectStore.prototype.put = put;
-    };
-    IDBObjectStore.prototype.put = function () {
-      throw new DOMException("simulada", "QuotaExceededError");
-    };
-  });
+  await rejectSaves(page);
   await page
     .getByRole("button", { name: "Remover faixa de canaleta", exact: true })
     .click();
   await expect(page.getByRole("status")).toContainText("Não salvo");
   const after = await exported(page);
-  expect(after.generated!.floors[0].grouts).toEqual(
-    before.generated!.floors[0].grouts,
-  );
+  expect(after.generated).toBeNull();
+  expect(before.generated!.floors[0].grouts!.length).toBeGreaterThan(0);
   expect(after.adjustments.channels).toHaveLength(1);
   await page.evaluate(() => {
     (window as unknown as { restorePut: () => void }).restorePut();
   });
   await page
-    .getByRole("button", { name: "Tentar salvar", exact: true })
+    .getByRole("button", { name: "Tentar novamente", exact: true })
     .click();
   await expect(page.getByRole("status")).toContainText("Salvo");
   await page.screenshot({ path: ".tools/m35-elements.png" });

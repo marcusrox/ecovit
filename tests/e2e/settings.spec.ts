@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./auth";
 import { createProject, makeWall } from "../../src/domain/project";
 
 test("Configurações do projeto ficam junto ao nome, com ícone e dicas acessíveis", async ({
@@ -227,7 +227,7 @@ test("Lucide mantém rótulos, estados, foco e navegação nas superfícies do a
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(doc)),
   });
-  await expect(page.getByRole("status")).toContainText("Salvo no navegador");
+  await expect(page.getByRole("status")).toHaveText("Salvo");
   await expect(page.getByRole("status").locator("svg")).toHaveAttribute(
     "aria-hidden",
     "true",

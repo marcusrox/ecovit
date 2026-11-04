@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { rejectSaves } from "./auth";
+import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import {
   createProject,
@@ -174,7 +175,9 @@ test("M3.3 EX-33 incluir e remover todos intervalos, vazio sem alvo e canaleta p
   ]);
   await course(page, 20);
   await click(page, 10625);
-  expect((await exported(page)).adjustments.grout).toEqual(d.adjustments.grout);
+  const recovered = await exported(page);
+  expect(recovered.adjustments.grout).toEqual(d.adjustments.grout);
+  expect(recovered.generated!.floors[0].grouts).toHaveLength(1);
   await expect(
     page.getByRole("button", { name: "Adicionar graute", exact: true }),
   ).toHaveCount(0);
@@ -321,26 +324,18 @@ test("M3.3 falha de armazenamento preserva download e recuperação", async ({
   await load(page, fixture());
   await course(page, 1);
   await page.getByRole("button", { name: "Graute", exact: true }).click();
-  await page.evaluate(() => {
-    const original = IDBObjectStore.prototype.put;
-    (window as unknown as { restorePut: () => void }).restorePut = () => {
-      IDBObjectStore.prototype.put = original;
-    };
-    IDBObjectStore.prototype.put = function () {
-      throw new DOMException("simulada", "QuotaExceededError");
-    };
-  });
+  await rejectSaves(page);
   await click(page, 10625);
   await expect(page.getByRole("status")).toContainText("Não salvo");
   const d = await exported(page);
-  expect(d.generated!.floors[0].grouts).toHaveLength(1);
+  expect(d.generated).toBeNull();
   expect(d.adjustments.grout).toHaveLength(1);
-  expect(d.generationState.status).toBe("current");
+  expect(d.generationState.status).toBe("outdated");
   await page.evaluate(() => {
     (window as unknown as { restorePut: () => void }).restorePut();
   });
   await page
-    .getByRole("button", { name: "Tentar salvar", exact: true })
+    .getByRole("button", { name: "Tentar novamente", exact: true })
     .click();
   await expect(page.getByRole("status")).toContainText("Salvo");
   expect((await exported(page)).adjustments.grout).toEqual(d.adjustments.grout);

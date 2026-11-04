@@ -1,8 +1,13 @@
 import { afterEach, expect, it, vi } from "vitest";
-vi.mock("../src/persistence/database", () => ({
-  saveProject: vi.fn().mockResolvedValue(1),
+vi.mock("../src/persistence/remote", () => ({
+  forgetProject: vi.fn(),
+  pendingErrorKind: () => "falhou",
+  saveProject: vi.fn().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  }),
   loadProject: vi.fn(),
-  acquireProject: vi.fn().mockResolvedValue(() => {}),
 }));
 import {
   createProject,
@@ -26,7 +31,7 @@ import {
 } from "../src/persistence/files";
 import * as engine from "../src/domain/composition";
 import { useStore } from "../src/state/store";
-import { saveProject } from "../src/persistence/database";
+import { saveProject } from "../src/persistence/remote";
 
 function fixture() {
   const d = createProject("M9", { length: 2500, width: 1250, height: 700 });
@@ -55,7 +60,11 @@ function fixture() {
 afterEach(() => {
   useStore.getState().close();
   vi.restoreAllMocks();
-  vi.mocked(saveProject).mockReset().mockResolvedValue(1);
+  vi.mocked(saveProject).mockReset().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  });
 });
 
 it("EX-95/97 ciclos completos e padrões de criação", () => {

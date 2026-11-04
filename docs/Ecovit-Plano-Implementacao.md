@@ -18,7 +18,7 @@
 | [M2 — Composição e inspeção de fiadas](marcos/M2-Composicao.md) | Catálogo nominal, retas, L/U/T/contornos, fases, diagnóstico e inspeção | RF-01/03/04/05/09/10/11/12; CT-01–06 | Implementado e aceito pelo solicitante |
 | [M3.1 — Vãos](marcos/M3-Vaos-Canaletas-Grautes.md) | Portas, janelas, vãos e padrões de inserção | RF-04/06/09/10/12; CT-07/08 | Implementado e aceito pelo solicitante |
 | [M3.2 — Canaletas](marcos/M3-Vaos-Canaletas-Grautes.md) | Níveis globais, faixas locais, supressão/restauração | RF-04/07/09/10/12; CT-09 | Implementado e aceito pelo solicitante |
-| [M3.3 — Grautes](marcos/M3-Vaos-Canaletas-Grautes.md) | Categorias, distância, eixos, seleção individual em Fiada e restauração por parede/pavimento | RF-04/07/09/10/12; CT-10 | Entrega original aceita; seleção individual, edição de grautes em qualquer parede do pavimento, visualização contínua com status no canvas e restauração implementadas, com aceite específico pendente |
+| [M3.3 — Grautes](marcos/M3-Vaos-Canaletas-Grautes.md) | Categorias, distância, eixos, seleção individual em Fiada e restauração por parede/pavimento | RF-04/07/09/10/12; CT-10 | Entrega original e complementos de seleção individual, edição em qualquer parede do pavimento, visualização contínua com status no canvas e restauração implementados e aceitos pelo solicitante |
 | [M3.4 — Edição no canvas](marcos/M3.4-Edicao-no-Canvas.md) | Continuidade/união, movimento com dependentes e módulo inicial | RF-02/03/06/07/09/10/11/12; CT-11 | Implementado e aceito pelo solicitante |
 | [M3.5 — Cruz nominal](marcos/M3.5-Cruz-Nominal.md) | Cruz integrada a L/T/contorno, fases e elementos associados | RF-04/05/07/09/10/12; CT-12 | Implementado e aceito pelo solicitante |
 | [M4 — Lajes e múltiplos pavimentos](marcos/M4-Lajes-e-Pavimentos.md) | Cota única modular, lajes independentes, até quatro pavimentos e comparação visual | RF-08/13 e integração com RF-04/05/07 | Implementado e aceito pelo solicitante |
@@ -30,10 +30,11 @@
 | [M7 — Medidas independentes](marcos/M7-Medidas.md) | Medidas livres em Planta, atração geométrica e persistência por pavimento | BL-03; RF-15, integração com RF-02/08/09/11/12/14 | Entrega e criação por três cliques aceitas; atração aos vértices do terreno corrigida, verificada pelo Codex e aceita pelo solicitante |
 | [M8 — Imagem de referência por pavimento](marcos/M8-Imagem-de-Referencia.md) | Uma imagem de fundo calibrada, posição/rotação, opacidade e interface compacta | BL-02; RF-16, integração com RF-02/08/09/11/12 | Implementado e aceito pelo solicitante |
 | [M9 — Tipos de portas e janelas](marcos/M9-Esquadrias.md) | Nove variantes e símbolos em Planta com botão único de orientação cíclica | BL-08; RF-06; [Elementos construtivos](arquitetura/Elementos-Construtivos.md#vãos-e-aparência-de-esquadrias); CT-17 | Implementado e aceito pelo solicitante |
-| [M10 — Mobiliários](marcos/M10-Mobiliarios.md) | Acervo integrado com 59 opções, ocorrências editáveis em Planta e upload incorporado ao arquivo | BL-01; RF-17; [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) | Entrega inicial aceita; ampliações do acervo, bloco de contenção em vista plana, espelhamento e ajustes de interface implementados, com teste manual e aceite específicos pendentes |
+| [M10 — Mobiliários](marcos/M10-Mobiliarios.md) | Acervo integrado com 59 opções, ocorrências editáveis em Planta e upload incorporado ao arquivo | BL-01; RF-17; [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) | Entrega inicial e complementos de ampliação do acervo, bloco de contenção em vista plana, espelhamento e ajustes de interface implementados e aceitos pelo solicitante |
 | [M11 — Terreno](marcos/M11-Terreno.md) | Terreno global com perímetro livre, aparências, área em m² e ajuste de pontos/posição | RF-18; integração com RF-02/08/09/11/12/16 | Entrega original, Verde suave e rótulo superior/controlável aceitos; reutilização das texturas e atração angular aceitas; rosa dos ventos opcional implementada, verificada pelo Codex e aceita pelo solicitante |
+| [M12 — Contas e persistência remota](marcos/M12-Contas-e-Persistencia-Remota.md) | Conta por código de e-mail, projetos privados em PostgreSQL 18.0, lixeira/exclusão da conta e importação manual .ecovit | BL-04/05; RF-12/19/20 | Implementado e verificado localmente; validação manual parcial realizada, conflito entre abas revalidado pelo Codex, hora nos cartões e faixa de status implementadas, verificadas e aceitas pelo solicitante; demais testes manuais, implantação/homologação e aceite global pendentes |
 
-Persistência, integridade e verificação acompanham cada entrega. M4 depende de M3; M5 depende de M4. Os subitens de M4 têm seus próprios critérios, verificações e aceites.
+Persistência, integridade e verificação acompanham cada entrega. M4 depende de M3; M5 depende de M4. Os subitens de M4 têm seus próprios critérios, verificações e aceites. M12 é uma evolução conjunta de contas/persistência; sua especificação não comprova implementação ou aceite funcional.
 
 ## Ajustes transversais e pendências específicas
 
@@ -43,7 +44,7 @@ A primeira exibição do canvas com câmera restaurada e feedback mantido até o
 
 O [registro de M5](marcos/M5-Quantitativos-e-Projetos.md) preserva também a situação dos ajustes posteriores de exclusão de projetos, cartões e cabeçalho, inclusive os aceites específicos ainda pendentes. M1–M10 aprovados não implica aprovação automática dessas alterações.
 
-BL-01/02/03/06/07/08 estão implementados; BL-04/05 permanecem sem escopo de implementação aprovado, conforme o backlog. A entrega original de M11, Verde suave e o controle/posição superior do rótulo de terreno estão implementados e aceitos pelo solicitante. Seu arquivo reúne verificações, limitações e aceites.
+BL-01/02/03/06/07/08 estão implementados; BL-04/05 têm implementação conjunta na M12, verificada localmente, pronta para teste e com aceite pendente, conforme o backlog. A entrega original de M11, Verde suave e o controle/posição superior do rótulo de terreno estão implementados e aceitos pelo solicitante. Seu arquivo reúne verificações, limitações e aceites.
 
 ## Verificação da reorganização
 

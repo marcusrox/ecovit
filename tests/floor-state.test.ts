@@ -1,11 +1,16 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
-vi.mock("../src/persistence/database", () => ({
-  saveProject: vi.fn().mockResolvedValue(1),
+vi.mock("../src/persistence/remote", () => ({
+  forgetProject: vi.fn(),
+  pendingErrorKind: () => "falhou",
+  saveProject: vi.fn().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  }),
   loadProject: vi.fn(),
-  acquireProject: vi.fn().mockResolvedValue(() => {}),
 }));
-import { saveProject, acquireProject } from "../src/persistence/database";
+import { saveProject, loadProject } from "../src/persistence/remote";
 import * as engine from "../src/domain/composition";
 import { createProject, makeWall } from "../src/domain/project";
 import {
@@ -126,7 +131,7 @@ it("M4.2 A10/A12 laje conserva alvenaria/ajustes e falhas não perdem intenção
   expect(current.model.walls).toEqual(previous.model.walls);
   expect(current.generated).toEqual(previous.generated);
   expect(spy).toHaveBeenCalledTimes(1);
-  expect(save).toHaveBeenCalledTimes(2);
+  expect(save).toHaveBeenCalledTimes(1);
   save.mockReset().mockRejectedValue(new Error("quota"));
   await useStore
     .getState()
@@ -136,7 +141,12 @@ it("M4.2 A10/A12 laje conserva alvenaria/ajustes e falhas não perdem intenção
   expect(useStore.getState().busy).toBe(false);
   expect(useStore.getState().saved).toBe("error");
   expect(parseFile(serializeFile(current).text).model).toEqual(current.model);
-  save.mockReset().mockResolvedValue(1);
+  save.mockReset().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  });
+  await useStore.getState().retry();
   spy.mockImplementation(() => {
     throw new Error("motor indisponível");
   });
@@ -154,27 +164,37 @@ beforeEach(() => {
   useStore.setState({ busy: false });
   useStore.getState().close();
   vi.restoreAllMocks();
-  save.mockReset().mockResolvedValue(1);
-  vi.mocked(acquireProject).mockResolvedValue(() => {});
+  save.mockReset().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  });
 });
 it.each([false, true])(
-  "CT-14 atualiza resultado v9 ao abrir, somente leitura=%s",
-  async (readonly) => {
+  "CT-14 atualiza resultado v9 ao abrir, abertura remota=%s",
+  async (remote) => {
     const original = JSON.parse(
       readFileSync(
         new URL("./fixtures/unequal-heights-v9.ecovit", import.meta.url),
         "utf8",
       ),
     );
-    if (readonly) vi.mocked(acquireProject).mockResolvedValueOnce(null);
-    await useStore.getState().open(original, true);
+    if (remote)
+      vi.mocked(loadProject).mockResolvedValueOnce(
+        parseFile(JSON.stringify(original)),
+      );
+    await useStore
+      .getState()
+      .open(remote ? original.project.id : original, !remote);
     const s = useStore.getState();
-    expect(s.readonly).toBe(readonly);
+    expect(s.readonly).toBe(false);
     expect(s.doc!.model).toEqual({
       ...original.model,
       terrain: null,
       measurements: [],
-      referenceImages: [], imageElements: [], customImageAssets: [],
+      referenceImages: [],
+      imageElements: [],
+      customImageAssets: [],
     });
     expect(s.doc!.adjustments).toEqual(original.adjustments);
     expect(s.doc!.generated!.convention).toBe("nominal-v10");
@@ -185,30 +205,37 @@ it.each([false, true])(
     expect(s.history.past).toEqual([]);
     expect(s.busy).toBe(false);
     expect(original.generated.convention).toBe("nominal-v9");
-    if (readonly) expect(save).not.toHaveBeenCalled();
-    else expect(save).toHaveBeenCalledTimes(2);
+    if (remote) expect(save).not.toHaveBeenCalled();
+    else expect(save).toHaveBeenCalledTimes(1);
   },
 );
 it.each([false, true])(
-  "CT-14 falha ao atualizar legado conserva desenho acessível, somente leitura=%s",
-  async (readonly) => {
+  "CT-14 falha ao atualizar legado conserva desenho acessível, abertura remota=%s",
+  async (remote) => {
     const original = JSON.parse(
       readFileSync(
         new URL("./fixtures/unequal-heights-v9.ecovit", import.meta.url),
         "utf8",
       ),
     );
-    if (readonly) vi.mocked(acquireProject).mockResolvedValueOnce(null);
+    if (remote)
+      vi.mocked(loadProject).mockResolvedValueOnce(
+        parseFile(JSON.stringify(original)),
+      );
     vi.spyOn(engine, "generate").mockImplementationOnce(() => {
       throw new Error("Falha simulada");
     });
-    await useStore.getState().open(original, true);
+    await useStore
+      .getState()
+      .open(remote ? original.project.id : original, !remote);
     const s = useStore.getState();
     expect(s.doc?.model).toEqual({
       ...original.model,
       terrain: null,
       measurements: [],
-      referenceImages: [], imageElements: [], customImageAssets: [],
+      referenceImages: [],
+      imageElements: [],
+      customImageAssets: [],
     });
     expect(s.doc?.adjustments).toEqual(original.adjustments);
     expect(s.doc?.generated).toBeNull();
@@ -216,7 +243,7 @@ it.each([false, true])(
       status: "outdated",
       diagnostics: [],
     });
-    expect(s.readonly).toBe(readonly);
+    expect(s.readonly).toBe(false);
     expect(s.busy).toBe(false);
     expect(s.history).toEqual({ past: [], future: [] });
     expect(s.message).toContain("Cálculo não concluído: Falha simulada");
@@ -224,13 +251,12 @@ it.each([false, true])(
       ...original.model,
       terrain: null,
       measurements: [],
-      referenceImages: [], imageElements: [], customImageAssets: [],
+      referenceImages: [],
+      imageElements: [],
+      customImageAssets: [],
     });
-    if (readonly) {
-      expect(save).not.toHaveBeenCalled();
-      expect(s.message).toContain("outra aba");
-    } else {
-      expect(save).toHaveBeenCalledTimes(1);
+    expect(save).toHaveBeenCalledTimes(remote ? 0 : 1);
+    {
       await s.retry();
       expect(useStore.getState().doc!.generated!.convention).toBe(
         "nominal-v10",
@@ -276,16 +302,13 @@ it.each(["intenção", "convenção"])(
           "utf8",
         ),
       ),
-      spy = vi.spyOn(engine, "generate"),
-      unlock = vi.fn();
-    vi.mocked(acquireProject).mockResolvedValueOnce(unlock);
+      spy = vi.spyOn(engine, "generate");
     if (invalid === "intenção") original.model.slabs[0].thickness = 0;
     else original.generated.convention = "nominal-v11";
     await useStore.getState().open(original, true);
     expect(useStore.getState().doc).toBe(before);
     expect(useStore.getState().busy).toBe(false);
     expect(useStore.getState().readonly).toBe(false);
-    expect(unlock).toHaveBeenCalledTimes(1);
     expect(save).not.toHaveBeenCalled();
     expect(spy).not.toHaveBeenCalled();
     expect(useStore.getState().message).not.toBe("");
@@ -492,7 +515,7 @@ it("A07/A09 cópia é selecionada, recálculo completo, histórico e última fia
       .map((w) => w.id),
   ).toEqual(copyIds);
 });
-it("A09 reduzir altura conserva aviso de fiada após os dois salvamentos", async () => {
+it("A09 reduzir altura conserva aviso de fiada após o save remoto", async () => {
   const d = await opened();
   useStore.getState().inspect({ mode: "course", course: 3 });
   await useStore.getState().commit({
@@ -507,7 +530,7 @@ it("A09 reduzir altura conserva aviso de fiada após os dois salvamentos", async
     "A fiada anterior deixou de existir. Selecionada a fiada 2.",
   );
   expect(useStore.getState().saved).toBe("saved");
-  expect(save).toHaveBeenCalledTimes(2);
+  expect(save).toHaveBeenCalledTimes(1);
 });
 it("A08/A09 remover ativo escolhe anterior; desfazer conserva ativo existente", async () => {
   let d = await opened();
@@ -544,38 +567,42 @@ it("A13 falha de cálculo conserva intenção e permite retry; nenhuma composiç
   expect(s.doc!.generated!.floors).toHaveLength(2);
   expect(s.doc!.generationState.status).toBe("current");
 });
-it("A11 leitura bloqueada só confere snapshot, sem regenerar/salvar", async () => {
+it("A11 leitura remota de resultado atual não regenera nem salva", async () => {
   const d = await opened();
   useStore.getState().close();
   save.mockClear();
-  vi.mocked(acquireProject).mockResolvedValueOnce(null);
+  vi.mocked(loadProject).mockResolvedValueOnce(d);
   const spy = vi.spyOn(engine, "generate");
-  await useStore.getState().open(d, true);
-  expect(useStore.getState().readonly).toBe(true);
+  await useStore.getState().open(d.project.id);
+  expect(useStore.getState().readonly).toBe(false);
   expect(save).not.toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledTimes(1);
+  expect(spy).not.toHaveBeenCalled();
   expect(useStore.getState().doc!.generated).toEqual(d.generated);
 });
-it.each(["first", "second"])(
-  "A13 falha da gravação %s mantém memória e libera controles",
-  async (which) => {
-    const d = await opened();
-    if (which === "first") save.mockRejectedValueOnce(new Error("quota"));
-    else
-      save.mockResolvedValueOnce(1).mockRejectedValueOnce(new Error("quota"));
-    await useStore
-      .getState()
-      .commit(
-        addFloor(d, { name: "Novo", level: 28000, defaultHeight: 28000 }),
-        "floor",
-      );
-    const s = useStore.getState();
-    expect(s.busy).toBe(false);
-    expect(s.doc!.model.floors).toHaveLength(2);
-    expect(s.doc!.generationState.status).toBe("current");
-    expect(s.saved).toBe(which === "first" ? "saved" : "error");
-  },
-);
+it("A13 falha do save remoto mantém intenção, bloqueia edição e recupera sem perda", async () => {
+  const d = await opened();
+  save.mockRejectedValueOnce(new Error("quota"));
+  await useStore
+    .getState()
+    .commit(
+      addFloor(d, { name: "Novo", level: 28000, defaultHeight: 28000 }),
+      "floor",
+    );
+  expect(useStore.getState()).toMatchObject({
+    busy: false,
+    readonly: true,
+    saved: "error",
+  });
+  expect(useStore.getState().doc!.model.floors).toHaveLength(2);
+  expect(useStore.getState().doc!.generationState.status).toBe("outdated");
+  await useStore.getState().retry();
+  expect(useStore.getState()).toMatchObject({
+    readonly: false,
+    saved: "saved",
+  });
+  expect(useStore.getState().doc!.model.floors).toHaveLength(2);
+  expect(useStore.getState().doc!.generationState.status).toBe("current");
+});
 it("A09 seletor não troca pavimento durante operação ocupada", async () => {
   let d = await opened();
   d = addFloor(d, { name: "Outro", level: 28000, defaultHeight: 28000 });

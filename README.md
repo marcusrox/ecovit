@@ -1,6 +1,6 @@
 # Ecovit
 
-Editor local de plantas com paredes ortogonais, malha de meio tijolo, medidas independentes e composição nominal de fiadas. Terreno único por projeto com perímetro livre, seis aparências, área em m² e rosa dos ventos opcional; botão Terreno para desenhar/selecionar, Ajustar nas propriedades para mover ou editar os pontos. Aplicativo 0.16.0, arquivo versão 18 e composição nominal-v10.
+Editor web de plantas com paredes ortogonais, malha de meio tijolo, medidas independentes e composição nominal de fiadas. Terreno único por projeto com perímetro livre, seis aparências, área em m² e rosa dos ventos opcional; botão Terreno para desenhar/selecionar, Ajustar nas propriedades para mover ou editar os pontos. Aplicativo 0.17.0, arquivo versão 18 e composição nominal-v10.
 
 | Marco | Funcionalidade | Estado |
 |---|---|---|
@@ -19,48 +19,83 @@ Editor local de plantas com paredes ortogonais, malha de meio tijolo, medidas in
 | M7 | Medidas independentes em Planta | Implementado e aceito pelo solicitante; verificações e aceite no [M7](docs/marcos/M7-Medidas.md) |
 | M8 | Imagem de referência por pavimento, calibração e controles compactos | Implementado e aceito pelo solicitante; verificações e aceite no [M8](docs/marcos/M8-Imagem-de-Referencia.md) |
 | M9 | Tipos e símbolos de portas/janelas, com orientação cíclica | Implementado e aceito pelo solicitante; verificações e aceite no [M9](docs/marcos/M9-Esquadrias.md) |
-| M10 | Mobiliários: 59 opções, upload e edição em Planta | Entrega inicial aceita; ampliação do acervo com teste manual pendente; registro no [M10](docs/marcos/M10-Mobiliarios.md) |
+| M10 | Mobiliários: 59 opções, upload e edição em Planta | Entrega inicial e complementos aceitos; registro no [M10](docs/marcos/M10-Mobiliarios.md) |
+| M12 | Contas por código de e-mail e persistência remota | [Implementado e verificado localmente; pronto para teste](docs/marcos/M12-Contas-e-Persistencia-Remota.md); implantação e aceite do solicitante pendentes |
 
 O aplicativo trabalha com um a quatro pavimentos independentes. A composição é nominal, sem dimensionamento estrutural ou comprovação de passagem física em furos/canais. Requisitos e limites no [PRD](docs/Ecovit-PRD.md); verificações e aceites no [plano](docs/Ecovit-Plano-Implementacao.md). O aceite específico das revisões de apresentação está pendente, conforme [Apresentação, operação e verificação documental](docs/marcos/Apresentacao-e-Operacao.md).
 
 Em Planta, o campo Referência de pavimento em Propriedades do pavimento na lateral (sem elemento selecionado) mostra um vizinho inferior/superior como referência tracejada, sem edição ou encaixe. Enquadrar considera as duas plantas; cada pavimento lembra sua direção durante a sessão ao alternar entre eles. Entrar em Fiada limpa a escolha do ativo; reabrir o projeto limpa todas. Essa preferência é apenas da sessão, sem alterar arquivo ou cálculo.
 
-Durante o MVP, cada marco pode adotar novo formato sem compatibilidade com marcos anteriores. O aplicativo grava envelope 16 e lê envelopes 9/10/11/12/13/14/15, preservando ocorrências/recursos da versão 13, acrescentando coleções vazias de mobiliário/recursos personalizados às versões 9–12 e conservando os símbolos genéricos das esquadrias anteriores, sem inferir seu funcionamento. Acrescenta imagens vazias nos envelopes 9/10 e medidas vazias no 9, sem modificar o arquivo original. Resultados nominal-v9 são atualizados pelo cálculo nominal-v10, preservando desenhos e ajustes. Outros envelopes, inclusive o de M4.1, continuam incompatíveis. Registros incompatíveis permanecem na lista identificados; nesse caso, crie um novo projeto.
+Conta obrigatória, com código por e-mail. Projetos e imagens ficam privados no servidor PostgreSQL; criar/editar exige conexão. A nova versão não lê nem migra IndexedDB. **Antes de atualizar, exporte na versão anterior os projetos que quiser manter; depois entre e importe os arquivos .ecovit manualmente.** Arquivo vigente 18, leitores 9–18 e composição nominal-v10, conforme a arquitetura.
 
 Em Planta, Mobiliários abre o acervo do Ecovit em nove categorias. Escolha e clique para posicionar; arraste para mover, use os quatro cantos para manter a proporção atual e as duas alças quadradas para ajustar largura (direita) ou profundidade (inferior, oposta ao giro) separadamente. As alças acompanham a rotação e mantêm o lado oposto fixo. O controle externo gira; as propriedades editam dimensões em cm na proporção atual. Imagens padrão são referências do catálogo, sem bytes no .ecovit; uploads PNG/JPEG são incorporados uma vez e reutilizados. Espelhar horizontalmente/verticalmente nas propriedades inverte a arte nos eixos do próprio objeto, mantendo centro, dimensões e rotação. Os controles são alternáveis e o estado é preservado no histórico e no arquivo. Projetos anteriores abrem sem espelhamento; o recurso não se aplica à imagem de referência de M8. As dimensões são genéricas e o mobiliário não altera composição ou quantitativos.
 
-## Abrir nesta máquina
+## Configurar e abrir
 
-O servidor de desenvolvimento usa **http://127.0.0.1:5173/**. Para iniciar no PowerShell, dentro desta pasta:
+Requer Node 24.18.0, npm e PostgreSQL 18.0 em execução, local ou acessível por conexão privada. Para testar o envio real, precisa também da Resend com domínio verificado, chave de envio e remetente autorizados. Não enviar chaves/senhas por mensagem nem usar variáveis VITE_ para segredos.
+
+No PowerShell, dentro de C:\Projects\ecovit:
 
 ```powershell
-.\Start-Ecovit.ps1
-```
-
-O script usa o Node instalado ou o runtime incluído no Codex. Nesta máquina, npm foi preparado na pasta local ignorada `.tools`; o script não baixa ou instala nada. Mantenha o terminal aberto e use Ctrl+C para encerrar. Se a porta 5173 estiver ocupada pelo Ecovit, abra o endereço já existente.
-
-## Instalação convencional
-
-Em outra máquina, instale Node.js 22.12+ ou 24 LTS com npm e execute:
-
-```sh
+node --version
 npm ci
-npm run dev
+Copy-Item .env.example .env
 ```
 
-Use Chrome ou Edge desktop. O aplicativo exige localhost ou HTTPS para o bloqueio de edição entre abas. Use sempre a mesma origem: mudar entre `localhost` e `127.0.0.1`, ou trocar a porta, muda o armazenamento local. O arquivo `.ecovit` permite transportar projetos entre origens e navegadores.
+Não sobrescrever um .env já configurado. Edite esse arquivo privado com DATABASE_URL da role de execução, APP_ORIGIN=http://127.0.0.1:5173, API_PORT=3001, DATA_DIR exclusivo, RESEND_API_KEY e MAIL_FROM. Gere SESSION_SECRET localmente:
 
-O endereço padrão é **http://127.0.0.1:5173/**. Projetos salvos em outra origem, como `localhost`, permanecem nela. Para transferi-los, baixar o arquivo `.ecovit` na origem de armazenamento e carregá-lo na origem escolhida.
+```powershell
+node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"
+```
+
+Copie a saída para SESSION_SECRET, sem compartilhá-la. Crie banco/roles e aplique a migração com a role proprietária, usando temporariamente DATABASE_MIGRATION_URL. Os comandos SQL e privilégios estão em [Configuração e banco](docs/arquitetura/Persistencia-e-Compatibilidade.md#configuração-e-banco). Após migrar, conceda os privilégios de execução indicados e remova a credencial de migração do ambiente de uso diário:
+
+```powershell
+.\Start-Ecovit.ps1 -Task db:migrate
+.\Start-Ecovit.ps1 -Task dev
+```
+
+O comando dev inicia frontend em **http://127.0.0.1:5173/** e API em loopback, com configuração .env. Mantenha o terminal aberto; Ctrl+C encerra a instância iniciada nesse terminal. Não iniciar outra instância se essa porta já estiver em uso. Chrome e Edge desktop são os navegadores previstos. Entre com seu e-mail e o código recebido. A API não é opcional: abrir só o frontend não permite entrar ou salvar. Consulte /api/health pelo mesmo endereço para verificar a API; configuração incompleta é informada no terminal.
+
+Para conferir limpeza durante teste local, execute .\Start-Ecovit.ps1 -Task data:cleanup em outro terminal com o mesmo .env. Sem agendamento, a aplicação revoga acesso normalmente, mas a eliminação física depende da execução desse comando; no servidor deve rodar a cada 15 minutos. Procedimento completo de proxy/aaPanel, limites e monitoramento em [Operação e implantação](docs/arquitetura/Persistencia-e-Compatibilidade.md#operação-e-implantação).
+
+### Avaliação descartável sem envio de e-mail
+
+Para explorar a interface antes de configurar a Resend, use exclusivamente um banco PostgreSQL separado chamado ecovit_test. Crie esse banco com um usuário proprietário exclusivo e configure .env.test privado (sem alterar .env):
+
+```dotenv
+M12_TEST_DATABASE_URL=postgresql://USUARIO:SENHA@127.0.0.1:5432/ecovit_test
+```
+
+Inicie .\Start-Ecovit.ps1 -Task dev:test e abra **http://127.0.0.1:5174/**. Ao solicitar código, a mensagem é capturada em .tools/m12/browser-mail; consulte o arquivo mais recente no seu terminal:
+
+```powershell
+Get-ChildItem .tools/m12/browser-mail/*.json |
+  Sort-Object LastWriteTime -Descending |
+  Select-Object -First 1 |
+  Get-Content
+```
+
+Use o campo code dessa mensagem. Nenhum e-mail é enviado nesse modo. **O servidor de testes reinicializa as contas do schema m12_browser a cada início; use apenas projetos descartáveis ou cópias exportadas.** Não use esse banco durante a suíte automatizada nem exponha esse servidor à internet. A captura testa o fluxo do aplicativo e não comprova envio/entrega pela Resend. O teste de aceite com dados que você deseja conservar deve usar o modo dev e o banco normal acima.
+
+## Verificações
+
+- npm run typecheck, npm run lint, npm test e npm run build verificam tipos, estilo, domínio/estado e builds.
+- npm run test:api exige M12_TEST_DATABASE_URL para PostgreSQL isolado chamado ecovit_test; cobre HTTP real, segurança e persistência.
+- npm run test:e2e usa o mesmo banco de testes, schema próprio, captura de e-mail e API/Vite na porta **5174**; inicia servidor novo, sem reaproveitar a instância do solicitante.
+- Para verificação interativa isolada, configure .env.test com M12_TEST_DATABASE_URL e execute .\Start-Ecovit.ps1 -Task dev:test. Esse servidor reinicializa as contas de teste; não usar dados pessoais. Códigos ficam apenas em .tools/m12/browser-mail nesse ambiente, sem endpoint especial de login.
+
+Produção usa npm run build e npm run api:start, com NODE_ENV=production e proxy HTTPS da mesma origem. Publicar somente dist; dist-server, .env e imagens ficam fora da raiz pública. Agendar a limpeza a cada 15 minutos. Produção, DNS, chaves e envio real não foram configurados nesta entrega. Backup do servidor continua sob administração do responsável.
 
 ## Uso
 
-1. Crie um projeto e escolha o tamanho-base.
+1. Entre pelo código enviado ao seu e-mail, crie um projeto e escolha o tamanho-base.
 2. Na ferramenta Parede, arraste para criar uma parede. Continuidade colinear compatível prolonga/une as paredes, inclusive ao preencher um intervalo entre duas existentes. A prévia mostra o comprimento total; “Inverter lado” muda o lado da espessura antes do próximo desenho. O quadrado cinza marca o módulo que contém o centro da cruz, também nas ferramentas de vãos. Ao arrastar em qualquer direção, esse módulo integra o elemento criado; para prolongar, selecione o módulo livre contíguo à ponta.
 3. Selecione uma parede e arraste as alças A/B, ou altere seu comprimento no painel escolhendo a extremidade. As alças têm prioridade, inclusive com Parede ativa. Para começar outra parede exatamente sobre uma alça, limpe a seleção primeiro usando Selecionar e clicando em área vazia.
 4. Em Selecionar, arraste o corpo da parede para mover com seus vãos e ajustes; no destino, continuidade compatível também une as paredes. Alças/vãos mantêm prioridade. Escape ou soltar fora cancela; um desfazer recupera movimento e união.
 5. Use roda do mouse para zoom, botão do meio + arraste para navegar (ou Espaço + botão esquerdo + arraste), Escape para cancelar, Delete para excluir e Ctrl+Z / Ctrl+Y (ou Ctrl+Shift+Z) para desfazer/refazer.
 6. Alterne para Fiada para navegar, consultar o intervalo de altura e sobrepor uma fiada adjacente. Selecione um conjunto com alternativa disponível, como L ou cruz, na primeira fiada, para visualizar e confirmar outra fase; a prévia destaca os cantos afetados. Diagnósticos podem ser clicados para localizar o problema.
-7. Aguarde a indicação “Salvo no navegador”. Baixe uma cópia regularmente: dados locais podem ser apagados pelo navegador. Carregar arquivo cria uma cópia de projeto, sem substituir o original salvo.
+7. Aguarde a indicação “Salvo”, que confirma a intenção no servidor. Baixar .ecovit conserva uma cópia sob seu controle. Importar arquivo cria outro projeto, sem substituir o original.
 
 A engrenagem ao lado de Configurações do projeto abre Preferências do Ecovit. As cinco opções de rótulos (Portas, Janelas, Vãos, Paredes e Medidas) são imediatas e ficam salvas neste navegador para todos os projetos; Paredes controla A/B e o texto de comprimento/altura em Planta. O grupo Imagens dos mobiliários oferece Suavização em qualidade alta, inicialmente ativada; desative para usar a suavização básica. Versões menores da mesma imagem são escolhidas automaticamente conforme o tamanho na tela e mantidas apenas em memória, sem aumentar o `.ecovit`. Essas preferências não entram no arquivo `.ecovit`. O estado da composição aparece no canto inferior esquerdo do canvas; instruções gerais estão em Como usar o editor, na lateral.
 
@@ -68,7 +103,7 @@ O térreo começa na cota 0 cm, com altura de novas paredes em 280 cm. No seleto
 
 Pontas livres e contornos abertos são permitidos. Retas conectadas, L, U e ciclos sem ramificações após o tratamento dos encontros usam paginação contínua: inteiros pareiam células consecutivas, cantos seguem a paridade do percurso e meios ficam nas extremidades quando necessários. Não há obrigação de orientar todos os cantos igualmente nem mínimo de quatro módulos para a ponte de um U. Reservas incompatíveis entre encontros próximos, sobreposições e transições de altura sem padrão continuam diagnosticadas; cruz → reta conforme altura é suportada.
 
-O arquivo vigente usa envelope versão 16 e composição `nominal-v10`, com leitura de envelopes 9/10/11/12/13/14/15 conforme descrito acima. O download usa JSON compacto; se o resultado calculado ultrapassar o limite de 50 MiB do arquivo, a cópia conserva todos os desenhos, medidas, imagens, configurações e ajustes e reconstrói o resultado ao abrir, com aviso. A composição nesta aba permanece intacta. Snapshots atuais são conferidos por recomputação antes de abrir; adulteração é recusada. Em outra aba, somente leitura atualiza resultados antigos apenas em memória, sem salvar no registro compartilhado. Configurações são comuns, mas paredes, vãos, medidas e ajustes são independentes por pavimento. Lajes e aberturas são independentes das paredes.
+O arquivo vigente usa envelope versão 18 e composição `nominal-v10`, com leitura de envelopes 9–18. O download usa JSON compacto; se o resultado calculado ultrapassar o limite de 50 MiB do arquivo, a cópia conserva todos os desenhos, medidas, imagens, configurações e ajustes e reconstrói o resultado ao abrir, com aviso. A composição nesta aba permanece intacta. Snapshots atuais são conferidos por recomputação antes de importar; adulteração é recusada. Abertura remota recompõe o resultado apenas em memória, sem gravação adicional. Outra aba pode editar, e a revisão do servidor impede sobrescrita silenciosa. Configurações são comuns, mas paredes, vãos, medidas e ajustes são independentes por pavimento. Lajes e aberturas são independentes das paredes.
 
 ## Tipos de portas e janelas — M9
 
@@ -118,22 +153,6 @@ No projeto aberto, use **Quantitativos** para consultar peças por tipo, pavimen
 
 Na lista inicial, **Duplicar** cria outro projeto a partir do último estado salvo, com nome próprio e edições independentes. Escopo, verificações e aceite no [registro de M5](docs/marcos/M5-Quantitativos-e-Projetos.md).
 
-## Verificações
-
-```sh
-npm run typecheck
-npm run lint
-npm test
-npm run test:e2e
-npm run build
-```
-
-Nesta máquina, pode-se usar `./Start-Ecovit.ps1 -Task typecheck` e o mesmo formato com `lint`, `test`, `test:e2e` ou `build`.
-
-Vitest cobre geometria, arquivo, histórico e IndexedDB. Playwright usa Chrome e Edge instalados, com perfis isolados que não alteram seus projetos pessoais; é preciso ter ambos os navegadores instalados para executar a suíte completa. As capturas e traces de falhas ficam em `test-results/`, fora do controle de versão. O build estático fica em `dist/`.
-
-A porta **5173** é reservada ao solicitante: o Codex apenas orienta sua inicialização com `./Start-Ecovit.ps1 -Task dev`, sem iniciar, encerrar ou reiniciar esse servidor. Os testes de navegador usam **http://127.0.0.1:5174/**. Playwright inicia e encerra seu próprio servidor, sem reaproveitar instâncias existentes; se 5174 estiver ocupada, a execução falha. Para verificações interativas do Codex, usar `./Start-Ecovit.ps1 -Task dev:test` ou `npm run dev:test`, com sessão de navegador isolada. Encerrar esse servidor antes de executar a suíte e2e. Projetos pessoais continuam na origem 5173; a separação de portas não elimina as atualizações automáticas do Vite quando o código é alterado.
-
 ## Documentação
 
 - [Plano incremental](docs/Ecovit-Plano-Implementacao.md): alcance, estado, critérios, evidências e roteiros por marco.
@@ -141,6 +160,6 @@ A porta **5173** é reservada ao solicitante: o Codex apenas orienta sua inicial
 - [Caderno técnico](docs/Ecovit-Caderno-Tecnico.md): fontes, regras geométricas, exemplos e lacunas.
 - [AGENTS.md](AGENTS.md): orientações para trabalhar no repositório.
 
-Dependências e suas versões estão registradas em `package-lock.json`. Os avisos e licenças dos pacotes são preservados na instalação npm. React, react-dom, react-konva, Konva, Zustand, Zod e Vite usam licença MIT; Dexie usa Apache-2.0. Não há fontes, bibliotecas ou APIs carregadas de CDN durante o uso.
+Dependências e suas versões estão registradas em `package-lock.json`. Os avisos e licenças dos pacotes são preservados na instalação npm. React, react-dom, react-konva, Konva, Zustand, Zod e Vite usam licença MIT; Dexie (somente fixture histórica de teste) usa Apache-2.0. Não há fontes, bibliotecas ou APIs carregadas de CDN durante o uso.
 
 Ícones de interface usam Lucide React 1.57.0 através de `src/ui/Icon.tsx`, com variantes comuns e imports protegidos pelo lint. Padrão na [Interface e iconografia](docs/arquitetura/Interface-e-Iconografia.md#iconografia). A licença integral do Lucide (ISC e avisos MIT dos ícones derivados) é distribuída em [public/third-party/lucide-react-LICENSE.txt](public/third-party/lucide-react-LICENSE.txt), copiada também para `dist/third-party/` pelo build. Logotipo e desenhos técnicos do canvas preservam suas representações próprias.

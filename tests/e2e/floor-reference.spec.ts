@@ -1,4 +1,6 @@
-import { test, expect, type Page } from "@playwright/test";
+import { withoutResult } from "../../src/domain/project";
+import { blockEditing } from "./auth";
+import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import {
   createProject,
@@ -95,27 +97,15 @@ async function exported(page: Page): Promise<Project> {
   return JSON.parse(await readFile((await (await download).path())!, "utf8"));
 }
 async function stored(page: Page, id: string) {
-  return page.evaluate(
-    (id) =>
-      new Promise((resolve, reject) => {
-        const request = indexedDB.open("ecovit");
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          const db = request.result,
-            row = db.transaction("projects").objectStore("projects").get(id);
-          row.onsuccess = () => {
-            db.close();
-            resolve(row.result.doc);
-          };
-          row.onerror = () => {
-            db.close();
-            reject(row.error);
-          };
-        };
-      }),
-    id,
-  );
+  return page.evaluate(async (id) => {
+    const remote = "/src/persistence/remote.ts",
+      domain = "/src/domain/project.ts";
+    return (await import(domain)).withoutResult(
+      await (await import(remote)).loadStoredProject(id),
+    );
+  }, id);
 }
+
 async function point(page: Page, x: number, y: number) {
   const drawing = page.getByTestId("drawing"),
     box = (await drawing.boundingBox())!,
@@ -317,7 +307,11 @@ test("M4.3 A05/A06: cotas, rótulos, histórico, Fiada e troca com prévia cance
     .selectOption(d.model.floors[2].id);
   await expect(select).toHaveValue("none");
   expect(await exported(page)).toEqual(before);
-  expect(await stored(page, before.project.id)).toEqual(before);
+  expect(await stored(page, before.project.id)).toEqual({
+    ...before,
+    generated: null,
+    generationState: { status: "outdated", diagnostics: [] },
+  });
 });
 
 test("M4.3 A07/A08: ativo vazio, só laje, download/reabertura e readonly sem escrita", async ({
@@ -343,11 +337,11 @@ test("M4.3 A07/A08: ativo vazio, só laje, download/reabertura e readonly sem es
     .getByRole("button", { name: /Comparação M4.3/ })
     .first()
     .click();
-  await expect(second.getByRole("status")).toContainText("Somente leitura");
+  await blockEditing(second);
   await second.getByLabel("Comparar pavimento").selectOption("above");
   await second.getByRole("button", { name: "Enquadrar" }).click();
   expect(await exported(second)).toEqual(before);
-  expect(await stored(page, before.project.id)).toEqual(before);
+  expect(await stored(page, before.project.id)).toEqual(withoutResult(before));
   await second.close();
   expect(await exported(page)).toEqual(before);
   await page.getByTestId("import-file").setInputFiles({
@@ -507,7 +501,7 @@ test("revisão M4.3: comparação conserva prévia fechada e Desfazer cancela an
     );
   }
   expect(await exported(page)).toEqual(before);
-  expect(await stored(page, before.project.id)).toEqual(before);
+  expect(await stored(page, before.project.id)).toEqual(withoutResult(before));
   await page.getByRole("button", { name: "Desfazer", exact: true }).click();
   await expect(page.getByLabel("Desenho de laje")).toHaveCount(0);
   expect(await exported(page)).toEqual(before);
@@ -558,7 +552,7 @@ test("revisão M4.3: geometria exclusiva da referência não recebe hover, sele�
     await page.keyboard.press("Delete");
   }
   expect(await exported(page)).toEqual(before);
-  expect(await stored(page, before.project.id)).toEqual(before);
+  expect(await stored(page, before.project.id)).toEqual(withoutResult(before));
   await expect(
     page.getByRole("button", { name: "Desfazer", exact: true }),
   ).toBeDisabled();

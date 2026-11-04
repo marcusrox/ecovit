@@ -21,12 +21,9 @@ import {
   type ImageElement,
   type CustomImageAsset,
 } from "../domain/project";
-import {
-  acquireProject,
-  loadProject,
-  saveProject,
-} from "../persistence/database";
+import { loadProject, saveProject, checkRevision } from "../persistence/remote";
 import { validateProject } from "../persistence/files";
+import { forgetProject, pendingErrorKind } from "../persistence/remote";
 import { mergeFloorView } from "../domain/floors";
 import { useMemo } from "react";
 import { reconcileOpenings } from "../domain/openings";
@@ -35,7 +32,6 @@ import {
   resolveFloorReference,
   type FloorReference,
 } from "../domain/floor-reference";
-let release: (() => void) | null = null;
 let retired = false;
 const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
@@ -143,7 +139,8 @@ type State = Inspection & {
   busy: boolean;
   openingProjectId: string | null;
   readonly: boolean;
-  saved: "saved" | "saving" | "error";
+  saved:
+    "saved" | "saving" | "error" | "uncertain" | "conflict" | "unavailable";
   message: string;
   select: string | null;
   open: (project: Project | string, fresh?: boolean) => Promise<void>;
@@ -166,8 +163,11 @@ type State = Inspection & {
   notify: (message: string) => void;
   choose: (id: string | null) => void;
   retry: () => Promise<void>;
+  discard: () => Promise<void>;
 };
 export const useStore = create<State>((set, get) => {
+  let checkpoint: Pick<State, "doc" | "history" | "activeFloorId"> | null =
+    null;
   function retainGroutResult(previous: Project, next: Project) {
     if (!changedInputs(previous, next)) return get().retainedGroutResult;
     // Merging a floor view can reorder records from other floors. Compare
@@ -196,66 +196,81 @@ export const useStore = create<State>((set, get) => {
       ? (previous.generated ?? get().retainedGroutResult)
       : get().retainedGroutResult;
   }
-  async function persist(doc: Project, calculate = true) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.16.0" } };
-    set({ doc });
-    set({ busy: true, saved: "saving" });
-    let saveFailed = false;
+  async function persist(doc: Project, calculate = true, write = true) {
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.17.0" } };
+    set({ doc, busy: true, saved: write ? "saving" : "saved" });
     let courseMessage = "";
     try {
-      try {
-        await saveProject(doc);
-      } catch {
-        saveFailed = true;
+      if (write) {
+        const receipt = await saveProject(doc);
+        if (receipt?.updatedAt)
+          doc = {
+            ...doc,
+            metadata: {
+              ...doc.metadata,
+              updatedAt: receipt.updatedAt,
+              createdAt: receipt.createdAt ?? doc.metadata.createdAt,
+            },
+          };
       }
+      set({ doc, readonly: false });
       if (calculate && doc.generationState.status === "outdated") {
         if (typeof requestAnimationFrame === "function")
           await new Promise<void>((resolve) =>
             requestAnimationFrame(() => setTimeout(resolve, 0)),
           );
-        let generated;
         try {
-          generated = generate(doc);
-        } catch (e) {
+          const generated = generate(doc);
+          doc = {
+            ...doc,
+            generated,
+            generationState: {
+              status: "current",
+              diagnostics: generated.diagnostics,
+            },
+          };
+          const current = get();
+          const count =
+            generated.floors.find(
+              (floor) => floor.floorId === current.activeFloorId,
+            )?.courses.length ?? 0;
+          const nextCourse = Math.min(current.course, Math.max(1, count));
+          if (nextCourse !== current.course)
+            courseMessage =
+              count > 0
+                ? `A fiada anterior deixou de existir. Selecionada a fiada ${count}.`
+                : "Este pavimento não tem fiadas disponíveis.";
+          set({ doc, course: nextCourse, retainedGroutResult: null });
+        } catch (error) {
           set({
-            saved: saveFailed ? "error" : "saved",
-            message: `Cálculo não concluído: ${e instanceof Error ? e.message : String(e)}. ${saveFailed ? "O trabalho está em memória; baixe uma cópia." : "O modelo foi salvo; tente recalcular."}`,
+            saved: "saved",
+            message: `Modelo salvo. Cálculo não concluído: ${error instanceof Error ? error.message : String(error)}. Use Recalcular.`,
           });
+          checkpoint = {
+            doc,
+            history: get().history,
+            activeFloorId: get().activeFloorId,
+          };
           return;
         }
-        const current: Project = {
-          ...doc,
-          generated,
-          generationState: {
-            status: "current",
-            diagnostics: generated.diagnostics,
-          },
-        };
-        const s = get();
-        const total =
-          generated.floors.find((f) => f.floorId === s.activeFloorId)?.courses
-            .length ?? 0;
-        const course = Math.min(s.course, Math.max(1, total));
-        if (course !== s.course)
-          courseMessage =
-            total > 0
-              ? `A fiada anterior deixou de existir. Selecionada a fiada ${total}.`
-              : "Este pavimento não tem fiadas disponíveis.";
-        set({ doc: current, course, retainedGroutResult: null });
-        await saveProject(current);
-        saveFailed = false;
       }
+      set({ doc, saved: "saved", readonly: false, message: courseMessage });
+      checkpoint = {
+        doc,
+        history: get().history,
+        activeFloorId: get().activeFloorId,
+      };
+    } catch (error) {
+      const kind = pendingErrorKind(error);
       set({
-        saved: saveFailed ? "error" : "saved",
-        message: saveFailed
-          ? "A primeira gravação falhou. O trabalho e o cálculo foram preservados; baixe uma cópia ou tente salvar."
-          : courseMessage,
-      });
-    } catch {
-      set({
-        saved: "error",
-        message:
-          "Não foi possível salvar no navegador. Seu trabalho está nesta aba; baixe uma cópia antes de sair.",
+        saved:
+          kind === "incerto"
+            ? "uncertain"
+            : kind === "conflito"
+              ? "conflict"
+              : "error",
+        readonly: true,
+        message: `${kind === "incerto" ? "Confirmação pendente. " : kind === "conflito" ? "Conflito. " : "Não salvo. "}${error instanceof Error ? error.message : String(error)}`,
       });
     } finally {
       set({ busy: false });
@@ -377,20 +392,15 @@ export const useStore = create<State>((set, get) => {
       if (retired || get().busy) return;
       const id =
         typeof requested === "string" ? requested : requested.project.id;
-      // A delayed/repeated open must not compete with the lock already owned
-      // by this store, or replace unsaved work with an older stored document.
-      const ownedRelease = get().doc?.project.id === id ? release : null;
-      if (ownedRelease && !fresh) return;
+      if (get().doc?.project.id === id && !fresh) return;
       set({ busy: true, openingProjectId: id, message: "" });
-      let nextRelease: (() => void) | null = null;
       try {
         // Let React paint the opening feedback and wait cursor before validation.
         if (typeof requestAnimationFrame === "function")
           await new Promise<void>((resolve) =>
             requestAnimationFrame(() => setTimeout(resolve, 0)),
           );
-        nextRelease = ownedRelease ?? (await acquireProject(id));
-        let doc =
+        const doc =
           fresh && typeof requested !== "string"
             ? validateProject(requested)
             : await loadProject(id);
@@ -400,25 +410,6 @@ export const useStore = create<State>((set, get) => {
           for (const image of doc.model.referenceImages)
             await decodeReference(image);
         }
-        let calculationMessage = "";
-        // A read-only tab may update disposable results in memory, never the shared record.
-        if (!nextRelease && doc.generationState.status === "outdated") {
-          try {
-            const generated = generate(doc);
-            doc = {
-              ...doc,
-              generated,
-              generationState: {
-                status: "current",
-                diagnostics: generated.diagnostics,
-              },
-            };
-          } catch (e) {
-            calculationMessage = `Cálculo não concluído: ${e instanceof Error ? e.message : String(e)}. O desenho foi preservado; baixe uma cópia ou reabra para tentar novamente.`;
-          }
-        }
-        if (release !== nextRelease) release?.();
-        release = nextRelease;
         set({
           ...inspection,
           doc,
@@ -426,18 +417,14 @@ export const useStore = create<State>((set, get) => {
           activeFloorId: doc.model.floors[0].id,
           coursesByFloor: {},
           floorReferencesByFloor: {},
-          readonly: !release,
+          readonly: false,
           history: { past: [], future: [] },
           select: null,
           saved: "saved",
-          message: !release
-            ? `Este projeto está aberto em outra aba. Feche a outra aba e reabra este projeto para editar.${calculationMessage ? ` ${calculationMessage}` : ""}`
-            : "",
+          message: "",
         });
-        if (release && (fresh || doc.generationState.status === "outdated"))
-          await persist(doc);
+        await persist(doc, true, fresh && typeof requested !== "string");
       } catch (e) {
-        if (nextRelease !== release) nextRelease?.();
         set({ message: String(e instanceof Error ? e.message : e) });
       } finally {
         set({ busy: false, openingProjectId: null });
@@ -445,10 +432,12 @@ export const useStore = create<State>((set, get) => {
     },
     close: () => {
       if (get().busy) return;
-      release?.();
-      release = null;
+      if (get().doc) forgetProject(get().doc!.project.id);
+      checkpoint = null;
       set({
         doc: null,
+        saved: "saved",
+        message: "",
         retainedGroutResult: null,
         terrainDraft: null,
         terrainEditing: false,
@@ -764,16 +753,75 @@ export const useStore = create<State>((set, get) => {
         await persist(doc, changedInputs(s.doc, next.doc));
       }
     },
+    discard: async () => {
+      const s = get();
+      if (!s.doc || s.busy) return;
+      const id = s.doc.project.id;
+      if (s.saved === "uncertain") {
+        set({
+          message:
+            "Confira a confirmação por Tentar novamente antes de descartar. Você pode baixar sua versão em memória.",
+        });
+        return;
+      }
+      forgetProject(id);
+      if (s.saved === "conflict") {
+        await get().open(id, true);
+        return;
+      }
+      if (checkpoint?.doc?.project.id === id)
+        set({
+          ...checkpoint,
+          readonly: false,
+          saved: "saved",
+          message: "",
+          retainedGroutResult: null,
+          ...inspection,
+        });
+      else {
+        set({ readonly: false, saved: "saved" });
+        get().close();
+      }
+    },
     retry: async () => {
       const s = get();
-      if (!retired && s.doc && !s.busy && !s.readonly) await persist(s.doc);
+      if (
+        !retired &&
+        s.doc &&
+        !s.busy &&
+        (s.saved === "unavailable" || (s.saved === "saved" && s.readonly))
+      ) {
+        set({ busy: true });
+        try {
+          await checkRevision(s.doc.project.id);
+          set({ readonly: false, saved: "saved", message: "" });
+        } catch (error) {
+          set({
+            readonly: true,
+            saved:
+              pendingErrorKind(error) === "conflito"
+                ? "conflict"
+                : "unavailable",
+            message: error instanceof Error ? error.message : String(error),
+          });
+        } finally {
+          set({ busy: false });
+        }
+        return;
+      }
+      if (!retired && s.doc && !s.busy)
+        await persist(
+          s.doc,
+          s.doc.generationState.status === "outdated",
+          s.saved !== "saved",
+        );
     },
   };
 });
 
 if (import.meta.hot) {
   import.meta.hot.dispose(async () => {
-    // A replaced store must finish its current write before releasing ownership,
+    // A replaced store must finish its current write before replacement,
     // and must not start new writes while Vite loads its replacement.
     retired = true;
     if (useStore.getState().busy)
@@ -785,8 +833,6 @@ if (import.meta.hot) {
           }
         });
       });
-    release?.();
-    release = null;
   });
 }
 

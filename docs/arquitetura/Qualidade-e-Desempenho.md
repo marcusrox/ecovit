@@ -10,6 +10,8 @@ Não haverá prova técnica, prova de conceito ou protótipo separado. O solicit
 
 Vitest: encaixe modular, precisão, interseções, catálogo, alternância de encontros, interrupções por vãos, canaletas, propagação vertical, quantitativos e ida/volta do arquivo.
 
+M12 acrescenta integração da API com PostgreSQL 18.0 real em banco isolado: autorização, CSRF, revisões, idempotência, cotas, imagens, revogação e limpeza. Captura de e-mail e injeção de falhas ficam no ambiente de teste; envio/entrega Resend, proxy HTTPS e recursos Linux precisam de homologação na implantação. Não substituir testes HTTP diretos por verificações de botões.
+
 Playwright: desenhar/redimensionar, cancelar gesto, alternar modos, navegar fiadas, editar encontro apenas na primeira, alterar graute respeitando vãos, desfazer, salvar/recarregar e transportar arquivo. Coordenadas dos gestos devem ser calculadas pela câmera/elementos conhecidos, evitando testes frágeis presos a pixels de uma tela específica.
 
 Testar arquivo inválido, falha de cálculo, liberação dos controles após falha, salvamento de rascunho, download após falha de armazenamento e alterações sucessivas em pavimentos diferentes. Usar os casos do Caderno técnico como resultados esperados para o motor; não validar o algoritmo apenas contra sua própria saída.
@@ -39,13 +41,13 @@ Não adotar WebGL, índices espaciais complexos ou compressão binária inicialm
 
 | Necessidade futura | Evolução prevista |
 |---|---|
-| Projetos na nuvem e login | Adicionar backend e persistência do documento por projeto |
+| Colaboração/compartilhamento | Evoluir a autorização somente se solicitado; M12 já fornece contas privadas e persistência remota |
 | Consulta 3D | Novo renderizador consumindo a mesma geometria e cotas |
 | PDF/SVG/CSV | Geradores usando modelo e resultado, sem depender de captura de tela |
 | Abertura offline | Service Worker/PWA quando virar requisito |
 | Projetos maiores | Otimizar o gargalo medido, preservando o domínio |
 
-Não selecionar banco remoto, provedor de autenticação ou biblioteca 3D agora. Preservar dados independentes da interface já atende à preparação necessária.
+Banco e autenticação vigentes são os definidos na M12. Não acrescentar outro banco, provedor ou biblioteca 3D como preparação para essas evoluções; preservar dados independentes da interface.
 
 ## Evidências e limites
 

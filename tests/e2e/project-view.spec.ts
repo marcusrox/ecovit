@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./auth";
 
 async function create(page: Page, name: string) {
   await page.getByRole("button", { name: /Novo projeto/ }).click();

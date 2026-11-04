@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./auth";
 import {
   createProject,
   makeWall,
@@ -102,13 +102,11 @@ test("M9 criação pendente só confirma aparência com dimensões válidas", as
     )!,
   ];
   await page.goto("/");
-  await page
-    .getByTestId("import-file")
-    .setInputFiles({
-      name: "pending.ecovit",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(d)),
-    });
+  await page.getByTestId("import-file").setInputFiles({
+    name: "pending.ecovit",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(d)),
+  });
   await expect(page.getByRole("status")).toContainText("Salvo");
   await page.getByRole("button", { name: "Janela", exact: true }).click();
   await drag(page, 11200, 22400);

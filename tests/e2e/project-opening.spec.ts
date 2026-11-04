@@ -1,10 +1,10 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./auth";
 
 async function seed(page: Page) {
   await page.goto("/");
   await page.evaluate(async () => {
     const domainPath = "/src/domain/project.ts",
-      databasePath = "/src/persistence/database.ts";
+      databasePath = "/src/persistence/remote.ts";
     const { createProject } = await import(domainPath);
     const { saveProject } = await import(databasePath);
     for (const name of ["Abrir casa de teste", "Outro projeto"])
@@ -17,10 +17,7 @@ async function seed(page: Page) {
 
 async function pauseRead(page: Page, fail = false) {
   await page.evaluate(async (fail) => {
-    const path = "/src/persistence/database.ts";
-    const { db } = await import(path);
-    const table = db.table("projects");
-    const get = table.get.bind(table);
+    const originalFetch = window.fetch.bind(window);
     const state = {
       reads: 0,
       cursorBeforeRead: "",
@@ -32,7 +29,12 @@ async function pauseRead(page: Page, fail = false) {
       resume = resolve;
     });
     Object.assign(window, { openingProbe: state, resumeOpening: resume });
-    table.get = async (id: string) => {
+    window.fetch = async (input, options) => {
+      if (
+        !/\/api\/projects\/[0-9a-f-]+$/.test(String(input)) ||
+        (options?.method && options.method !== "GET")
+      )
+        return originalFetch(input, options);
       state.reads++;
       const status = [...document.querySelectorAll('[role="status"]')].find(
         (el) => el.textContent === "Abrindo projeto…",
@@ -43,8 +45,15 @@ async function pauseRead(page: Page, fail = false) {
         document.elementFromPoint(400, 400)!,
       ).cursor;
       await gate;
-      if (state.fail) throw new Error("Falha ao ler projeto para teste.");
-      return get(id);
+      if (state.fail)
+        return new Response(
+          JSON.stringify({
+            code: "test_failure",
+            message: "Falha ao ler projeto para teste.",
+          }),
+          { status: 503 },
+        );
+      return originalFetch(input, options);
     };
   }, fail);
 }
@@ -197,18 +206,18 @@ for (const [width, height, failBitmap] of [
     await page.setViewportSize({ width, height });
     await seed(page);
     await page.evaluate(async () => {
-      const databasePath = "/src/persistence/database.ts";
+      const databasePath = "/src/persistence/remote.ts";
       const elementsPath = "/src/domain/image-elements.ts";
       const catalogPath = "/src/domain/image-catalog.ts";
-      const { db, saveProject } = await import(databasePath);
+      const { listProjects, loadProject, saveProject } = await import(
+        databasePath
+      );
       const { standardElement } = await import(elementsPath);
       const { imageCatalog } = await import(catalogPath);
-      const project = (await db.table("projects").toArray())
-        .map((row: { doc: unknown }) => row.doc)
-        .find(
-          (p: { project: { name: string } }) =>
-            p.project.name === "Abrir casa de teste",
-        );
+      const card = (await listProjects()).find(
+        (p: { name: string }) => p.name === "Abrir casa de teste",
+      );
+      const project = await loadProject(card.id);
       project.model.imageElements.push({
         ...standardElement(imageCatalog[0], project.model.floors[0].id),
         x: 14000,

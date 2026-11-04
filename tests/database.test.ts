@@ -3,12 +3,7 @@ import { expect, it } from "vitest";
 import { createProject, makeWall } from "../src/domain/project";
 import { generate } from "../src/domain/composition";
 import { parseFile } from "../src/persistence/files";
-import {
-  db,
-  loadProject,
-  saveProject,
-  listProjects,
-} from "../src/persistence/database";
+import { db, loadProject, saveProject, listProjects } from "./legacy/database";
 it("salva e reabre documento estruturado sem perder medidas", async () => {
   const doc = createProject("Persistência", {
     length: 2800,

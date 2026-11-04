@@ -371,6 +371,36 @@ button.iconButton {
   font-size: 12px;
   color: #63705e;
 }
+.homeStatus {
+  min-height: 52px;
+  margin-bottom: 16px;
+}
+.homeStatusMessage {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 1px solid #dce1d5;
+  border-radius: 10px;
+  background: #eef1e6;
+  color: #41563c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.homeStatusMessage > span:last-of-type {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.homeStatusMessage .openingSpinner {
+  flex-shrink: 0;
+}
+.homeStatusWarning {
+  color: #825321;
+  background: #fff7e8;
+  border-color: #e8d7b9;
+}
 .projectList {
   display: grid;
   align-content: start;
@@ -2303,4 +2333,49 @@ button.iconButton {
   inset: 0;
   z-index: 30;
   overflow: auto;
+}
+
+.loginPage {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  padding: 24px;
+}
+.accountForm {
+  width: min(480px, calc(100vw - 48px));
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #dbe2d9;
+  border-radius: 12px;
+}
+.accountForm h1 {
+  font-size: 24px;
+}
+.accountForm p,
+.accountDialog p {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.accountActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.accountDialog {
+  width: min(740px, calc(100vw - 36px));
+  max-height: 90vh;
+  overflow: auto;
+}
+.trashList {
+  display: grid;
+  gap: 10px;
+}
+.trashCard {
+  padding: 12px;
+  border: 1px solid #dbe2d9;
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  overflow-wrap: anywhere;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { deleteProject, loadStoredProject } from "../persistence/database";
+import { deleteProject, loadStoredProject } from "../persistence/remote";
 import { download } from "../persistence/files";
 import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
@@ -71,8 +71,9 @@ export function DeleteProjectDialog({
       <h2 id="delete-project-title">Excluir projeto</h2>
       <p id="delete-project-description">
         Deseja baixar o arquivo .ecovit de {source.name} para ter um backup
-        antes de excluir? O backup usa o último estado salvo neste navegador. A
-        exclusão não pode ser desfeita e não remove arquivos já baixados.
+        antes de excluir? O backup usa o último estado salvo na conta. A remoção
+        envia o projeto para a lixeira por 30 dias e não remove arquivos já
+        baixados.
       </p>
       {notice && <p role="status">{notice}</p>}
       {error && (
@@ -97,7 +98,7 @@ export function DeleteProjectDialog({
           onClick={() => void act(true)}
         >
           <Icon name="delete" />{" "}
-          {backup ? "Excluir projeto" : "Excluir sem backup"}
+          {backup ? "Enviar à lixeira" : "Enviar à lixeira sem backup"}
         </button>
       </div>
     </dialog>

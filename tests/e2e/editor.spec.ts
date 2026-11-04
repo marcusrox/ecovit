@@ -1,4 +1,7 @@
-import { test, expect, type Page } from "@playwright/test";
+import { rejectSaves } from "./auth";
+import { login } from "./auth";
+import { blockEditing } from "./auth";
+import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 
 async function create(page: Page, name = "Casa de teste") {
@@ -62,7 +65,7 @@ test("M1 criar, desenhar, editar ambas as pontas, histórico, salvar e transport
   expect((await exported(page)).model.walls).toEqual([wall]);
   const context = await browser.newContext(),
     other = await context.newPage();
-  await other.goto("/");
+  await login(other);
   await other.getByTestId("import-file").setInputFiles({
     name: "casa.ecovit",
     mimeType: "application/json",
@@ -143,11 +146,7 @@ test("M1 arquivo inválido preserva trabalho; falha de escrita permite download 
     buffer: Buffer.from(JSON.stringify({ ...original, schemaVersion: 999 })),
   });
   await expect(page.getByRole("alert")).toContainText("incompatível");
-  await page.evaluate(() => {
-    IDBObjectStore.prototype.put = function () {
-      throw new DOMException("Teste de armazenamento", "QuotaExceededError");
-    };
-  });
+  await rejectSaves(page);
   await page.getByLabel("Nome do projeto", { exact: true }).fill("Em memória");
   await page.getByLabel("Nome do projeto", { exact: true }).press("Tab");
   await expect(page.getByRole("status")).toContainText("Não salvo");
@@ -156,7 +155,7 @@ test("M1 arquivo inválido preserva trabalho; falha de escrita permite download 
   expect(current.model).toEqual(original.model);
 });
 
-test("M1 segunda aba bloqueada e desbloqueada após encerrar a primeira", async ({
+test("M12 falha bloqueia edição na segunda aba; reabertura explícita recupera", async ({
   page,
   context,
 }) => {
@@ -164,23 +163,12 @@ test("M1 segunda aba bloqueada e desbloqueada após encerrar a primeira", async 
   const other = await context.newPage();
   await other.goto("/");
   await other.getByRole("button", { name: /Casa de teste/ }).click();
-  await expect(other.getByRole("status")).toContainText("Somente leitura");
+  await blockEditing(other);
   await expect(
     other.getByRole("button", { name: "Parede", exact: true }),
   ).toBeDisabled();
   await page.close();
-  // Closing the tab and releasing its Web Lock are asynchronous in the browser.
-  // Reopen only after the old owner is gone; no fixed sleep or forced unlock.
-  await expect
-    .poll(() =>
-      other.evaluate(
-        async () =>
-          (await navigator.locks.query()).held?.some((lock) =>
-            lock.name?.startsWith("ecovit:"),
-          ) ?? false,
-      ),
-    )
-    .toBe(false);
+  other.once("dialog", (dialog) => dialog.accept());
   await other.getByRole("button", { name: "Projetos", exact: true }).click();
   await other.getByRole("button", { name: /Casa de teste/ }).click();
   await expect(other.getByRole("status")).toContainText("Salvo");

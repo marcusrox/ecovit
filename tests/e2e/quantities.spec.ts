@@ -1,4 +1,6 @@
-import { test, expect, type Page } from "@playwright/test";
+import { remoteSnapshot, rejectSaves } from "./auth";
+import { blockEditing } from "./auth";
+import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import {
   createProject,
@@ -226,7 +228,7 @@ test("M5 A07/08: cancelar, duplicar último salvo com origem bloqueada e editar 
   await second
     .getByRole("button", { name: /Quantitativos M5.*parede/ })
     .click();
-  await expect(second.getByRole("status")).toContainText("Somente leitura");
+  await blockEditing(second);
   await second
     .getByRole("button", { name: "Quantitativos", exact: true })
     .click();
@@ -436,32 +438,47 @@ test("revisão M5: abrir consulta durante renomeação confirma nome e abre no m
   expect((await exported(page)).project.name).toBe("Nome confirmado M5");
 });
 
-test("revisão M5: consulta após falha real de gravação usa cálculo em memória e não altera registro salvo", async ({
+test("revisão M5: falha remota preserva intenção e impede quantitativo desatualizado; retry calcula", async ({
   page,
 }) => {
   await load(page);
-  const disk = await page.evaluate(async () => {
-    const path = "/src/persistence/database.ts";
-    const { db } = await import(path);
-    return JSON.stringify(await db.table("projects").toArray());
-  });
+  const disk = await remoteSnapshot(page);
+  await rejectSaves(page);
   await page.evaluate(async () => {
-    const path = "/src/state/store.ts";
-    const { useStore } = await import(path);
-    const original = IDBObjectStore.prototype.put;
-    IDBObjectStore.prototype.put = function () {
-      throw new DOMException("Quota de teste", "QuotaExceededError");
-    };
-    try {
-      const candidate = structuredClone(useStore.getState().doc);
-      candidate.model.walls[0].height = 700;
-      await useStore.getState().commit(candidate);
-    } finally {
-      IDBObjectStore.prototype.put = original;
-    }
+    const file = "/src/state/store.ts";
+    const { useStore } = await import(file);
+    const candidate = structuredClone(useStore.getState().doc);
+    candidate.model.walls[0].height = 700;
+    await useStore.getState().commit(candidate);
   });
-  await expect(page.getByRole("status")).toContainText("Não salvo");
+  await expect(page.getByRole("status")).toHaveText("Não salvo");
   const memory = await snapshot(page);
+  await page
+    .getByRole("button", { name: "Quantitativos", exact: true })
+    .click();
+  await expect(report(page)).toContainText(
+    /desatualizado|Recalcular|recalcule/i,
+  );
+  await expect(
+    summary(page).getByRole("row", {
+      name: "Total de peças 4 0 4",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await report(page).getByRole("button", { name: "Voltar ao desenho" }).click();
+  expect(await snapshot(page)).toBe(memory);
+  expect(await remoteSnapshot(page)).toBe(disk);
+  const candidate = await exported(page);
+  expect(candidate.model.walls[0].height).toBe(700);
+  expect(candidate.generated).toBeNull();
+  await page.evaluate(() =>
+    (window as unknown as { restorePut: () => void }).restorePut(),
+  );
+  await page
+    .getByRole("button", { name: "Tentar novamente", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toHaveText("Salvo");
+  const confirmed = await snapshot(page);
   await page
     .getByRole("button", { name: "Quantitativos", exact: true })
     .click();
@@ -479,20 +496,5 @@ test("revisão M5: consulta após falha real de gravação usa cálculo em memó
     }),
   ).toBeVisible();
   await report(page).getByRole("button", { name: "Voltar ao desenho" }).click();
-  expect(await snapshot(page)).toBe(memory);
-  expect(
-    await page.evaluate(async () => {
-      const path = "/src/persistence/database.ts";
-      const { db } = await import(path);
-      return JSON.stringify(await db.table("projects").toArray());
-    }),
-  ).toBe(disk);
-  const output = await exported(page);
-  expect(output.model.walls[0].height).toBe(700);
-  expect(output.generationState.status).toBe("current");
-  expect(
-    output
-      .generated!.floors.flatMap((f) => f.courses)
-      .reduce((n, c) => n + c.pieces.length, 0),
-  ).toBe(4);
+  expect(await snapshot(page)).toBe(confirmed);
 });

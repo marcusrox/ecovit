@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { blockEditing } from "./auth";
+import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import { createProject, type Project } from "../../src/domain/project";
 import { catalogItem, imageCatalog } from "../../src/domain/image-catalog";
@@ -303,7 +304,7 @@ for (const kind of ["catalog", "custom"] as const) {
       .getByRole("button", { name: /M10 teste/ })
       .first()
       .click();
-    await expect(other.getByRole("status")).toContainText("Somente leitura");
+    await blockEditing(other);
     await other
       .getByLabel("Selecionar elemento", { exact: true })
       .selectOption(original.id);

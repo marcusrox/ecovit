@@ -1,5 +1,9 @@
 import { defineConfig } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+const runId = randomUUID();
 export default defineConfig({
+  metadata: { m12RunId: runId },
+  globalTeardown: "./tests/e2e/stop-server.ts",
   testDir: "./tests/e2e",
   fullyParallel: false,
   workers: 1,
@@ -14,7 +18,8 @@ export default defineConfig({
     { name: "edge", use: { channel: "msedge" } },
   ],
   webServer: {
-    command: `"${process.execPath}" node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5174 --strictPort`,
+    env: { M12_RUN_ID: runId },
+    command: `"${process.execPath}" --import tsx server/test-main.ts`,
     url: "http://127.0.0.1:5174",
     reuseExistingServer: false,
   },

@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { blockEditing } from "./auth";
+import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import {
   createProject,
@@ -459,7 +460,7 @@ test("M4.1 A11 arquivo antigo recusado sem perder o aberto; outra aba somente le
   const second = await context.newPage();
   await second.goto("/");
   await second.getByRole("button", { name: /Pavimentos M4.1/ }).click();
-  await expect(second.getByRole("status")).toContainText("Somente leitura");
+  await blockEditing(second);
   await expect(
     second.getByRole("button", { name: "Novo pavimento", exact: true }),
   ).toBeDisabled();

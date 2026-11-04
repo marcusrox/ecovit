@@ -1,8 +1,13 @@
 import { beforeEach, expect, it, vi } from "vitest";
-vi.mock("../src/persistence/database", () => ({
-  saveProject: vi.fn().mockResolvedValue(1),
+vi.mock("../src/persistence/remote", () => ({
+  forgetProject: vi.fn(),
+  pendingErrorKind: () => "falhou",
+  saveProject: vi.fn().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  }),
   loadProject: vi.fn(),
-  acquireProject: vi.fn().mockResolvedValue(() => {}),
 }));
 import {
   createProject,
@@ -31,7 +36,7 @@ import {
 } from "../src/domain/floors";
 import * as engine from "../src/domain/composition";
 import { useStore } from "../src/state/store";
-import { saveProject } from "../src/persistence/database";
+import { saveProject } from "../src/persistence/remote";
 const png =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==";
 function sealPNG(bytes: Uint8Array) {
@@ -69,7 +74,11 @@ beforeEach(() => {
   vi.restoreAllMocks();
   useStore.setState({ busy: false });
   useStore.getState().close();
-  vi.mocked(saveProject).mockReset().mockResolvedValue(1);
+  vi.mocked(saveProject).mockReset().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  });
 });
 
 it("M8 calibração euclidiana conserva primeira âncora sob rotação e transformação inversa", () => {

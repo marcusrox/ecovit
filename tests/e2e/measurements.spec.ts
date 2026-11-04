@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { blockEditing } from "./auth";
+import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import {
   createProject,
@@ -583,7 +584,7 @@ test("M7 pavimentos, somente leitura e apresentação nas três resoluções", a
     .getByRole("button", { name: /M7 Medidas independentes/ })
     .first()
     .click();
-  await expect(second.getByRole("status")).toContainText("Somente leitura");
+  await blockEditing(second);
   await expect(measure(second)).toBeDisabled();
   const m = (await state(second)).model.measurements[0];
   await second

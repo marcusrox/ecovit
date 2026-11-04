@@ -14,13 +14,13 @@ Registro de ideias para desenvolvimento futuro, criado em 15 de outubro de 2026.
 
 **Estado: implementado no M7 — Medidas independentes e aceito pelo solicitante.** Elemento independente “Medida”: segmento reto em qualquer direção, inclusive diagonal, com rótulo de comprimento. Criação por dois cliques (início e fim), atração geométrica nas duas pontas com suspensão por Alt, edição por corpo/alças, persistência por pavimento e controle do rótulo nas preferências. O encaixe não cria vínculo permanente com os elementos próximos. Requisito no [PRD RF-15](Ecovit-PRD.md#rf-15--medidas-independentes), contratos na [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#medidas-independentes) e escopo, verificações e aceite no [M7](marcos/M7-Medidas.md).
 
-## BL-04 — Persistência em SQLite
+## BL-04 — Persistência fora do navegador
 
-Evoluir o armazenamento para salvar os dados dos projetos em um banco SQLite, com preservação da integridade e possibilidade de migração dos projetos existentes. Antes da implementação, definir onde o banco será executado e como se relacionará com o salvamento no navegador e com os arquivos `.ecovit`, pois essa ideia representa uma evolução da arquitetura atual de aplicação estática com persistência local.
+**Estado: implementado junto com BL-05 na [M12](marcos/M12-Contas-e-Persistencia-Remota.md), verificado localmente, pronto para teste e com aceite pendente.** Hospedagem própria no aaPanel e PostgreSQL versão 18.0 definidos pelo solicitante, com projetos privados por conta e salvamento online com revisão. SQLite foi uma hipótese inicial e não orienta esta entrega. Transição por download feito pelo usuário antes da atualização e importação manual .ecovit; sem acesso/migrador IndexedDB na nova versão. Comportamento previsto em RF-12/19/20, representação no assunto Persistência e compatibilidade; pré-requisitos de implantação no marco. Backup do servidor fica com o administrador, fora desta especificação. O aplicativo usa conta e persistência remota; implantação pendente.
 
-## BL-05 — Controle de acesso com Google ou código por e-mail
+## BL-05 — Controle de acesso por código de e-mail
 
-Implementar autenticação por conta Google ou por e-mail, sem senha própria: na opção por e-mail, o usuário receberá um código para validar o acesso. Definir a associação entre contas e projetos, o tratamento dos projetos locais existentes e os fluxos de entrada e saída; a implementação exigirá revisar a arquitetura atual sem login e estabelecer a infraestrutura necessária para validar identidades e enviar os códigos.
+**Estado: implementado junto com BL-04 na [M12](marcos/M12-Contas-e-Persistencia-Remota.md), verificado localmente, pronto para teste e com aceite pendente.** Solicitante definiu somente código por e-mail, sem Google ou senha própria; conta obrigatória e projetos privados. Inclui sessão, saída, reentrada após expiração e exclusão da própria conta. Requisitos previstos em RF-19/20 e contratos em [Autenticação e acesso](arquitetura/Autenticacao-e-Acesso.md); Resend com idevs.com.br definido, verificação do domínio/chave/remetente e requisitos de implantação no marco. A implementação não comprova homologação do servidor nem aceite funcional.
 
 ## BL-06 — Configurações ao lado do nome do projeto
 

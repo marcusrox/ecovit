@@ -1,8 +1,13 @@
 import { beforeEach, expect, it, vi } from "vitest";
-vi.mock("../src/persistence/database", () => ({
-  saveProject: vi.fn().mockResolvedValue(1),
+vi.mock("../src/persistence/remote", () => ({
+  forgetProject: vi.fn(),
+  pendingErrorKind: () => "falhou",
+  saveProject: vi.fn().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  }),
   loadProject: vi.fn(),
-  acquireProject: vi.fn().mockResolvedValue(() => {}),
 }));
 import {
   createProject,
@@ -19,7 +24,7 @@ import {
 } from "../src/domain/grout";
 import { parseFile, serializeFile } from "../src/persistence/files";
 import { useStore } from "../src/state/store";
-import { saveProject } from "../src/persistence/database";
+import { saveProject } from "../src/persistence/remote";
 
 function fixture() {
   const d = createProject("Restaurar grautes", {
@@ -70,7 +75,11 @@ function fixture() {
 beforeEach(() => {
   vi.restoreAllMocks();
   useStore.getState().close();
-  vi.mocked(saveProject).mockResolvedValue(1);
+  vi.mocked(saveProject).mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  });
 });
 
 it("recálculo exclusivo de grautes mantém referência visual transitória sem salvar resultado antigo", async () => {
@@ -79,8 +88,13 @@ it("recálculo exclusivo de grautes mantém referência visual transitória sem 
   let resume!: () => void;
   vi.mocked(saveProject).mockImplementationOnce(
     () =>
-      new Promise<number>((resolve) => {
-        resume = () => resolve(1);
+      new Promise<Awaited<ReturnType<typeof saveProject>>>((resolve) => {
+        resume = () =>
+          resolve({
+            projectId: "test-project",
+            revision: "1",
+            operationId: "test-operation",
+          });
       }),
   );
   const pending = useStore.getState().commit(
@@ -109,8 +123,13 @@ it("recálculo exclusivo de grautes mantém referência visual transitória sem 
   const updated = useStore.getState().doc!;
   vi.mocked(saveProject).mockImplementationOnce(
     () =>
-      new Promise<number>((resolve) => {
-        resume = () => resolve(1);
+      new Promise<Awaited<ReturnType<typeof saveProject>>>((resolve) => {
+        resume = () =>
+          resolve({
+            projectId: "test-project",
+            revision: "1",
+            operationId: "test-operation",
+          });
       }),
   );
   const undo = useStore.getState().undo();

@@ -1,8 +1,13 @@
 import { beforeEach, expect, it, vi } from "vitest";
-vi.mock("../src/persistence/database", () => ({
-  saveProject: vi.fn().mockResolvedValue(1),
+vi.mock("../src/persistence/remote", () => ({
+  forgetProject: vi.fn(),
+  pendingErrorKind: () => "falhou",
+  saveProject: vi.fn().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  }),
   loadProject: vi.fn(),
-  acquireProject: vi.fn().mockResolvedValue(() => {}),
 }));
 import {
   createProject,
@@ -35,7 +40,7 @@ import {
   importedCopy,
 } from "../src/persistence/files";
 import { useStore } from "../src/state/store";
-import { saveProject } from "../src/persistence/database";
+import { saveProject } from "../src/persistence/remote";
 
 const fixture = () =>
   createProject("Medidas", { length: 2500, width: 1250, height: 700 });

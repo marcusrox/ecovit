@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { rejectSaves } from "./auth";
+import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import {
   createProject,
@@ -349,20 +350,27 @@ test("M3.2 falha de armazenamento preserva supressão e resultado em download", 
   await load(page, fixture());
   await course(page, 14);
   await click(page, 15000, 625);
-  await page.evaluate(() => {
-    IDBObjectStore.prototype.put = function () {
-      throw new DOMException("Falha simulada", "QuotaExceededError");
-    };
-  });
+  await rejectSaves(page);
   await page
     .getByRole("button", { name: "Remover faixa de canaleta", exact: true })
     .click();
   await expect(page.getByRole("status")).toContainText("Não salvo");
   const after = await exported(page);
   expect(after.adjustments.channels).toHaveLength(1);
-  expect(after.generationState.status).toBe("current");
+  expect(after.generationState.status).toBe("outdated");
+  expect(after.generated).toBeNull();
+  await expect(
+    page.getByRole("button", { name: "Desfazer", exact: true }),
+  ).toBeDisabled();
+  await page.evaluate(() =>
+    (window as unknown as { restorePut: () => void }).restorePut(),
+  );
+  await page
+    .getByRole("button", { name: "Tentar novamente", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toHaveText("Salvo");
   expect(
-    after.generated!.floors[0].courses[13].pieces.some((p) =>
+    (await exported(page)).generated!.floors[0].courses[13].pieces.some((p) =>
       p.kind.includes("channel"),
     ),
   ).toBe(false);

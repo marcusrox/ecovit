@@ -1,12 +1,17 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { createProject, makeWall, type Project } from "../src/domain/project";
 import * as engine from "../src/domain/composition";
-vi.mock("../src/persistence/database", () => ({
-  saveProject: vi.fn().mockResolvedValue(1),
+vi.mock("../src/persistence/remote", () => ({
+  forgetProject: vi.fn(),
+  pendingErrorKind: () => "falhou",
+  saveProject: vi.fn().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  }),
   loadProject: vi.fn(),
-  acquireProject: vi.fn().mockResolvedValue(() => {}),
 }));
-import { saveProject, acquireProject } from "../src/persistence/database";
+import { saveProject } from "../src/persistence/remote";
 import { useStore } from "../src/state/store";
 import { putOpening, removeElement } from "../src/domain/openings";
 import { suppressBand, restoreBand } from "../src/domain/channels";
@@ -44,7 +49,7 @@ async function openedCross() {
   save.mockClear();
   return useStore.getState().doc!;
 }
-it("M3.5 fase e histórico sobrevivem a falha do motor e ambas as gravações", async () => {
+it("M3.5 fase e histórico sobrevivem a falha do motor e a gravação remota", async () => {
   const d = await openedCross(),
     c = d.generated!.floors[0].components[0],
     a = {
@@ -66,20 +71,23 @@ it("M3.5 fase e histórico sobrevivem a falha do motor e ambas as gravações", 
   expect(useStore.getState()).toMatchObject({ busy: false, saved: "saved" });
   expect(useStore.getState().doc!.generationState.status).toBe("outdated");
   expect(useStore.getState().doc!.adjustments.junctions).toEqual([a]);
-  save.mockRejectedValueOnce(new Error("primeira"));
+  const writesBeforeCalculation = save.mock.calls.length;
   await useStore.getState().retry();
   expect(useStore.getState().saved).toBe("saved");
+  expect(save).toHaveBeenCalledTimes(writesBeforeCalculation);
   expect(
     useStore.getState().doc!.generated!.floors[0].components[0].phase,
   ).toBe(1);
-  save.mockResolvedValueOnce("ok").mockRejectedValueOnce(new Error("segunda"));
+  save.mockRejectedValueOnce(new Error("segunda"));
   await useStore.getState().undo();
   expect(useStore.getState()).toMatchObject({ busy: false, saved: "error" });
+  expect(useStore.getState().doc!.generated).toBeNull();
+  expect(useStore.getState().readonly).toBe(true);
+  await useStore.getState().retry();
+  expect(useStore.getState().saved).toBe("saved");
   expect(
     useStore.getState().doc!.generated!.floors[0].components[0].phase,
   ).toBe(0);
-  await useStore.getState().retry();
-  expect(useStore.getState().saved).toBe("saved");
   await useStore.getState().undo(true);
   expect(useStore.getState().doc!.adjustments.junctions).toEqual([a]);
 });
@@ -93,7 +101,6 @@ it("M3.3 inclusão/exclusão e histórico mantêm eixo, ID e configuração", as
   );
   expect(save.mock.calls.map((c) => c[0].generationState.status)).toEqual([
     "outdated",
-    "current",
   ]);
   await useStore.getState().commit(toggleGrout(included, cell, true));
   const excluded = useStore.getState().doc!;
@@ -117,7 +124,7 @@ it("M3.3 inclusão/exclusão e histórico mantêm eixo, ID e configuração", as
     useStore.getState().doc!.generated!.floors[0].grouts!.map((a) => a.x),
   ).toEqual([2500]);
 });
-it("M3.3 falha de motor e duas gravações mantêm ajustes e permitem recuperar", async () => {
+it("M3.3 falha de motor e gravação remota mantêm ajustes e permitem recuperar", async () => {
   const d = await opened(),
     cell = { x: 2500, y: 0, wallIds: [d.model.walls[0].id] };
   vi.spyOn(engine, "generate").mockImplementationOnce(() => {
@@ -127,17 +134,16 @@ it("M3.3 falha de motor e duas gravações mantêm ajustes e permitem recuperar"
   expect(useStore.getState()).toMatchObject({ busy: false, saved: "saved" });
   expect(useStore.getState().doc!.generationState.status).toBe("outdated");
   expect(useStore.getState().doc!.adjustments.grout).toHaveLength(1);
-  save.mockRejectedValueOnce(new Error("primeira gravação"));
+  const writesBeforeCalculation = save.mock.calls.length;
   await useStore.getState().retry();
   expect(useStore.getState()).toMatchObject({ busy: false, saved: "saved" });
+  expect(save).toHaveBeenCalledTimes(writesBeforeCalculation);
   expect(
     useStore
       .getState()
       .doc!.generated!.floors[0].grouts!.some((a) => a.x === 2500),
   ).toBe(true);
-  save
-    .mockResolvedValueOnce("ok")
-    .mockRejectedValueOnce(new Error("segunda gravação"));
+  save.mockRejectedValueOnce(new Error("gravação remota"));
   await useStore
     .getState()
     .commit(toggleGrout(useStore.getState().doc!, cell, true));
@@ -201,7 +207,7 @@ it("M3.2 supressão/restauração e histórico conservam identidade e outras fia
     suppressed.adjustments.channels,
   );
 });
-it("M3.2 falha do motor preserva supressão e retry recompõe; segundo save preserva restauração", async () => {
+it("M3.2 falha do motor preserva supressão e retry recompõe; save remoto preserva restauração", async () => {
   const d = await channelProject(),
     wallId = d.model.walls[0].id;
   vi.spyOn(engine, "generate").mockImplementationOnce(() => {
@@ -213,16 +219,18 @@ it("M3.2 falha do motor preserva supressão e retry recompõe; segundo save pres
   expect(useStore.getState().doc!.generationState.status).toBe("outdated");
   await useStore.getState().retry();
   expect(useStore.getState().doc!.generated!.floors[0].channels).toEqual([]);
-  save.mockResolvedValueOnce("ok").mockRejectedValueOnce(new Error("quota"));
+  save.mockRejectedValueOnce(new Error("quota"));
   await useStore
     .getState()
     .commit(restoreBand(useStore.getState().doc!, wallId, 1400));
   expect(useStore.getState()).toMatchObject({ busy: false, saved: "error" });
+  expect(useStore.getState().doc!.generated).toBeNull();
+  expect(useStore.getState().doc!.adjustments.channels).toHaveLength(0);
+  await useStore.getState().retry();
+  expect(useStore.getState().saved).toBe("saved");
   expect(useStore.getState().doc!.generated!.floors[0].channels).toHaveLength(
     1,
   );
-  await useStore.getState().retry();
-  expect(useStore.getState().saved).toBe("saved");
 });
 it("M3.2 excluir parede remove supressão dependente na mesma operação desfazível", async () => {
   const d = await channelProject();
@@ -267,10 +275,13 @@ it("RF-09 nome/seleção/câmera e desfazer nome não geram peças novamente", a
 });
 beforeEach(() => {
   vi.restoreAllMocks();
-  vi.mocked(acquireProject).mockResolvedValue(() => {});
   useStore.setState({ busy: false });
   useStore.getState().close();
-  save.mockReset().mockResolvedValue("ok");
+  save.mockReset().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  });
 });
 async function opened() {
   const d = createProject("Estado", { length: 2500, width: 1250, height: 700 });
@@ -290,38 +301,42 @@ async function opened() {
   save.mockClear();
   return useStore.getState().doc!;
 }
-it("salva modelo desatualizado antes do resultado; histórico sem peças", async () => {
+it("salva intenção uma única vez e calcula em memória; histórico sem peças", async () => {
   const d = await opened();
   await useStore.getState().commit(editWall(d, "Editado"));
   expect(useStore.getState().message).toBe("");
   expect(save.mock.calls.map((c) => c[0].generationState.status)).toEqual([
     "outdated",
-    "current",
   ]);
   expect(useStore.getState().history.past[0].generated).toBeNull();
   await useStore.getState().undo();
   expect(useStore.getState().doc!.project.name).toBe("Estado");
   expect(useStore.getState().doc!.generationState.status).toBe("current");
 });
-it("falha da primeira gravação conserva memória e continua cálculo; retry recupera", async () => {
+it("falha da gravação remota conserva candidato, bloqueia novas edições e retry recupera", async () => {
   const d = await opened();
   save.mockRejectedValue(new Error("quota"));
   await useStore.getState().commit(editWall(d, "Em memória"));
-  expect(save).toHaveBeenCalledTimes(2);
+  expect(save).toHaveBeenCalledTimes(1);
   expect(useStore.getState()).toMatchObject({ busy: false, saved: "error" });
   expect(useStore.getState().doc!.project.name).toBe("Em memória");
-  expect(useStore.getState().doc!.generationState.status).toBe("current");
-  save.mockResolvedValue("ok");
+  expect(useStore.getState().doc!.generationState.status).toBe("outdated");
+  expect(useStore.getState().readonly).toBe(true);
+  save.mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  });
   await useStore.getState().retry();
   expect(useStore.getState().saved).toBe("saved");
   expect(useStore.getState().message).toBe("");
 });
-it("falha na gravação do resultado mantém composição atual em memória", async () => {
+it("falha no save remoto conserva intenção desatualizada para recuperação", async () => {
   const d = await opened();
-  save.mockResolvedValueOnce("ok").mockRejectedValueOnce(new Error("quota"));
+  save.mockRejectedValueOnce(new Error("quota"));
   await useStore.getState().commit(editWall(d, "Segundo save"));
   expect(useStore.getState()).toMatchObject({ busy: false, saved: "error" });
-  expect(useStore.getState().doc!.generationState.status).toBe("current");
+  expect(useStore.getState().doc!.generationState.status).toBe("outdated");
   await useStore.getState().retry();
   expect(useStore.getState().saved).toBe("saved");
 });
@@ -343,7 +358,12 @@ it("não aceita segunda edição enquanto grava; não cria fila", async () => {
   save.mockImplementationOnce(
     () =>
       new Promise((resolve) => {
-        release = () => resolve("ok");
+        release = () =>
+          resolve({
+            projectId: "test-project",
+            revision: "1",
+            operationId: "test-operation",
+          });
       }),
   );
   const pending = useStore.getState().commit(editWall(d, "Primeira"));
@@ -351,7 +371,7 @@ it("não aceita segunda edição enquanto grava; não cria fila", async () => {
   expect(useStore.getState().doc!.project.name).toBe("Primeira");
   release();
   await pending;
-  expect(save).toHaveBeenCalledTimes(2);
+  expect(save).toHaveBeenCalledTimes(1);
 });
 it("excluir parede remove ajuste na mesma operação; desfazer recupera escolha", async () => {
   const d = await opened();
@@ -422,7 +442,6 @@ it("M3.1 edição/exclusão e histórico restauram IDs e configurações", async
   await useStore.getState().commit(putOpening(d, o));
   expect(save.mock.calls.map((c) => c[0].generationState.status)).toEqual([
     "outdated",
-    "current",
   ]);
   expect(useStore.getState().doc!.model.openings).toEqual([o]);
   await useStore
@@ -466,7 +485,7 @@ it("M3.1 falha do motor após inserir conserva abertura e libera controles", asy
   await useStore.getState().retry();
   expect(useStore.getState().doc!.generationState.status).toBe("current");
 });
-it("M3.1 segunda gravação preserva abertura e recuperação da primeira registra salvo real", async () => {
+it("M3.1 gravação remota preserva abertura e recuperação da primeira registra salvo real", async () => {
   const d = await opened(),
     o = {
       id: crypto.randomUUID(),
@@ -477,18 +496,24 @@ it("M3.1 segunda gravação preserva abertura e recuperação da primeira regist
       base: 0,
       height: 700,
     };
-  save.mockResolvedValueOnce("ok").mockRejectedValueOnce(new Error("quota"));
+  save.mockRejectedValueOnce(new Error("quota"));
   await useStore.getState().commit(putOpening(d, o));
   expect(useStore.getState()).toMatchObject({ busy: false, saved: "error" });
   expect(useStore.getState().doc!.model.openings).toEqual([o]);
-  expect(useStore.getState().doc!.generationState.status).toBe("current");
-  save.mockResolvedValue("ok");
+  expect(useStore.getState().doc!.generationState.status).toBe("outdated");
+  save.mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  });
   await useStore.getState().retry();
   const current = useStore.getState().doc!;
   save.mockRejectedValueOnce(new Error("quota"));
   await useStore.getState().commit(putOpening(current, { ...o, width: 3750 }));
-  expect(useStore.getState().saved).toBe("saved");
+  expect(useStore.getState().saved).toBe("error");
   expect(useStore.getState().doc!.model.openings[0].width).toBe(3750);
+  await useStore.getState().retry();
+  expect(useStore.getState().saved).toBe("saved");
 });
 
 it("M3.4 commit explícito evita dupla reconciliação e histórico restaura movimento", async () => {
@@ -510,7 +535,6 @@ it("M3.4 commit explícito evita dupla reconciliação e histórico restaura mov
   await useStore.getState().commit(next.doc, "move");
   expect(save.mock.calls.map((c) => c[0].generationState.status)).toEqual([
     "outdated",
-    "current",
   ]);
   const moved = useStore.getState().doc!;
   expect(moved.model.openings[0].offset).toBe(2500);

@@ -6,6 +6,7 @@ export default ts.config(
   {
     ignores: [
       "dist/**",
+      "dist-server/**",
       "node_modules/**",
       ".tools/**",
       "test-results/**",

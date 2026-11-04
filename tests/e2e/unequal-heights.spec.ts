@@ -1,11 +1,10 @@
-import { test, expect, type Page } from "@playwright/test";
+import { blockEditing, remoteSnapshot } from "./auth";
+import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import { type Project } from "../../src/domain/project";
 
-async function exported(page: Page, readonly = false): Promise<Project> {
-  await expect(page.getByRole("status")).toContainText(
-    readonly ? "Somente leitura" : "Salvo",
-  );
+async function exported(page: Page): Promise<Project> {
+  await expect(page.getByRole("status")).toContainText("Salvo");
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Baixar projeto" }).click();
   return JSON.parse(await readFile((await (await download).path())!, "utf8"));
@@ -96,102 +95,77 @@ test("CT-14 importa resultado antigo, preserva desenho, alturas e histórico ao 
   ).toBeVisible();
 });
 
-for (const readonly of [false, true]) {
-  test(`CT-14 reabre registro local v9, somente leitura=${readonly}`, async ({
-    page,
-    context,
-  }) => {
-    const original = JSON.parse(
-      await readFile("tests/fixtures/unequal-heights-v9.ecovit", "utf8"),
-    );
-    await page.goto("/");
-    await page.evaluate(async (doc) => {
-      await new Promise<void>((resolve, reject) => {
-        const request = indexedDB.open("ecovit");
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          const db = request.result,
-            tx = db.transaction("projects", "readwrite");
-          tx.objectStore("projects").put({
-            id: doc.project.id,
-            updatedAt: doc.metadata.updatedAt,
-            doc,
-          });
-          tx.oncomplete = () => {
-            db.close();
-            resolve();
-          };
-          tx.onerror = () => reject(tx.error);
-        };
-      });
-    }, original);
-    const holder = readonly ? await context.newPage() : null;
-    if (holder) {
-      await holder.goto("/");
-      await holder.evaluate((id) => {
-        void navigator.locks.request(`ecovit:${id}`, () => {
-          document.documentElement.dataset.locked = "yes";
-          return new Promise<void>(() => {});
+test("CT-14 registros locais não aparecem; importação manual mantém alturas sem alterar fonte", async ({
+  page,
+}) => {
+  const text = await readFile(
+      "tests/fixtures/unequal-heights-v9.ecovit",
+      "utf8",
+    ),
+    original = JSON.parse(text);
+  await page.evaluate(async (doc) => {
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open("ecovit", 1);
+      request.onupgradeneeded = () =>
+        request.result.createObjectStore("projects", { keyPath: "id" });
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const db = request.result,
+          tx = db.transaction("projects", "readwrite");
+        tx.objectStore("projects").put({
+          id: doc.project.id,
+          updatedAt: doc.metadata.updatedAt,
+          doc,
         });
-      }, original.project.id);
-      await expect(holder.locator("html")).toHaveAttribute(
-        "data-locked",
-        "yes",
-      );
-    }
-    await page.reload();
-    await page
-      .getByRole("button", { name: /Meu projeto R3/ })
-      .first()
-      .click();
-    const updated = await exported(page, readonly);
-    expect(updated.project.id).toBe(original.project.id);
-    expect(updated.model).toEqual({
-      ...original.model,
-      measurements: [],
-      referenceImages: [],
-      imageElements: [],
-      customImageAssets: [],
-      terrain: null,
-    });
-    expect(updated.generated!.convention).toBe("nominal-v10");
-    expect(
-      updated.generationState.diagnostics.filter((d) => d.severity === "error"),
-    ).toEqual([]);
-    await expect(
-      page.getByRole("button", { name: "Desfazer", exact: true }),
-    ).toBeDisabled();
-    const stored = await page.evaluate(async (id) => {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open("ecovit");
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          const db = request.result;
-          const row = db
-            .transaction("projects")
-            .objectStore("projects")
-            .get(id);
-          row.onsuccess = () => {
-            db.close();
-            resolve(row.result.doc);
-          };
-          row.onerror = () => {
-            db.close();
-            reject(row.error);
-          };
+        tx.oncomplete = () => {
+          db.close();
+          resolve();
         };
-      });
-    }, original.project.id);
-    expect(stored).toEqual(readonly ? original : updated);
-    if (holder) {
-      await expect(page.getByRole("alert")).toContainText("outra aba");
-      await holder.close();
-      await page.reload();
-      await page
-        .getByRole("button", { name: /Meu projeto R3/ })
-        .first()
-        .click();
-      expect((await exported(page)).generated).toEqual(updated.generated);
-    }
+        tx.onerror = () => {
+          db.close();
+          reject(tx.error);
+        };
+      };
+    });
+  }, original);
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: /Meu projeto R3/ }),
+  ).toHaveCount(0);
+  await page.getByTestId("import-file").setInputFiles({
+    name: "Alturas.ecovit",
+    mimeType: "application/json",
+    buffer: Buffer.from(text),
   });
-}
+  const updated = await exported(page);
+  expect(updated.project.id).not.toBe(original.project.id);
+  expect(updated.model.walls).toEqual(original.model.walls);
+  expect(updated.generated!.convention).toBe("nominal-v10");
+  expect(
+    await readFile("tests/fixtures/unequal-heights-v9.ecovit", "utf8"),
+  ).toBe(text);
+});
+test("CT-14 consulta bloqueada preserva alturas, snapshot e intenção remota", async ({
+  page,
+}) => {
+  const text = await readFile(
+    "tests/fixtures/unequal-heights-v9.ecovit",
+    "utf8",
+  );
+  await page.getByTestId("import-file").setInputFiles({
+    name: "Alturas.ecovit",
+    mimeType: "application/json",
+    buffer: Buffer.from(text),
+  });
+  const updated = await exported(page),
+    disk = await remoteSnapshot(page);
+  await blockEditing(page);
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Baixar projeto" }).click();
+  const retained = JSON.parse(
+    await readFile((await (await download).path())!, "utf8"),
+  );
+  expect(retained.model).toEqual(updated.model);
+  expect(retained.generated).toEqual(updated.generated);
+  expect(await remoteSnapshot(page)).toBe(disk);
+});

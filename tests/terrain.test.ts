@@ -1,8 +1,13 @@
 import { beforeEach, expect, it, vi } from "vitest";
-vi.mock("../src/persistence/database", () => ({
-  saveProject: vi.fn().mockResolvedValue(1),
+vi.mock("../src/persistence/remote", () => ({
+  forgetProject: vi.fn(),
+  pendingErrorKind: () => "falhou",
+  saveProject: vi.fn().mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  }),
   loadProject: vi.fn(),
-  acquireProject: vi.fn().mockResolvedValue(() => {}),
 }));
 import {
   createProject,
@@ -34,7 +39,7 @@ import {
 } from "../src/domain/floors";
 import * as engine from "../src/domain/composition";
 import { useStore } from "../src/state/store";
-import { saveProject } from "../src/persistence/database";
+import { saveProject } from "../src/persistence/remote";
 
 const fixture = () =>
   createProject("Terreno", { length: 2500, width: 1250, height: 700 });
@@ -57,7 +62,11 @@ beforeEach(() => {
   vi.restoreAllMocks();
   useStore.setState({ busy: false });
   useStore.getState().close();
-  vi.mocked(saveProject).mockResolvedValue(1);
+  vi.mocked(saveProject).mockResolvedValue({
+    projectId: "test-project",
+    revision: "1",
+    operationId: "test-operation",
+  });
   vi.mocked(saveProject).mockClear();
 });
 

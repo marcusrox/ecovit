@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { login } from "./auth";
+import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import {
   createProject,
@@ -184,6 +185,7 @@ test("M3.1 três tipos, corpo, duas alças, campos, excluir/desfazer e transport
   expect((await exported(page)).model).toEqual(changed.model);
   const context = await browser.newContext(),
     other = await context.newPage();
+  await login(other);
   await load(other, changed);
   expect((await exported(other)).model).toEqual(changed.model);
   await context.close();

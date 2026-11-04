@@ -1,6 +1,7 @@
+// Historical IndexedDB fixture. Never imported by the M12 application.
 import Dexie, { type Table } from "dexie";
-import type { Project } from "../domain/project";
-import { importedCopy, validateProject } from "./files";
+import type { Project } from "../../src/domain/project";
+import { importedCopy, validateProject } from "../../src/persistence/files";
 export const db = new Dexie("ecovit");
 db.version(1).stores({ projects: "id, updatedAt" });
 const projects = db.table("projects") as Table<{

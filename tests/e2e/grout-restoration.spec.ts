@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { blockEditing } from "./auth";
+import { expect, test, type Page } from "./auth";
 import {
   createProject,
   defaultGroutSettings,
@@ -128,20 +129,22 @@ test("grautes mantêm paredes e navegação visíveis durante inclusão e remoç
       const oldPixels = await pixels();
       expect(oldPixels.some((p) => p[3] > 0)).toBe(true);
       await page.evaluate(async () => {
-        const path = "/src/persistence/database.ts";
-        const { db } = await import(path);
-        const table = db.table("projects"),
-          original = table.put;
+        const original = window.fetch.bind(window);
         let release!: () => void;
         const gate = new Promise<void>((resolve) => {
           release = resolve;
         });
         (window as unknown as { resumeGroutSave: () => void }).resumeGroutSave =
           release;
-        table.put = async function (...args: unknown[]) {
-          table.put = original;
+        window.fetch = async (input, options) => {
+          if (
+            options?.method !== "PUT" ||
+            !String(input).includes("/api/projects/")
+          )
+            return original(input, options);
+          window.fetch = original;
           await gate;
-          return original.apply(this, args);
+          return original(input, options);
         };
       });
       await click(page, 625, 10625);
@@ -474,7 +477,7 @@ test("parede em readonly permite consulta filtrada e bloqueia restauração e ed
     .getByRole("button", { name: /Restaurar grautes.*cópia/ })
     .first()
     .click();
-  await expect(other.getByRole("status")).toContainText("Somente leitura");
+  await blockEditing(other);
   await other.getByRole("button", { name: "Fiada", exact: true }).click();
   const before = await snapshot(other);
   await click(other, 10625, 625);

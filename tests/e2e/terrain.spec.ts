@@ -1,4 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
+import { remoteSnapshot } from "./auth";
+import { blockEditing } from "./auth";
+import { expect, test, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import { createProject, type Project } from "../../src/domain/project";
 import { terrainArea, terrainAreaText } from "../../src/domain/terrain";
@@ -257,7 +259,7 @@ test("M11 rosa: visibilidade, pavimentos, arquivo, recarga e readonly", async ({
     .getByRole("button", { name: /Rosa persistente/ })
     .first()
     .click();
-  await expect(other.getByRole("status")).toContainText("Somente leitura");
+  await blockEditing(other);
   await other.getByRole("button", { name: "Terreno", exact: true }).click();
   await expect(
     other.getByRole("checkbox", { name: "Mostrar rosa dos ventos" }),
@@ -636,7 +638,7 @@ test("M11 materiais, movimento, pavimentos, arquivo e somente leitura", async ({
     .getByRole("button", { name: /M11 Compartilhado/ })
     .first()
     .click();
-  await expect(other.getByRole("status")).toContainText("Somente leitura");
+  await blockEditing(other);
   await other.getByRole("button", { name: "Terreno", exact: true }).click();
   await expect(
     panel(other).getByRole("button", { name: "Ajustar", exact: true }),
@@ -1117,14 +1119,8 @@ test("M11 rótulo superior: preferência persistida, prévia, readonly e três r
     .getByRole("button", { name: /M11 Terreno/ })
     .first()
     .click();
-  await expect(other.getByRole("status")).toContainText("Somente leitura");
-  const storedSnapshot = () =>
-    other.evaluate(async () => {
-      const path = "/src/persistence/database.ts";
-      return JSON.stringify(
-        await (await import(path)).db.table("projects").toArray(),
-      );
-    });
+  await blockEditing(other);
+  const storedSnapshot = () => remoteSnapshot(other);
   const stored = await storedSnapshot();
   const readonlyBefore = await snapshot(other);
   await expect.poll(() => texts(other)).toContain(label);

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { duplicateProject } from "../persistence/database";
+import { duplicateProject, pendingCopyName } from "../persistence/remote";
 import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
 
@@ -12,7 +12,10 @@ export function DuplicateProjectDialog({
   close: () => void;
   saved: () => void;
 }) {
-  const [name, setName] = useState(`${source.name.slice(0, 92)} (cópia)`);
+  const [name, setName] = useState(
+    pendingCopyName(source.id) ?? `${source.name.slice(0, 92)} (cópia)`,
+  );
+  const [pending, setPending] = useState(!!pendingCopyName(source.id));
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const running = useRef(false);
@@ -46,7 +49,10 @@ export function DuplicateProjectDialog({
           setError("");
           void duplicateProject(source.id, name)
             .then(saved)
-            .catch((e) => setError((e as Error).message))
+            .catch((e) => {
+              setError((e as Error).message);
+              setPending(!!pendingCopyName(source.id));
+            })
             .finally(() => {
               running.current = false;
               setWorking(false);
@@ -60,10 +66,16 @@ export function DuplicateProjectDialog({
             required
             maxLength={100}
             value={name}
-            disabled={working}
+            disabled={working || pending}
             onChange={(e) => setName(e.target.value)}
           />
         </label>
+        {pending && (
+          <p>
+            A resposta pode ter se perdido. Tentar novamente confere a mesma
+            cópia. Fechar mantém o acompanhamento nesta página.
+          </p>
+        )}
         {error && (
           <p role="alert" className={styles.errorText}>
             {error}
@@ -71,7 +83,7 @@ export function DuplicateProjectDialog({
         )}
         <div className={styles.quantityHeader}>
           <button type="button" disabled={working} onClick={close}>
-            Cancelar
+            {pending ? "Fechar" : "Cancelar"}
           </button>
           <button
             type="submit"

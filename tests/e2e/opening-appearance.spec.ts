@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { blockEditing } from "./auth";
+import { expect, test, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import {
   createProject,
@@ -171,7 +172,7 @@ test("M9 histórico, transporte, legado 11 e bloqueio real entre abas", async ({
 }) => {
   const legacy = JSON.parse(JSON.stringify(fixture()));
   legacy.schemaVersion = 11;
-    Reflect.deleteProperty(legacy.model, "terrain");
+  Reflect.deleteProperty(legacy.model, "terrain");
   delete legacy.model.imageElements;
   delete legacy.model.customImageAssets;
   const before = await load(page, legacy),
@@ -201,7 +202,7 @@ test("M9 histórico, transporte, legado 11 e bloqueio real entre abas", async ({
     .getByRole("button", { name: /M9 Esquadrias/ })
     .first()
     .click();
-  await expect(second.getByRole("status")).toContainText("Somente leitura");
+  await blockEditing(second);
   await choose(second, id);
   await expect(second.getByLabel("Tipo da esquadria")).toBeDisabled();
   await expect(
