@@ -14,7 +14,7 @@
     "build": "npm run typecheck && vite build && node scripts/build-server.mjs",
     "format": "prettier --write src tests *.json *.ts *.js",
     "api:dev": "node --env-file=.env --import tsx server/main.ts",
-    "api:start": "node --env-file=.env dist-server/main.mjs",
+    "api:start": "node app.js",
     "db:migrate": "node --env-file=.env --import tsx server/cli.ts migrate",
     "data:cleanup": "node --env-file=.env --import tsx server/cli.ts cleanup"
   },

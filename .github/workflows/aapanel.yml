@@ -1,0 +1,68 @@
+name: CI e deploy do Ecovit no aaPanel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ecovit-production
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: Validar Ecovit (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["24.22.1", "24.x"]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Validar código
+        run: npm run lint
+
+      - name: Executar testes
+        run: npm test -- --maxWorkers=1
+
+      - name: Verificar tipos e compilar
+        run: npm run build
+
+  deploy:
+    name: Implantar revisão validada no aaPanel
+    needs: ci
+    if: github.ref == 'refs/heads/main' && vars.AAPANEL_CD_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Acionar webhook do Ecovit e conferir a revisão
+        env:
+          AAPANEL_WEBHOOK_URL: ${{ secrets.AAPANEL_WEBHOOK_URL }}
+        run: |
+          if [[ "$AAPANEL_WEBHOOK_URL" != https://* ]]; then
+            echo "Configure o segredo AAPANEL_WEBHOOK_URL com o webhook HTTPS do Ecovit."
+            exit 1
+          fi
+          response=$(curl --fail --silent --show-error --request POST \
+            --connect-timeout 15 --max-time 900 \
+            --url-query "param=$GITHUB_SHA" \
+            "$AAPANEL_WEBHOOK_URL")
+          if ! grep -Fq -- "ECOVIT_DEPLOY_OK=$GITHUB_SHA" <<< "$response"; then
+            echo "O webhook não confirmou a implantação da revisão $GITHUB_SHA. Confira o log no aaPanel."
+            exit 1
+          fi
+          printf 'Revisão implantada: %s\n' "$GITHUB_SHA"

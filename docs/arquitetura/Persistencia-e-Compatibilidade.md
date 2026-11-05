@@ -14,7 +14,7 @@ Frontend estático existente e API TypeScript/Node no mesmo repositório e domí
 
 Ambiente definido pelo solicitante: host emdia.idevs.com.br, Node 24.18 e PostgreSQL versão 18.0; servidor não inspecionado. Node 24.x LTS é a linha-alvo do backend, com patch completo fixado/testado na implementação. PostgreSQL 18.0 é o único banco-alvo desta entrega, sem camada de compatibilidade com outros produtos. M12 cria banco/schema próprios na instância disponibilizada pelo administrador; não instala ou migra automaticamente bancos de outros aplicativos. A escolha de versão não comprova instalação, acesso ou homologação.
 
-Domínio público do Ecovit ainda precisa ser definido/configurado; emdia.idevs.com.br foi informado como host do servidor, não comprova que será a origem pública do aplicativo. Proposta para validação do administrador: https://ecovit.idevs.com.br, com frontend e /api na mesma origem. Nenhuma alteração DNS, certificado ou conexão ao servidor foi executada. Implementação com Fastify 5.12.7, pg 8.23.1 e Sharp 0.35.5 no Node 24.18.0. Requisitos abaixo são fornecidos para validação pelo administrador, sem exigir divulgação dos recursos atuais.
+O solicitante definiu https://ecovit.idevs.com.br como origem pública, com frontend e /api no mesmo endereço e hospedagem em emdia.idevs.com.br. O solicitante informou a criação do registro no Cloudflare. Validação da resolução, certificado e acesso HTTPS permanece pendente. Implementação verificada localmente com Fastify 5.12.7, pg 8.23.1 e Sharp 0.35.5 no Node 24.18.0. Requisitos abaixo são fornecidos para validação pelo administrador, sem exigir divulgação dos recursos atuais.
 
 ### Requisitos para validação pelo administrador
 
@@ -230,7 +230,28 @@ npm run build
 npm run api:start
 ```
 
-O build gera dist e dist-server, incluindo schema.sql e validate-worker.mjs. Runtime precisa das dependências de produção instaladas, incluindo os binários de Sharp compatíveis com Linux do servidor; não copiar node_modules do Windows. O supervisor do aaPanel inicia uma instância de api:start com NODE_ENV=production, diretório de trabalho correto, usuário restrito, reinício e início no boot. A API escuta em 127.0.0.1:3001 (API_PORT configurável). Validar /api/health e falha de conexão ao banco sem revelar detalhes.
+O build gera dist e dist-server, incluindo schema.sql e validate-worker.mjs. Instalar dependências no Linux do servidor para obter o binário de Sharp compatível. No aaPanel, cadastrar um projeto Node.js do tipo PM2, com app.js como Startup File e raiz do repositório como Run Directory. O app.js é também a entrada de npm run api:start. Ele carrega o .env do diretório de trabalho antes de iniciar dist-server/main.mjs. Usar Node da linha 24, NODE_ENV=production, usuário de serviço restrito, uma instância, reinício e início no boot. A API escuta em 127.0.0.1:3001 (API_PORT configurável). Validar /api/health e falha de conexão ao banco sem revelar detalhes.
+
+O fluxo de atualização obtém a revisão aprovada, instala dependências com o lockfile e conclui npm run build antes de reiniciar apenas o processo Ecovit na mesma instância do PM2 gerenciada pelo aaPanel. Conservar .env e DATA_DIR privados entre atualizações. Migrações usam a role proprietária em etapa administrativa própria. Verificar /api/health após reiniciar e homologar o fluxo de atualização no servidor antes de ativá-lo automaticamente.
+
+### GitHub Actions e webhook do aaPanel
+
+O workflow `.github/workflows/aapanel.yml` valida push na main ou execução manual com Node 24.22.1 e 24.x. Lint, testes de domínio e build com checagem de tipos antecedem o deploy. O job de deploy exige main e a variável **de repositório** `AAPANEL_CD_ENABLED=true`. Mantenha a variável ausente até o primeiro cadastro e teste do processo Ecovit no servidor. Guarde a URL HTTPS do webhook dedicado em `AAPANEL_WEBHOOK_URL`, no ambiente `production` do GitHub. Use a URL base gerada pelo painel, com a chave e sem um parâmetro `param` existente.
+
+Antes de habilitar o CD, verifique se o WebHook nativo da instalação repassa o parâmetro `param` ao primeiro argumento e inclui a saída do script na resposta. Use temporariamente `printf 'ECOVIT_HOOK_PROBE=%s\n' "$1"` como comando do webhook. Confirme com um valor de teste e substitua pelo comando de deploy. O workflow envia o SHA pelo parâmetro `param` e exige `ECOVIT_DEPLOY_OK=<sha>` na resposta. HTTP 2xx sozinho indica somente que o painel aceitou a chamada. Se a versão instalada devolver apenas um recibo assíncrono, mantenha o deploy desativado até homologar a confirmação por outro meio.
+
+Depois que o projeto PM2 `ecovit` estiver ativo, instale a cópia revisada do script com `install -o root -g root -m 0750 scripts/deploy-aapanel.sh /usr/local/sbin/ecovit-deploy`. Execute a cópia administrativa de fora do checkout gravável pelo usuário da aplicação. No webhook, use o mesmo usuário do daemon e o mesmo PM2_HOME que permitem administrar o `emdia` no monitor do painel. O daemon e o processo Node podem usar usuários diferentes. Exemplo para o webhook executado pelo painel com permissão de alternar usuários:
+
+```bash
+#!/usr/bin/env bash
+export ECOVIT_NODE_BIN='/caminho/do/node-24/bin'
+export ECOVIT_PM2_USER='usuario-do-daemon'
+export PM2_HOME='/caminho/do/pm2-home-do-painel'
+export ECOVIT_APP_DIR='/srv/ecovit/app'
+exec /usr/local/sbin/ecovit-deploy "$1"
+```
+
+O script usa o checkout do Ecovit em /srv/ecovit/app por padrão e o processo `ecovit` já cadastrado. Confere o socket do PM2, o diretório do processo e a revisão no topo da main. A obtenção do código, instalação e compilação rodam como usuário Linux `ecovit`. Um lock no servidor impede execuções simultâneas. A confirmação é emitida após o reinício e a resposta de saúde pela porta local 3001. O build ocorre no checkout em uso e pode causar indisponibilidade durante a atualização. O procedimento não inclui reversão automática. Mantenha a vigilância de arquivos desativada para que o reinício ocorra ao fim do build. Após um deploy manual bem-sucedido por workflow_dispatch, acompanhe o histórico do GitHub e o log do webhook no aaPanel.
 
 ### Proxy e conteúdo estático
 
