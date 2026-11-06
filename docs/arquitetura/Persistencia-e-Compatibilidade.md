@@ -230,9 +230,11 @@ npm run build
 npm run api:start
 ```
 
-O build gera dist e dist-server, incluindo schema.sql e validate-worker.mjs. Instalar dependências no Linux do servidor para obter o binário de Sharp compatível. No aaPanel, cadastrar um projeto Node.js do tipo PM2, com app.js como Startup File e raiz do repositório como Run Directory. O app.js é também a entrada de npm run api:start. Ele carrega o .env do diretório de trabalho antes de iniciar dist-server/main.mjs. Usar Node da linha 24, NODE_ENV=production, usuário de serviço restrito, uma instância, reinício e início no boot. A API escuta em 127.0.0.1:3001 (API_PORT configurável). Validar /api/health e falha de conexão ao banco sem revelar detalhes.
+O build gera dist e dist-server, incluindo schema.sql e validate-worker.mjs. Instalar dependências no Linux do servidor para obter o binário de Sharp compatível. No aaPanel, cadastrar um projeto Node.js do tipo PM2, com app.js como Startup File e raiz do repositório como Run Directory. O app.js é também a entrada de npm run api:start. Ele carrega o .env do diretório de trabalho antes de iniciar dist-server/main.mjs. Usar Node da linha 24, NODE_ENV=production, uma instância, reinício e início no boot. Neste servidor, o usuário Linux de execução é www. O checkout, o .env com modo 0600 e o DATA_DIR com modo 0700 pertencem a www. Processos executados com o mesmo usuário Linux compartilham suas permissões de acesso. As roles PostgreSQL de migração e execução continuam independentes do usuário Linux. A API escuta em 127.0.0.1:3001 (API_PORT configurável). Validar /api/health e falha de conexão ao banco sem revelar detalhes.
 
 O fluxo de atualização obtém a revisão aprovada, instala dependências com o lockfile e conclui npm run build antes de reiniciar apenas o processo Ecovit na mesma instância do PM2 gerenciada pelo aaPanel. Conservar .env e DATA_DIR privados entre atualizações. Migrações usam a role proprietária em etapa administrativa própria. Verificar /api/health após reiniciar e homologar o fluxo de atualização no servidor antes de ativá-lo automaticamente.
+
+Neste servidor, instalar dependências com `runuser -u www -- npm ci --include=dev --cache /www/wwwroot/ecovit/npm-cache`. O administrador cria esse diretório com `install -d -o www -g www -m 0700 /www/wwwroot/ecovit/npm-cache`. Ele fica fora do checkout e da raiz pública. O script de deploy usa o mesmo cache por padrão, configurável por `ECOVIT_NPM_CACHE`. Desativar a instalação de dependências pelo painel para que a instalação manual ou o webhook seja o único responsável pelo node_modules desse checkout.
 
 ### GitHub Actions e webhook do aaPanel
 
@@ -247,15 +249,17 @@ Depois que o projeto PM2 `ecovit` estiver ativo, instale a cópia revisada do sc
 export ECOVIT_NODE_BIN='/caminho/do/node-24/bin'
 export ECOVIT_PM2_USER='usuario-do-daemon'
 export PM2_HOME='/caminho/do/pm2-home-do-painel'
-export ECOVIT_APP_DIR='/srv/ecovit/app'
+export ECOVIT_APP_DIR='/www/wwwroot/ecovit/ecovit/ecovit'
 exec /usr/local/sbin/ecovit-deploy "$1"
 ```
 
-O script usa o checkout do Ecovit em /srv/ecovit/app por padrão e o processo `ecovit` já cadastrado. Confere o socket do PM2, o diretório do processo e a revisão no topo da main. A obtenção do código, instalação e compilação rodam como usuário Linux `ecovit`. Um lock no servidor impede execuções simultâneas. A confirmação é emitida após o reinício e a resposta de saúde pela porta local 3001. O build ocorre no checkout em uso e pode causar indisponibilidade durante a atualização. O procedimento não inclui reversão automática. Mantenha a vigilância de arquivos desativada para que o reinício ocorra ao fim do build. Após um deploy manual bem-sucedido por workflow_dispatch, acompanhe o histórico do GitHub e o log do webhook no aaPanel.
+O script usa o diretório configurado em ECOVIT_APP_DIR e o processo `ecovit` já cadastrado. Confere o socket do PM2, o diretório do processo e a revisão no topo da main. A obtenção do código, instalação e compilação rodam como usuário Linux `www`. Um lock no servidor impede execuções simultâneas. A confirmação é emitida após o reinício e a resposta de saúde pela porta local 3001. O build ocorre no checkout em uso e pode causar indisponibilidade durante a atualização. O procedimento não inclui reversão automática. Mantenha a vigilância de arquivos desativada para que o reinício ocorra ao fim do build. Após um deploy manual bem-sucedido por workflow_dispatch, acompanhe o histórico do GitHub e o log do webhook no aaPanel.
 
 ### Proxy e conteúdo estático
 
 Servir somente dist como raiz pública, incluindo recursos do catálogo; não servir a raiz do repositório, dist-server, .env, .tools ou DATA_DIR. Encaminhar /api/ para a porta interna, sem remover o prefixo. Modelo para adaptar ao site HTTPS no Nginx/aaPanel:
+
+No aaPanel, um site estático para ecovit.idevs.com.br pode servir a raiz `/www/wwwroot/ecovit/ecovit/ecovit/dist` enquanto o PM2 supervisiona a API. Usar um único site para o domínio. Se o Mapping do projeto Node já tiver gerado um site, adaptar a configuração existente para servir dist e encaminhar somente /api/. Preservar as diretivas do painel para o certificado e para o desafio de renovação.
 
 ```nginx
 root /caminho/ecovit/dist;

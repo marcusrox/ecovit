@@ -1,10 +1,10 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { Pool } from "pg";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { Pool, PoolClient } from "pg";
 import { z } from "zod";
-import type { Config } from "./config";
+import { emailSchema, type Config } from "./config";
 import { transaction } from "./db";
 import {
   ApiError,
@@ -12,6 +12,7 @@ import {
   cookieHeader,
   equal,
   hash,
+  hashSession,
   identity,
   rate,
   requireCsrf,
@@ -21,19 +22,6 @@ import {
   token,
 } from "./security";
 
-const emailSchema = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .max(254)
-  .email()
-  .refine(
-    (email) =>
-      /^[\x21-\x7e]+$/.test(email) &&
-      email.split("@")[0].length <= 64 &&
-      !email.includes('"'),
-    "Use um endereço de e-mail de formato usual.",
-  );
 const challengeSchema = z
   .object({ email: emailSchema, purpose: z.enum(["login", "delete"]) })
   .strict();
@@ -63,6 +51,57 @@ export function authRoutes(app: FastifyInstance, db: Pool, config: Config) {
       requireCsrf(request, sign(config.secret, `csrf:${flow(request)}`));
     }
   }
+  async function createSession(
+    client: PoolClient,
+    request: FastifyRequest,
+    email: string,
+  ) {
+    await client.query(
+      "INSERT INTO ecovit_accounts(id,email) VALUES($1,$2) ON CONFLICT(email) DO NOTHING",
+      [randomUUID(), email],
+    );
+    const accounts = await client.query(
+      "SELECT id,email,state FROM ecovit_accounts WHERE email=$1 FOR UPDATE",
+      [email],
+    );
+    const account = accounts.rows[0];
+    if (account.state !== "active") return null;
+    const raw = token();
+    const csrfToken = token();
+    await client.query(
+      "INSERT INTO ecovit_sessions(hash,account_id,csrf) VALUES($1,$2,$3)",
+      [hashSession(config, raw), account.id, csrfToken],
+    );
+    await client.query("DELETE FROM ecovit_sessions WHERE hash=$1", [
+      hashSession(config, cookie(request, config.cookie)),
+    ]);
+    return {
+      raw,
+      csrf: csrfToken,
+      account: { id: account.id as string, email: account.email as string },
+    };
+  }
+  function issueSession(
+    reply: FastifyReply,
+    session: NonNullable<Awaited<ReturnType<typeof createSession>>>,
+  ) {
+    reply.header(
+      "Set-Cookie",
+      cookieHeader(config, config.cookie, session.raw, 30 * 86400),
+    );
+    return {
+      account: session.account,
+      csrf: session.csrf,
+      serverTime: new Date().toISOString(),
+    };
+  }
+  function devLoginFor(request: FastifyRequest) {
+    return config.devLoginEmail &&
+      request.ip === "127.0.0.1" &&
+      request.headers.host === new URL(config.origin).host
+      ? config.devLoginEmail
+      : undefined;
+  }
   app.get("/api/session", async (request, reply) => {
     let nonce = flow(request);
     if (!nonce) {
@@ -82,12 +121,39 @@ export function authRoutes(app: FastifyInstance, db: Pool, config: Config) {
     } catch (error) {
       if (!(error instanceof ApiError) || error.statusCode !== 401) throw error;
     }
+    const devEmail = devLoginFor(request);
     return {
       account: account ? { id: account.id, email: account.email } : null,
       csrf: account?.csrf ?? sign(config.secret, `csrf:${nonce}`),
       serverTime: new Date().toISOString(),
+      ...(devEmail && devEmail !== account?.email ? { devLogin: true } : {}),
     };
   });
+  if (config.devLoginEmail) {
+    app.post(
+      "/api/auth/dev-login",
+      { bodyLimit: 1024, onRequest: csrf },
+      async (request, reply) => {
+        const email = devLoginFor(request);
+        if (!email)
+          throw new ApiError(
+            403,
+            "dev_login",
+            "Acesso direto disponível somente no Ecovit local.",
+          );
+        const session = await transaction(db, (client) =>
+          createSession(client, request, email),
+        );
+        if (!session)
+          throw new ApiError(
+            409,
+            "account_deleting",
+            "A exclusão da conta está em processamento.",
+          );
+        return issueSession(reply, session);
+      },
+    );
+  }
   app.post(
     "/api/auth/code",
     { bodyLimit: 2048, onRequest: csrf },
@@ -222,8 +288,6 @@ export function authRoutes(app: FastifyInstance, db: Pool, config: Config) {
     async (request, reply) => {
       const input = verifySchema.parse(request.body);
       await rate(db, `verify-ip:${hash(request.ip)}`, 60);
-      const rawSession = token(),
-        csrfToken = token();
       const outcome = await transaction(db, async (client) => {
         const peek = await client.query(
           "SELECT email FROM ecovit_challenges WHERE id=$1 AND flow_hash=$2",
@@ -278,40 +342,18 @@ export function authRoutes(app: FastifyInstance, db: Pool, config: Config) {
           ]);
           return { deletion: { proof, receipt } };
         }
-        await client.query(
-          "INSERT INTO ecovit_accounts(id,email) VALUES($1,$2) ON CONFLICT(email) DO NOTHING",
-          [randomUUID(), challenge.email],
-        );
-        const accounts = await client.query(
-          "SELECT id,email,state FROM ecovit_accounts WHERE email=$1 FOR UPDATE",
-          [challenge.email],
-        );
-        const account = accounts.rows[0];
-        if (account.state !== "active")
+        const session = await createSession(client, request, challenge.email);
+        if (!session)
           return { error: "A exclusão da conta está em processamento." };
-        await client.query(
-          "INSERT INTO ecovit_sessions(hash,account_id,csrf) VALUES($1,$2,$3)",
-          [hash(rawSession), account.id, csrfToken],
-        );
-        await client.query("DELETE FROM ecovit_sessions WHERE hash=$1", [
-          hash(cookie(request, config.cookie)),
-        ]);
         await client.query("DELETE FROM ecovit_challenges WHERE id=$1", [
           input.id,
         ]);
-        return {
-          account: { id: account.id as string, email: account.email as string },
-        };
+        return { session };
       });
       if (outcome.error) throw new ApiError(422, "invalid_code", outcome.error);
-      if (outcome.account)
-        reply.header(
-          "Set-Cookie",
-          cookieHeader(config, config.cookie, rawSession, 30 * 86400),
-        );
+      if (outcome.session) return issueSession(reply, outcome.session);
       return {
-        ...outcome,
-        csrf: outcome.account ? csrfToken : undefined,
+        deletion: outcome.deletion,
         serverTime: new Date().toISOString(),
       };
     },

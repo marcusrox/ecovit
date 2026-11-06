@@ -8,6 +8,7 @@ if [[ ! "$revision" =~ ^[0-9a-f]{40}$ ]]; then
 fi
 
 app_dir=${ECOVIT_APP_DIR:-/srv/ecovit/app}
+npm_cache=${ECOVIT_NPM_CACHE:-/www/wwwroot/ecovit/npm-cache}
 node_bin=${ECOVIT_NODE_BIN:?Informe o diretório bin do Node usado pelo aaPanel}
 pm2_user=${ECOVIT_PM2_USER:?Informe o usuário do daemon PM2 do aaPanel}
 pm2_home=${PM2_HOME:?Informe o PM2_HOME usado pelo aaPanel}
@@ -27,10 +28,15 @@ if [[ ! "$pid" =~ ^[1-9][0-9]*$ ]] || [[ "$(readlink -f "/proc/$pid/cwd")" != "$
   exit 1
 fi
 
-runuser -u ecovit -- env PATH="$PATH" bash -se -- "$app_dir" "$revision" <<'BUILD'
+runuser -u www -- env PATH="$PATH" bash -se -- "$app_dir" "$revision" "$npm_cache" <<'BUILD'
 cd "$1"
 revision=$2
+npm_cache=$3
 test -r .env
+if [[ ! -d "$npm_cache" || ! -w "$npm_cache" ]]; then
+  echo 'Crie o diretório de cache npm do Ecovit com permissão de escrita para www.' >&2
+  exit 1
+fi
 case "$(git remote get-url origin)" in
   https://github.com/marcusrox/ecovit.git|git@github.com:marcusrox/ecovit.git) ;;
   *) echo 'O checkout aponta para outro repositório.' >&2; exit 1 ;;
@@ -45,7 +51,7 @@ if [[ "$(git rev-parse FETCH_HEAD)" != "$revision" ]]; then
   exit 1
 fi
 git switch --detach "$revision"
-npm ci --include=dev
+npm ci --include=dev --cache "$npm_cache"
 npm run build
 BUILD
 

@@ -593,6 +593,92 @@ describe("M12 — API com PostgreSQL 18.0 real", () => {
         .rows[0].count,
     ).toBe(0);
   });
+  it("login local usa apenas a conta configurada e isola a sessão", async () => {
+    const owner = await login("local@example.com");
+    await create(owner);
+    const environment = {
+      NODE_ENV: "development",
+      DATABASE_URL: config.databaseUrl,
+      SESSION_SECRET: config.secret,
+      APP_ORIGIN: config.origin,
+      DATA_DIR: config.dataDir,
+      DEV_LOGIN_EMAIL: " LOCAL@EXAMPLE.COM ",
+      RESEND_API_KEY: "isolated-test-key-no-mail-sent",
+      MAIL_FROM: "Ecovit <ecovit@example.com>",
+    };
+    expect(() =>
+      readConfig({ ...environment, APP_ORIGIN: "https://ecovit.example" }),
+    ).toThrow("DEV_LOGIN_EMAIL");
+    const localConfig = readConfig(environment);
+    const service = await createApi(db, localConfig);
+    try {
+      const host = new URL(config.origin).host;
+      const flow = await service.inject({
+        url: "/api/session",
+        headers: { host, cookie: owner.cookie },
+      });
+      expect(flow.json()).toMatchObject({ account: null, devLogin: true });
+      const request = {
+        method: "POST" as const,
+        url: "/api/auth/dev-login",
+        headers: {
+          host,
+          cookie: cookies(flow),
+          origin: config.origin,
+          "x-csrf-token": flow.json().csrf,
+        },
+      };
+      for (const headers of [
+        { ...request.headers, origin: "http://other.example" },
+        { ...request.headers, host: "other.example" },
+        { ...request.headers, "x-forwarded-for": "192.0.2.1" },
+        { ...request.headers, "x-csrf-token": "wrong" },
+      ]) {
+        expect((await service.inject({ ...request, headers })).statusCode).toBe(
+          403,
+        );
+      }
+      const signedIn = await service.inject(request);
+      expect(signedIn.statusCode).toBe(200);
+      expect(signedIn.json().account).toEqual({
+        id: owner.id,
+        email: owner.email,
+      });
+      const sessionCookie = cookies(signedIn);
+      const list = await service.inject({
+        url: "/api/projects",
+        headers: { host, cookie: sessionCookie },
+      });
+      expect(list.json().projects).toHaveLength(1);
+      const normal = await app.inject({
+        url: "/api/session",
+        headers: { cookie: sessionCookie.replace("ecovit-dev=", "ecovit=") },
+      });
+      expect(normal.json()).toMatchObject({ account: null });
+      expect(normal.json()).not.toHaveProperty("devLogin");
+      expect((await app.inject(request)).statusCode).toBe(404);
+      const logout = await service.inject({
+        method: "POST",
+        url: "/api/logout",
+        headers: {
+          ...request.headers,
+          cookie: sessionCookie,
+          "x-csrf-token": signedIn.json().csrf,
+        },
+      });
+      expect(logout.statusCode).toBe(200);
+      const afterLogout = await service.inject({
+        url: "/api/session",
+        headers: { host, cookie: sessionCookie },
+      });
+      expect(afterLogout.json()).toMatchObject({
+        account: null,
+        devLogin: true,
+      });
+    } finally {
+      await service.close();
+    }
+  });
   it("produção recusa captura e aplica cookies, headers e origem seguros", async () => {
     expect(() =>
       readConfig({
@@ -611,10 +697,16 @@ describe("M12 — API com PostgreSQL 18.0 real", () => {
       DATA_DIR: path.join(root, "production-assets"),
       RESEND_API_KEY: "isolated-test-key-no-mail-sent",
       MAIL_FROM: "Ecovit <ecovit@example.com>",
+      DEV_LOGIN_EMAIL: "ignored@example.com",
     });
     const service = await createApi(db, production);
     try {
       const session = await service.inject({ url: "/api/session" });
+      expect(session.json()).not.toHaveProperty("devLogin");
+      expect(
+        (await service.inject({ method: "POST", url: "/api/auth/dev-login" }))
+          .statusCode,
+      ).toBe(404);
       const header = String(session.headers["set-cookie"]);
       expect(header).toMatch(/^__Host-ecovit-flow=/);
       expect(header).toContain("; Path=/");

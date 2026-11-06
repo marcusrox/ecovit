@@ -22,6 +22,11 @@ export const hash = (value: string | Buffer) =>
 export const token = () => randomBytes(32).toString("base64url");
 export const sign = (secret: string, value: string) =>
   createHmac("sha256", secret).update(value).digest("hex");
+export function hashSession(config: Config, raw: string) {
+  return config.devLoginEmail
+    ? sign(config.secret, `dev-session:${config.devLoginEmail}:${raw}`)
+    : hash(raw);
+}
 export function equal(a: string, b: string) {
   const left = Buffer.from(a),
     right = Buffer.from(b);
@@ -75,7 +80,7 @@ export async function identity(
   config: Config,
   lock = false,
 ): Promise<Identity> {
-  const sessionHash = hash(cookie(request, config.cookie));
+  const sessionHash = hashSession(config, cookie(request, config.cookie));
   // The account coordinator must be locked before the session row everywhere.
   if (lock) {
     const session = await db.query(

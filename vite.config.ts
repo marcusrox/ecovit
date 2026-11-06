@@ -8,7 +8,12 @@ export default defineConfig({
       : "node_modules/.vite",
   plugins: [react()],
   server: {
-    proxy: { "/api": process.env.API_PROXY ?? "http://127.0.0.1:3001" },
+    proxy: {
+      "/api": {
+        target: process.env.API_PROXY ?? "http://127.0.0.1:3001",
+        changeOrigin: false,
+      },
+    },
   },
   test: { include: ["tests/**/*.test.ts"] },
 });

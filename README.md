@@ -57,6 +57,8 @@ Copie a saída para SESSION_SECRET, sem compartilhá-la. Crie banco/roles e apli
 
 O comando dev inicia frontend em **http://127.0.0.1:5173/** e API em loopback, com configuração .env. Mantenha o terminal aberto; Ctrl+C encerra a instância iniciada nesse terminal. Não iniciar outra instância se essa porta já estiver em uso. Chrome e Edge desktop são os navegadores previstos. Entre com seu e-mail e o código recebido. A API não é opcional: abrir só o frontend não permite entrar ou salvar. Consulte /api/health pelo mesmo endereço para verificar a API; configuração incompleta é informada no terminal.
 
+Para abrir a lista diretamente no desenvolvimento local, configure `DEV_LOGIN_EMAIL=seu-email@example.com` no `.env` privado, mantenha `APP_ORIGIN=http://127.0.0.1:5173` e reinicie o comando `dev`. O Ecovit entra na conta correspondente do banco configurado ou cria a conta no primeiro acesso. Para voltar à entrada por código, remova a chave e reinicie. O atalho é exclusivo do desenvolvimento em loopback e deve ser usado em uma instância e um banco de uso local.
+
 Para conferir limpeza durante teste local, execute .\Start-Ecovit.ps1 -Task data:cleanup em outro terminal com o mesmo .env. Sem agendamento, a aplicação revoga acesso normalmente, mas a eliminação física depende da execução desse comando; no servidor deve rodar a cada 15 minutos. Procedimento completo de proxy/aaPanel, limites e monitoramento em [Operação e implantação](docs/arquitetura/Persistencia-e-Compatibilidade.md#operação-e-implantação).
 
 ### Avaliação descartável sem envio de e-mail

@@ -581,7 +581,7 @@ export function AccountShell({ children }: { children: ReactNode }) {
   async function start() {
     setError("");
     try {
-      const next = await bootstrap();
+      const next = await bootstrap({ allowDevLogin: true });
       setAccountScope(next.account?.id ?? null);
       setAccount(next.account);
       setReady(true);

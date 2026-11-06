@@ -347,6 +347,38 @@ it("resposta antiga de bootstrap não substitui sessão recém-autenticada", asy
   expect(getAccountScope()).toBe(other.id);
 });
 
+it("acesso direto usa o CSRF do bootstrap apenas na entrada inicial", async () => {
+  const flow = {
+    account: null,
+    csrf: "local-flow-csrf-with-over-32-characters",
+    serverTime: new Date().toISOString(),
+    devLogin: true,
+  };
+  const local = {
+    account,
+    csrf: "local-session-csrf-with-over-32-characters",
+    serverTime: flow.serverTime,
+  };
+  fetcher.mockResolvedValueOnce(answer(flow));
+  expect((await bootstrap()).account).toBeNull();
+  expect(fetcher).toHaveBeenCalledTimes(1);
+
+  fetcher
+    .mockResolvedValueOnce(answer(flow))
+    .mockResolvedValueOnce(answer(local));
+  await expect(bootstrap({ allowDevLogin: true })).resolves.toMatchObject({
+    account,
+    csrf: local.csrf,
+  });
+  expect(fetcher).toHaveBeenLastCalledWith(
+    "/api/auth/dev-login",
+    expect.objectContaining({
+      method: "POST",
+      headers: expect.objectContaining({ "X-CSRF-Token": flow.csrf }),
+    }),
+  );
+});
+
 it("lista atrasada de outra conta não substitui uso ou revisões do contexto atual", async () => {
   let resolve!: (response: Response) => void;
   fetcher.mockReturnValueOnce(

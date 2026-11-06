@@ -3,6 +3,7 @@ export type Session = {
   account: Account | null;
   csrf: string;
   serverTime: string;
+  devLogin?: true;
 };
 let session: Session = {
   account: null,
@@ -159,13 +160,23 @@ function incomplete() {
     "Resposta incompleta. Confira a sessão antes de tentar novamente.",
   );
 }
-export async function bootstrap() {
+export async function bootstrap({ allowDevLogin = false } = {}) {
   const revision = sessionRevision;
   const next = await api<Session>("/session");
   if (!validSession(next)) throw incomplete();
   if (revision !== sessionRevision) return session;
   setSession(next);
-  return next;
+  if (!allowDevLogin || next.devLogin !== true) return next;
+
+  const devRevision = sessionRevision;
+  const local = await api<Session>("/auth/dev-login", {
+    method: "POST",
+    reauth: false,
+  });
+  if (!validSession(local) || !local.account) throw incomplete();
+  if (devRevision !== sessionRevision) return session;
+  setSession(local);
+  return local;
 }
 export async function loginCode(
   email: string,

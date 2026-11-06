@@ -5,6 +5,7 @@ const sizes = [
   [1366, 768],
   [1280, 720],
   [900, 680],
+  [390, 844],
 ] as const;
 const band = (page: Page) =>
   page.getByRole("region", { name: "Status dos projetos" });
@@ -22,9 +23,8 @@ test("faixa reserva espaço na atualização, mantém erro e permite recuperar l
   await expect(
     page.getByRole("button", { name: /Novo projeto/ }),
   ).toBeEnabled();
-  const initialTop = (await page
-    .getByRole("button", { name: /Novo projeto/ })
-    .boundingBox())!.y;
+  const list = page.getByRole("region", { name: "Seu espaço de projetos" });
+  const initialTop = (await list.boundingBox())!.y;
   let finish!: () => void;
   const gate = new Promise<void>((resolve) => {
     finish = resolve;
@@ -43,10 +43,7 @@ test("faixa reserva espaço na atualização, mantém erro e permite recuperar l
     await expect(band(page).getByRole("status")).toHaveText(
       "Atualizando lista…",
     );
-    expect(
-      (await page.getByRole("button", { name: /Novo projeto/ }).boundingBox())!
-        .y,
-    ).toBe(initialTop);
+    expect((await list.boundingBox())!.y).toBe(initialTop);
     for (const [width, height] of sizes) {
       await page.setViewportSize({ width, height });
       await expect(band(page)).toBeVisible();
