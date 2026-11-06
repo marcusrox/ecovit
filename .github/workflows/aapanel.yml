@@ -47,9 +47,11 @@ jobs:
     needs: ci
     if: github.ref == 'refs/heads/main' && vars.AAPANEL_CD_ENABLED == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: production
     steps:
       - name: Acionar webhook do Ecovit e conferir a revisão
+        shell: bash
         env:
           AAPANEL_WEBHOOK_URL: ${{ secrets.AAPANEL_WEBHOOK_URL }}
         run: |
@@ -57,12 +59,36 @@ jobs:
             echo "Configure o segredo AAPANEL_WEBHOOK_URL com o webhook HTTPS do Ecovit."
             exit 1
           fi
-          response=$(curl --fail --silent --show-error --request POST \
-            --connect-timeout 15 --max-time 900 \
-            --url-query "param=$GITHUB_SHA" \
+          run_key="$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          status=$(curl --fail --silent --show-error --request POST \
+            --connect-timeout 15 --max-time 60 \
+            --output /dev/null --write-out '%{http_code}' \
+            --url-query "param=$GITHUB_SHA-$run_key" \
             "$AAPANEL_WEBHOOK_URL")
-          if ! grep -Fq -- "ECOVIT_DEPLOY_OK=$GITHUB_SHA" <<< "$response"; then
-            echo "O webhook não confirmou a implantação da revisão $GITHUB_SHA. Confira o log no aaPanel."
+          if [[ ! "$status" =~ ^2[0-9][0-9]$ ]]; then
+            echo "O webhook do aaPanel respondeu com HTTP $status."
             exit 1
           fi
-          printf 'Revisão implantada: %s\n' "$GITHUB_SHA"
+
+          echo "Webhook aceito. Aguardando a publicação da revisão $GITHUB_SHA."
+          origin=https://ecovit.idevs.com.br
+          deadline=$((SECONDS + 900))
+          while (( SECONDS < deadline )); do
+            query="verify=$run_key-$SECONDS"
+            if receipt=$(curl --fail --silent --max-time 10 \
+              --header 'Cache-Control: no-cache' "$origin/ecovit-deploy.txt?$query"); then
+              index_hash=${receipt##* }
+              if [[ "$index_hash" =~ ^[0-9a-f]{64}$ && "$receipt" == "$GITHUB_SHA $run_key $index_hash" ]] &&
+                public_index=$(curl --fail --silent --max-time 10 \
+                  --header 'Cache-Control: no-cache' "$origin/?$query" | sha256sum) &&
+                [[ "${public_index%% *}" == "$index_hash" ]] &&
+                health=$(curl --fail --silent --max-time 10 "$origin/api/health") &&
+                [[ "$health" == '{"ok":true}' ]]; then
+                printf 'Revisão implantada e verificada em produção: %s\n' "$GITHUB_SHA"
+                exit 0
+              fi
+            fi
+            sleep 10
+          done
+          echo "Publicação da revisão $GITHUB_SHA não confirmada em 15 minutos. Confira o log do webhook no aaPanel."
+          exit 1

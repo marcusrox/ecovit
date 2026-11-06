@@ -238,22 +238,13 @@ Neste servidor, instalar dependências com `runuser -u www -- npm ci --include=d
 
 ### GitHub Actions e webhook do aaPanel
 
-O workflow `.github/workflows/aapanel.yml` valida push na main ou execução manual com Node 24.22.1 e 24.x. Lint, testes de domínio e build com checagem de tipos antecedem o deploy. O job de deploy exige main e a variável **de repositório** `AAPANEL_CD_ENABLED=true`. Mantenha a variável ausente até o primeiro cadastro e teste do processo Ecovit no servidor. Guarde a URL HTTPS do webhook dedicado em `AAPANEL_WEBHOOK_URL`, no ambiente `production` do GitHub. Use a URL base gerada pelo painel, com a chave e sem um parâmetro `param` existente.
+O workflow `.github/workflows/aapanel.yml` valida push na main ou execução manual com Node 24.22.1 e 24.x. Lint, testes de domínio e build com checagem de tipos antecedem o deploy. O job de deploy exige main e a variável **de repositório** `AAPANEL_CD_ENABLED=true`. Guarde a URL HTTPS do webhook dedicado em `AAPANEL_WEBHOOK_URL`, no ambiente `production` do GitHub. Use a URL gerada pelo painel com a chave e sem parâmetro `param`.
 
-Antes de habilitar o CD, verifique se o WebHook nativo da instalação repassa o parâmetro `param` ao primeiro argumento e inclui a saída do script na resposta. Use temporariamente `printf 'ECOVIT_HOOK_PROBE=%s\n' "$1"` como comando do webhook. Confirme com um valor de teste e substitua pelo comando de deploy. O workflow envia o SHA pelo parâmetro `param` e exige `ECOVIT_DEPLOY_OK=<sha>` na resposta. HTTP 2xx sozinho indica somente que o painel aceitou a chamada. Se a versão instalada devolver apenas um recibo assíncrono, mantenha o deploy desativado até homologar a confirmação por outro meio.
+Cole o conteúdo integral de `scripts/deploy-aapanel.sh` no WebHook do Ecovit antes de ativar o workflow novo. O hook roda com permissão de alternar usuários e usa por padrão o checkout `/www/wwwroot/ecovit/ecovit/ecovit`, PM2 acessível a `www` e o Node identificado pelo processo existente. O script mantém os ajustes opcionais `ECOVIT_APP_DIR`, `ECOVIT_NPM_CACHE`, `ECOVIT_NODE_BIN`, `ECOVIT_PM2_USER` e `PM2_HOME` para outra configuração. O painel repassa `param` como primeiro argumento. O formato atual é `<sha>-<run_id>-<run_attempt>`. O hook também aceita o SHA isolado para a transição do workflow anterior, sem publicar recibo nesse modo.
 
-Depois que o projeto PM2 `ecovit` estiver ativo, instale a cópia revisada do script com `install -o root -g root -m 0750 scripts/deploy-aapanel.sh /usr/local/sbin/ecovit-deploy`. Execute a cópia administrativa de fora do checkout gravável pelo usuário da aplicação. No webhook, use o mesmo usuário do daemon e o mesmo PM2_HOME que permitem administrar o `emdia` no monitor do painel. O daemon e o processo Node podem usar usuários diferentes. Exemplo para o webhook executado pelo painel com permissão de alternar usuários:
+O script confere o socket e o processo do PM2, o checkout limpo, o remoto e a revisão na ponta da main. A obtenção do código, instalação e compilação rodam como `www`. O Vite preserva `dist/.user.ini` com `--no-emptyOutDir`, o que também conserva arquivos de builds anteriores. Um lock no servidor impede execuções simultâneas. O build ocorre no checkout em uso e pode causar indisponibilidade durante a atualização. A vigilância de arquivos fica desativada e o procedimento não inclui reversão automática.
 
-```bash
-#!/usr/bin/env bash
-export ECOVIT_NODE_BIN='/caminho/do/node-24/bin'
-export ECOVIT_PM2_USER='usuario-do-daemon'
-export PM2_HOME='/caminho/do/pm2-home-do-painel'
-export ECOVIT_APP_DIR='/www/wwwroot/ecovit/ecovit/ecovit'
-exec /usr/local/sbin/ecovit-deploy "$1"
-```
-
-O script usa o diretório configurado em ECOVIT_APP_DIR e o processo `ecovit` já cadastrado. Confere o socket do PM2, o diretório do processo e a revisão no topo da main. A obtenção do código, instalação e compilação rodam como usuário Linux `www`. Um lock no servidor impede execuções simultâneas. A confirmação é emitida após o reinício e a resposta de saúde pela porta local 3001. O build ocorre no checkout em uso e pode causar indisponibilidade durante a atualização. O procedimento não inclui reversão automática. Mantenha a vigilância de arquivos desativada para que o reinício ocorra ao fim do build. Após um deploy manual bem-sucedido por workflow_dispatch, acompanhe o histórico do GitHub e o log do webhook no aaPanel.
+Após o build, reinício do Ecovit e saúde da API local, o script publica atomicamente `dist/ecovit-deploy.txt` e registra `ECOVIT_DEPLOY_OK=<sha>` no log do aaPanel. O recibo público contém apenas o SHA, o identificador da execução e tentativa e o SHA-256 de `dist/index.html`. HTTP 2xx do webhook indica que a chamada foi aceita. O workflow consulta a produção por até 15 minutos, exige o recibo da própria tentativa, confere o SHA-256 do HTML servido e verifica a saúde da API HTTPS. Um recibo anterior do mesmo commit não confirma uma nova execução. Após instalar o script no painel, homologar por `workflow_dispatch` na main e conferir o log do webhook.
 
 ### Proxy e conteúdo estático
 
