@@ -80,7 +80,13 @@ jobs:
               index_hash=${receipt##* }
               if [[ "$index_hash" =~ ^[0-9a-f]{64}$ && "$receipt" == "$GITHUB_SHA $run_key $index_hash" ]] &&
                 public_index=$(curl --fail --silent --max-time 10 \
-                  --header 'Cache-Control: no-cache' "$origin/?$query" | sha256sum) &&
+                  --header 'Cache-Control: no-cache' "$origin/?$query" |
+                  perl -0777 -pe '
+                    s{<script>(.*?)</script>}{
+                      index($1, q{window.__CF$cv$params}) >= 0 &&
+                      index($1, q{/cdn-cgi/challenge-platform/scripts/jsd/}) >= 0 ? q{} : $&
+                    }gse
+                  ' | sha256sum) &&
                 [[ "${public_index%% *}" == "$index_hash" ]] &&
                 health=$(curl --fail --silent --max-time 10 "$origin/api/health") &&
                 [[ "$health" == '{"ok":true}' ]]; then
