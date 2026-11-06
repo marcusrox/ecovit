@@ -87,7 +87,7 @@ Use o campo code dessa mensagem. Nenhum e-mail é enviado nesse modo. **O servid
 - npm run test:e2e usa o mesmo banco de testes, schema próprio, captura de e-mail e API/Vite na porta **5174**; inicia servidor novo, sem reaproveitar a instância do solicitante.
 - Para verificação interativa isolada, configure .env.test com M12_TEST_DATABASE_URL e execute .\Start-Ecovit.ps1 -Task dev:test. Esse servidor reinicializa as contas de teste; não usar dados pessoais. Códigos ficam apenas em .tools/m12/browser-mail nesse ambiente, sem endpoint especial de login.
 
-Produção usa npm run build e npm run api:start, com NODE_ENV=production e proxy HTTPS da mesma origem. O projeto PM2 no aaPanel pode iniciar diretamente app.js com a raiz do repositório como diretório de trabalho. Servir somente dist e manter dist-server, .env e imagens fora da raiz pública. Agendar a limpeza a cada 15 minutos. A implantação e a homologação no servidor seguem o [marco M12](docs/marcos/M12-Contas-e-Persistencia-Remota.md). Backup do servidor continua sob administração do responsável.
+Em produção, o PM2 inicia `app.js` na raiz do repositório com `NODE_ENV=production` e proxy HTTPS da mesma origem. Servir somente `dist` e manter `dist-server`, `.env` e imagens fora da raiz pública. Agendar a limpeza a cada 15 minutos. Para publicar atualizações, siga o [procedimento de deploy no aaPanel](docs/arquitetura/Persistencia-e-Compatibilidade.md#github-actions-e-webhook-do-aapanel). A validação em produção e a homologação funcional são registradas no [marco M12](docs/marcos/M12-Contas-e-Persistencia-Remota.md#registro-consolidado). Backup do servidor continua sob administração do responsável.
 
 ## Uso
 
