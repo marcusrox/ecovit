@@ -2,8 +2,6 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md) · [Marcos](../Ecovit-Plano-Implementacao.md)
 
-Este documento descreve contratos de software vigentes. Regras geométricas/construtivas, justificativas, fontes e exemplos independentes pertencem ao Caderno Técnico; escopo e comportamento ao PRD; verificações executadas e aceites aos registros dos marcos.
-
 ## Projeção de consulta
 
 Adicionar função de domínio pura para agregar o `Project` confirmado em memória. Contrato de saída discriminado: indisponível (em processamento, desatualizado ou sem resultado vigente) ou disponível (totais por tipo/fiada/pavimento/projeto, IDs de pavimentos e indicação de parcialidade). O estado busy é fornecido pela aplicação, sem gravá-lo no documento. Recusar exposição de snapshots nominal-v10 ainda não atualizados; usar o fluxo de abertura da [Persistência e compatibilidade](Persistencia-e-Compatibilidade.md#atualização-de-cálculo-e-somente-leitura). Não chamar `generate`, reconciliar ajustes, validar arquivo por recomputação, salvar ou modificar o documento ao abrir/filtrar/fechar a consulta.

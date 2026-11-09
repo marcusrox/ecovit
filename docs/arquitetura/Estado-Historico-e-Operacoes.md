@@ -2,15 +2,13 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md) · [Marcos](../Ecovit-Plano-Implementacao.md)
 
-Este documento descreve contratos de software vigentes. Regras geométricas/construtivas, justificativas, fontes e exemplos independentes pertencem ao Caderno Técnico; escopo e comportamento ao PRD; verificações executadas e aceites aos registros dos marcos.
-
 ## M12 — estados remotos
 
-Esta seção rege os projetos remotos implementados em [M12](../marcos/M12-Contas-e-Persistencia-Remota.md), com aceite pendente. Protocolo/armazenamento em [Persistência e compatibilidade](Persistencia-e-Compatibilidade.md#m12--persistência-remota); identidade em [Autenticação e acesso](Autenticacao-e-Acesso.md).
+Esta seção rege os projetos remotos. Protocolo/armazenamento em [Persistência e compatibilidade](Persistencia-e-Compatibilidade.md#m12--persistência-remota); identidade em [Autenticação e acesso](Autenticacao-e-Acesso.md).
 
 Manter eixos independentes: autenticação (verificando/autenticado/ausente/expirado), persistência (carregando/salvo/salvando/incerto/falhou/conflito/indisponível), cálculo (atual/desatualizado/calculando/falhou) e gesto. Não usar current/outdated como estado de rede. Operação carrega conta, projeto, revisão esperada e operationId; resposta só é aplicada à sessão que a iniciou, sem atualizar outro documento após troca de contexto.
 
-Projetos remotos não dependem de Web Lock ou IndexedDB. Duas abas/dispositivos podem abrir e preparar edição da mesma revisão; a transação do servidor arbitra a gravação e o perdedor recebe conflito. Não conservar automaticamente o bloqueio exclusivo local que tornava a segunda aba somente leitura. Tamanho/ordem do histórico continuam da sessão; câmera e preferências continuam fora da revisão remota.
+Projetos remotos não dependem de Web Lock ou IndexedDB. Duas abas/dispositivos podem abrir e preparar edição da mesma revisão; a transação do servidor arbitra a gravação e o perdedor recebe conflito. Tamanho/ordem do histórico continuam da sessão; câmera e preferências continuam fora da revisão remota.
 
 Fluxo único: candidato validado e uma operação no histórico; para insumos construtivos, invalidar resultado e reter visual de grautes quando aplicável; enviar novos recursos e intenção, sem resultado; aguardar confirmação remota antes de iniciar o cálculo. Uma confirmação de intenção permite calcular localmente sem segunda gravação remota. Edição não construtiva preserva resultado em memória e grava somente intenção. Estado Salvo representa intenção confirmada, sem afirmar sucesso do motor. Abertura remota recompõe em memória e não gera gravação/histórico só por calcular.
 

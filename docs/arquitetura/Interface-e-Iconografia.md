@@ -2,11 +2,9 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md) · [Marcos](../Ecovit-Plano-Implementacao.md)
 
-Este documento descreve contratos de software vigentes. Regras geométricas/construtivas, justificativas, fontes e exemplos independentes pertencem ao Caderno Técnico; escopo e comportamento ao PRD; verificações executadas e aceites aos registros dos marcos.
-
 ## M12 — conta e persistência remota
 
-M12 implementada, com aceite pendente. Produto em RF-12/19/20 e critérios em [M12](../marcos/M12-Contas-e-Persistencia-Remota.md). Entrada por formulário de e-mail e código, com reenviar/tempo de espera, erros legíveis e foco previsível; não exigir múltiplos campos de um dígito. Permitir colar código e usar autocomplete apropriado. Não apresentar senha ou Google. Mostrar conta atual, Sair, uso de cota e acesso à Lixeira/Excluir conta; não misturar essas ações com Configurações do projeto ou Preferências.
+Produto em RF-12/19/20. Entrada por formulário de e-mail e código, com reenviar/tempo de espera, erros legíveis e foco previsível; não exigir múltiplos campos de um dígito. Permitir colar código e usar autocomplete apropriado. Não apresentar senha ou Google. Mostrar conta atual, Sair, uso de cota e acesso à Lixeira/Excluir conta; não misturar essas ações com Configurações do projeto ou Preferências.
 
 Lista ativa e lixeira têm contextos claros; importação identifica conta de destino e novo projeto. Aviso de transição informa exportação dos projetos pela versão antiga antes da atualização, sem botão de migrador IndexedDB. Confirmações de exclusão distinguem mandar à lixeira, excluir definitivamente e excluir a conta inteira. Código novo de exclusão não deve ser confundido com login.
 
@@ -84,7 +82,7 @@ Os controles de rótulos atuam somente nos textos definidos pelo RF-14. Em pared
 
 Preservar textos temporários de edição e avisos mesmo quando rótulos estiverem ocultos; não confundir identificadores A/B com as alças, que continuam disponíveis. Propriedades, listas de seleção e controles mantêm identificação. Portas/janelas/vãos respeitam o mesmo booleano em Planta/Fiada onde já renderizados; não acrescentar rótulos de paredes em Fiada ou em referências de outro pavimento. Nenhuma alteração de tipos do modelo, schema de projeto, envelope ou convenção nominal.
 
-M10 acrescenta a preferência booleana highQualityImages, inicialmente true, no mesmo estado de apresentação e em registro separado ecovit:rendering:v1, sem reformatar a chave legada de rótulos. Leitura ausente/inválida/inacessível usa true; falha de gravação conserva a escolha na sessão e o aviso existente. O grupo Imagens dos mobiliários oferece Suavização em qualidade alta; ao desativar conserva suavização básica, com resoluções alternativas ainda disponíveis. Aplica-se também em somente leitura, sem histórico ou mudança do envelope.
+A apresentação usa a preferência booleana highQualityImages, inicialmente true, no mesmo estado de apresentação e em registro separado ecovit:rendering:v1, sem reformatar a chave legada de rótulos. Leitura ausente/inválida/inacessível usa true; falha de gravação conserva a escolha na sessão e o aviso existente. O grupo Imagens dos mobiliários oferece Suavização em qualidade alta; ao desativar conserva suavização básica, com resoluções alternativas ainda disponíveis. Aplica-se também em somente leitura, sem histórico ou mudança do envelope.
 
 ### Status e orientações do canvas
 

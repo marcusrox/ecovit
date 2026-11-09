@@ -2,8 +2,6 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md) · [Marcos](../Ecovit-Plano-Implementacao.md)
 
-Este documento descreve contratos de software vigentes. Regras geométricas/construtivas, justificativas, fontes e exemplos independentes pertencem ao Caderno Técnico; escopo e comportamento ao PRD; verificações executadas e aceites aos registros dos marcos.
-
 ## Unidades e precisão
 
 Coordenadas construtivas usam inteiros seguros em 0,1 mm: 12,5 cm = 1.250 unidades e 7 cm = 700. A base exige comprimento igual a duas larguras e dimensões representáveis nessa precisão. A interface converte unidades; câmera e pixels não mudam dimensões do projeto. Modulação e convenções nominais seguem CT-01/02 do Caderno, sem inferir junta física nula ou comprovação de fabricante.

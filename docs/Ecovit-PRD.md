@@ -1,128 +1,26 @@
-# Ecovit — Documento de requisitos do produto (PRD)
+# Ecovit — Requisitos do produto
 
-**Versão documental:** 0.43
-**M12:** [Contas e persistência remota](#m12--contas-e-persistência-remota) implementadas e verificadas localmente; prontas para teste, com aceite do solicitante e implantação pendentes. Conta obrigatória e armazenamento remoto substituem o modo local.
-**M10:** Mobiliários implementado e aceito pelo solicitante no RF-17, conforme [M10](marcos/M10-Mobiliarios.md).
-**Estado do produto:** M1, M2 e M3.1–M3.5 implementados e aceitos. M4.1 implementado, revisado e aceito pelo solicitante; M4.2 implementado e aceito pelo solicitante, com verificações no plano; M4.3 implementado e aceito pelo solicitante; M5 implementado e aceito pelo solicitante, com registro e verificações no plano. M6 implementado e aceito pelo solicitante, com registro e verificações no [M6](marcos/M6-Preferencias.md). M7 implementado e aceito pelo solicitante no RF-15, com verificações e registro do aceite no [M7](marcos/M7-Medidas.md). M8 implementado e aceito pelo solicitante no RF-16, com verificações e registro do aceite no [M8](marcos/M8-Imagem-de-Referencia.md). M9 implementado e aceito pelo solicitante no RF-06; verificações e registro do aceite no [M9](marcos/M9-Esquadrias.md).
-**Plataforma:** aplicação web em português brasileiro para computadores com mouse e teclado.
+O Ecovit é um editor web 2D em português brasileiro para arquitetos e autoconstrutores que projetam com tijolos ecológicos de solo-cimento. A Planta representa a intenção do usuário. A Fiada mostra a distribuição nominal das peças, os encontros, os vãos e os ajustes de canaletas e grautes. Os quantitativos representam as peças calculadas.
 
-Este documento define o comportamento do produto. O [plano incremental](Ecovit-Plano-Implementacao.md) separa o alcance implementado de cada marco e os requisitos previstos. Lajes (M4.2) e comparação visual entre pavimentos (M4.3) estão implementadas, com verificações e aceites separados no plano; quantitativos e duplicação de projetos (M5) estão implementados e aceitos pelo solicitante, com registro e verificações no plano.
+A aplicação pública usa conta por código de e-mail e projetos privados com salvamento remoto. O arquivo .ecovit permite baixar uma cópia e importar um projeto. A [arquitetura](Ecovit-Arquitetura-Tecnica.md) define os contratos de software, o [Caderno técnico](Ecovit-Caderno-Tecnico.md) define as convenções nominais e o [índice de aceites](Ecovit-Plano-Implementacao.md) registra as pendências.
 
-Durante o MVP, cada marco pode adotar um novo contrato de dados sem compatibilidade com formatos de marcos anteriores. Não há obrigação de criar ou manter migrações, conversores ou geradores exclusivamente para essa compatibilidade. M4.1 aplica essa quebra: arquivos e documentos locais anteriores são incompatíveis, sem conversão. As referências legadas nas seções de marcos anteriores descrevem contratos históricos, sem leitores ou geradores antigos no aplicativo vigente.
+## Escopo
 
-## 1. Visão do produto
+- Editor para computador com mouse e teclado. Paredes ortogonais, uma família de tijolo-base por projeto e até quatro pavimentos com cotas independentes, inclusive negativas.
+- Bases de 25 × 12,5 × 7 cm e 30 × 15 × 7 cm, com opção personalizada de comprimento igual ao dobro da largura e altura configurável.
+- Lajes e aberturas ortogonais, comparação visual de pavimentos adjacentes, medidas independentes, imagem de referência, mobiliários e terreno com rosa dos ventos opcional.
+- Diagnósticos de composição, quantitativos, histórico de edição, arquivo nativo, duplicação, lixeira e exclusão da própria conta.
 
-O Ecovit é uma aplicação web para projetar plantas baixas de construções com tijolos ecológicos de solo-cimento. Seu diferencial será transformar a intenção arquitetônica em uma distribuição verificável das peças de cada fiada, respeitando a modulação do sistema escolhido, os encontros entre paredes, os vãos e os elementos em canaletas.
+A validação é geométrica e nominal. Cargas, resistência, armaduras, apoios, fundações e instalações exigem projeto técnico próprio. O escopo exclui visualização 3D, colaboração, edição offline e importação ou exportação CAD/BIM, PDF, SVG e CSV.
 
-O aplicativo é 2D e representa a altura das paredes por fiadas. O alcance implementado usa de um a quatro pavimentos independentes. Visualização 3D está fora da primeira versão; o modelo de dados mantém coordenadas e relações independentes do renderizador.
+## Jornada principal
 
-O produto produz desenhos; quantitativos de M5 estão implementados. O M3 representa geometria nominal de vãos, canaletas e grautes, sem verificar dimensões físicas internas de furos/canais, dimensionar apoios, cargas ou armaduras. Compatibilidade modular e ausência de colisões não significam comprovação da capacidade estrutural da construção.
+1. Entre na conta, crie um projeto e escolha o tijolo-base.
+2. Desenhe paredes e vãos em Planta. Adicione pavimentos, lajes e referências conforme o projeto.
+3. Inspecione as peças, os encontros e os ajustes em Fiada. Use os diagnósticos para localizar conflitos e revisar a intenção.
+4. Consulte os quantitativos. Confira o estado do salvamento remoto e baixe o .ecovit quando precisar de uma cópia portátil.
 
-## 2. Definição do produto
-
-### Características
-
-- Nome do aplicativo: **Ecovit**.
-- Aplicação web especializada em tijolos ecológicos de solo-cimento.
-- Referência de produto: Tijocad.
-- Trabalho inicial em 2D, com planejamento de todas as fiadas.
-- Atenção prioritária às dimensões predefinidas e à modulação dos tijolos.
-- Representação de elementos estruturais com tijolos canaletas.
-- Geração automática de encontros de paredes segundo práticas construtivas adequadas.
-- Suporte a até quatro pavimentos.
-- Dois tamanhos iniciais de tijolo (comprimento × largura × altura): 25 × 12,5 × 7 cm e 30 × 15 × 7 cm, além de dimensões configuráveis pelo usuário.
-- Público principal: arquitetos e autoconstrutores.
-- Entregas incrementais no aplicativo, com critérios e estado por marco no plano.
-
-### Limites de escopo
-
-- Paredes exclusivamente horizontais e verticais.
-- Um único tamanho-base para toda a construção, definido no início do projeto.
-- Dimensões personalizadas com comprimento igual ao dobro da largura; altura configurável.
-- Até quatro pavimentos no total, ordenados por cota, inclusive negativa, sem classificação de piso ou cobertura.
-- Automação de composição e posicionamento estrutural, sem cálculos de cargas, resistência ou armaduras.
-- Encontros editáveis somente na primeira fiada do pavimento, com efeito em toda a altura correspondente até o topo definido pela altura de cada parede.
-- Conta por código de e-mail e salvamento remoto de projetos privados, com arquivo nativo para baixar e importar manualmente.
-- Intenção persistida em PostgreSQL, com arquivo nativo independente para transporte.
-- Única exportação inicial: arquivo nativo para reabrir o projeto.
-- Pesquisa e documentação construtiva como etapa técnica anterior à implementação dos algoritmos do motor.
-
-## 3. Problema e objetivos
-
-### Público e experiência de uso
-
-O produto atenderá arquitetos e autoconstrutores. Arquitetos precisarão de precisão, edição numérica e documentação. Autoconstrutores precisarão de uma jornada guiada, explicações dos termos e diagnósticos que indiquem o problema e as alternativas disponíveis.
-
-A mesma base de projeto atenderá os dois públicos. O editor deverá explicar conceitos como módulo, fiada, vão bruto e canaleta em contexto, sem exigir conhecimento de CAD para iniciar. Orientações de uso não serão apresentadas como aprovação técnica da construção.
-
-Desenhar paredes como linhas ou retângulos não resolve a distribuição dos tijolos. Uma planta aparentemente correta pode produzir peças sobrepostas nos encontros, cortes não previstos, furos desalinhados, canaletas interrompidas e aberturas incompatíveis com as fiadas.
-
-O Ecovit deverá:
-
-1. Facilitar a criação de plantas compatíveis com o catálogo derivado do tijolo-base.
-2. Gerar a posição de cada peça em todas as fiadas de cada pavimento.
-3. Resolver automaticamente os encontros, permitindo alterar a composição e propagar a amarração.
-4. Evidenciar situações sem solução e evitar correções silenciosas da geometria.
-5. Posicionar automaticamente grauteamentos e elementos em canaletas, com ajustes pelo usuário.
-6. Produzir desenhos e quantitativos consistentes com o projeto salvo.
-
-### Indicadores propostos
-
-- Todo projeto marcado como geometricamente válido terá zero colisões na composição de peças e zero regiões de parede sem solução em cada pavimento, dentro do alcance das validações implementadas. Não se verifica colisão ou apoio entre pavimentos distintos.
-- A regeneração preservará as escolhas de encontros e ajustes compatíveis do usuário.
-- Quantitativos exibidos corresponderão às peças geradas no estado atual do projeto.
-- Um usuário do público escolhido deverá conseguir criar uma planta simples, inserir vãos, gerar fiadas e localizar uma incompatibilidade sem assistência. O tempo-alvo será definido em teste de usabilidade.
-
-## 4. Escopo da primeira versão validável
-
-### Incluído
-
-- Criar, nomear, salvar, reabrir e duplicar projetos.
-- Definir o tamanho-base do tijolo e receber automaticamente o catálogo padrão suportado derivado dele.
-- Editor 2D com paredes ortogonais, cotas, portas e janelas.
-- Até quatro pavimentos no total (térreo + até três superiores), com níveis e alturas independentes.
-- Geração e inspeção de todas as fiadas, inclusive fiadas especiais.
-- Encontros em L, T e cruz definidos automaticamente e ajustáveis pelo usuário, com propagação da amarração nas fiadas acima até o topo definido pela altura de cada parede.
-- Canaletas, cintas, vergas e contravergas como elementos posicionados automaticamente e que podem ser ajustados pelo usuário.
-- Grauteamentos e vigas de canaletas propostos automaticamente conforme as convenções nominais documentadas no caderno técnico.
-- Lajes com contorno e espessura definidos pelo usuário e topo na cota do próprio pavimento.
-- Reservas verticais para reforços/graute e verificação do alinhamento dos furos.
-- Ajustes contextuais de encontros, grauteamentos e canaletas, sem edição ou bloqueio de tijolos individuais.
-- Diagnósticos e quantitativos para consulta no aplicativo; download e carregamento do arquivo nativo.
-
-### Fora do escopo inicial
-
-- Visualização 3D, renderização e geração de imagens por IA.
-- Dimensionamento estrutural, cálculo de fundações, cargas ou armaduras.
-- Projetos completos de instalações elétricas e hidráulicas.
-- Paredes curvas, diagonais e composição de diferentes famílias na mesma parede.
-- Dimensionamento resistente e detalhamento de armaduras de escadas, lajes e coberturas; a representação geométrica das lajes está incluída.
-- Colaboração simultânea, marketplace, pagamentos e gestão de obras.
-- Exportações PDF, SVG e CSV; importação/exportação CAD ou BIM, incluindo DWG, DXF e IFC. Podem ser acrescentadas posteriormente.
-- Aprovação automática por normas ou legislação municipal.
-
-O limite de quatro pavimentos é uma capacidade de modelagem do aplicativo. A viabilidade de uma edificação concreta dependerá de projeto e análise técnica próprios.
-
-## 5. Jornada principal
-
-1. Criar o projeto e escolher ou informar o tamanho-base do tijolo; o Ecovit gera o catálogo automaticamente.
-2. Abrir diretamente o térreo, criado com propriedades iniciais visíveis e editáveis; adicionar outros pavimentos somente quando necessário.
-3. No modo Planta, desenhar paredes na malha modular e inserir vãos.
-4. Consultar incompatibilidades e aceitar, quando desejado, sugestões de ajuste.
-5. Alternar para Fiada e navegar pela distribuição gerada, inspecionando encontros, peças, furos e canaletas.
-6. Criar lajes, definir suas espessuras e revisar canaletas, cintas, elementos sobre e sob vãos e grauteamentos posicionados automaticamente.
-7. Aguardar o recálculo automático após cada alteração confirmada e resolver apenas as incompatibilidades indicadas.
-8. Revisar todos os pavimentos e comparar visualmente os andares por sobreposição de referência.
-9. Conferir o salvamento automático no navegador ou baixar o documento atual para backup e reabertura.
-
-## 6. Requisitos funcionais
-
-| Requisitos | Alcance implementado | Parte prevista |
-|---|---|---|
-| RF-01/02/03/04/05/06/07/09/10 | Editor e composição nominal de M1–M4.2 por pavimento, comparação visual de M4.3 | Preparação/consumo de peças somente com procedimento documentado |
-| RF-08/13 | Gestão de até quatro pavimentos, cota única, composição isolada, lajes e comparação visual (M4.1–M4.3) | Sem novo alcance neste recorte |
-| RF-11/12 | Arquivo nativo, salvamento remoto, reabertura, transporte, quantitativos com perdas opcionais e duplicação de projetos (M5) | Persistência remota em M12, pronta para teste; PDF/SVG/CSV fora da primeira versão |
-| RF-19/20 | Conta por código de e-mail, projetos privados, lixeira e exclusão da própria conta implementados na M12; aceite pendente | Sem compartilhamento, organizações ou edição offline |
+## Requisitos funcionais
 
 ### RF-01 — Catálogo automático a partir do tijolo-base
 
@@ -204,7 +102,7 @@ O resultado deverá distinguir sugestão automática de ajuste manual por indica
 
 ### RF-05 — Encontros automáticos e editáveis
 
-**Alcance implementado:** M2 compõe L alternado e T com principal contínua e ramal encostado; M3.5 compõe a cruz nominal, inclusive integrada a L/T/contorno, conforme §16 e CT-12. O T informa necessidade de ligação complementar, sem dimensioná-la. Convenções nominal-v1–v7 conservam o diagnóstico de cruz bloqueada apenas para validar arquivos legados.
+O Ecovit compõe L alternado, T com principal contínua e ramal encostado, e cruz nominal integrada a L/T e contornos conforme CT-12. O T informa necessidade de ligação complementar, que exige dimensionamento próprio.
 
 O Ecovit reconhece encontros em L, T e cruz e define automaticamente uma composição compatível com os padrões suportados, conforme as convenções nominais documentadas no caderno técnico. Considera alternância das peças, fechamento geométrico das paredes, alinhamento dos eixos nominais e representação de canaletas. Peças especiais e sua preparação só serão incorporadas quando houver procedimentos documentados; a composição nominal não comprova amarração resistente ou passagem física.
 
@@ -222,9 +120,9 @@ Portas, janelas e vãos serão adicionados como elementos arrastáveis com o mou
 
 Cada elemento poderá ser selecionado, reposicionado com o mouse e ter sua largura alterada respeitando a malha modular. A representação atualizará a interrupção dos tijolos nas fiadas afetadas, preservando a identificação gráfica do elemento.
 
-As propriedades editáveis incluirão largura, **altura** e **base**. Base é a distância vertical entre a referência do pavimento e o início inferior do elemento. Em M4, essa referência será a cota única do pavimento; o contrato implementado de M3 usa o piso, conforme §14. O topo corresponde à base mais a altura. Para portas, a base inicial será zero; para janelas e demais vãos, será configurável.
+As propriedades editáveis incluirão largura, **altura** e **base**. Base é a distância vertical entre a referência do pavimento e o início inferior do elemento. Essa referência é a cota única do pavimento; o contrato implementado de M3 usa o piso, conforme §14. O topo corresponde à base mais a altura. Para portas, a base inicial será zero; para janelas e demais vãos, será configurável.
 
-Ao informar altura ou base, o Ecovit validará sua compatibilidade com os limites das fiadas, considerando o passo vertical efetivo e a referência vertical aplicável ao contrato. Em M4, tanto os vãos quanto as fiadas partem da cota única do pavimento. A base e o topo deverão coincidir com limites realizáveis das fiadas. Valores incompatíveis mostrarão alternativas antes da confirmação, sem arredondamento silencioso.
+Ao informar altura ou base, o Ecovit validará sua compatibilidade com os limites das fiadas, considerando o passo vertical efetivo e a referência vertical aplicável ao contrato. Tanto os vãos quanto as fiadas partem da cota única do pavimento. A base e o topo deverão coincidir com limites realizáveis das fiadas. Valores incompatíveis mostrarão alternativas antes da confirmação, sem arredondamento silencioso.
 
 Os campos principais serão largura e altura do vão bruto de alvenaria e sua base. Dimensão da esquadria e folgas de instalação, quando informadas, ficarão em opções adicionais, sem alterar automaticamente o vão bruto. Posicionar automaticamente vergas e contravergas aplicáveis e atualizar os elementos associados quando posição, largura, base ou altura forem alteradas.
 
@@ -232,7 +130,7 @@ As propriedades serão apresentadas de forma compacta e contextual ao selecionar
 
 **Aceite:** arrastar mostra a prévia modular; soltar insere um indicador gráfico distinto para cada tipo; mover e redimensionar respeita o módulo horizontal; editar base ou altura valida os limites das fiadas e atualiza os tijolos e elementos associados. Um vão que invade células compartilhadas de um encontro apresenta conflito localizado. Quando intercepta um eixo de graute, seus intervalos são recalculados para excluir a abertura, sem gerar conflito apenas por essa interseção. Ajustes que perderem seu alvo geométrico permanecem registrados como pendentes e localizáveis.
 
-#### M9 — Tipos e orientação das esquadrias (BL-08)
+#### Tipos e orientação das esquadrias
 
 Escopo aprovado para implementação: portas de giro de uma ou duas folhas iguais, de correr de uma folha ou duas com abertura central, e portão basculante de garagem; janelas de giro de uma ou duas folhas iguais, de correr com duas folhas (uma fixa e uma móvel) e basculantes. Novas portas começam em giro de uma folha; novas janelas em correr de duas folhas. Vão livre mantém seu comportamento. O seletor Tipo da esquadria reúne tipo e quantidade de folhas; não cria ferramentas adicionais.
 
@@ -264,23 +162,21 @@ Permitir remover canaletas somente na Fiada onde aparecem; renderizar canaletas 
 
 ### RF-13 — Lajes
 
-**Marco:** M4.2, implementado. Contratos na [Elementos construtivos](arquitetura/Elementos-Construtivos.md#lajes); convenção CT-13 e exemplos EX-65–74 no Caderno §11.2; tarefas, verificações, aceite e roteiro no [M4.2](marcos/M4.2-Lajes.md). D42-01 confirmada pelo solicitante: alças nas arestas e redesenho para acrescentar ou retirar cantos. Aceite global da funcionalidade registrado no [M4](marcos/M4-Lajes-e-Pavimentos.md).
-
 Permitir criar uma laje por pavimento, com contorno ortogonal simples, sem auto-interseções, e espessura positiva definida pelo usuário. Será possível editar contorno, espessura e aberturas, também ortogonais simples. Vértices do contorno e das aberturas seguem a malha horizontal de meio tijolo do projeto. Aberturas retiram efetivamente área da laje, devem ficar estritamente internas ao contorno e não podem tocar ou sobrepor umas às outras nem tocar a borda externa. Não são desenhos de referência. A laje pertence ao pavimento em que é desenhada e independe da existência de paredes nele. Não haverá classificação ou comportamento distinto de piso e cobertura.
 
 Desenhar contorno e aberturas por vértices na malha, com prévia ortogonal entre pontos e fechamento explícito do polígono. Escape cancela o desenho ou edição em andamento sem alterar o documento. Criar ou editar usa prévia antes de confirmar. Mover a laje transporta todas as suas aberturas pela mesma translação horizontal. Uma edição que deixe abertura fora do contorno ou viole as regras de validade não é confirmada; preservar o estado anterior e indicar o impedimento, sem apagar, deslocar ou reduzir aberturas automaticamente. Permitir excluir uma abertura sem excluir a laje; excluir a laje remove suas aberturas, preservando paredes e demais elementos. Operações confirmadas são desfazíveis.
 
-#### Interação de M4.2
+#### Interação com lajes
 
 Na Planta do pavimento ativo, a ferramenta **Laje** inicia um contorno quando ainda não existe laje; se existir, fica indisponível com a explicação “Este pavimento já tem uma laje”. Cada clique esquerdo fixa um vértice; o trecho provisório parte do último ponto na direção horizontal ou vertical predominante do cursor, encaixado na malha (empate mantém horizontal). Não inserir cantos intermediários automaticamente. O primeiro ponto permanece indicado; clicar nele ou usar **Fechar contorno** tenta ligar o último ao primeiro por um único segmento ortogonal. Não fechar por proximidade, duplo clique ou ao sair da ferramenta. Fechamento inválido mantém o rascunho para correção ou cancelamento. Após fechar o contorno, oferecer somente **Confirmar contorno** e **Cancelar** como ações, tanto para laje quanto para abertura e redesenho. Não reabrir o rascunho fechado; para corrigir os pontos, cancelar e iniciar outro desenho. Cancelar preserva integralmente a laje e aberturas existentes. A prévia fechada apresenta espessura e **Confirmar/Cancelar**; a espessura inicial exige entrada positiva explícita, sem sugerir valor construtivo. **Retirar último vértice** está disponível enquanto o desenho está aberto; após fechar, corrigir exige cancelar e reiniciar, conforme as ações acima. Só Confirmar cria a laje.
 
 Selecionar a laje oferece **Adicionar abertura**, usando o mesmo desenho e fechamento; a abertura não tem espessura própria. Mostrar prévia da região retirada, sem ocultar paredes no vazio. Selecionar abertura oferece suas ações e identifica a laje proprietária. Arrastar o corpo da laje já selecionada move contorno e aberturas; arrastar o interior de uma abertura já selecionada move apenas essa abertura. Um clique de seleção não inicia movimento. Soltar no canvas confirma somente candidato válido e diferente do original; Escape, perda de foco, perda de captura ou soltura fora cancelam integralmente. Trocar ferramenta, modo ou pavimento cancela desenhos, prévias e campos ainda não confirmados. Espaço + arraste navega sem fixar pontos nem mover elementos; zoom não confirma operações. Atalhos do canvas não atuam em campos de texto. Durante desenho ou arraste pendente, as ações de alteração nas propriedades da laje ficam indisponíveis; escolher outro elemento na lista cancela a prévia.
 
-**D42-01 — edição confirmada pelo solicitante:** usar uma alça no meio de cada aresta do contorno selecionado, inclusive de abertura. Arrastá-la desloca a aresta perpendicularmente, movendo seus dois extremos na malha e alongando/encurtando as duas arestas vizinhas; todas as demais permanecem fixas. Mostrar comprimento e deslocamento na prévia. Impedir colapso ou inversão das arestas vizinhas, mesmo quando um salto produza outro polígono simples na posição final. Não oferecer arraste livre de vértices. Para mudar a quantidade de cantos, **Redesenhar contorno** reutiliza o desenho por vértices, conservando o ID do alvo e, ao redesenhar o exterior, todas as aberturas imóveis. O original só é substituído ao confirmar um candidato integralmente válido. Esse conjunto compõe o escopo implementado de M4.2, com aceite manual da funcionalidade separado da confirmação de D42-01.
+**Edição de arestas (D42-01):** usar uma alça no meio de cada aresta do contorno selecionado, inclusive de abertura. Arrastá-la desloca a aresta perpendicularmente, movendo seus dois extremos na malha e alongando/encurtando as duas arestas vizinhas; todas as demais permanecem fixas. Mostrar comprimento e deslocamento na prévia. Impedir colapso ou inversão das arestas vizinhas, mesmo quando um salto produza outro polígono simples na posição final. Não oferecer arraste livre de vértices. Para mudar a quantidade de cantos, **Redesenhar contorno** reutiliza o desenho por vértices, conservando o ID do alvo e, ao redesenhar o exterior, todas as aberturas imóveis. O original só é substituído ao confirmar um candidato integralmente válido. Esse conjunto compõe o escopo implementado de M4.2, com aceite manual da funcionalidade separado da confirmação de D42-01.
 
 Espessura é editada nas propriedades com **Aplicar/Cancelar**, mostrando as faces superior/inferior derivadas. Aplicar espessura, cancelar espessura, adicionar abertura, redesenhar contorno e excluir usam botões compactos somente com ícones, com nomes acessíveis e dicas por mouse/foco; a exclusão identifica laje ou abertura conforme a seleção. Zero, negativo, precisão não representável e valor que exceda os limites de integridade são impedidos com mensagem; não exigir múltiplo da altura-base. Excluir abertura atua apenas na selecionada. Excluir laje pede confirmação informando que também remove suas aberturas; cancelar preserva tudo. Delete segue o alvo selecionado e a mesma confirmação da laje, sem interferir em campos. Desfazer/refazer restaura IDs, espessura, contornos e aberturas como uma operação por confirmação ou arraste.
 
-#### Representação e seleção em M4.2
+#### Representação e seleção de lajes
 
 Na camada editável, mostrar somente a laje do pavimento ativo, em Planta, como preenchimento discreto com contorno externo e bordas de aberturas identificáveis. Aberturas são vazios reais no preenchimento, sem retângulo opaco sobre o fundo. A malha fica ao fundo, seguida pela laje, paredes/vãos, realces de seleção e prévias/alças. Paredes e vãos continuam legíveis sobre a laje. A comparação de M4.3 acrescenta a referência não editável atrás dessa camada, conforme RF-08. Não incluir perspectiva ou representação de laje em Fiada. Pavimento com somente laje continua sem paredes/fiadas no estado vazio já definido em RF-08.
 
@@ -297,8 +193,6 @@ Para representar uma laje acima das paredes, inclusive uma cobertura, o usuário
 **Aceite:** criar laje com ou sem paredes mantém sua face superior na cota do pavimento; alterar a espessura move somente a face inferior; contorno e aberturas respeitam a malha e as regras de validade; aberturas retiram área somente da laje; edição inválida mantém o estado anterior; sobreposições com paredes não recortam a composição nem geram diagnóstico. Dimensionamento resistente e armaduras da laje ficam fora desta entrega.
 
 ### RF-08 — Até quatro pavimentos
-
-**Marco:** propriedades do térreo implementadas em M1; gestão de até quatro pavimentos e composição isolada implementadas e aceitas pelo solicitante em M4.1, conforme [M4](marcos/M4-Lajes-e-Pavimentos.md). Lajes pertencem a M4.2 e sobreposição visual entre pavimentos a M4.3.
 
 O projeto começará com um térreo e propriedades iniciais visíveis e editáveis, sem exigir cadastro prévio de todos os níveis. Adicionar, renomear, duplicar e remover pavimentos até o limite de quatro, sem distinção de piso ou cobertura. Cada pavimento terá uma cota única, especificada pelo usuário ao criá-lo, e altura padrão para novas paredes. Essa cota define o início de todas as suas paredes e a face superior de sua laje, quando existir. Não haverá campos separados de piso acabado e início da alvenaria no comportamento de M4. Alterar a altura padrão não modificará paredes existentes.
 
@@ -318,11 +212,11 @@ Em M4.1, cada pavimento funciona como uma nova Planta, com seus elementos própr
 
 **Aceite:** o quinto pavimento é impedido; cotas negativas são admitidas, cotas iguais ou fora da modulação não são confirmadas; a ordem acompanha a cota; todas as paredes começam na cota de seu pavimento, com ou sem laje; pavimento sem paredes pode conter laje e abrir Fiada em estado vazio; duplicação preserva intenção e independência; remoção preserva os demais pavimentos e não elimina o último; sobreposições e diferenças de alinhamento entre andares não geram diagnósticos; referências sobrepostas não recebem edição.
 
-**Recorte de M4.1:** criar pavimento vazio, renomear, alterar cota/altura padrão, duplicar, remover, alternar e editar paredes/vãos/ajustes nos pavimentos; na barra, Novo pavimento, Duplicar pavimento e Excluir pavimento usam botões compactos somente com ícones, com nomes acessíveis e dicas por mouse/foco de teclado; navegação de fiadas e diagnóstico local; histórico, salvamento e arquivo no novo contrato. Configurações de vãos, níveis de canaletas e padrão de graute continuam comuns ao projeto, aplicadas separadamente à geometria de cada pavimento; ajustes individuais não são compartilhados. Novo projeto abre o térreo em cota 0. Os formulários de pavimento mostram nome, cota e altura padrão antes de confirmar; nome não vazio de até 100 caracteres, sem exigir nomes únicos. Criar ou duplicar seleciona o novo pavimento; renomear preserva IDs e não dispara composição. Ao reabrir, selecionar o pavimento de menor cota e Planta; câmera e última fiada por pavimento são estado da sessão. Ações Localizar/Ver fiada/Editar na Planta de diagnósticos mudam para o pavimento do alvo antes de selecionar ou enquadrar. Critérios específicos em M4.1-A01–14 do plano; exemplos em EX-56–64 do caderno. Sem ferramenta de laje, sobreposição entre andares, quantitativos ou migração de arquivos anteriores nesse incremento.
+**Operações por pavimento:** criar pavimento vazio, renomear, alterar cota/altura padrão, duplicar, remover, alternar e editar paredes/vãos/ajustes nos pavimentos; na barra, Novo pavimento, Duplicar pavimento e Excluir pavimento usam botões compactos somente com ícones, com nomes acessíveis e dicas por mouse/foco de teclado; navegação de fiadas e diagnóstico local; histórico, salvamento e arquivo no novo contrato. Configurações de vãos, níveis de canaletas e padrão de graute continuam comuns ao projeto, aplicadas separadamente à geometria de cada pavimento; ajustes individuais não são compartilhados. Novo projeto abre o térreo em cota 0. Os formulários de pavimento mostram nome, cota e altura padrão antes de confirmar; nome não vazio de até 100 caracteres, sem exigir nomes únicos. Criar ou duplicar seleciona o novo pavimento; renomear preserva IDs e não dispara composição. Ao reabrir, selecionar o pavimento de menor cota e Planta; câmera e última fiada por pavimento são estado da sessão. Ações Localizar/Ver fiada/Editar na Planta de diagnósticos mudam para o pavimento do alvo antes de selecionar ou enquadrar. Critérios específicos em M4.1-A01–14 do plano; exemplos em EX-56–64 do caderno. Sem ferramenta de laje, sobreposição entre andares, quantitativos ou migração de arquivos anteriores nesse incremento.
 
-#### Comparação visual — M4.3 (implementado)
+#### Comparação visual de pavimentos
 
-Contratos na [Editor e interação](arquitetura/Editor-e-Interacao.md#comparação-visual-de-pavimentos); CT-15/EX-80–85 no Caderno §11.4; tarefas, aceite e roteiro no [M4.3](marcos/M4.3-Comparacao-de-Pavimentos.md). Implementado no aplicativo 0.10.0; aceite global do solicitante registrado no [M4](marcos/M4-Lajes-e-Pavimentos.md). M5 permanece fora do recorte.
+A referência segue CT-15/EX-80–85 e o contrato de [Editor e interação](arquitetura/Editor-e-Interacao.md#comparação-visual-de-pavimentos).
 
 Em Planta, dentro de **Propriedades do pavimento** na lateral, oferecer o campo **Referência de pavimento**, com nome acessível **Comparar pavimento**, com **Sem referência** e os vizinhos disponíveis: **Inferior — nome · cota** e **Superior — nome · cota**, em centímetros. Identificar o controle por nome acessível, sem diálogo ou painel adicional. Mostrar somente com dois ou mais pavimentos e desabilitar durante processamento. O campo acompanha o painel do pavimento: não aparece na barra nem nos painéis de parede, vão ou laje. Recolher propriedades ou selecionar um elemento não desliga a referência; limpar a seleção e reabrir o painel permite alterá-la. Não listar o ativo, vizinhos inexistentes ou andares não adjacentes. Direção e cota distinguem nomes repetidos.
 
@@ -338,7 +232,7 @@ Abrir/reabrir/importar projeto inicia todos os pavimentos em **Sem referência**
 
 Enquanto o ativo permanecer o mesmo, conservar a direção escolhida após renomear, alterar cotas, criar/remover outro pavimento ou desfazer/refazer. Resolver novamente o vizinho imediato na ordem atual, atualizando nome/cota/geometria; se a direção ficar sem vizinho, voltar a **Sem referência**. Não manter um ID que se tornou não adjacente nem restaurar comparação já limpa ao desfazer. Criar/duplicar inicia o novo pavimento sem referência, sem copiar a preferência da origem; remover descarta a preferência do pavimento excluído. Trocas do ativo, inclusive por diagnóstico ou histórico, recuperam a escolha do destino. Após mudanças de cota, exclusão ou histórico, normalizar também as escolhas dos pavimentos inativos: se a direção perder o vizinho, limpá-la e não restaurá-la ao desfazer. A comparação é estado da sessão, ausente do arquivo e do histórico; não muda cálculo, validade, alturas, lajes ou ajustes.
 
-**Aceite de M4.3:** referência única adjacente identificada e sem interação, alinhamento horizontal exato, vazios legíveis, prioridade do ativo, enquadramento da união e atualização após mudanças de ordem; comparação ausente em Fiada e ao reabrir; intenção, composição e persistência invariantes ao operar somente a comparação. Casos verificáveis em M4.3-A01–10 do plano. Sem comparação volumétrica, continuidade estrutural ou quantitativos.
+**Critério de comparação:** referência única adjacente identificada e sem interação, alinhamento horizontal exato, vazios legíveis, prioridade do ativo, enquadramento da união e atualização após mudanças de ordem; comparação ausente em Fiada e ao reabrir; intenção, composição e persistência invariantes ao operar somente a comparação. Casos verificáveis em M4.3-A01–10 do plano. Sem comparação volumétrica, continuidade estrutural ou quantitativos.
 
 ### RF-09 — Edição simples e recálculo automático
 
@@ -346,7 +240,7 @@ As peças são geradas pelo motor, sem substituição, orientação ou bloqueio 
 
 Após cada alteração geométrica ou construtiva confirmada que afete os insumos do motor, marcar o resultado como desatualizado e recalcular automaticamente o projeto inteiro, uma operação por vez. Alterações de nome, seleção, câmera e medidas independentes não exigem cálculo. É aceitável aguardar o processamento com novas edições temporariamente indisponíveis; não há fila de edições ou botão de regeneração no fluxo normal. Preservar ajustes compatíveis. Ajustes incompatíveis permanecem registrados como pendentes, sem aplicação à composição, com ação para localizar e corrigir ou descartar o ajuste. Uma falha de cálculo mantém o modelo editável e permite tentar novamente.
 
-Em M4.1 não haverá orçamento ou teto de geração por quantidade de módulos, células, fiadas, peças, eixos ou intervalos derivados. Manter validações geométricas existentes e limites de integridade de arquivos/dados; falhas reais de processamento preservam a intenção. A análise de quantidades pelo usuário pertence aos quantitativos futuros de M5, sem criar controle de orçamento em M4.1.
+A geração não aplica orçamento ou teto por quantidade de módulos, células, fiadas, peças, eixos ou intervalos derivados. Manter validações geométricas existentes e limites de integridade de arquivos/dados; falhas reais de processamento preservam a intenção. A análise de quantidades pelo usuário pertence aos quantitativos futuros de M5, sem criar controle de orçamento em M4.1.
 
 **Aceite:** ambas as extremidades permitem redimensionar paredes; alterações confirmadas recalculam automaticamente; ajustes incompatíveis não desaparecem silenciosamente; resultados desatualizados não são apresentados como atuais nem usados nos quantitativos.
 
@@ -360,11 +254,9 @@ Mostrar de forma simples se o resultado está atualizado e se há pendências ge
 
 ### RF-11 — Quantitativos e arquivo nativo
 
-**Marco:** arquivo nativo implementado; quantitativos implementados em M5 no aplicativo 0.11.0 e aceitos pelo solicitante, conforme registro no [M5 §12.6](marcos/M5-Quantitativos-e-Projetos.md#126-andamento-limitações-e-aceite). Contratos na [Quantitativos](arquitetura/Quantitativos.md#projeção-de-consulta); CT-16/EX-86–94 no Caderno §12; tarefas, critérios e roteiro no [M5](marcos/M5-Quantitativos-e-Projetos.md).
-
 Contar peças por tipo, pavimento e fiada, sem duplicar peças dos encontros. Separar cortes e peças especiais. Para peças modificadas na obra, distinguir a peça-base consumida da peça resultante, evitando dupla contagem. Eventual margem de perdas será informada pelo usuário e separada da quantidade geométrica.
 
-**Consulta de M5:** acesso identificado como Quantitativos no projeto aberto, em tela própria, com retorno ao desenho. Ao acessar durante renomeação, abrir no primeiro clique; a saída do campo confirma o nome pelo fluxo normal e a consulta aguarda a operação antes de apresentar quantidades. Mostrar o nome do projeto e a base nominal, resumo do projeto e detalhamento de um pavimento por vez, com totais e linhas por fiada local. Ordenar pavimentos pela cota e identificar também sua cota, distinguindo nomes repetidos. Contar os quatro tipos realmente gerados: inteiro, meio, canaleta e meia canaleta, em unidades inteiras; o total de peças soma esses tipos. Usar as peças finais da composição, sem contar novamente suas paredes participantes, origens de canaletas, células, grautes ou referências de comparação. Pavimento vazio, inclusive com somente laje, tem totais zero e nenhuma fiada artificial.
+**Consulta:** acesso identificado como Quantitativos no projeto aberto, em tela própria, com retorno ao desenho. Ao acessar durante renomeação, abrir no primeiro clique; a saída do campo confirma o nome pelo fluxo normal e a consulta aguarda a operação antes de apresentar quantidades. Mostrar o nome do projeto e a base nominal, resumo do projeto e detalhamento de um pavimento por vez, com totais e linhas por fiada local. Ordenar pavimentos pela cota e identificar também sua cota, distinguindo nomes repetidos. Contar os quatro tipos realmente gerados: inteiro, meio, canaleta e meia canaleta, em unidades inteiras; o total de peças soma esses tipos. Usar as peças finais da composição, sem contar novamente suas paredes participantes, origens de canaletas, células, grautes ou referências de comparação. Pavimento vazio, inclusive com somente laje, tem totais zero e nenhuma fiada artificial.
 
 O catálogo atual não registra peças preparadas na obra nem rendimento de cortes. Identificar a consulta como quantidade geométrica nominal: meios não são automaticamente cortes de inteiros, e canaletas não são automaticamente inteiros consumidos na preparação. Informar que consumo de peças-base para preparação não é determinado neste catálogo; não apresentar esse consumo como zero ou somá-lo às peças resultantes. Não incluir novas peças, procedimentos, áreas/volumes de lajes, concreto, graute, aço, preços ou orçamento em M5.
 
@@ -374,51 +266,35 @@ O catálogo atual não registra peças preparadas na obra nem rendimento de cort
 
 Quantitativos são consultados em tela separada do canvas. A única exportação inicial será o arquivo nativo, para baixar e reabrir o projeto. PDF, SVG, CSV e documentos de impressão ficam para evolução posterior.
 
-Não estimar volume de graute nem quantidade de aço sem dados suficientes; essas estimativas ficam fora da primeira versão.
+Não estimar volume de graute nem quantidade de aço sem dados suficientes; a consulta cobre peças da composição.
 
-**Aceite:** a soma geométrica por fiada coincide com a soma do pavimento e do projeto; consulta usa o estado atualizado e identifica totais parciais; perdas opcionais ficam separadas e arredondadas por tipo no total do projeto. Download e carregamento preservam o projeto, inclusive pendências e ajustes; filtros e percentual de consulta não são persistidos. Critérios específicos em M5-A01–06/A10 do plano.
+**Aceite:** a soma geométrica por fiada coincide com a soma do pavimento e do projeto; consulta usa o estado atualizado e identifica totais parciais; perdas opcionais ficam separadas e arredondadas por tipo no total do projeto. Download e carregamento preservam o projeto, inclusive pendências e ajustes; filtros e percentual de consulta não são persistidos.
 
-### RF-12 — Salvamento local, arquivo portátil e armazenamento futuro
+### RF-12 — Salvamento remoto e arquivo portátil
 
-Conta e persistência seguem a [M12](#m12--contas-e-persistência-remota). O arquivo .ecovit continua sendo o transporte manual; a versão atual não consulta nem migra os registros locais anteriores.
+Os projetos são salvos no servidor. A abertura, a importação e o download seguem os formatos suportados em [Persistência e compatibilidade](arquitetura/Persistencia-e-Compatibilidade.md#formato-e-leitores-vigentes).
 
-Ao acionar um projeto compatível na lista, apresentar imediatamente “Abrindo projeto…” no cartão escolhido, preservando seu nome, com indicador de espera e cursor de espera em toda a página antes de iniciar leitura/validação pesada. Não mostrar porcentagem sem progresso mensurável. Impedir aberturas concorrentes, criação, importação, duplicação ou exclusão durante a operação. Manter o feedback de abertura até o canvas ter dimensões reais, câmera restaurada e primeiro desenho completo, incluindo as imagens visíveis. Exibir o editor já com zoom e centro salvos, sem enquadramento automático ou quadros intermediários; sem preferência válida, usar a câmera inicial habitual. No sucesso, abrir o editor e restaurar o cursor; na falha, permanecer na lista, mostrar a causa e liberar controles/cursor para nova tentativa. O indicador respeita movimento reduzido e mantém texto acessível. Carregar e validar o registro uma única vez no fluxo de abertura, preservando conferência de integridade, controle remoto por revisão e atualização de resultados. Implementação e verificações no Plano §17 e no [M5](marcos/M5-Quantitativos-e-Projetos.md#1211-abertura-até-o-primeiro-desenho--rf-1214), que registra o teste manual declarado e o aceite específico da primeira exibição do canvas.
+Ao acionar um projeto compatível na lista, apresentar imediatamente “Abrindo projeto…” no cartão escolhido, preservando seu nome, com indicador de espera e cursor de espera em toda a página antes de iniciar leitura/validação pesada. Não mostrar porcentagem sem progresso mensurável. Impedir aberturas concorrentes, criação, importação, duplicação ou exclusão durante a operação. Manter o feedback de abertura até o canvas ter dimensões reais, câmera restaurada e primeiro desenho completo, incluindo as imagens visíveis. Exibir o editor já com zoom e centro salvos, sem enquadramento automático ou quadros intermediários; sem preferência válida, usar a câmera inicial habitual. No sucesso, abrir o editor e restaurar o cursor; na falha, permanecer na lista, mostrar a causa e liberar controles/cursor para nova tentativa. O indicador respeita movimento reduzido e mantém texto acessível. Carregar e validar o registro uma única vez no fluxo de abertura, preservando conferência de integridade, controle remoto por revisão e atualização de resultados.
 
 A tela de projetos reserva uma faixa de status logo abaixo de “Seu espaço de projetos”, alinhada ao conteúdo e com espaço mínimo mantido mesmo em repouso. Mostrar “Importando arquivo…” durante a leitura/importação, “Abrindo projeto…” durante a abertura e até o primeiro desenho pronto, e “Atualizando lista…” durante a consulta dos projetos. Abertura tem prioridade sobre importação, que tem prioridade sobre atualização da lista. Reusar o indicador de espera, respeitar movimento reduzido e anunciar progresso somente na faixa; o cartão ativo pode conservar seu feedback visual. Falhas da lista, importação ou abertura permanecem na mesma faixa até resolução ou fechamento quando aplicável; falha de lista conserva a ação Atualizar lista. Avisos de salvamento e recuperação no editor mantêm seu próprio local. A faixa não exibe porcentagem nem altera validação, persistência ou preparação do canvas.
 
 A lista usa cartões compactos, com altura mínima visual de 80 px e 8 px entre itens. Preservar o bloco Novo projeto e o tamanho do ícone de projeto (bloco de 48 px, pictograma de 24 px). Nome na primeira linha, quantidade de paredes e data/hora da última atualização na segunda, no formato dd/mm/aaaa às HH:mm e fuso local do navegador; nomes longos usam reticências e título com nome completo. A indicação curta de incompatibilidade integra a linha de informações e pode exigir quebra; a explicação expandida aumenta o cartão conforme necessário. Duplicar e Excluir são botões somente com ícones dentro da borda do cartão, alinhados horizontalmente à direita, com espaço sempre reservado. Mostrar em hover sobre o cartão ou foco dentro dele; sem capacidade de hover, manter visíveis. Nomes acessíveis em português e dicas por mouse/foco identificam as ações. Corpo e ações são controles independentes: abrir/explicar, duplicar ou excluir não acionam os demais. Nenhum cartão da lista mostra seta de abertura.
 
-Na lista, projetos de formato incompatível conservam a indicação permanente de incompatibilidade e não mostram a seta de abertura. Clicar no cartão ou acioná-lo pelo teclado exibe a explicação no próprio cartão: o formato antigo não pode ser aberto nesta versão, arquivos de marcos anteriores não são convertidos e é necessário criar um novo projeto. Essa ação não tenta abrir o documento nem emite o aviso global no topo. A explicação permanece junto ao projeto selecionado, com anúncio acessível e ajuste mínimo da rolagem caso necessário para mantê-la visível no final da lista. Duplicar continua indisponível; Excluir e seu backup permanecem disponíveis.
+Na lista, projetos de formato incompatível conservam a indicação permanente de incompatibilidade e não mostram a seta de abertura. Clicar no cartão ou acioná-lo pelo teclado exibe a explicação no próprio cartão: o projeto está em formato incompatível e é necessário criar um novo projeto. Essa ação não tenta abrir o documento nem emite o aviso global no topo. A explicação permanece junto ao projeto selecionado, com anúncio acessível e ajuste mínimo da rolagem caso necessário para mantê-la visível no final da lista. Duplicar continua indisponível; Excluir e seu backup permanecem disponíveis.
 
 Na lista de projetos, oferecer **Excluir** como ícone dentro do cartão, à direita, para projetos da conta. Ao clicar, identificar o projeto e perguntar se o usuário deseja baixar um backup `.ecovit` antes da exclusão. Oferecer Cancelar (foco inicial), Baixar backup e Enviar à lixeira sem backup; após solicitar o download, manter a confirmação aberta com Enviar à lixeira e orientação para conferir o arquivo salvo. Escape cancela sem excluir. O backup usa o último registro salvo e não converte formatos antigos; a política vigente de tamanho continua aplicada. A exclusão confirmada envia o projeto para a lixeira por 30 dias, com restauração e eliminação definitiva pela conta, conforme RF-19/20. Não bloquear pela existência de outra aba: revisão e estado no servidor impedem que uma aba antiga recrie ou sobrescreva o projeto removido. Falhas preservam o diálogo e permitem conferir/repetir a mesma operação.
 
-Durante o MVP, cada marco pode recusar formatos de marcos anteriores, sem migração ou conversão. Transporte e reabertura são garantidos dentro do contrato suportado pelo marco entregue. Em M4.1, arquivos e documentos locais anteriores são recusados com indicação de incompatibilidade e necessidade de criar novo projeto, sem exclusão automática dos dados antigos ou substituição do trabalho atual em memória. Não há obrigação de manter código exclusivamente para compatibilidade entre marcos do MVP.
+O download gera JSON compacto com extensão .ecovit. Quando o resultado calculado faria o arquivo exceder 50 MiB, a cópia conserva toda a intenção e informa que a composição será reconstruída na abertura. O trabalho aberto permanece em memória. Um arquivo inválido é recusado antes de substituir o trabalho ou criar um projeto.
 
-M8 grava envelope 11 e lê envelopes 9/10, acrescentando imagens de referência vazias e, no envelope 9, medidas vazias, sem modificar a origem. Projetos com resultado de cálculo nominal-v9 abrem preservando todos os desenhos, alturas, configurações e ajustes; o resultado antigo é descartado e atualizado automaticamente pelo motor vigente, nominal-v10. Não pedir conversão nem manter um motor antigo. O arquivo original não é modificado; registros locais só são atualizados com bloqueio de edição. Em aba somente leitura, atualizar apenas o cálculo em memória. Resultados vigentes adulterados e formatos desconhecidos continuam recusados. Esta atualização do cálculo não é uma migração de modelos de marcos anteriores.
-
-Salvar automaticamente no navegador, indicar o estado do salvamento e permitir baixar e carregar o arquivo nativo. Não haverá login ou dependência de servidor na primeira versão. Informar discretamente que os dados locais estão associados ao navegador/dispositivo e podem ser apagados; o arquivo baixado permite backup e transferência.
-
-Salvar o documento após cada alteração confirmada, antes do cálculo, com resultado marcado como desatualizado; salvar novamente após o cálculo terminar. Não salvar movimentos intermediários do mouse. Falha no cálculo não impede salvar o rascunho. Falha no armazenamento mantém o trabalho em memória e permite baixar o documento atual, mesmo que ainda não tenha sido salvo no navegador. Durante o processamento, o download aguarda o término da operação. Em M4.1, resultado desatualizado é ausente (`generated: null`, diagnósticos derivados vazios); resultado atual contém a composição completa dos pavimentos. O download usa JSON compacto. Se a composição fizer a cópia ultrapassar 50 MiB, baixar toda a intenção como documento desatualizado, sem resultado derivado, avisando que ele será reconstruído na abertura. O documento aberto permanece intacto; não limitar a geração nem descartar desenhos, configurações ou ajustes. A intenção editável deve caber nesse limite de transporte, validado antes de confirmar alterações.
-
-Adotar documento estruturado em JSON, com extensão proposta **.ecovit**, identificação do aplicativo e versão do formato. Versionar o formato permite identificar contratos suportados e recusar incompatíveis; não obriga a migrar versões anteriores nem implica versionamento de regras construtivas.
-
-Armazenar identificadores estáveis para projeto e elementos, unidades, tamanho-base, origem modular, pavimentos, paredes, vãos, lajes, encontros escolhidos, elementos automáticos e ajustes manuais. Preservar a composição gerada necessária à reabertura fiel e o estado atualizado ou pendente. Relações entre elementos usarão identificadores, sem depender de objetos da interface ou caminhos locais.
-
-Separar o modelo do projeto das funções de armazenamento. A mesma estrutura deverá poder ser persistida futuramente em banco de dados, por documento ou mapeamento de entidades, sem redesenhar o modelo de domínio. Conta, sincronização e permissões de acesso serão tratadas somente nessa evolução.
-
-Validar arquivos carregados sem modificar o original e impedir que uma importação inválida sobrescreva o trabalho aberto. As migrações descritas nos contratos históricos de M1–M3.5 foram removidas de M4.1, que aceita somente o formato vigente.
-
-**Aceite:** recarregar recupera o último salvamento concluído; baixar e carregar em outro navegador preserva geometria, escolhas e ajustes; arquivo inválido mantém o trabalho existente; o formato pode ser lido independentemente da interface.
-
-#### Duplicação de projetos — M5
+#### Duplicação de projetos
 
 Na lista de projetos, oferecer Duplicar para registros do formato suportado. Solicitar o nome da cópia antes de confirmar, sugerindo o nome de origem com sufixo “ (cópia)” dentro do limite de 100 caracteres. Aceitar nome não vazio após remover espaços externos; nomes repetidos continuam permitidos. Cancelar não cria registro. A cópia usa novo ID de projeto e novas datas, preserva toda a intenção confirmada (quatro pavimentos, lajes, aberturas, configurações, escolhas e ajustes inclusive pendentes) e não altera a origem. Identificadores internos permanecem estáveis dentro de cada documento independente, como na importação; não se trata de duplicação de pavimento.
 
-Confirmar cria e salva um novo projeto independente, atualiza a lista e permanece nela, permitindo abrir a cópia pelo fluxo habitual. Não copiar histórico, câmera, seleção, comparação, prévias ou percentual de perdas da sessão. Falha de leitura, validação ou gravação informa o problema sem apresentar uma cópia salva nem modificar a origem. Formato incompatível conserva o aviso atual e não é duplicado parcialmente. O projeto aberto em outra aba pode ser copiado a partir do último registro salvo, identificado dessa forma; a cópia não lê alterações não salvas nem escreve na origem. Não adicionar exclusão de projetos, sincronização ou mesclagem a este marco.
+Confirmar cria e salva um novo projeto independente, atualiza a lista e permanece nela, permitindo abrir a cópia pelo fluxo habitual. Não copiar histórico, câmera, seleção, comparação, prévias ou percentual de perdas da sessão. Falha de leitura, validação ou gravação informa o problema sem apresentar uma cópia salva nem modificar a origem. Formato incompatível conserva o aviso atual e não é duplicado parcialmente. O projeto aberto em outra aba pode ser copiado a partir do último registro salvo, identificado dessa forma; a cópia não lê alterações não salvas nem escreve na origem.
 
 ### RF-14 — Preferências do Ecovit
 
-**Estado: M6 implementado e aceito pelo solicitante; registro no [M6](marcos/M6-Preferencias.md).** Origem: BL-07. Diálogo compacto denominado “Preferências do Ecovit”, separado de Configurações do projeto, com grupo “Visibilidade dos rótulos”. Acesso por botão com ícone de engrenagem ao lado do botão de configurações do projeto no cabeçalho, com nome acessível e dica “Preferências do Ecovit”. Preservar acesso e identificação dos dois controles, inclusive com nome de projeto longo e em telas menores; seguir a [Interface e iconografia](arquitetura/Interface-e-Iconografia.md#iconografia). O botão existente mantém seu ícone de ajustes.
+Diálogo compacto denominado “Preferências do Ecovit”, separado de Configurações do projeto, com grupo “Visibilidade dos rótulos”. Acesso por botão com ícone de engrenagem ao lado do botão de configurações do projeto no cabeçalho, com nome acessível e dica “Preferências do Ecovit”. Preservar acesso e identificação dos dois controles, inclusive com nome de projeto longo e em telas menores; seguir a [Interface e iconografia](arquitetura/Interface-e-Iconografia.md#iconografia). O botão existente mantém seu ícone de ajustes.
 
 Seis caixas de seleção independentes — Portas, Janelas, Vãos, Paredes, Medidas e Terreno — iniciam marcadas. Medidas controla os textos das cotas independentes do RF-15. Terreno controla o rótulo de área do RF-18; ocultá-lo mantém o preenchimento, contorno, área nas propriedades e medidas temporárias de edição. Para portas, janelas e vãos, cada controle abrange o rótulo inteiro de tipo/base/topo, sem opções por parte do texto. Para paredes, um único controle abrange os identificadores A/B das extremidades quando selecionadas e o novo rótulo permanente de comprimento e altura de cada parede confirmada no pavimento ativo em Planta. Ocultar um tipo não oculta os demais nem o desenho dos elementos.
 
@@ -428,17 +304,15 @@ Alterações têm aplicação imediata, sem Aplicar/Cancelar, com botão Fechar 
 
 Uma única preferência por tipo vale nos modos onde seus rótulos aparecem: os rótulos de portas/janelas/vãos seguem a presença atual em Planta/Fiada; o novo rótulo de parede é exclusivo de Planta. Selecionar não reexibe texto oculto; propriedades permanecem disponíveis. Informações temporárias de inserção/movimento/redimensionamento, avisos, orientações e controles de edição continuam visíveis. A referência de outro pavimento conserva sua apresentação sem novos textos. Lajes, grautes e outros tipos ficam fora do controle neste marco.
 
-M10 acrescenta o grupo Imagens dos mobiliários com a opção Suavização em qualidade alta, inicialmente ativada. A opção aplica-se imediatamente à redução e rotação dos mobiliários padrão e personalizados em Planta, inclusive em somente leitura, e persiste só neste navegador. Desativá-la mantém a suavização básica. A escolha não altera o projeto, seu histórico, resultado construtivo ou arquivo .ecovit.
+O grupo Imagens dos mobiliários oferece a opção Suavização em qualidade alta, inicialmente ativada. A opção aplica-se imediatamente à redução e rotação dos mobiliários padrão e personalizados em Planta, inclusive em somente leitura, e persiste só neste navegador. Desativá-la mantém a suavização básica. A escolha não altera o projeto, seu histórico, resultado construtivo ou arquivo .ecovit.
 
-#### Visualização local por projeto — complemento de RF-14
+#### Visualização local por projeto
 
 Preservar automaticamente o zoom e o ponto do desenho no centro da área de trabalho ao sair e reabrir um projeto no mesmo navegador. Guardar uma visualização por projeto, compartilhada entre Planta/Fiada e pavimentos, sem restaurar modo, pavimento ou seleção. Ao mudar o tamanho da área de desenho, conservar escala e ponto central; a extensão visível pode mudar. Enquadrar continua disponível e sua visualização também é lembrada.
 
-Essa preferência é independente das opções globais de rótulos. Não altera documento, data de edição, cálculo, histórico ou arquivo `.ecovit`; cópias/importações com novo ID começam sem preferência. Funciona também em somente leitura. Ausência, conteúdo inválido ou leitura indisponível usa a câmera inicial habitual. Falha de gravação informa que a visualização não foi salva para a próxima abertura, sem impedir navegação ou edição. Sem sincronização entre abas, dispositivos ou navegadores. Implementação e verificações no Plano §16; teste de abertura com visualização salva e aceite específico registrados no [M5](marcos/M5-Quantitativos-e-Projetos.md#1211-abertura-até-o-primeiro-desenho--rf-1214). Não foram informados resultados manuais individuais dos demais cenários.
+Essa preferência é independente das opções globais de rótulos. Não altera documento, data de edição, cálculo, histórico ou arquivo `.ecovit`; cópias/importações com novo ID começam sem preferência. Funciona também em somente leitura. Ausência, conteúdo inválido ou leitura indisponível usa a câmera inicial habitual. Falha de gravação informa que a visualização não foi salva para a próxima abertura, sem impedir navegação ou edição. Sem sincronização entre abas, dispositivos ou navegadores. Implementação e verificações no Plano §16; teste de abertura com visualização salva e aceite específico registrados no [M5](marcos/M5-Quantitativos-e-Projetos.md). Não foram informados resultados manuais individuais dos demais cenários.
 
 ### RF-15 — Medidas independentes
-
-**Estado: implementado em M7 e aceito pelo solicitante, incluindo criação em três cliques com cota afastada; teste manual e aceite registrados no [M7](marcos/M7-Medidas.md). Atração aos vértices do terreno corrigida, verificada pelo Codex e aceita pelo solicitante.** Origem: BL-03. A ferramenta “Medida” em Planta cria medidas independentes entre dois pontos do pavimento ativo. Cada medida tem um rótulo com sua distância reta em planta, inclusive em diagonal; não depende de parede nem representa distância em 3D. Esta ferramenta é exceção à obrigatoriedade de malha e direção ortogonal das ferramentas construtivas do RF-03: suas coordenadas mantêm a precisão interna existente, sem exigir múltiplos do módulo de tijolo.
 
 **Criação:** três cliques esquerdos: início, fim e posição da linha da cota. Após o segundo clique, as duas referências ficam fixas e mover o mouse mostra a linha paralela afastada, suas auxiliares e a distância, para qualquer lado do segmento. O terceiro clique confirma a medida inteira em uma única operação de histórico/salvamento; o afastamento pode ser zero e não altera o comprimento medido. Prévias e solturas dos dois primeiros cliques não gravam. Atração aplica-se somente às duas referências, com prioridade para extremidades/vértices próximos e depois o ponto mais próximo de uma linha elegível. A tolerância é visual, constante em tela ao mudar o zoom; Alt pressionado suspende a atração temporariamente. O afastamento é perpendicular e livre, sem atração ou vínculo geométrico. Escape, perda de foco, clique fora ou troca de contexto cancelam a criação inteira; pontas coincidentes conservam o início para tentar outro ponto final. Navegação e zoom permanecem disponíveis entre os três cliques. A ferramenta permite repetir a criação até trocar de ferramenta ou cancelar.
 
@@ -448,13 +322,13 @@ Essa preferência é independente das opções globais de rótulos. Não altera 
 
 **Apresentação:** linha de cota paralela ao segmento medido, posicionada por afastamento perpendicular em qualquer um dos lados. Linhas auxiliares ligam os pontos medidos à cota; pequenos traços diagonais marcam suas extremidades. O rótulo fica centralizado junto à linha, acompanhando sua direção, com leitura legível e sem texto invertido. Mostrar comprimento em cm, com até duas casas decimais; arredondar apenas a exibição, preservando os pontos. Fonte, folga do texto e traços de extremidade têm tamanho visual constante; o afastamento da cota pertence ao desenho e acompanha o zoom. Seleção mostra alças nos pontos medidos; não há reposicionamento independente do rótulo. Acrescentar “Medidas” ao grupo Visibilidade dos rótulos das Preferências do Ecovit, inicialmente visível e com o mesmo alcance local e aplicação imediata de RF-14. Ocultar esse rótulo conserva linha, auxiliares e alças; selecionar não reexibe o texto oculto, preservando a orientação temporária necessária durante criação/edição.
 
-**Persistência e integração:** medidas pertencem ao pavimento, são salvas no navegador e no `.ecovit`, preservadas na reabertura, importação e duplicação do projeto. Duplicar pavimento copia suas medidas com identidades próprias; remover pavimento remove também suas medidas, com restauração por histórico. Medidas aparecem e são editadas somente em Planta, não em Fiada nem na referência de outro pavimento. Não alteram paredes, vãos, lajes, composição, diagnósticos construtivos ou quantitativos, nem disparam recálculo construtivo apenas por sua edição. Enquadrar considera suas extremidades, inclusive em pavimento com somente medidas.
+**Persistência e integração:** medidas pertencem ao pavimento, são salvas no projeto remoto e no `.ecovit`, preservadas na reabertura, importação e duplicação do projeto. Duplicar pavimento copia suas medidas com identidades próprias; remover pavimento remove também suas medidas, com restauração por histórico. Medidas aparecem e são editadas somente em Planta, não em Fiada nem na referência de outro pavimento. Não alteram paredes, vãos, lajes, composição, diagnósticos construtivos ou quantitativos, nem disparam recálculo construtivo apenas por sua edição. Enquadrar considera suas extremidades, inclusive em pavimento com somente medidas.
 
-**Fora do recorte:** edição numérica de comprimento/ângulo, medidas encadeadas, linhas auxiliares de cota, rótulo personalizado ou reposicionável, vínculos automáticos com elementos e medição em 3D. A geometria livre da Medida não libera desenho não modular para paredes, vãos ou lajes. Escopo e aceite no [M7](marcos/M7-Medidas.md); dados, precisão e interação na [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#medidas-independentes). M7 grava envelope 10 e lê envelope 9 acrescentando medidas vazias; arquivos de origem preservados, sem suporte a envelopes 1–8 ou versões desconhecidas. A convenção nominal-v10 permanece inalterada.
+**Fora do recorte:** edição numérica de comprimento/ângulo, medidas encadeadas, linhas auxiliares de cota, rótulo personalizado ou reposicionável, vínculos automáticos com elementos e medição em 3D. A geometria livre da Medida não libera desenho não modular para paredes, vãos ou lajes. Escopo e aceite no [M7](marcos/M7-Medidas.md); dados, precisão e interação na [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#medidas-independentes).
 
 ### RF-16 — Imagem de referência por pavimento
 
-**Estado: implementado em M8 e aceito pelo solicitante; verificações e registro do aceite no [M8](marcos/M8-Imagem-de-Referencia.md).** Origem: BL-02. Cada pavimento pode ter uma única imagem de referência, abaixo da malha e dos elementos, somente em Planta do pavimento ativo. Ela acompanha zoom/navegação e serve de apoio visual ao desenho. Enquadrar inclui a referência visível do ativo, inclusive durante a prévia; imagens ocultas e de outro pavimento não ampliam esse enquadramento. Não gera composição, quantitativos, diagnóstico construtivo ou atração às linhas da imagem. Não aparece em Fiada nem como referência de outro pavimento. BL-01, imagens como objetos do projeto, permanece fora deste recorte.
+Cada pavimento pode ter uma única imagem de referência, abaixo da malha e dos elementos, somente em Planta do pavimento ativo. Ela acompanha zoom/navegação e serve de apoio visual ao desenho. Enquadrar inclui a referência visível do ativo, inclusive durante a prévia; imagens ocultas e de outro pavimento não ampliam esse enquadramento. Não gera composição, quantitativos, diagnóstico construtivo ou atração às linhas da imagem. Não aparece em Fiada nem como referência de outro pavimento. BL-01, imagens como objetos do projeto, permanece fora deste recorte.
 
 **Acesso e apresentação compacta:** seção “Imagem de referência” em Propriedades do pavimento. Sem imagem, oferecer Adicionar imagem. Com imagem, mostrar controles curtos de visibilidade e Opacidade, ação Ajustar e acesso compacto a Substituir/Remover; revelar campos de ajuste apenas durante a operação. Não acrescentar uma barra permanente de ferramentas nem um painel grande sobre o canvas. Usar ícones do catálogo central com nomes acessíveis/dicas e textos breves, mantendo foco, legibilidade e área de clique conforme a [Interface e iconografia](arquitetura/Interface-e-Iconografia.md#iconografia). Orientações da etapa ativa ficam na faixa operacional do canvas; explicações gerais em Como usar o editor. Compactação não pode esconder erros, unidade ou ações Concluir/Cancelar.
 
@@ -471,9 +345,7 @@ Essa preferência é independente das opções globais de rótulos. Não altera 
 
 ### RF-17 — Mobiliários
 
-**Estado: entrega inicial implementada em M10, verificada pelo Codex e aceita pelo solicitante; ampliações do acervo implementadas, com teste manual e aceite específicos pendentes.** Origem: BL-01. [M10](marcos/M10-Mobiliarios.md) reúne catálogo, tarefas, evidências e aceite; [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) define os contratos. Aplicativo 0.15.1, envelope 16 e composição nominal-v10.
-
-**Biblioteca e inserção:** ferramenta Mobiliários em Planta abre catálogo integrado ao Ecovit com categorias, miniaturas, nomes e busca. O núcleo contém 59 opções nas nove categorias da tabela do [M10 §17.1](marcos/M10-Mobiliarios.md#171-alcance-e-catálogo-inicial), incluindo Sofá em L, Escrivaninha, Cadeira de escritório, Berço, Banheira, Churrasqueira, Bicicleta e Aparador. Escolher um item apresenta prévia junto ao cursor; clicar no canvas confirma uma ocorrência no pavimento ativo. Após confirmar, selecionar a ocorrência e retornar a Selecionar. Escape cancela. Abrir, buscar ou fechar o catálogo não altera o projeto. O acervo é distribuído com o aplicativo, sem exigir upload ou consulta a serviço externo de imagens durante a edição.
+**Biblioteca e inserção:** ferramenta Mobiliários em Planta abre catálogo integrado ao Ecovit com categorias, miniaturas, nomes e busca. O núcleo contém 59 opções nas nove categorias da tabela do [catálogo](arquitetura/Medidas-e-Imagens.md#opções-do-catálogo), incluindo Sofá em L, Escrivaninha, Cadeira de escritório, Berço, Banheira, Churrasqueira, Bicicleta e Aparador. Escolher um item apresenta prévia junto ao cursor; clicar no canvas confirma uma ocorrência no pavimento ativo. Após confirmar, selecionar a ocorrência e retornar a Selecionar. Escape cancela. Abrir, buscar ou fechar o catálogo não altera o projeto. O acervo é distribuído com o aplicativo, sem exigir upload ou consulta a serviço externo de imagens durante a edição.
 
 **Categoria Arquitetura:** onze elementos em vista superior e estilo neutro: cinco escadas (reta, U, U assimétrica, L e U com três lances), caminho de placas, caminho de blocos intertravados, bloco de concreto para contenção, rampa reta, floreira e banco de concreto. Cada escada representa exatamente 16 pisos de degrau; patamares não entram nessa contagem. São imagens ilustrativas com dimensões genéricas editáveis, sem cálculo de altura de espelho, conexão automática entre pavimentos, dimensionamento de contenção ou efeito na composição/quantitativos. A seta indica o percurso a partir do ponto inicial. O bloco de contenção usa vista ortogonal plana de cima, com contorno retangular, dois vazados e preenchimento uniforme, sem perspectiva ou faces laterais.
 
@@ -483,17 +355,15 @@ Essa preferência é independente das opções globais de rótulos. Não altera 
 
 **Qualidade no zoom:** gerar versões em resoluções diferentes da mesma imagem sob demanda, apenas em memória, e selecionar conforme tamanho efetivo na tela e densidade do monitor. Compartilhar entre ocorrências da mesma fonte e descartar quando deixam de ser exibidas. Preservar transparência, enquadramento, dimensões, rotação e deformação; usar a original quando a aproximação exigir. Não incorporar versões reduzidas ao projeto nem ao .ecovit. A preferência de qualidade alta segue RF-14 e não afeta a imagem de referência de M8. A redução suaviza detalhes finos, sem garantir a leitura de detalhes menores que um pixel.
 
-**Padrão visual:** vista superior ortogonal, cores suaves (bege, madeira clara, branco, cinza e verde suave), contornos finos e acabamento com detalhes discretos de materiais. Manter o acabamento da prancha aprovada, simplificando a folhagem da vegetação para harmonizar detalhe e legibilidade. Arquivos individuais com fundo transparente, sem rótulos incorporados, marcas, perspectiva ou sombras externas extensas; miniaturas reutilizam as mesmas artes. A [prancha de referência](images/M10-Estudo-Acervo.png) é um estudo visual gerado por IA, com tamanhos ilustrativos, não um conjunto de arquivos finais nem uma escala comum. A vegetação da prancha deve ser simplificada nas artes finais. Dimensões genéricas e proporções constam do acervo implementado; o aceite global da entrega pelo solicitante está registrado no [M10](marcos/M10-Mobiliarios.md).
+**Padrão visual:** vista superior ortogonal, contornos finos, cores suaves e detalhes discretos de materiais. A vegetação usa folhagem simplificada. As imagens têm fundo transparente e as miniaturas usam as mesmas artes. Dimensões e proporções são ilustrativas e constam do catálogo.
 
 **Apresentação e limites:** ocorrências aparecem somente em Planta do pavimento ativo, acima das lajes e abaixo dos traços técnicos de paredes, vãos e medidas, sem impedir a seleção de elementos sobrepostos. Enquadrar considera sua extensão rotacionada, inclusive em pavimento sem paredes. Não aparecem em Fiada nem na comparação de outro pavimento. Nome é consultável no catálogo/propriedades, sem novo rótulo permanente sobre o canvas. Imagens são representações visuais independentes: não geram peças, quantitativos, atração geométrica ou diagnósticos construtivos; não modificam a composição nem disparam seu recálculo. Equipamentos não têm instalação ou altura física modelada.
 
 **Upload e persistência:** aceitar PNG/JPEG personalizados, com validação de conteúdo e limites antes de confirmar. PNG é recomendado para transparência; JPEG mantém o fundo original. Reutilizar a mesma imagem personalizada em várias ocorrências no projeto. Salvar os bytes personalizados em recursos privados do servidor e incorporá-los uma única vez ao `.ecovit`, mantendo referências nas ocorrências. Imagens padrão ficam somente referenciadas pelo catálogo, sem bytes ou miniaturas incorporados ao documento remoto ou arquivo exportado. Reabrir depende de uma distribuição do Ecovit que contenha os itens/revisões referenciados. Ausência de recurso padrão deve ser explicada antes de substituir o trabalho aberto, sem troca silenciosa da arte. Preservar posição, dimensões, rotação e nomes em salvamento, reabertura, importação e cópia de projeto/pavimento; remover pavimento remove suas ocorrências, com restauração por histórico. O limite total de arquivo continua em 50 MiB.
 
-**Fora de M10:** demais itens das capturas além do núcleo, edição/recorte de arte, remoção de fundo, agrupamentos, ordenação manual de camadas, biblioteca personalizada global, 3D, geração de imagens por IA dentro do aplicativo, projetos de instalações e verificação de colisão/circulação. M8 conserva sua imagem de referência separada e seu fluxo de calibração. O aceite global da M10 abrange o escopo implementado, conforme [M10](marcos/M10-Mobiliarios.md).
+**Limites:** edição/recorte de arte, remoção de fundo, agrupamentos, ordenação manual de camadas, biblioteca personalizada global, 3D, geração de imagens por IA dentro do aplicativo, projetos de instalações e verificação de colisão/circulação. M8 conserva sua imagem de referência separada e seu fluxo de calibração. O aceite global da M10 abrange o escopo implementado, conforme [M10](marcos/M10-Mobiliarios.md).
 
 ### RF-18 — Terreno
-
-**Estado: entrega original e ampliações Verde suave e controle/posição superior do rótulo implementadas, verificadas pelo Codex e aceitas pelo solicitante, com registro no [M11](marcos/M11-Terreno.md). Assistência angular na criação e reaproveitamento das texturas em memória implementados, verificados pelo Codex e aceitos pelo solicitante. Rosa dos ventos opcional implementada, verificada pelo Codex e aceita pelo solicitante.** Um terreno por projeto, compartilhado em Planta entre todos os pavimentos.
 
 Em Planta, desenhar o perímetro por cliques em pontos livres, sem restrição ortogonal ou modular. Enquanto o cursor se move, mostrar o segmento entre o último ponto fixado e o próximo ponto, com comprimento euclidiano nas unidades de medida do editor. Clicar no primeiro ponto fecha o polígono e cria o terreno, desde que haja pelo menos três vértices distintos, área não nula e contorno simples sem cruzamentos, sobreposições ou contatos entre arestas não adjacentes. Aceitar concavidade. Antes de fechar, o desenho é apenas uma prévia cancelável.
 
@@ -513,7 +383,7 @@ Recorte plano e visual, sem topografia, terraplenagem, georreferenciamento, recu
 
 ## M12 — Contas e persistência remota
 
-**Estado:** implementada e verificada localmente, pronta para teste; aceite do solicitante e implantação pendentes. Alcance, decisões e verificações em [M12](marcos/M12-Contas-e-Persistencia-Remota.md). Conta e persistência remota substituem o uso local para projetos; não há acesso nem migração automática do IndexedDB anterior.
+O acesso é por conta e os projetos ficam no servidor. O estado da homologação funcional está no [M12](marcos/M12-Contas-e-Persistencia-Remota.md).
 
 ### RF-19 — Conta e acesso por código de e-mail
 
@@ -523,9 +393,7 @@ Cada conta acessa somente seus projetos e imagens, mesmo que alguém conheça o 
 
 Sessão expirada durante uso conserva trabalho em memória, suspende gravação e oferece reentrada por código na própria página. Mesma conta retoma somente após conferência do salvamento/revisão; outra conta não recebe o trabalho anterior. Fechar ou recarregar a página pode perder alterações ainda não salvas, mesmo com aviso. Saída/troca de conta com trabalho não salvo exige escolha explícita, sem descarte silencioso. Formatos de endereço e parâmetros de código/sessão seguem [Autenticação e acesso](arquitetura/Autenticacao-e-Acesso.md); entrada fora do formato suportado é informada antes de enviar código.
 
-**Aceite pendente:** M12-A01/A02/A06/A13/A16. Resend e domínio idevs.com.br definidos pelo solicitante; verificação do domínio, chave e remetente final são requisitos de implantação, conforme M12-D06; credenciais não integram documentação nem aplicativo cliente.
-
-### Evolução de RF-12 — Salvamento remoto e transição por arquivo
+### Salvamento remoto e recuperação de falhas
 
 Servidor é a fonte persistente dos projetos; acesso em outro navegador autenticado recupera o último salvamento confirmado. Editor/cálculo continuam no navegador. Lista, criação, nome, duplicação e arquivos conservam os comportamentos aplicáveis; duplicação produz projeto independente do último salvo, sem copiar memória de outra sessão.
 
@@ -535,11 +403,11 @@ Conexão/servidor indisponível mantém candidato em memória e bloqueia novas a
 
 Cotas iniciais por conta: 20 projetos e 500 MiB de imagens privadas, configuráveis; imagens do catálogo não consomem essa cota. Preservar os limites estruturais e de arquivo/imagem vigentes por projeto. Ao atingir limite, informar motivo e meios de liberar espaço, mantendo leitura/download/exclusão; não apagar projetos automaticamente. Contabilização de lixeira e retenção de recursos conforme D07 e contrato de persistência.
 
-**Transição acordada:** antes da atualização, o usuário baixa na versão antiga os projetos que quer manter; depois autentica e importa manualmente os .ecovit na versão nova. A nova versão não precisa consultar IndexedDB nem manter acesso aos registros locais. Comunicar necessidade de exportação prévia. Não há migração automática/em lote, descoberta de dados de outro navegador/origem nem promessa de recuperação de projeto não exportado. A atualização não deve apagar registros locais por iniciativa própria.
+Projetos de instalações que armazenavam dados no navegador só podem ser transferidos por exportação .ecovit na instalação de origem e importação manual na conta. A recuperação depende de um arquivo em formato suportado. Registros IndexedDB permanecem no armazenamento de origem.
 
 Importar cria novo projeto privado na conta identificada, mantendo geometria, imagens, escolhas e ajustes dos formatos suportados. Não modifica arquivo original nem substitui projeto por coincidência de ID. Falha recusa o arquivo inteiro e preserva remotos anteriores. Repetição técnica da mesma requisição não duplica; nova importação explícita pode criar outra cópia. .ecovit continua autossuficiente para imagens personalizadas, sem credenciais ou dependência de caminhos privados do servidor.
 
-**Aceite pendente:** M12-A03/A04/A05/A07/A08/A09/A10/A11/A12/A13. Detalhes técnicos pertencem a Persistência e Estado; representação remota não muda regras construtivas ou formatos suportados por si só.
+Detalhes técnicos pertencem a Persistência e Estado; representação remota não muda regras construtivas ou formatos suportados por si só.
 
 ### RF-20 — Lixeira e exclusão da própria conta
 
@@ -549,7 +417,7 @@ Remover projeto envia à lixeira privada, separada da lista ativa. Exibir prazo,
 
 Lixeira e exclusão ativa pertencem ao Ecovit. Política de backup do servidor fica integralmente com o administrador, fora da especificação do produto; não prometer recuperação, frequência, retenção ou eliminação de cópias externas pelo aplicativo.
 
-**Aceite pendente:** M12-A14/A15/A16, conforme D07/D08 definidos pelo solicitante. Não há painel de administração, lixeira de elementos individuais ou compartilhamento nesta entrega.
+Não há painel de administração, lixeira de elementos individuais ou compartilhamento nesta entrega.
 
 ## 7. Modelo de domínio e diretrizes de implementação
 
@@ -569,7 +437,7 @@ Lixeira e exclusão ativa pertencem ao Ecovit. Política de backup do servidor f
 | Resultado gerado | Estado do projeto usado nos desenhos e quantitativos |
 
 Haverá apenas um canvas, ocupando a maior parte da tela, onde o usuário fará o desenho, alteração ou exclusão de elementos. Quantitativos abrirão em tela separada.
-Usar unidades internas precisas e tolerância documentada; a representação numérica escolhida não poderá acumular erros a cada fiada. Coordenadas verticais e orientação existirão desde a primeira versão para sustentar uma futura visualização 3D.
+Usar unidades internas precisas e tolerância documentada; a representação numérica escolhida não poderá acumular erros a cada fiada. O modelo registra coordenadas verticais e orientação, independentes do renderizador.
 
 A stack e as decisões de implementação estão propostas no documento complementar [Arquitetura Técnica do Ecovit](Ecovit-Arquitetura-Tecnica.md). O PRD mantém os requisitos de produto como referência.
 
@@ -583,7 +451,7 @@ A identidade visual usa verde profundo, verde oliva e fundo areia, com fonte de 
 
 ### Iconografia consistente
 
-Ações e indicadores da interface atual e futura devem usar um único catálogo amplo, com traços uniformes, aparência refinada, contraste legível e alinhamento central. Mesma ação conserva símbolo e significado em todo o aplicativo. Ícones complementam rótulos; controles sem texto têm nome acessível e dica visual. Não misturar emoji ou caracteres de fonte com ícones de ação/status. Logotipo e desenhos técnicos do canvas preservam sua identidade e significado. Biblioteca, variantes, exceções e verificações são definidos na [Interface e iconografia](arquitetura/Interface-e-Iconografia.md#iconografia). A interface usa Lucide React; verificações e aceite específico da apresentação constam no plano.
+Ações e indicadores da interface usam um único catálogo amplo, com traços uniformes, aparência refinada, contraste legível e alinhamento central. Mesma ação conserva símbolo e significado em todo o aplicativo. Ícones complementam rótulos; controles sem texto têm nome acessível e dica visual. Não misturar emoji ou caracteres de fonte com ícones de ação/status. Logotipo e desenhos técnicos do canvas preservam sua identidade e significado. Biblioteca, variantes, exceções e verificações são definidos na [Interface e iconografia](arquitetura/Interface-e-Iconografia.md#iconografia). A interface usa Lucide React; verificações e aceite específico da apresentação constam no plano.
 
 ### Interface centrada no canvas
 
@@ -603,9 +471,9 @@ No cabeçalho do projeto aberto, o retorno à lista fica à esquerda, após o lo
 
 O editor usa cabeçalho de 48 px, seguido de faixa compacta com ferramentas, Planta/Fiada e controles de fiada. Em larguras menores, a faixa pode quebrar sem ocultar ações. Propriedades e inspeção usam painel estreito recolhível; a legenda inicia recolhida e pode ser aberta. O rodapé compacto reúne térreo, módulo, referência externa e contagem de paredes; a situação da composição fica concentrada no canvas conforme a seção abaixo. O canvas ocupa o espaço principal, preservando a identidade verde do Ecovit. Ferramentas e parâmetros da interface correspondem ao alcance implementado.
 
-### Status e orientações do canvas — M6
+### Status e orientações do canvas
 
-**Estado: implementado em M6 e aceito pelo solicitante; registro no [M6](marcos/M6-Preferencias.md).** Complementa RF-09/10 e o alcance do RF-14, sem criar nova preferência de visibilidade. Concentrar o estado do processamento em um único local no canto inferior esquerdo do canvas, ocupando o espaço da orientação fixa de seleção. Retirar o status junto de Planta/Fiada e sua duplicação no rodapé; manter os demais controles e informações dessas áreas.
+Concentrar o estado do processamento em um único local no canto inferior esquerdo do canvas, ocupando o espaço da orientação fixa de seleção. Retirar o status junto de Planta/Fiada e sua duplicação no rodapé; manter os demais controles e informações dessas áreas.
 
 Exibir, por prioridade: “Processando…” durante processamento; “Resultado desatualizado” quando não houver resultado atual; “Atualizado · com pendências” para resultado atual com diagnósticos de erro; “Composição nominal atualizada” para resultado atual sem erros. O último texto substitui “Geometria nominal verificada” sem sugerir comprovação estrutural. Processamento não pode deixar uma mensagem de conclusão antiga visível; falhas, diagnósticos e a ação Recalcular quando cabível continuam acessíveis.
 
@@ -640,7 +508,7 @@ Observar confusão entre modos, ações acidentais, compreensão da modulação,
 - **Acessibilidade:** controles e diagnósticos utilizáveis por teclado; cores acompanhadas de símbolos ou texto.
 - **Segurança:** tratar arquivos importados como dados; limitar tamanho e validar estrutura; impedir execução de conteúdo importado.
 - **Compatibilidade proposta:** Chrome e Edge desktop; outros navegadores serão avaliados antes do lançamento.
-- **Evolução:** formato identificado e testes de regressão das funcionalidades preservadas; durante o MVP não há obrigação de compatibilizar formatos de marcos anteriores. Sem controle de versões de regras construtivas como funcionalidade do produto.
+- **Evolução:** formato identificado e testes de regressão das funcionalidades preservadas; a compatibilidade segue a matriz de leitores vigente. Sem controle de versões de regras construtivas como funcionalidade do produto.
 
 ## 9. Pesquisa e especificação técnica do motor único
 
@@ -703,22 +571,22 @@ O caderno técnico define convenções implementadas de M2–M3.5, evidências d
 | Quatro pavimentos | Origem comum; cotas distintas, múltiplas da altura-base e ordenadas; fiadas independentes e comparação somente visual |
 | Pavimento sem paredes | Fiada exibe estado vazio, sem criar fiada fictícia |
 | Duplicar ou remover pavimento | Cópia independente da intenção editável; remoção desfazível preserva os demais e impede excluir o último |
-| Abrir arquivo anterior a M4 no aplicativo de M4 | Incompatibilidade informada, sem migração, apagamento automático ou perda do documento corrente |
+| Abrir arquivo de formato incompatível | Incompatibilidade informada; o arquivo de origem e o trabalho corrente são preservados |
 | Mudança após ajuste construtivo | Ajustes compatíveis preservados; incompatíveis pendentes com opção de corrigir ou descartar |
 | Salvar, reabrir e regenerar | Composição e ajustes preservados |
 | Baixar e carregar arquivo nativo | Geometria, ajustes, composição e pendências preservados |
 | Consultar quantitativos | Peças finais por tipo, fiada e pavimento fecham com o total do projeto, sem duplicação nos encontros ou nas canaletas compartilhadas |
 | Informar perdas opcionais | Geométrico, acréscimo e total estimado separados; arredondamento por tipo no total do projeto; consulta não modifica o desenho ou o arquivo |
 | Consultar com pendências ou sem resultado | Resultado atual incompleto identificado como parcial; cálculo ausente/desatualizado não apresenta números antigos como atuais |
-| Duplicar projeto salvo | Novo projeto com nome confirmado e intenção independente, preservando ajustes pendentes e origem; cancelamento ou falha não cria cópia parcial |
+| Duplicar projeto salvo | Projeto independente do último salvo. A lista só anuncia a cópia após confirmação; uma resposta perdida é conciliada pelo mesmo identificador. |
 | Falha no cálculo | Modelo salvo como rascunho, controles liberados e quantitativos antigos indisponíveis |
-| Falha no salvamento remoto | Trabalho mantido em memória e download contém a última edição confirmada |
+| Falha no salvamento remoto | Candidato mantido em memória e disponível para download com os dados acessíveis na sessão |
 | Alterar pavimentos sucessivamente | Uma operação por vez, com projeto inteiro recalculado sem perder alterações de outro pavimento |
 | Composição fora dos procedimentos documentados | Diagnóstico “Sem solução automática”, sem peça especial inventada |
 | Criar projeto | Térreo aberto com propriedades editáveis, sem cadastro obrigatório de outros pavimentos |
-| Reabrir em outro navegador | Projeto recuperado pelo arquivo sem login |
+| Reabrir em outro navegador | A mesma conta recupera o último salvamento confirmado pelo servidor. Importar um .ecovit compatível cria um projeto independente. |
 
-O conjunto de testes deverá incluir casos que precisam falhar, além de exemplos bem-sucedidos. O solicitante testará as funcionalidades diretamente no aplicativo após cada implementação, incluindo o uso de quatro pavimentos, e ajustará os rumos quando necessário. Não haverá prova técnica, prova de conceito ou protótipo separado.
+Os cenários incluem operações bem-sucedidas, recusas e recuperação de falhas. A [estratégia de verificação](arquitetura/Qualidade-e-Desempenho.md#estratégia-de-verificação) separa testes automatizados de aceite manual.
 
 ## 11. Riscos e tratamento previsto
 
@@ -729,27 +597,8 @@ O conjunto de testes deverá incluir casos que precisam falhar, além de exemplo
 | Misturar desenho estrutural e cálculo | Limites explícitos no produto e parâmetros informados por responsável |
 | Perder ajustes ao regenerar | Preservação dos ajustes de encontros, graute e canaletas, desfazer e indicação de incompatibilidades |
 | Quantitativo divergente do desenho | Estado gerado comum para desenho e consulta de quantitativos |
-| Excesso de escopo na primeira versão | Ortogonalidade e uma família ativa; demais geometrias fora do início |
+| Geometria fora do escopo | Paredes ortogonais e uma família ativa por projeto |
 | Desempenho insuficiente | Observar a espera no próprio aplicativo após cada implementação e otimizar apenas quando necessário |
-
-## 12. Síntese de escopo
-
-| Aspecto | Definição |
-|---|---|
-| Público | Arquitetos e autoconstrutores |
-| Direção de paredes | Horizontais e verticais |
-| Tamanho-base | Único para toda a construção, definido no início |
-| Dimensões personalizadas | Comprimento igual ao dobro da largura; altura configurável |
-| Pavimentos | Até quatro: térreo e até três superiores |
-| Automação estrutural | Composição e posicionamento, sem cálculo de cargas, resistência ou armaduras |
-| Referência construtiva | Pesquisa e caderno técnico antes dos algoritmos do motor, conforme seção 9 |
-| Alteração de encontros | Somente na primeira fiada, aplicada a toda a altura até o limite superior da alvenaria |
-| Ajuste de grauteamentos | Todo o trecho vertical do pavimento, respeitando portas, janelas e vãos |
-| Salvamento | No navegador, com download e carregamento de arquivo, sem login |
-| Armazenamento futuro | Formato estruturado e modelo independentes do armazenamento, preparados para banco de dados |
-| Exportação inicial | Somente arquivo nativo para reabrir |
-
-O alcance e o estado de cada entrega constam no plano incremental. As convenções geométricas e suas limitações são definidas no caderno técnico.
 
 ## 13. Referências e limites da pesquisa
 
@@ -761,11 +610,9 @@ As referências são páginas públicas. Não há avaliação prática do editor
 
 Os requisitos deste PRD distinguem alcance implementado e previsto por marco. A pesquisa pública não valida padrões executivos de encontros, detalhamento de armaduras ou viabilidade de edificações com quatro pavimentos.
 
-## 14. M3 — Vãos, canaletas e grautes nominais
+## 14. Vãos, canaletas e grautes nominais
 
-**Estado:** M3.1, M3.2 e M3.3 implementados e aceitos. M3.1 cobre vãos e seus padrões; M3.2 cobre canaletas, níveis globais e supressões/restauração; M3.3 cobre grautes e seus controles. O alcance é nominal, com automação configurável e ajustes persistentes.
-
-As referências separadas de piso e início da alvenaria nesta seção descrevem o contrato histórico de M3 e a interpretação de seus arquivos. Em M4.1, RF-08 adota uma cota única para início das paredes, bases dos vãos e níveis de canaletas; os valores relativos dos padrões abaixo mantêm seus significados. Arquivos anteriores são incompatíveis e não são migrados para M4.1.
+Configurações e ajustes de vãos, canaletas e grautes usam a cota única do pavimento como referência vertical.
 
 Tela “Configurações do projeto”, acessível por botão somente com ícone ao lado do nome editável do projeto no cabeçalho, com nome acessível e dica por mouse/teclado, sem ocupar a barra de desenho. O acesso preserva a renomeação em andamento e abre em um único clique. Tela compacta, com grupos Vãos, Canaletas e Graute vertical; não há abas de armaduras, grampos ou idioma. Aplicar confirma uma única operação de histórico e recálculo; Cancelar não modifica nada. Restaurar padrões atua no grupo e só efetiva ao aplicar; não apaga ajustes manuais existentes.
 
@@ -779,7 +626,7 @@ Restaurar padrões de configuração é diferente de restaurar ajustes automáti
 | Canaletas | Lista de alturas em cm referidas ao piso, interpretadas como topo da fiada de canaleta; mostrar número da fiada. Adicionar/remover nível e restaurar padrões. Alterar níveis regenera as faixas globais existentes. |
 | Graute vertical | Quatro opções independentes: encontros, laterais dos vãos, pontas livres e intervalos em paredes longas. Distância máxima positiva utilizada na distribuição por intervalos. Desabilitar uma categoria remove seus automáticos, preservando inclusões manuais. |
 
-### Padrões normativos de M3
+### Padrões nominais
 
 Esta tabela é a referência dos valores iniciais para novos projetos. Os efeitos de Aplicar, Cancelar e Restaurar e os campos configuráveis estão definidos acima; a inicialização de projetos legados está na [Motor e diagnósticos](arquitetura/Motor-e-Diagnosticos.md#canaletas-e-grautes).
 
@@ -818,9 +665,7 @@ O [registro de M3.1–M3.3](marcos/M3-Vaos-Canaletas-Grautes.md) organiza a impl
 
 As fórmulas, limites geométricos, paginação e exemplos são definidos em CT-07–10 do caderno; representação persistente, identidade dos ajustes e processamento estão na [Motor e diagnósticos](arquitetura/Motor-e-Diagnosticos.md#canaletas-e-grautes). Os critérios e evidências de cada incremento ficam no plano.
 
-## 15. M3.4 — Edição no canvas
-
-**Estado:** implementado e aceito. Abrange RF-02/03/06/07/09/10/11/12: continuidade e união colinear, movimento com dependentes, destaque do módulo inicial e preservação de ajustes. Critérios e verificações no [M3.4](marcos/M3.4-Edicao-no-Canvas.md).
+## 15. Edição no canvas
 
 ### Continuidade e união ao desenhar ou mover
 
@@ -871,9 +716,7 @@ Se ajustes preservados coincidirem no mesmo eixo, qualquer exclusão aplicável 
 
 As regras geométricas e exemplos estão em CT-11/EX-36–48 do caderno; dados/migração na [Elementos construtivos](arquitetura/Elementos-Construtivos.md#paredes-e-dependentes); tarefas, aceite e roteiro no [M3.4](marcos/M3.4-Edicao-no-Canvas.md). Sem nova regra resistente, divisão/rotação de paredes, edição de tijolos, lajes, pavimentos ou quantitativos.
 
-## 16. M3.5 — Composição nominal de encontros em cruz
-
-**Estado:** implementado e aceito no aplicativo 0.7.0. Abrange RF-04/05/07/09/10/12 e a composição nominal de cruz integrada a contorno fechado e encontros L/T. Critérios e verificações no [M3.5](marcos/M3.5-Cruz-Nominal.md). Os contratos legados de cruz bloqueada aplicam-se somente à validação de arquivos antigos.
+## 16. Composição nominal de encontros em cruz
 
 Uma cruz ortogonal com quatro ramos de alvenaria deve receber composição automática conforme CT-12, sem exigir que o usuário altere medidas, separe paredes ou transforme o cruzamento em dois T. Resolver o componente conectado inteiro, incluindo contorno externo e divisórias; uma cruz suportada não pode apagar as peças desse conjunto. Não basta mostrar apenas uma cruz isolada resolvida. Modelagem nominal não comprova ligação resistente entre paredes.
 
@@ -881,6 +724,6 @@ A convenção geométrica de CT-12 usa uma faixa principal contínua horizontal 
 
 Integrar vãos, canaletas e grautes pelos contratos existentes após compor a alvenaria. Vãos não podem invadir a célula compartilhada do encontro nas alturas em que as paredes coexistem; um vão acima de uma parede encerrada não invade o encontro inferior. Preservar edição indireta incompatível com diagnóstico. Canaletas coincidentes e eixo de graute do cruzamento não duplicam por parede/origem. Ajustes, movimento/união de paredes, histórico e transporte permanecem aplicáveis. Classificar a geometria existente em cada fiada, preservando fase quando a cruz se tornar reta após terminar uma das paredes.
 
-Para conflito real de ocupação, alturas sem padrão, escolha pendente ou combinação de encontros incompatível, manter diagnóstico localizável e componente afetado sem composição; outros componentes continuam visíveis. Não usar o simples reconhecimento de cruz como erro. Informar a consequência: “Composição suspensa em N paredes conectadas: [motivo]”, destacando encontro e paredes afetadas. Snapshots antigos com cruz bloqueada permanecem validados pelo contrato original antes da migração; o editor atual não deve atribuir suporte ausente à modulação nem usar mensagem operacional dependente de “no M2”.
+Para conflito real de ocupação, alturas sem padrão, escolha pendente ou combinação de encontros incompatível, manter diagnóstico localizável e componente afetado sem composição; outros componentes continuam visíveis. Não usar o simples reconhecimento de cruz como erro. Informar a consequência: “Composição suspensa em N paredes conectadas: [motivo]”, destacando encontro e paredes afetadas. A compatibilidade de resultados salvos segue a matriz de formatos suportados.
 
-CT-12/EX-51–55 define geometria/exemplos; [Motor e diagnósticos](arquitetura/Motor-e-Diagnosticos.md#pipeline-de-células-e-encontros) define processamento/migração; [M3.5](marcos/M3.5-Cruz-Nominal.md) define tarefas/aceite. Sem lajes, múltiplos pavimentos, quantitativos, aço, peças especiais ou validação estrutural.
+CT-12/EX-51–55 define a geometria e os exemplos. [Motor e diagnósticos](arquitetura/Motor-e-Diagnosticos.md#pipeline-de-células-e-encontros) define o processamento. A composição da cruz é nominal e não dimensiona aço, peças especiais ou ligações.

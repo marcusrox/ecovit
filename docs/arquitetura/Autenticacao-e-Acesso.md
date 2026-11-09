@@ -4,7 +4,7 @@
 
 ## Alcance
 
-**M12 implementada e verificada localmente, pronta para teste; aceite do solicitante pendente.** Entrada por código de e-mail na aplicação pública e conta obrigatória; sem edição offline ou migração de IndexedDB. Este assunto define identidade/sessão/autorização; persistência e estados de falha pertencem aos assuntos correspondentes.
+A aplicação pública exige conta e entrada por código de e-mail. Este assunto define identidade, sessão e autorização. A persistência e os estados de falha têm contratos próprios.
 
 Uma conta representa uma pessoa; projetos são privados e possuem um proprietário. Cadastro gratuito no primeiro login válido. Sem Google, organizações, convites, transferência de propriedade, papéis de colaborador ou compartilhamento nesta entrega. Login não transfere projetos locais; transição por arquivo .ecovit. Controle da caixa de e-mail é a prova de identidade: não há segundo fator nesta M12. Sessões opacas e código por e-mail dispensam JWT/access-refresh tokens ou servidor de identidade separado.
 
@@ -80,7 +80,6 @@ Backup do servidor segue exclusivamente a administração, fora desta especifica
 
 - [Resend — domínio](https://resend.com/docs/add-a-domain), [chave restrita](https://resend.com/docs/api-reference/api-keys/create-api-key) e [envio HTTPS](https://resend.com/docs/api-reference/emails/send-email): pré-requisitos e contrato de envio.
 - [Resend — idempotência](https://resend.com/docs/dashboard/emails/idempotency-keys), [cotas](https://resend.com/docs/knowledge-base/account-quotas-and-limits) e [conflitos MX](https://resend.com/docs/knowledge-base/how-do-i-avoid-conflicting-with-my-mx-records): limites e integração com DNS existente.
-- [Resend — SMTP](https://resend.com/docs/send-with-smtp): alternativa documentada, não implementada em paralelo; smtp.resend.com, usuário resend, API key como senha, porta 465/TLS ou 587/STARTTLS obrigatório.
 - [OWASP — Session Management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html): sessão, cookies, expiração e revogação.
 - [OWASP — CSRF Prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html): defesa de requisições que alteram estado.
 - [OWASP — Forgot Password](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html): referência para expiração, uso único e limites de desafios enviados por canal lateral; não introduz senha própria no Ecovit.

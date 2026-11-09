@@ -2,8 +2,6 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md) · [Marcos](../Ecovit-Plano-Implementacao.md)
 
-Este documento descreve contratos de software vigentes. Regras geométricas/construtivas, justificativas, fontes e exemplos independentes pertencem ao Caderno Técnico; escopo e comportamento ao PRD; verificações executadas e aceites aos registros dos marcos.
-
 ## Canvas, Planta e Fiada
 
 Um Stage Konva representa a área do desenho. Usa camadas do mesmo espaço de edição para referência raster, malha, geometria, mobiliários e interação/seleção, conforme os contratos de cada elemento. São camadas do mesmo espaço de edição, sem canvases visíveis separados para Planta e Fiada. Zoom/enquadramento aceitam escala de 0,000001 a 0,12 pixel por unidade interna; o limite inferior permite enquadrar perímetros grandes de terreno e é aceito também na restauração da câmera local.
@@ -64,7 +62,7 @@ src/editor/Terrain.tsx integra criação por cliques, ajuste e propriedades. Pr�
 
 Acrescentar gesto de translação de parede à união de estados existente, com parede inicial, ponto de pega e delta modular; distinguir de movimento de vão, alças, criação e navegação. Prévia inclui dependentes e geometria da união; é descartável. Célula de hover usa o centro ativo do cursor e a mesma identificação de célula do gesto, em camada sem eventos. Tratar Escape, blur, mouseup fora e bloqueios.
 
-Ao confirmar, registrar modelo/ajustes uma vez no histórico sem resultados gerados; executar salvar → calcular projeto inteiro → salvar, com tratamento de falhas existente. Não ampliar reconcileOpenings de modo a confundir translação explícita com redimensionamento: neste último preservar posição mundial dos vãos; na translação preservar offset e, se houver união, recalculá-lo para manter a posição mundial atingida. Cancelamento/hover não alteram metadados, histórico ou salvamento. Seleção após união aponta para sobrevivente; após movimento sem união mantém ID. Câmera permanece e controles não são exibidos como disponíveis antes da implementação.
+Ao confirmar, registrar modelo/ajustes uma vez no histórico sem resultados gerados; aguardar a confirmação remota da intenção e calcular o projeto inteiro em memória. Não ampliar reconcileOpenings de modo a confundir translação explícita com redimensionamento: neste último preservar posição mundial dos vãos; na translação preservar offset e, se houver união, recalculá-lo para manter a posição mundial atingida. Cancelamento/hover não alteram metadados, histórico ou salvamento. Seleção após união aponta para sobrevivente; após movimento sem união mantém ID. A câmera é preservada.
 
 ## Seleção inicial por célula
 
