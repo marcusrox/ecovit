@@ -98,6 +98,11 @@ button.iconButton {
   right: calc(100% + 6px);
   transform: translateY(-50%);
 }
+.bigPlus,
+.projectIcon {
+  display: grid;
+  place-items: center;
+}
 :global(button:focus-visible),
 :global(input:focus-visible),
 :global(select:focus-visible),
@@ -232,8 +237,6 @@ button.iconButton {
   white-space: nowrap;
 }
 .homeApp {
-  --home-gutter: clamp(16px, 3vw, 32px);
-  --home-width: 1040px;
   height: auto;
   min-height: 100dvh;
   min-width: 0;
@@ -241,8 +244,8 @@ button.iconButton {
     radial-gradient(ellipse at 90% 0%, #e8ecdf 0, transparent 55%), #f5f4ee;
 }
 .homeApp .header {
-  height: 72px;
-  padding-inline: max(var(--home-gutter), calc((100% - var(--home-width)) / 2));
+  height: 88px;
+  padding-inline: max(32px, calc((100% - 1160px) / 2));
   background: transparent;
   border-color: #d9ded2;
 }
@@ -252,6 +255,7 @@ button.iconButton {
   gap: 8px;
   font-size: 12px;
   color: #576851;
+  margin-right: 14px;
 }
 .localBadge::before {
   content: "";
@@ -261,9 +265,9 @@ button.iconButton {
   background: #708751;
 }
 .home {
-  width: min(var(--home-width), calc(100% - 2 * var(--home-gutter)));
+  width: min(1160px, calc(100% - 64px));
   margin: 0 auto;
-  padding: clamp(24px, 3.5vw, 40px) 0 32px;
+  padding: 44px 0 28px;
 }
 .eyebrow {
   font-size: 10px;
@@ -272,18 +276,20 @@ button.iconButton {
   font-weight: 700;
 }
 .homeIntro {
-  display: grid;
-  gap: 8px;
-  padding-bottom: 24px;
-  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding-bottom: 36px;
+  margin-bottom: 28px;
   border-bottom: 1px solid #d9ded2;
 }
 .homeIntro h1 {
-  font-size: clamp(30px, 3.6vw, 44px);
+  font-size: clamp(32px, 3.3vw, 46px);
   line-height: 1.15;
   font-weight: 550;
   letter-spacing: -1.8px;
-  margin-top: 8px;
+  margin-top: 14px;
   color: #233f30;
 }
 .homeIntro h1 em {
@@ -293,53 +299,88 @@ button.iconButton {
 }
 .homeIntro p {
   color: #61705e;
+  line-height: 1.7;
+  font-size: 14px;
+  padding-bottom: 2px;
+}
+.homeGrid {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+.newCard {
+  position: relative;
+  min-height: 224px;
+  padding: 24px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: #274b38;
+  color: #fffef5;
+  border: 1px solid #274b38;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px #253c3010;
+}
+.newCard:hover:not(:disabled) {
+  background: #335d44;
+}
+.bigPlus {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #aabb9770;
+  border-radius: 50%;
+  font-size: 26px;
+  text-align: center;
+  line-height: 29px;
+  color: #dce9c4;
+  margin-bottom: 18px;
+}
+.newCard strong {
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+.newCard > span:not(.bigPlus) {
+  font-size: 13px;
   line-height: 1.6;
+  margin-top: 7px;
+  color: #d0dcc8;
+  max-width: 220px;
+}
+.newCard b {
+  font-size: 12px;
+  margin-top: 20px;
+  color: #e4efcf;
+  font-weight: 600;
 }
 .listHeading {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 12px 16px;
-  margin-bottom: 12px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 .listHeading h2 {
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.3px;
 }
-.listTitle p {
-  min-height: 1.5em;
-  margin-top: 4px;
-  font-size: 13px;
-  line-height: 1.5;
+.listHeading > span {
+  font-size: 12px;
   color: #63705e;
 }
-.listActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.listUtilities {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px 12px;
-  margin-bottom: 8px;
-}
-.listUtilities > button {
-  padding: 8px 12px;
-  font-size: 13px;
-}
 .homeStatus {
-  min-height: 44px;
+  min-height: 52px;
+  margin-bottom: 16px;
 }
 .homeStatusMessage {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 44px;
-  padding: 5px 12px;
+  min-height: 52px;
+  padding: 10px 14px;
   border: 1px solid #dce1d5;
   border-radius: 10px;
   background: #eef1e6;
@@ -373,16 +414,19 @@ button.iconButton {
   border: 1px dashed #c5cebb;
   background: #fafaf580;
   border-radius: 14px;
-  min-height: 176px;
+  min-height: 224px;
   text-align: center;
   padding: 24px;
   color: #637555;
+}
+.empty > span {
+  font-size: 30px;
 }
 .empty h3 {
   font-size: 16px;
   color: #41563c;
   font-weight: 600;
-  margin: 12px 0 4px;
+  margin: 8px 0;
 }
 .empty p {
   font-size: 13px;
@@ -399,8 +443,10 @@ button.iconButton {
   border: 0;
   border-radius: 12px;
   background: #fffefb;
+  box-shadow: 0 2px 4px #253c3003;
 }
 .projectCard:hover:not(:disabled) {
+  border-color: #a5b496;
   background: #fff;
 }
 .projectOpeningCard:disabled {
@@ -452,36 +498,77 @@ button.iconButton {
   font-size: 12px;
   line-height: 1.5;
 }
+.projectCard b {
+  margin-left: auto;
+  font-size: 21px;
+  font-weight: 400;
+  color: #6e805e;
+}
 .localNote {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 12px;
   color: #68735f;
-  margin-top: 16px;
+  margin-top: 24px;
   line-height: 1.7;
 }
 .localNote > span:first-child {
   color: #8a9974;
   font-size: 18px;
 }
+@media (max-width: 1000px) {
+  .homeIntro {
+    display: block;
+  }
+  .homeIntro p {
+    margin-top: 16px;
+  }
+}
 @media (max-width: 640px) {
+  .homeApp .header {
+    height: 76px;
+    padding-inline: 20px;
+  }
   .localBadge {
     display: none;
   }
+  .home {
+    width: calc(100% - 40px);
+    padding-top: 28px;
+  }
   .homeIntro {
-    padding-bottom: 16px;
-    margin-bottom: 16px;
+    padding-bottom: 24px;
+    margin-bottom: 24px;
   }
   .homeIntro h1 {
     letter-spacing: -1px;
   }
-  .projectCard {
-    padding-inline: 12px;
-    gap: 8px;
+  .homeGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
   }
-  .projectRow .projectActions {
-    padding-right: 8px;
+  .newCard {
+    min-height: 0;
+    padding: 20px;
+  }
+  .bigPlus {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+  }
+  .newCard > span:not(.bigPlus) {
+    max-width: calc(100% - 48px);
+  }
+  .projectCard {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .listHeading h2 {
+    font-size: 15px;
+  }
+  .listHeading > span {
+    font-size: 11px;
   }
   .homeApp .modal {
     width: min(480px, calc(100% - 32px));

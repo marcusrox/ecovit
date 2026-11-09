@@ -742,8 +742,15 @@ function EditorApp() {
   }, [refreshProjects]);
   const homeHeader = (
     <div className={styles.headerActions}>
-      <span className={styles.localBadge}>Projetos privados na conta</span>
       <AccountButton />
+      <span className={styles.localBadge}>Projetos privados na conta</span>
+      <button
+        disabled={busy || importing || listingState !== "ready"}
+        onClick={() => input.current?.click()}
+        className={styles.iconText}
+      >
+        <Icon name="upload" /> Carregar .ecovit
+      </button>
     </div>
   );
   const homeProgress = openingProjectId
@@ -765,79 +772,20 @@ function EditorApp() {
           </h1>
         </div>
         <p>
-          Desenhe sua planta com tijolos ecológicos.{" "}
+          Desenhe sua planta com tijolos ecológicos.
+          <br />
           Uma malha precisa, um espaço para criar.
         </p>
       </div>
       <div className={styles.listHeading}>
-        <div className={styles.listTitle}>
-          <h2 id="projects-title">Seu espaço de projetos</h2>
-          <p>
-            {listingState === "loading"
-              ? ""
-              : listingState === "error"
-                ? "Lista indisponível"
-                : `${projects.length} ${projects.length === 1 ? "projeto salvo" : "projetos salvos"}`}
-          </p>
-        </div>
-        <div className={styles.listActions}>
-          <button
-            disabled={busy || importing || listingState !== "ready"}
-            onClick={() => input.current?.click()}
-            className={styles.iconText}
-          >
-            <Icon name="upload" /> Carregar .ecovit
-          </button>
-          <button
-            className={`${styles.primary} ${styles.iconText}`}
-            disabled={busy || importing || listingState !== "ready"}
-            onClick={() => {
-              setFormError("");
-              setCreating(true);
-            }}
-          >
-            <Icon name="plus" /> Novo projeto
-          </button>
-        </div>
-      </div>
-      <div className={styles.listUtilities}>
-        <div
-          className={styles.homeStatus}
-          role="region"
-          aria-label="Status dos projetos"
-        >
-          <div role="status" aria-atomic="true">
-            {homeProgress && (
-              <div className={styles.homeStatusMessage}>
-                <span className={styles.openingSpinner}>
-                  <Icon name="saving" />
-                </span>
-                <span>{homeProgress}</span>
-              </div>
-            )}
-          </div>
-          {!homeProgress && homeNotice ? (
-            <div
-              className={`${styles.homeStatusMessage} ${styles.homeStatusWarning}`}
-              role="alert"
-              aria-atomic="true"
-            >
-              <Icon name="warning" />
-              <span>{homeNotice}</span>
-              {homeNotice !== listingFailure && (
-                <button
-                  aria-label="Fechar aviso"
-                  className={styles.iconButton}
-                  title="Fechar aviso"
-                  data-tooltip="Fechar aviso"
-                  onClick={() => useStore.getState().notify("")}
-                >
-                  <Icon name="close" />
-                </button>
-              )}
-            </div>
-          ) : null}
-        </div>
+        <h2 id="projects-title">Seu espaço de projetos</h2>
+        <span>
+          {listingState === "loading"
+            ? ""
+            : listingState === "error"
+              ? "Lista indisponível"
+              : `${projects.length} ${projects.length === 1 ? "projeto salvo" : "projetos salvos"}`}
+        </span>
         <button
           disabled={busy || importing || listingState === "loading"}
           onClick={() => void refreshProjects()}
@@ -845,149 +793,205 @@ function EditorApp() {
           Atualizar lista
         </button>
       </div>
-      <section
-        className={styles.projectList}
-        aria-labelledby="projects-title"
+      <div
+        className={styles.homeStatus}
+        role="region"
+        aria-label="Status dos projetos"
       >
-        {!projects.length ? (
-          <div className={styles.empty}>
-            <span aria-hidden="true">
-              <Icon name="home" size="feature" />
-            </span>
-            <h3>
-              {listingState === "ready"
-                ? "Um espaço para suas ideias"
-                : listingState === "loading"
-                  ? "Consultando seus projetos…"
-                  : "Lista indisponível"}
-            </h3>
-            <p>
-              {listingState === "ready"
-                ? "Os projetos salvos na sua conta aparecerão aqui."
-                : "A lista ainda não foi confirmada pelo servidor. Use Atualizar lista para tentar novamente."}
-            </p>
+        <div role="status" aria-atomic="true">
+          {homeProgress && (
+            <div className={styles.homeStatusMessage}>
+              <span className={styles.openingSpinner}>
+                <Icon name="saving" />
+              </span>
+              <span>{homeProgress}</span>
+            </div>
+          )}
+        </div>
+        {!homeProgress && homeNotice ? (
+          <div
+            className={`${styles.homeStatusMessage} ${styles.homeStatusWarning}`}
+            role="alert"
+            aria-atomic="true"
+          >
+            <Icon name="warning" />
+            <span>{homeNotice}</span>
+            {homeNotice !== listingFailure && (
+              <button
+                aria-label="Fechar aviso"
+                className={styles.iconButton}
+                title="Fechar aviso"
+                data-tooltip="Fechar aviso"
+                onClick={() => useStore.getState().notify("")}
+              >
+                <Icon name="close" />
+              </button>
+            )}
           </div>
-        ) : (
-          projects.map((p) => (
-            <div
-              className={`${styles.projectSlot} ${fadingProjects.includes(p.id) ? styles.projectRowExiting : ""}`}
-              key={p.id}
-              inert={fadingProjects.includes(p.id)}
-              onAnimationEnd={(event) => {
-                if (
-                  event.target !== event.currentTarget ||
-                  !fadingProjects.includes(p.id)
-                )
-                  return;
-                setProjects((current) =>
-                  current.filter((project) => project.id !== p.id),
-                );
-                setFadingProjects((current) =>
-                  current.filter((id) => id !== p.id),
-                );
-              }}
-            >
-              <div className={styles.projectRow}>
-                <button
-                  disabled={busy || importing || listingState !== "ready"}
-                  key={p.id}
-                  className={`${styles.projectCard} ${openingProjectId === p.id ? styles.projectOpeningCard : ""}`}
-                  aria-expanded={
-                    !p.compatible ? incompatibleProject === p.id : undefined
-                  }
-                  aria-describedby={
-                    !p.compatible && incompatibleProject === p.id
-                      ? `project-compatibility-${p.id}`
-                      : undefined
-                  }
-                  onClick={() => {
-                    if (!p.compatible) {
-                      setIncompatibleProject(p.id);
-                      return;
-                    }
-                    void useStore.getState().open(p.id);
-                  }}
-                >
-                  <span className={styles.projectIcon} aria-hidden="true">
-                    {openingProjectId === p.id ? (
-                      <span className={styles.openingSpinner}>
-                        <Icon name="saving" size="card" />
-                      </span>
-                    ) : (
-                      <Icon name="plan" size="card" />
-                    )}
-                  </span>
-                  <span className={styles.projectInfo}>
-                    <strong title={p.name}>{p.name}</strong>
-                    {openingProjectId === p.id ? (
-                      <small>Abrindo projeto…</small>
-                    ) : (
-                      <small>
-                        {!p.compatible && (
-                          <span>Formato incompatível · </span>
-                        )}
-                        {p.walls} {p.walls === 1 ? "parede" : "paredes"} ·
-                        Atualizado em{" "}
-                        <time dateTime={p.updatedAt}>
-                          {new Date(p.updatedAt).toLocaleDateString("pt-BR")}{" "}
-                          às{" "}
-                          {new Date(p.updatedAt).toLocaleTimeString("pt-BR", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hourCycle: "h23",
-                          })}
-                        </time>
-                      </small>
-                    )}
-                    {!p.compatible && incompatibleProject === p.id && (
-                      <small
-                        id={`project-compatibility-${p.id}`}
-                        role="status"
-                        className={styles.projectCompatibilityMessage}
-                      >
-                        Este projeto usa um formato antigo e não pode ser
-                        aberto nesta versão. Arquivos de marcos anteriores não
-                        são convertidos. Crie um novo projeto.
-                      </small>
-                    )}
-                  </span>
-                </button>
-                <div className={styles.projectActions}>
+        ) : null}
+      </div>
+      <div className={styles.homeGrid}>
+        <button
+          className={styles.newCard}
+          disabled={busy || importing || listingState !== "ready"}
+          onClick={() => {
+            setFormError("");
+            setCreating(true);
+          }}
+        >
+          <span className={styles.bigPlus} aria-hidden="true">
+            <Icon name="plus" size="feature" />
+          </span>
+          <strong>Novo projeto</strong>
+          <span>Escolha o tijolo-base e dê forma à sua próxima ideia.</span>
+          <b className={styles.iconText}>
+            Criar planta <Icon name="next" />
+          </b>
+        </button>
+        <section
+          className={styles.projectList}
+          aria-labelledby="projects-title"
+        >
+          {!projects.length ? (
+            <div className={styles.empty}>
+              <span aria-hidden="true">
+                <Icon name="home" size="feature" />
+              </span>
+              <h3>
+                {listingState === "ready"
+                  ? "Um espaço para suas ideias"
+                  : listingState === "loading"
+                    ? "Consultando seus projetos…"
+                    : "Lista indisponível"}
+              </h3>
+              <p>
+                {listingState === "ready"
+                  ? "Os projetos salvos na sua conta aparecerão aqui."
+                  : "A lista ainda não foi confirmada pelo servidor. Use Atualizar lista para tentar novamente."}
+              </p>
+            </div>
+          ) : (
+            projects.map((p) => (
+              <div
+                className={`${styles.projectSlot} ${fadingProjects.includes(p.id) ? styles.projectRowExiting : ""}`}
+                key={p.id}
+                inert={fadingProjects.includes(p.id)}
+                onAnimationEnd={(event) => {
+                  if (
+                    event.target !== event.currentTarget ||
+                    !fadingProjects.includes(p.id)
+                  )
+                    return;
+                  setProjects((current) =>
+                    current.filter((project) => project.id !== p.id),
+                  );
+                  setFadingProjects((current) =>
+                    current.filter((id) => id !== p.id),
+                  );
+                }}
+              >
+                <div className={styles.projectRow}>
                   <button
-                    className={styles.iconButton}
-                    aria-label="Duplicar"
-                    data-tooltip="Duplicar"
-                    disabled={
-                      busy ||
-                      importing ||
-                      listingState !== "ready" ||
-                      !!duplicating ||
-                      !p.compatible
-                    }
-                    title="Duplicar o último estado salvo"
-                    onClick={() => setDuplicating({ id: p.id, name: p.name })}
-                  >
-                    <Icon name="copy" />
-                  </button>
-                  <button
-                    className={`${styles.iconButton} ${styles.deleteProject}`}
-                    aria-label="Excluir"
-                    title="Excluir projeto"
-                    data-tooltip="Excluir"
                     disabled={busy || importing || listingState !== "ready"}
-                    onClick={(event) => {
-                      deleteTrigger.current = event.currentTarget;
-                      setDeleting({ id: p.id, name: p.name });
+                    key={p.id}
+                    className={`${styles.projectCard} ${openingProjectId === p.id ? styles.projectOpeningCard : ""}`}
+                    aria-expanded={
+                      !p.compatible ? incompatibleProject === p.id : undefined
+                    }
+                    aria-describedby={
+                      !p.compatible && incompatibleProject === p.id
+                        ? `project-compatibility-${p.id}`
+                        : undefined
+                    }
+                    onClick={() => {
+                      if (!p.compatible) {
+                        setIncompatibleProject(p.id);
+                        return;
+                      }
+                      void useStore.getState().open(p.id);
                     }}
                   >
-                    <Icon name="delete" />
+                    <span className={styles.projectIcon} aria-hidden="true">
+                      {openingProjectId === p.id ? (
+                        <span className={styles.openingSpinner}>
+                          <Icon name="saving" size="card" />
+                        </span>
+                      ) : (
+                        <Icon name="plan" size="card" />
+                      )}
+                    </span>
+                    <span className={styles.projectInfo}>
+                      <strong title={p.name}>{p.name}</strong>
+                      {openingProjectId === p.id ? (
+                        <small>Abrindo projeto…</small>
+                      ) : (
+                        <small>
+                          {!p.compatible && (
+                            <span>Formato incompatível · </span>
+                          )}
+                          {p.walls} {p.walls === 1 ? "parede" : "paredes"} ·
+                          Atualizado em{" "}
+                          <time dateTime={p.updatedAt}>
+                            {new Date(p.updatedAt).toLocaleDateString("pt-BR")}{" "}
+                            às{" "}
+                            {new Date(p.updatedAt).toLocaleTimeString("pt-BR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hourCycle: "h23",
+                            })}
+                          </time>
+                        </small>
+                      )}
+                      {!p.compatible && incompatibleProject === p.id && (
+                        <small
+                          id={`project-compatibility-${p.id}`}
+                          role="status"
+                          className={styles.projectCompatibilityMessage}
+                        >
+                          Este projeto usa um formato antigo e não pode ser
+                          aberto nesta versão. Arquivos de marcos anteriores não
+                          são convertidos. Crie um novo projeto.
+                        </small>
+                      )}
+                    </span>
                   </button>
+                  <div className={styles.projectActions}>
+                    <button
+                      className={styles.iconButton}
+                      aria-label="Duplicar"
+                      data-tooltip="Duplicar"
+                      disabled={
+                        busy ||
+                        importing ||
+                        listingState !== "ready" ||
+                        !!duplicating ||
+                        !p.compatible
+                      }
+                      title="Duplicar o último estado salvo"
+                      onClick={() => setDuplicating({ id: p.id, name: p.name })}
+                    >
+                      <Icon name="copy" />
+                    </button>
+                    <button
+                      className={`${styles.iconButton} ${styles.deleteProject}`}
+                      aria-label="Excluir"
+                      title="Excluir projeto"
+                      data-tooltip="Excluir"
+                      disabled={busy || importing || listingState !== "ready"}
+                      onClick={(event) => {
+                        deleteTrigger.current = event.currentTarget;
+                        setDeleting({ id: p.id, name: p.name });
+                      }}
+                    >
+                      <Icon name="delete" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
-        )}
-      </section>
+            ))
+          )}
+        </section>
+      </div>
       <p className={styles.localNote}>
         <span aria-hidden="true">
           <Icon name="download" />
