@@ -28,6 +28,7 @@ import {
 import { download } from "../persistence/files";
 import { useStore } from "../state/store";
 import { Icon } from "../ui/Icon";
+import { Brand } from "../ui/Brand";
 import { VersionFooter } from "./ReleaseHistory";
 import styles from "../ui/App.module.css";
 
@@ -187,9 +188,12 @@ function Login({
         </div>
       </form>
       {!expected && (
-        <p className={styles.help}>
-          Projetos da versão anterior precisam ser exportados em .ecovit antes
-          da atualização e importados após entrar.
+        <p className={styles.loginMigration}>
+          <Icon name="info" size="compact" />
+          <span>
+            Projetos da versão anterior precisam ser exportados em .ecovit antes
+            da atualização e importados após entrar.
+          </span>
         </p>
       )}
     </div>
@@ -574,7 +578,29 @@ function Reauthenticate({
 function LoginPage({ children }: { children: ReactNode }) {
   return (
     <div className={styles.loginShell}>
-      <main className={styles.loginPage}>{children}</main>
+      <main className={styles.loginPage}>
+        <figure className={styles.loginHero}>
+          <img
+            src={`${import.meta.env.BASE_URL}images/entrada-tijolo-ecologico.webp`}
+            alt="Casa contemporânea em tijolo ecológico aparente cercada de vegetação"
+            width={1122}
+            height={1402}
+            fetchPriority="high"
+          />
+          <figcaption className={styles.loginCaption}>
+            <span>Arquitetura sustentável</span>
+            <p>
+              Projetos que
+              <br />
+              nascem da terra.
+            </p>
+          </figcaption>
+        </figure>
+        <div className={styles.loginContent}>
+          <Brand />
+          <div className={styles.loginEntry}>{children}</div>
+        </div>
+      </main>
       <VersionFooter />
     </div>
   );

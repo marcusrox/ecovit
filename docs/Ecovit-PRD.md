@@ -387,6 +387,8 @@ O acesso é por conta e os projetos ficam no servidor. A situação da homologa�
 
 ### RF-19 — Conta e acesso por código de e-mail
 
+A tela de entrada apresenta a identidade do Ecovit e uma imagem editorial de arquitetura em tijolo ecológico. Em telas largas, a imagem acompanha o formulário lado a lado. Em telas estreitas, a imagem ocupa uma faixa compacta acima do formulário. A entrada por e-mail e código, o aviso sobre projetos da versão anterior e o link de versão permanecem acessíveis nos dois formatos.
+
 Acesso gratuito pela internet, com conta obrigatória para criar, editar, importar e acessar projetos remotos. Entrada exclusivamente por código enviado ao e-mail na aplicação pública; primeira confirmação válida cria a conta e entradas posteriores recuperam a mesma identidade. Em desenvolvimento local, o administrador pode configurar um e-mail fixo para abrir a lista diretamente, usando a conta correspondente no banco da instância. Sem senha própria, Google ou vinculação de métodos nesta entrega. Mostrar endereço da conta e permitir Sair. Erro de envio, código inválido/expirado/usado e excesso de tentativas têm mensagem e recuperação próprias, sem criar conta parcialmente. Envio aceito pelo servidor de e-mail não garante entrega na caixa; orientar pasta de spam e reenvio limitado.
 
 Cada conta acessa somente seus projetos e imagens, mesmo que alguém conheça o identificador ou endereço de um recurso de outro usuário. Gratuidade não torna os projetos públicos. Sem organizações, compartilhamento ou transferência de propriedade. Não há edição offline nem modo de criação local. Preferências e câmera podem continuar no navegador, sem sincronização entre dispositivos.

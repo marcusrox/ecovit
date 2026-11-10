@@ -12,6 +12,10 @@ Indicador do editor diferencia persistência de cálculo. Mensagens de falha/res
 
 Reusar Icon e controles existentes; eventuais símbolos novos entram no mapa central com nome semântico, sem imports diretos ou catálogo paralelo. Validar foco/teclado/nomes acessíveis, anúncios de status e ausência de rolagem horizontal nas resoluções 1366×768, 1280×720 e 900×680 em Chrome/Edge, além das verificações de iconografia deste assunto. Não atribuir essas verificações à especificação: serão executadas na implementação.
 
+## Tela de entrada
+
+A tela pública usa a marca compartilhada com o restante do aplicativo e uma imagem editorial WebP servida com o frontend. Em desktop, o painel ilustrado fica ao lado do formulário. Em larguras de até 680 px, o painel passa a uma faixa compacta acima da entrada. A legenda da imagem é texto da interface sobre um degradê escuro. O formulário mantém rótulos, estados e foco da autenticação. O aviso de migração usa o ícone de informação do catálogo central. O rodapé com a versão segue o fluxo da página.
+
 ## Versão e histórico de tasks
 
 O rodapé do login e da lista de projetos usa um link de texto alinhado à direita. No editor, o mesmo link ocupa a última posição do rodapé compacto, preservando sua altura e as informações existentes. O link tem nome acessível com a versão e o destino, sublinhado e foco visível.
