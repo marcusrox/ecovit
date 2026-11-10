@@ -1,10 +1,10 @@
 # Apresentação, operação e verificação documental
 
-[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../Ecovit-PRD.md)
+[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../../Ecovit-PRD.md)
 
 Iconografia, favicon, painéis, campos com unidade e operação local.
 
-Contrato vigente em [Arquitetura](../arquitetura/Interface-e-Iconografia.md).
+Contrato vigente em [Arquitetura](../../arquitetura/Interface-e-Iconografia.md).
 
 ## Aceite
 

@@ -1,12 +1,14 @@
 # M12 — Contas e persistência remota
 
-[PRD](../Ecovit-PRD.md#m12--contas-e-persistência-remota) · [Autenticação](../arquitetura/Autenticacao-e-Acesso.md) · [Persistência](../arquitetura/Persistencia-e-Compatibilidade.md)
+> Registro histórico. Acompanhe as pendências em [T-001](../../tasks/T-001-Homologacao-Funcional-Producao.md), [T-002](../../tasks/T-002-Homologacao-Operacional-Producao.md) e [T-003](../../tasks/T-003-Conferencia-Manual-Listagem-e-Acesso-Local.md).
+
+[PRD](../../Ecovit-PRD.md#m12--contas-e-persistência-remota) · [Autenticação](../../arquitetura/Autenticacao-e-Acesso.md) · [Persistência](../../arquitetura/Persistencia-e-Compatibilidade.md)
 
 Contas por código de e-mail, projetos privados em PostgreSQL, importação e download de .ecovit, recuperação de gravação, lixeira e exclusão da própria conta. A aplicação está publicada em [ecovit.idevs.com.br](https://ecovit.idevs.com.br/).
 
 ## Aceite e verificações
 
-- O deploy em HTTPS e a confirmação do SHA servido estão validados. O [procedimento de operação](../arquitetura/Persistencia-e-Compatibilidade.md#github-actions-e-webhook-do-aapanel) define o recibo por tentativa e a checagem pública. O [workflow](https://github.com/marcusrox/ecovit/actions/workflows/aapanel.yml) mostra as publicações.
+- O deploy em HTTPS e a confirmação do SHA servido estão validados. O [procedimento de operação](../../arquitetura/Persistencia-e-Compatibilidade.md#github-actions-e-webhook-do-aapanel) define o recibo por tentativa e a checagem pública. O [workflow](https://github.com/marcusrox/ecovit/actions/workflows/aapanel.yml) mostra as publicações.
 - O solicitante confirmou localmente entrada por código, importação, edição preservada ao reabrir, imagens e download. A apresentação de data/hora e a faixa de status da lista têm aceite específico.
 - A verificação automatizada cobre autorização, cotas, falhas de gravação, concorrência, integridade, lixeira e exclusão de conta. A verificação de deploy não constitui homologação funcional.
 

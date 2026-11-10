@@ -1,6 +1,6 @@
 # Interface e iconografia
 
-[Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md) · [Marcos](../Ecovit-Plano-Implementacao.md)
+[Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
 ## M12 — conta e persistência remota
 
@@ -12,9 +12,15 @@ Indicador do editor diferencia persistência de cálculo. Mensagens de falha/res
 
 Reusar Icon e controles existentes; eventuais símbolos novos entram no mapa central com nome semântico, sem imports diretos ou catálogo paralelo. Validar foco/teclado/nomes acessíveis, anúncios de status e ausência de rolagem horizontal nas resoluções 1366×768, 1280×720 e 900×680 em Chrome/Edge, além das verificações de iconografia deste assunto. Não atribuir essas verificações à especificação: serão executadas na implementação.
 
+## Versão e histórico de tasks
+
+O rodapé do login e da lista de projetos usa um link de texto alinhado à direita. No editor, o mesmo link ocupa a última posição do rodapé compacto, preservando sua altura e as informações existentes. O link tem nome acessível com a versão e o destino, sublinhado e foco visível.
+
+A página pública abre no fragmento `#historico-de-tasks`. Ao chegar pelo link, a interface usa um diálogo de página inteira e mantém a tela de origem montada. Voltar, Escape e o botão de retorno do navegador fecham a página sem desmontar o editor. O acesso direto ao fragmento mostra a página sem iniciar a autenticação. O conteúdo da lista usa somente os dados públicos da compilação.
+
 ## Iconografia
 
-**Implementação:** Lucide React (`lucide-react` **1.57.0**) é o catálogo único para ícones de interface, na família de contorno. Dependência exata no package.json/lockfile, compatível com React 19. `src/ui/Icon.tsx` centraliza importações individuais e nomes semânticos, sem paths autorais. Verificações e aceite específico da apresentação no [Apresentação, operação e verificação documental](../marcos/Apresentacao-e-Operacao.md).
+**Implementação:** Lucide React (`lucide-react` **1.57.0**) é o catálogo único para ícones de interface, na família de contorno. Dependência exata no package.json/lockfile, compatível com React 19. `src/ui/Icon.tsx` centraliza importações individuais e nomes semânticos, sem paths autorais. Os aceites anteriores estão no [registro histórico de apresentação e operação](../arquivo/marcos/Apresentacao-e-Operacao.md).
 
 A escolha atende à necessidade concreta de catálogo amplo com linguagem visual consistente, SVGs configuráveis e componentes React. Importações individuais permitem incluir apenas os ícones usados. Referências oficiais: [catálogo](https://lucide.dev/icons/), [React/importações](https://lucide.dev/guide/react/getting-started), [traço](https://lucide.dev/guide/react/basics/stroke-width) e [licença](https://lucide.dev/license). Licença integral do pacote, incluindo avisos ISC/MIT dos derivados, em `public/third-party/lucide-react-LICENSE.txt`, copiada pelo build para dist. Em futuras atualizações, selecionar versão estável compatível, atualizar lockfile e conferir/manter os avisos distribuídos; sem CDN/fontes remotas.
 

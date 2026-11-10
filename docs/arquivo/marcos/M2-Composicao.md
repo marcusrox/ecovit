@@ -1,10 +1,10 @@
 # M2 — Composição e inspeção de fiadas
 
-[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../Ecovit-PRD.md)
+[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../../Ecovit-PRD.md)
 
 Catálogo de tijolos, composição nominal de fiadas e diagnósticos de encontros.
 
-Contrato vigente em [Arquitetura](../arquitetura/Motor-e-Diagnosticos.md).
+Contrato vigente em [Arquitetura](../../arquitetura/Motor-e-Diagnosticos.md).
 
 ## Aceite
 

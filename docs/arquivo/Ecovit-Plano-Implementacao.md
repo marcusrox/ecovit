@@ -1,6 +1,8 @@
 # Ecovit — Índice de requisitos e aceites
 
-O [PRD](Ecovit-PRD.md) define o comportamento atual, a [arquitetura](Ecovit-Arquitetura-Tecnica.md) define os contratos e o [Caderno técnico](Ecovit-Caderno-Tecnico.md) reúne convenções, fontes e exemplos. Os registros abaixo relacionam funcionalidades vigentes a seus identificadores e à situação de aceite.
+> Registro histórico. O desenvolvimento incremental e as verificações pendentes do M12 são acompanhados em [Tasks](../tasks/README.md).
+
+O [PRD](../Ecovit-PRD.md) define o comportamento atual, a [arquitetura](../Ecovit-Arquitetura-Tecnica.md) define os contratos e o [Caderno técnico](../Ecovit-Caderno-Tecnico.md) reúne convenções, fontes e exemplos. Os registros abaixo relacionam funcionalidades vigentes a seus identificadores e à situação de aceite.
 
 | Referência | Funcionalidade | Requisitos | Aceite |
 |---|---|---|---|
@@ -19,8 +21,8 @@ O [PRD](Ecovit-PRD.md) define o comportamento atual, a [arquitetura](Ecovit-Arqu
 | [M6 — Preferências do Ecovit](marcos/M6-Preferencias.md) | Preferências de rótulos, comprimento/altura das paredes e status e ajuda do canvas | BL-07; RF-09/10/14 | Aceite recebido |
 | [M7 — Medidas independentes](marcos/M7-Medidas.md) | Medidas livres em Planta, atração geométrica e persistência por pavimento | BL-03; RF-15, integração com RF-02/08/09/11/12/14 | Aceite recebido |
 | [M8 — Imagem de referência por pavimento](marcos/M8-Imagem-de-Referencia.md) | Uma imagem de fundo calibrada, posição/rotação, opacidade e interface compacta | BL-02; RF-16, integração com RF-02/08/09/11/12 | Aceite recebido |
-| [M9 — Tipos de portas e janelas](marcos/M9-Esquadrias.md) | Nove variantes e símbolos em Planta com botão único de orientação cíclica | BL-08; RF-06; [Elementos construtivos](arquitetura/Elementos-Construtivos.md#vãos-e-aparência-de-esquadrias); CT-17 | Aceite recebido |
-| [M10 — Mobiliários](marcos/M10-Mobiliarios.md) | Acervo integrado com 59 opções, ocorrências editáveis em Planta e upload incorporado ao arquivo | BL-01; RF-17; [Medidas e imagens](arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) | Aceite recebido |
+| [M9 — Tipos de portas e janelas](marcos/M9-Esquadrias.md) | Nove variantes e símbolos em Planta com botão único de orientação cíclica | BL-08; RF-06; [Elementos construtivos](../arquitetura/Elementos-Construtivos.md#vãos-e-aparência-de-esquadrias); CT-17 | Aceite recebido |
+| [M10 — Mobiliários](marcos/M10-Mobiliarios.md) | Acervo integrado com 59 opções, ocorrências editáveis em Planta e upload incorporado ao arquivo | BL-01; RF-17; [Medidas e imagens](../arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) | Aceite recebido |
 | [M11 — Terreno](marcos/M11-Terreno.md) | Terreno global com perímetro livre, aparências, área em m² e ajuste de pontos/posição | RF-18; integração com RF-02/08/09/11/12/16 | Aceite recebido |
 | [M12 — Contas e persistência remota](marcos/M12-Contas-e-Persistencia-Remota.md) | Conta por código de e-mail, projetos privados em PostgreSQL 18.0, lixeira/exclusão da conta e importação manual .ecovit | BL-04, BL-05; RF-12/19/20 | Publicado; homologação funcional e aceite global pendentes |
 

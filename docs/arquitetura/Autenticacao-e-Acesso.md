@@ -1,6 +1,6 @@
 # Autenticação e acesso
 
-[Arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md#m12--contas-e-persistência-remota) · [M12](../marcos/M12-Contas-e-Persistencia-Remota.md)
+[Arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md#m12--contas-e-persistência-remota)
 
 ## Alcance
 

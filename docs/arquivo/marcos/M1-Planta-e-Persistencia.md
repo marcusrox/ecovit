@@ -1,10 +1,10 @@
 # M1 — Planta editável e persistência
 
-[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../Ecovit-PRD.md)
+[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../../Ecovit-PRD.md)
 
 Editor de planta, histórico de edição, arquivo nativo e abertura de projetos.
 
-Contrato vigente em [Arquitetura](../arquitetura/Editor-e-Interacao.md).
+Contrato vigente em [Arquitetura](../../arquitetura/Editor-e-Interacao.md).
 
 ## Aceite
 

@@ -1,10 +1,10 @@
 # M11 — Terreno
 
-[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../Ecovit-PRD.md)
+[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../../Ecovit-PRD.md)
 
 Terreno global com contorno editável, seis aparências, área e rosa dos ventos opcional.
 
-Contrato vigente em [Arquitetura](../arquitetura/Editor-e-Interacao.md).
+Contrato vigente em [Arquitetura](../../arquitetura/Editor-e-Interacao.md).
 
 ## Aceite
 

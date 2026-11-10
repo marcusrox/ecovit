@@ -1,10 +1,10 @@
 # M10 — Mobiliários
 
-[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../Ecovit-PRD.md)
+[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../../Ecovit-PRD.md)
 
 Catálogo de 59 opções e imagens personalizadas com edição, espelhamento e persistência por pavimento.
 
-Contrato vigente em [Arquitetura](../arquitetura/Medidas-e-Imagens.md).
+Contrato vigente em [Arquitetura](../../arquitetura/Medidas-e-Imagens.md).
 
 ## Aceite
 

@@ -1,6 +1,6 @@
 # Persistência e compatibilidade
 
-[Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md) · [Marcos](../Ecovit-Plano-Implementacao.md)
+[Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
 ## M12 — persistência remota
 
@@ -12,11 +12,11 @@ Frontend estático existente e API TypeScript/Node no mesmo repositório e domí
 
 Ambiente definido pelo solicitante: host emdia.idevs.com.br, Node 24.18 e PostgreSQL versão 18.0; servidor não inspecionado. Node 24.x LTS é a linha-alvo do backend, com patch completo fixado/testado na implementação. PostgreSQL 18.0 é o único banco-alvo desta entrega, sem camada de compatibilidade com outros produtos. M12 cria banco/schema próprios na instância disponibilizada pelo administrador; não instala ou migra automaticamente bancos de outros aplicativos. A escolha de versão não comprova instalação, acesso ou homologação.
 
-A origem pública é https://ecovit.idevs.com.br, com frontend e /api no mesmo endereço e hospedagem em emdia.idevs.com.br. O DNS passa pelo Cloudflare. A validação da publicação e da saúde da API em HTTPS está registrada no [M12](../marcos/M12-Contas-e-Persistencia-Remota.md#aceite-e-verificações). A implementação foi verificada localmente com Fastify 5.12.7, pg 8.23.1 e Sharp 0.35.5 no Node 24.18.0. Os requisitos abaixo orientam a homologação funcional e de capacidade pelo administrador.
+A origem pública é https://ecovit.idevs.com.br, com frontend e /api no mesmo endereço e hospedagem em emdia.idevs.com.br. O DNS passa pelo Cloudflare. A validação da publicação e da saúde da API em HTTPS está registrada no [arquivo do M12](../arquivo/marcos/M12-Contas-e-Persistencia-Remota.md#aceite-e-verificações). A implementação foi verificada localmente com Fastify 5.12.7, pg 8.23.1 e Sharp 0.35.5 no Node 24.18.0. Os requisitos abaixo orientam a homologação funcional e de capacidade pelo administrador.
 
 ### Requisitos para validação pelo administrador
 
-**Referência de dimensionamento:** uso pequeno e uma importação pesada por vez. A capacidade depende do ensaio M12-T08. Em servidor compartilhado, considerar recursos disponíveis para Ecovit/API/validador/PostgreSQL, além dos já usados por aaPanel/outros sites.
+**Referência de dimensionamento:** uso pequeno e uma importação pesada por vez. A capacidade depende do ensaio M12-T08, previsto na [task de homologação operacional](../tasks/T-002-Homologacao-Operacional-Producao.md). Em servidor compartilhado, considerar recursos disponíveis para Ecovit/API/validador/PostgreSQL, além dos já usados por aaPanel/outros sites.
 
 | Item | Base proposta para homologação e implantação inicial |
 |---|---|
@@ -245,7 +245,9 @@ O script confere o socket e o processo do PM2, o checkout limpo, o remoto e a re
 
 Após o build, o reinício do Ecovit e a resposta saudável da API local, o script publica atomicamente `dist/ecovit-deploy.txt` e registra `ECOVIT_DEPLOY_OK=<sha>` no log do aaPanel. O recibo público contém apenas o SHA, o identificador da execução e tentativa e o SHA-256 de `dist/index.html`.
 
-O HTTP 2xx do webhook indica que o painel aceitou a chamada. O workflow consulta a produção por até 15 minutos. Para concluir, exige um recibo da própria tentativa com o SHA do CI, confere o hash do HTML servido e verifica `/api/health` por HTTPS. A comparação remove o bloco inline de detecção JavaScript do Cloudflare quando as duas assinaturas do serviço estão presentes. O sucesso aparece como `Revisão implantada e verificada em produção: <sha>` no job. Se a confirmação expirar, consulte a execução correspondente no log do WebHook do aaPanel e confira se o domínio serve o recibo da tentativa. A [validação em produção](../marcos/M12-Contas-e-Persistencia-Remota.md#aceite-e-verificações) fica no M12.
+O HTTP 2xx do webhook indica que o painel aceitou a chamada. O workflow consulta a produção por até 15 minutos. Para concluir, exige um recibo da própria tentativa com o SHA do CI, confere o hash do HTML servido e verifica `/api/health` por HTTPS. A comparação remove o bloco inline de detecção JavaScript do Cloudflare quando as duas assinaturas do serviço estão presentes. O sucesso aparece como `Revisão implantada e verificada em produção: <sha>` no job. Se a confirmação expirar, consulte a execução correspondente no log do WebHook do aaPanel e confira se o domínio serve o recibo da tentativa. Acompanhe as verificações pendentes na [task de homologação operacional](../tasks/T-002-Homologacao-Operacional-Producao.md).
+
+O Vite incorpora a versão e o histórico público no bundle do frontend. A configuração lê uma vez o SHA e a data do commit de `HEAD` e lê os arquivos de tasks pelo SHA capturado, diretamente dos objetos Git. O histórico usa o conteúdo registrado nessa revisão, inclusive em builds de desenvolvimento. O build requer um checkout Git com o commit disponível. Somente ID, título e data das tasks elegíveis são incorporados ao frontend.
 
 ### Proxy e conteúdo estático
 

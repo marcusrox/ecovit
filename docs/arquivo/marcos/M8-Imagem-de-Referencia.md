@@ -1,10 +1,10 @@
 # M8 — Imagem de referência por pavimento
 
-[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../Ecovit-PRD.md)
+[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../../Ecovit-PRD.md)
 
 Imagem de referência calibrada por pavimento, com posição, rotação, visibilidade e opacidade.
 
-Contrato vigente em [Arquitetura](../arquitetura/Medidas-e-Imagens.md).
+Contrato vigente em [Arquitetura](../../arquitetura/Medidas-e-Imagens.md).
 
 ## Aceite
 

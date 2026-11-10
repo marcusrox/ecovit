@@ -1,10 +1,10 @@
 # M5 — Quantitativos e projetos
 
-[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../Ecovit-PRD.md)
+[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../../Ecovit-PRD.md)
 
 Quantitativos nominais, perdas opcionais, duplicação e abertura de projetos com o primeiro desenho pronto.
 
-Contrato vigente em [Arquitetura](../arquitetura/Quantitativos.md).
+Contrato vigente em [Arquitetura](../../arquitetura/Quantitativos.md).
 
 ## Aceite
 

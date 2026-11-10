@@ -9,7 +9,7 @@ Aplicação web 2D com editor no navegador, API no mesmo domínio e PostgreSQL. 
 | [PRD](Ecovit-PRD.md) | Comportamento do produto e limites de escopo |
 | Arquitetura e seus assuntos | Representação em dados, módulos, algoritmos, interação, estado e persistência do software |
 | [Caderno Técnico](Ecovit-Caderno-Tecnico.md) | Regras e convenções geométricas/construtivas, justificativas, fontes, exemplos independentes e limites de validade |
-| [Índice de requisitos e aceites](Ecovit-Plano-Implementacao.md) | Rastreabilidade, aceites e pendências |
+| [Tasks](tasks/README.md) | Escopo das alterações, verificações e aceites |
 
 Uma decisão de programação não estabelece uma regra construtiva. Antes de mudar o motor, consultar CT/EX do Caderno; antes de mudar comportamento, consultar RF do PRD. A arquitetura descreve como implementar esses contratos, sem repetir sua pesquisa ou tratar convenções nominais como comprovação física. Campos persistidos e códigos legados ainda aceitos conservam seus nomes; a matriz de leitores é a referência de compatibilidade.
 
@@ -45,7 +45,7 @@ Frontend/editor/motor TypeScript e API TypeScript/Node ficam no mesmo repositór
 
 Intenção validada é a fonte persistente remota; peças/diagnósticos são derivados localmente, sem segunda escrita só para cálculo. Documento remoto tem versão independente do envelope .ecovit. Validação de importação com recomputação roda em processo filho isolado da API, sem fila, com timeout de 90 s e heap V8 de 1 GiB; a capacidade do ambiente de produção ainda precisa de homologação; isso não introduz Worker no editor. Extrair funções puras de validação/serialização dos módulos que também contêm APIs DOM; frontend e API têm configurações de build próprias. Protocolo de revisão/idempotência, imagens e transição manual estão em [Persistência — M12](arquitetura/Persistencia-e-Compatibilidade.md#m12--persistência-remota); fluxos de falha em [Estado — M12](arquitetura/Estado-Historico-e-Operacoes.md#m12--estados-remotos); identidade em [Autenticação](arquitetura/Autenticacao-e-Acesso.md).
 
-Conta obrigatória, com edição online e importação manual de arquivos .ecovit suportados. Código por e-mail usa Resend com idevs.com.br, via API HTTPS; domínio verificado e API key restrita ficam no backend. Produção usa aaPanel, Node 24.x e PostgreSQL 18 em emdia.idevs.com.br. Documentos usam JSON nativo, com mapeamento de tipos, transações e conexão definidos no assunto Persistência. Requisitos de recursos são fornecidos para validação do administrador, sem inspeção ou obrigação de divulgar a configuração atual. Cotas, lixeira e exclusão são contratos do PRD/M12, sem nova regra construtiva. Backup do servidor permanece a cargo do administrador, fora do escopo desta especificação.
+Conta obrigatória, com edição online e importação manual de arquivos .ecovit suportados. Código por e-mail usa Resend com idevs.com.br, via API HTTPS; domínio verificado e API key restrita ficam no backend. Produção usa aaPanel, Node 24.x e PostgreSQL 18 em emdia.idevs.com.br. Documentos usam JSON nativo, com mapeamento de tipos, transações e conexão definidos no assunto Persistência. Requisitos de recursos são fornecidos para validação do administrador, sem inspeção ou obrigação de divulgar a configuração atual. Cotas, lixeira e exclusão seguem o PRD, sem nova regra construtiva. Backup do servidor permanece a cargo do administrador, fora do escopo desta especificação.
 
 ## Aplicação e stack
 
@@ -83,4 +83,4 @@ Editor e API usam o [fluxo sequencial](arquitetura/Estado-Historico-e-Operacoes.
 
 ## Manutenção
 
-Cada contrato tem um assunto responsável. Alterações atualizam esse assunto e o marco; o índice não mantém cópias de algoritmos, versões de arquivo, regras construtivas ou resultados de testes. Verificações, limitações e aceite ficam na M12.
+Cada contrato tem um assunto responsável. Atualize o assunto afetado junto com a implementação e registre os critérios, as evidências e a situação do aceite na task correspondente. Os [registros dos marcos](arquivo/Ecovit-Plano-Implementacao.md) preservam a rastreabilidade histórica.

@@ -1,10 +1,10 @@
 # M3 — Vãos, canaletas e grautes nominais
 
-[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../Ecovit-PRD.md)
+[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../../Ecovit-PRD.md)
 
 Vãos, canaletas e grautes por pavimento, com configuração, ajustes e restauração dos padrões.
 
-Contrato vigente em [Arquitetura](../arquitetura/Motor-e-Diagnosticos.md).
+Contrato vigente em [Arquitetura](../../arquitetura/Motor-e-Diagnosticos.md).
 
 ## Aceite
 

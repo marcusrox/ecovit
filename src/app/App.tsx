@@ -1,4 +1,10 @@
 import { AccountButton, AccountShell } from "./Account";
+import {
+  ReleaseHistory,
+  releaseHistoryHash,
+  VersionFooter,
+  VersionLink,
+} from "./ReleaseHistory";
 import { TerrainProperties } from "../editor/Terrain";
 import { compassSelectionId } from "../domain/terrain-compass";
 import { ReferenceImageProperties } from "../editor/ReferenceImage";
@@ -1517,10 +1523,14 @@ function EditorApp() {
               {doc.model.walls.length === 1 ? "parede" : "paredes"} · Planta em
               centímetros
             </span>
+            <VersionLink />
           </footer>
         </>
       ) : (
-        home
+        <>
+          {home}
+          <VersionFooter />
+        </>
       )}
       {creating && (
         <div className={styles.modalBackdrop}>
@@ -1732,6 +1742,7 @@ function EditorApp() {
             {homeHeader}
           </header>
           {home}
+          <VersionFooter />
         </div>
       )}
     </>
@@ -1739,9 +1750,34 @@ function EditorApp() {
 }
 
 export default function App() {
+  const [{ historyOpen, hasOrigin }, setRoute] = useState(() => {
+    const historyOpen = window.location.hash === releaseHistoryHash;
+    return { historyOpen, hasOrigin: !historyOpen };
+  });
+  useEffect(() => {
+    const updateHistory = () => {
+      const open = window.location.hash === releaseHistoryHash;
+      setRoute((route) => ({
+        historyOpen: open,
+        hasOrigin: route.hasOrigin || !open,
+      }));
+    };
+    window.addEventListener("hashchange", updateHistory);
+    return () => window.removeEventListener("hashchange", updateHistory);
+  }, []);
+
   return (
-    <AccountShell>
-      <EditorApp />
-    </AccountShell>
+    <>
+      {hasOrigin && (
+        <AccountShell>
+          <EditorApp />
+        </AccountShell>
+      )}
+      {historyOpen && (
+        <ReleaseHistory
+          back={hasOrigin ? () => window.history.back() : undefined}
+        />
+      )}
+    </>
   );
 }

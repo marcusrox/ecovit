@@ -61,7 +61,7 @@ Use o campo code dessa mensagem. Nenhum e-mail é enviado nesse modo. **O servid
 - npm run test:e2e usa o mesmo banco de testes, schema próprio, captura de e-mail e API/Vite na porta **5174**; inicia servidor novo, sem reaproveitar a instância do solicitante.
 - Para verificação interativa isolada, configure .env.test com M12_TEST_DATABASE_URL e execute .\Start-Ecovit.ps1 -Task dev:test. Esse servidor reinicializa as contas de teste; não usar dados pessoais. Códigos ficam apenas em .tools/m12/browser-mail nesse ambiente, sem endpoint especial de login.
 
-Em produção, o PM2 inicia `app.js` na raiz do repositório com `NODE_ENV=production` e proxy HTTPS da mesma origem. Servir somente `dist` e manter `dist-server`, `.env` e imagens fora da raiz pública. Agendar a limpeza a cada 15 minutos. Para publicar atualizações, siga o [procedimento de deploy no aaPanel](docs/arquitetura/Persistencia-e-Compatibilidade.md#github-actions-e-webhook-do-aapanel). A validação em produção e a homologação funcional são registradas no [marco M12](docs/marcos/M12-Contas-e-Persistencia-Remota.md#aceite-e-verificações). Backup do servidor continua sob administração do responsável.
+Em produção, o PM2 inicia `app.js` na raiz do repositório com `NODE_ENV=production` e proxy HTTPS da mesma origem. Servir somente `dist` e manter `dist-server`, `.env` e imagens fora da raiz pública. Agendar a limpeza a cada 15 minutos. Para publicar atualizações, siga o [procedimento de deploy no aaPanel](docs/arquitetura/Persistencia-e-Compatibilidade.md#github-actions-e-webhook-do-aapanel). A verificação inicial da publicação está no [arquivo do M12](docs/arquivo/marcos/M12-Contas-e-Persistencia-Remota.md#aceite-e-verificações). Acompanhe a [homologação funcional](docs/tasks/T-001-Homologacao-Funcional-Producao.md) e a [homologação operacional](docs/tasks/T-002-Homologacao-Operacional-Producao.md) nas respectivas tasks. Backup do servidor continua sob administração do responsável.
 
 ## Uso
 
@@ -137,7 +137,8 @@ Na lista inicial, **Duplicar** cria outro projeto a partir do último estado sal
 
 ## Documentação
 
-- [Índice de requisitos e aceites](docs/Ecovit-Plano-Implementacao.md): identificadores, situação de aceite e pendências.
+- [Tasks](docs/tasks/README.md) — especificações incrementais, verificações e aceites.
+- [Arquivo de marcos e aceites](docs/arquivo/Ecovit-Plano-Implementacao.md) — histórico da formação do produto.
 - [PRD](docs/Ecovit-PRD.md) e [Arquitetura](docs/Ecovit-Arquitetura-Tecnica.md): requisitos e decisões.
 - [Caderno técnico](docs/Ecovit-Caderno-Tecnico.md): fontes, regras geométricas, exemplos e lacunas.
 - [AGENTS.md](AGENTS.md): orientações para trabalhar no repositório.

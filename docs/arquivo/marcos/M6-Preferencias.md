@@ -1,10 +1,10 @@
 # M6 — Preferências do Ecovit
 
-[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../Ecovit-PRD.md)
+[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../../Ecovit-PRD.md)
 
 Preferências locais de rótulos, status e ajuda do canvas, com câmera por projeto.
 
-Contrato vigente em [Arquitetura](../arquitetura/Interface-e-Iconografia.md).
+Contrato vigente em [Arquitetura](../../arquitetura/Interface-e-Iconografia.md).
 
 ## Aceite
 

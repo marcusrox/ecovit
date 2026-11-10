@@ -1,6 +1,6 @@
 # Qualidade e desempenho
 
-[Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md) · [Marcos](../Ecovit-Plano-Implementacao.md)
+[Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
 ## Estratégia de verificação
 
@@ -37,4 +37,4 @@ Não adotar WebGL, índices espaciais complexos ou compressão binária inicialm
 
 ## Evidências e limites
 
-Os roteiros de verificação e as pendências de aceite usam o [índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md). Metas de carga são referências de observação; desempenho depende do projeto e do ambiente.
+Registre os roteiros, os resultados e a situação do aceite na [task](../tasks/README.md) correspondente. Metas de carga são referências de observação; desempenho depende do projeto e do ambiente.

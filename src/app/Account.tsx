@@ -28,6 +28,7 @@ import {
 import { download } from "../persistence/files";
 import { useStore } from "../state/store";
 import { Icon } from "../ui/Icon";
+import { VersionFooter } from "./ReleaseHistory";
 import styles from "../ui/App.module.css";
 
 const AccountContext = createContext<{
@@ -570,6 +571,15 @@ function Reauthenticate({
     </dialog>
   );
 }
+function LoginPage({ children }: { children: ReactNode }) {
+  return (
+    <div className={styles.loginShell}>
+      <main className={styles.loginPage}>{children}</main>
+      <VersionFooter />
+    </div>
+  );
+}
+
 export function AccountShell({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<Account | null>(null);
   const [ready, setReady] = useState(false);
@@ -608,7 +618,7 @@ export function AccountShell({ children }: { children: ReactNode }) {
   }, []);
   if (!ready)
     return (
-      <main className={styles.loginPage}>
+      <LoginPage>
         <p role="status">Conectando ao Ecovit…</p>
         {error && (
           <>
@@ -618,22 +628,22 @@ export function AccountShell({ children }: { children: ReactNode }) {
             </button>
           </>
         )}
-      </main>
+      </LoginPage>
     );
   if (!account)
     return (
-      <main className={styles.loginPage}>
+      <LoginPage>
         <Login
           done={(next) => {
             resetRemote();
             entered(next, false);
           }}
         />
-      </main>
+      </LoginPage>
     );
   if (needsAuth && !hasDocument)
     return (
-      <main className={styles.loginPage}>
+      <LoginPage>
         <Login expected={account} done={(next) => entered(next, true)} />
         <button
           onClick={() => {
@@ -646,7 +656,7 @@ export function AccountShell({ children }: { children: ReactNode }) {
         >
           Usar outro e-mail
         </button>
-      </main>
+      </LoginPage>
     );
   return (
     <AccountContext.Provider

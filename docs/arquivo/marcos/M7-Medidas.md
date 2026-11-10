@@ -1,10 +1,10 @@
 # M7 — Medidas independentes
 
-[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../Ecovit-PRD.md)
+[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../../Ecovit-PRD.md)
 
 Medidas independentes por pavimento, com criação por três cliques e atração à geometria e aos vértices do terreno.
 
-Contrato vigente em [Arquitetura](../arquitetura/Medidas-e-Imagens.md).
+Contrato vigente em [Arquitetura](../../arquitetura/Medidas-e-Imagens.md).
 
 ## Aceite
 

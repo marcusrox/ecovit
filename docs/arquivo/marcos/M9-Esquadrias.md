@@ -1,10 +1,10 @@
 # M9 — Tipos e orientação de portas e janelas
 
-[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../Ecovit-PRD.md)
+[Índice de requisitos e aceites](../Ecovit-Plano-Implementacao.md) · [PRD](../../Ecovit-PRD.md)
 
 Tipos de portas e janelas e símbolos esquemáticos com orientação cíclica em Planta.
 
-Contrato vigente em [Arquitetura](../arquitetura/Elementos-Construtivos.md).
+Contrato vigente em [Arquitetura](../../arquitetura/Elementos-Construtivos.md).
 
 ## Aceite
 
