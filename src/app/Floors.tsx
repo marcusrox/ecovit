@@ -5,7 +5,11 @@ import { useStore } from "../state/store";
 import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
 
-export function FloorControls() {
+export function FloorControls({
+  properties = false,
+}: {
+  properties?: boolean;
+}) {
   const s = useStore(),
     doc = s.doc!,
     floor = doc.model.floors.find((f) => f.id === s.activeFloorId)!;
@@ -39,60 +43,73 @@ export function FloorControls() {
     setError("");
   };
   return (
-    <div className={styles.floorControls}>
-      <label>
-        Pavimento{" "}
-        <select
-          aria-label="Pavimento"
-          value={floor.id}
-          disabled={s.busy}
-          onChange={(e) => s.switchFloor(e.target.value)}
-        >
-          {doc.model.floors.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.name} · {display(f.level)} cm
-            </option>
-          ))}
-        </select>
-      </label>
-      <button
-        disabled={disabled || doc.model.floors.length >= 4}
-        className={styles.iconButton}
-        aria-label="Novo pavimento"
-        title="Novo pavimento"
-        data-tooltip="Novo pavimento"
-        onClick={(e) => begin("new", e.currentTarget)}
-      >
-        <Icon name="plus" />
-      </button>
-      <button
-        disabled={disabled || doc.model.floors.length >= 4}
-        className={styles.iconButton}
-        aria-label="Duplicar pavimento"
-        title="Duplicar pavimento"
-        data-tooltip="Duplicar pavimento"
-        onClick={(e) => begin("copy", e.currentTarget)}
-      >
-        <Icon name="copy" />
-      </button>
-      <button
-        disabled={disabled || doc.model.floors.length === 1}
-        className={styles.iconButton}
-        aria-label="Excluir pavimento"
-        title="Excluir pavimento"
-        data-tooltip="Excluir pavimento"
-        onClick={() => {
-          if (
-            window.confirm(
-              `Excluir ${floor.name} e todos os seus elementos? A ação pode ser desfeita.`,
-            )
-          )
-            void s.commit(removeFloor(doc, floor.id), "floor");
-        }}
-      >
-        <Icon name="delete" />
-      </button>
-      <span>{doc.model.floors.length}/4</span>
+    <div
+      className={
+        properties ? styles.floorPropertiesActions : styles.floorControls
+      }
+    >
+      {!properties && (
+        <>
+          <select
+            aria-label="Pavimento"
+            value={floor.id}
+            disabled={s.busy}
+            onChange={(e) => s.switchFloor(e.target.value)}
+          >
+            {doc.model.floors.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name} · {display(f.level)} cm
+              </option>
+            ))}
+          </select>
+          <button
+            disabled={disabled || doc.model.floors.length >= 4}
+            className={styles.iconButton}
+            aria-label="Novo pavimento"
+            title="Novo pavimento"
+            data-tooltip="Novo pavimento"
+            onClick={(e) => begin("new", e.currentTarget)}
+          >
+            <Icon name="plus" />
+          </button>
+        </>
+      )}
+      {properties && (
+        <>
+          <span className={styles.note}>
+            Pavimentos do projeto: {doc.model.floors.length}/4
+          </span>
+          <div className={styles.floorActionButtons}>
+            <button
+              disabled={disabled || doc.model.floors.length >= 4}
+              className={styles.iconButton}
+              aria-label="Duplicar pavimento"
+              title="Duplicar pavimento"
+              data-tooltip="Duplicar pavimento"
+              onClick={(e) => begin("copy", e.currentTarget)}
+            >
+              <Icon name="copy" />
+            </button>
+            <button
+              disabled={disabled || doc.model.floors.length === 1}
+              className={`${styles.iconButton} ${styles.danger}`}
+              aria-label="Excluir pavimento"
+              title="Excluir pavimento"
+              data-tooltip="Excluir pavimento"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `Excluir ${floor.name} e todos os seus elementos? A ação pode ser desfeita.`,
+                  )
+                )
+                  void s.commit(removeFloor(doc, floor.id), "floor");
+              }}
+            >
+              <Icon name="delete" />
+            </button>
+          </div>
+        </>
+      )}
       {dialog && (
         <div className={styles.modalBackdrop}>
           <section

@@ -4,14 +4,15 @@ import { database, migrate } from "./db";
 import { readConfig } from "./config";
 import { createApi } from "./app";
 import { mkdir, writeFile } from "node:fs/promises";
+import {
+  loadTestEnvironment,
+  validateTestDatabaseUrl,
+} from "../scripts/load-test-env";
 
+loadTestEnvironment();
 if (process.env.NODE_ENV === "production")
   throw new Error("Servidor de testes bloqueado em produção.");
-const url = process.env.M12_TEST_DATABASE_URL;
-if (!url || !/ecovit_test(?:[?]|$)/.test(url))
-  throw new Error(
-    "Configure M12_TEST_DATABASE_URL para banco isolado ecovit_test.",
-  );
+const url = validateTestDatabaseUrl(process.env.M12_TEST_DATABASE_URL);
 const setup = database(url);
 await setup.query("CREATE SCHEMA IF NOT EXISTS m12_browser");
 await setup.end();

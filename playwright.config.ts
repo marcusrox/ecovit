@@ -1,5 +1,7 @@
 import { defineConfig } from "@playwright/test";
+import { loadTestEnvironment } from "./scripts/load-test-env";
 import { randomUUID } from "node:crypto";
+loadTestEnvironment();
 const runId = randomUUID();
 export default defineConfig({
   metadata: { m12RunId: runId },

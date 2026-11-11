@@ -21,12 +21,9 @@ import { assetPath } from "../../server/projects";
 import { createProject, makeWall } from "../../src/domain/project";
 import { dehydrate } from "../../src/persistence/remote-document";
 import { generate } from "../../src/domain/composition";
+import { validateTestDatabaseUrl } from "../../scripts/load-test-env";
 
-const databaseUrl = process.env.M12_TEST_DATABASE_URL;
-if (!databaseUrl || !/ecovit_test(?:[?]|$)/.test(databaseUrl))
-  throw new Error(
-    "Defina M12_TEST_DATABASE_URL para um banco isolado chamado ecovit_test.",
-  );
+const databaseUrl = validateTestDatabaseUrl(process.env.M12_TEST_DATABASE_URL);
 const root = path.resolve(".tools/m12/integration");
 const config = readConfig({
   NODE_ENV: "test",

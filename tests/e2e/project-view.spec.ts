@@ -43,69 +43,79 @@ async function expectView(
     .toBeLessThan(0.001);
 }
 
-test("visualização por projeto: navegar, sair, atualizar e reabrir em outra janela", async ({
-  page,
-}) => {
-  await page.goto("/");
-  await create(page, "Vista A");
-  const before = await snapshot(page);
-  const box = (await page.getByTestId("drawing").boundingBox())!;
-  await page.mouse.move(box.x + 300, box.y + 200);
-  await page.mouse.wheel(0, -250);
-  await page.getByRole("button", { name: "Ampliar zoom", exact: true }).click();
-  await page.mouse.move(box.x + 300, box.y + 200);
-  await page.mouse.down({ button: "middle" });
-  await page.mouse.move(box.x + 450, box.y + 280, { steps: 5 });
-  await page.mouse.up({ button: "middle" });
-  const a = await view(page);
-  expect(a.scale).toBeGreaterThan(0.012);
-  expect(await snapshot(page)).toBe(before);
-  await page.getByRole("button", { name: "Projetos", exact: true }).click();
-  await create(page, "Vista B");
-  expect((await view(page)).scale).toBe(0.012);
-  await page.getByRole("button", { name: "Reduzir zoom", exact: true }).click();
-  const b = await view(page);
-  await page.reload();
-  await page.setViewportSize({ width: 1100, height: 760 });
-  await page.getByRole("button", { name: /Vista A/ }).click();
-  await expectView(page, a);
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await expectView(page, a);
-  await page.getByRole("button", { name: "Projetos", exact: true }).click();
-  await page.getByRole("button", { name: /Vista B/ }).click();
-  await expectView(page, b);
-  await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
-  const fitted = await view(page);
-  await page.reload();
-  await page.getByRole("button", { name: /Vista B/ }).click();
-  await expectView(page, fitted);
-});
+test(
+  "visualização por projeto: navegar, sair, atualizar e reabrir em outra janela",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    await page.goto("/");
+    await create(page, "Vista A");
+    const before = await snapshot(page);
+    const box = (await page.getByTestId("drawing").boundingBox())!;
+    await page.mouse.move(box.x + 300, box.y + 200);
+    await page.mouse.wheel(0, -250);
+    await page
+      .getByRole("button", { name: "Ampliar zoom", exact: true })
+      .click();
+    await page.mouse.move(box.x + 300, box.y + 200);
+    await page.mouse.down({ button: "middle" });
+    await page.mouse.move(box.x + 450, box.y + 280, { steps: 5 });
+    await page.mouse.up({ button: "middle" });
+    const a = await view(page);
+    expect(a.scale).toBeGreaterThan(0.012);
+    expect(await snapshot(page)).toBe(before);
+    await page.getByRole("button", { name: "Projetos", exact: true }).click();
+    await create(page, "Vista B");
+    expect((await view(page)).scale).toBe(0.012);
+    await page
+      .getByRole("button", { name: "Reduzir zoom", exact: true })
+      .click();
+    const b = await view(page);
+    await page.reload();
+    await page.setViewportSize({ width: 1100, height: 760 });
+    await page.getByRole("button", { name: /Vista A/ }).click();
+    await expectView(page, a);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await expectView(page, a);
+    await page.getByRole("button", { name: "Projetos", exact: true }).click();
+    await page.getByRole("button", { name: /Vista B/ }).click();
+    await expectView(page, b);
+    await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
+    const fitted = await view(page);
+    await page.reload();
+    await page.getByRole("button", { name: /Vista B/ }).click();
+    await expectView(page, fitted);
+  },
+);
 
-test("preferência inválida e falha de gravação não impedem edição", async ({
-  page,
-}) => {
-  await page.goto("/");
-  await create(page, "Vista inválida");
-  await page.getByRole("button", { name: "Projetos", exact: true }).click();
-  await page.evaluate(() => {
-    for (const key of Object.keys(localStorage))
-      if (key.startsWith("ecovit:project-view:v1:"))
-        localStorage.setItem(key, '{"scale":0,"centerX":null}');
-  });
-  await page.getByRole("button", { name: /Vista inválida/ }).click();
-  expect((await view(page)).scale).toBe(0.012);
-  await page.evaluate(() => {
-    const original = Storage.prototype.setItem;
-    Storage.prototype.setItem = function (key, value) {
-      if (key.startsWith("ecovit:project-view:v1:")) throw new Error("quota");
-      original.call(this, key, value);
-    };
-  });
-  const before = await snapshot(page);
-  await page.getByRole("button", { name: "Ampliar zoom", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText(
-    "Não foi possível salvar a visualização",
-  );
-  expect((await view(page)).scale).toBeGreaterThan(0.012);
-  expect(await snapshot(page)).toBe(before);
-});
+test(
+  "preferência inválida e falha de gravação não impedem edição",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    await page.goto("/");
+    await create(page, "Vista inválida");
+    await page.getByRole("button", { name: "Projetos", exact: true }).click();
+    await page.evaluate(() => {
+      for (const key of Object.keys(localStorage))
+        if (key.startsWith("ecovit:project-view:v1:"))
+          localStorage.setItem(key, '{"scale":0,"centerX":null}');
+    });
+    await page.getByRole("button", { name: /Vista inválida/ }).click();
+    expect((await view(page)).scale).toBe(0.012);
+    await page.evaluate(() => {
+      const original = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, value) {
+        if (key.startsWith("ecovit:project-view:v1:")) throw new Error("quota");
+        original.call(this, key, value);
+      };
+    });
+    const before = await snapshot(page);
+    await page
+      .getByRole("button", { name: "Ampliar zoom", exact: true })
+      .click();
+    await expect(page.getByRole("alert")).toContainText(
+      "Não foi possível salvar a visualização",
+    );
+    expect((await view(page)).scale).toBeGreaterThan(0.012);
+    expect(await snapshot(page)).toBe(before);
+  },
+);

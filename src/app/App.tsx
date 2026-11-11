@@ -377,6 +377,7 @@ function Properties({ doc }: { doc: Project }) {
               </label>
             )}
           </section>
+          <FloorControls properties />
           <ReferenceImageProperties key={floor.id} />
           <section
             className={styles.propertyGroup}

@@ -37,7 +37,7 @@ Para conferir limpeza durante teste local, execute .\Start-Ecovit.ps1 -Task data
 
 ### Avaliação descartável sem envio de e-mail
 
-Para explorar a interface antes de configurar a Resend, use exclusivamente um banco PostgreSQL separado chamado ecovit_test. Crie esse banco com um usuário proprietário exclusivo e configure .env.test privado (sem alterar .env):
+Para explorar a interface antes de configurar a Resend, use exclusivamente um banco PostgreSQL separado chamado ecovit_test. Execute o [preparo do ambiente](#preparação-do-ambiente-de-testes) ou configure uma conexão existente em .env.test privado (sem alterar .env):
 
 ```dotenv
 M12_TEST_DATABASE_URL=postgresql://USUARIO:SENHA@127.0.0.1:5432/ecovit_test
@@ -54,12 +54,61 @@ Get-ChildItem .tools/m12/browser-mail/*.json |
 
 Use o campo code dessa mensagem. Nenhum e-mail é enviado nesse modo. **O servidor de testes reinicializa as contas do schema m12_browser a cada início; use apenas projetos descartáveis ou cópias exportadas.** Não use esse banco durante a suíte automatizada nem exponha esse servidor à internet. A captura testa o fluxo do aplicativo e não comprova envio/entrega pela Resend. O teste de aceite com dados que você deseja conservar deve usar o modo dev e o banco normal acima.
 
+## Preparação do ambiente de testes
+
+Pré-requisitos: Node.js 24, dependências instaladas com npm ci, PostgreSQL 18 e Google Chrome. Edge é necessário para suas verificações direcionadas e homologação completa. Os comandos não instalam ou baixam esses componentes.
+
+```powershell
+npm run test:env
+# Quando houver verificação no Edge:
+npm run test:env -- --edge
+# Apenas diagnosticar, sem provisionar ou iniciar banco:
+npm run test:env:check
+# Ao terminar, parar somente o banco gerenciado, preservando os dados:
+npm run test:env:stop
+```
+
+Na primeira execução sem conexão configurada, o preparo cria um PostgreSQL descartável em .tools/test-environment, escutando somente em 127.0.0.1:55432, com role e banco ecovit_test, UTF8 e autenticação local trust. Salva a conexão em .env.test privado e ignorado pelo Git. Repetir o comando reutiliza ou reinicia esse cluster sem apagar dados. O preparo verifica as portas 5174/3002 e os componentes necessários; o servidor do aplicativo de testes continua sendo iniciado pelo runner na 5174. Não usa a porta 5173 nem lê/altera .env.
+
+Se M12_TEST_DATABASE_URL já estiver no ambiente ou em .env.test, a conexão é preservada e verificada. Deve apontar exatamente para ecovit_test em PostgreSQL 18/UTF8, com permissão CREATE nesse banco. Banco externo não é criado nem iniciado/encerrado pelo comando. Todos os runners de teste carregam .env.test automaticamente; variáveis já definidas no ambiente têm precedência. A preparação não limpa dados, mas a execução do servidor de navegador reinicializa o schema m12_browser conforme descrito acima.
+
+Para localizar PostgreSQL, o comando procura PATH e a instalação convencional da versão 18. Outras versões no PATH são ignoradas. Se necessário, definir ECOVIT_TEST_PG_BIN com a pasta que contém postgres, initdb e pg_ctl da versão 18; um diretório explícito inválido produz erro, sem fallback silencioso. Porta ocupada, conexão inválida ou componente ausente produz erro com orientação; o comando não encerra instâncias desconhecidas. Logs locais em .tools/test-environment. Em máquinas onde o sandbox impedir o navegador ou o gerenciamento do PostgreSQL, executar o comando com as permissões adequadas, mantendo o mesmo ambiente isolado.
+
+Os mesmos comandos estão disponíveis por ./Start-Ecovit.ps1 -Task test:env, test:env:check e test:env:stop. Acrescentar -TestArguments @('--edge') para verificar também Edge.
+
 ## Verificações
 
 - npm run typecheck, npm run lint, npm test e npm run build verificam tipos, estilo, domínio/estado e builds.
 - npm run test:api exige M12_TEST_DATABASE_URL para PostgreSQL isolado chamado ecovit_test; cobre HTTP real, segurança e persistência.
-- npm run test:e2e usa o mesmo banco de testes, schema próprio, captura de e-mail e API/Vite na porta **5174**; inicia servidor novo, sem reaproveitar a instância do solicitante.
+- Os comandos de navegador abaixo usam M12_TEST_DATABASE_URL definido no ambiente, banco ecovit_test, schema próprio, captura de e-mail e API/Vite na porta **5174**. Cada execução inicia servidor novo, sem reaproveitar a instância do solicitante.
 - Para verificação interativa isolada, configure .env.test com M12_TEST_DATABASE_URL e execute .\Start-Ecovit.ps1 -Task dev:test. Esse servidor reinicializa as contas de teste; não usar dados pessoais. Códigos ficam apenas em .tools/m12/browser-mail nesse ambiente, sem endpoint especial de login.
+
+Google Chrome é o padrão cotidiano; selecionar arquivos/cenários afetados. Usar Edge em verificações específicas de compatibilidade e ambos na homologação completa, conforme [Qualidade e desempenho](docs/arquitetura/Qualidade-e-Desempenho.md#verificação-em-navegadores). Chrome e Edge continuam suportados.
+
+| Comando | Alcance |
+|---|---|
+| `npm run test:e2e:interface -- <arquivo ou filtros>` | Interface, resoluções, controles e acessibilidade no Chrome |
+| `npm run test:e2e:flows -- <arquivo ou filtros>` | Fluxos funcionais no Chrome |
+| `npm run test:e2e:load -- <arquivo ou filtros>` | Carga e backup grande no Chrome |
+| `npm run test:e2e -- <arquivo ou filtros>` | Todos os grupos selecionados no Chrome |
+| `npm run test:e2e:edge -- <arquivo ou filtros>` | Cenários selecionados no Edge |
+| `npm run test:e2e:full` | Todos os cenários em Chrome e Edge, sem filtros na homologação completa |
+
+Sem filtros, test:e2e e test:e2e:edge executam todos os cenários apenas no respectivo navegador. O comando direto playwright test sem seleção continua usando ambos os projetos. Para conferir a seleção sem iniciar servidor, acrescentar --list.
+
+Cada cenário tem uma tag principal: @interface, @fluxo ou @carga. Os comandos por finalidade combinam --grep adicional com a tag, preservando o grupo e as expressões/flags do Playwright, inclusive /padrão/i. É possível usar --project=edge nesses comandos para verificação direcionada. Para detalhes, consultar o [contrato de finalidades](docs/arquitetura/Qualidade-e-Desempenho.md#finalidades-dos-testes-de-navegador).
+
+Exemplos com um cenário da T-006, incluindo encaminhamento de argumentos pelo script local:
+
+```powershell
+npm run test:e2e:interface -- tests/e2e/floors.spec.ts --grep 'T-006'
+npm run test:e2e:interface -- tests/e2e/floors.spec.ts --grep 'T-006' --project=edge
+./Start-Ecovit.ps1 -Task test:e2e:interface -TestArguments @('tests/e2e/floors.spec.ts', '--grep', 'T-006')
+./Start-Ecovit.ps1 -Task test:e2e:interface -TestArguments @('tests/e2e/floors.spec.ts', '--grep', 'T-006', '--project=edge')
+./Start-Ecovit.ps1 -Task test:e2e:full
+```
+
+O script local invoca o CLI npm diretamente pelo Node, encaminha argumentos sem passar por npm.cmd (inclusive metacaracteres de expressões regulares) e preserva o código de saída. Navegador, API e dev:test carregam .env.test com precedência do ambiente; não é necessário exportar a conexão a cada execução.
 
 Em produção, o PM2 inicia `app.js` na raiz do repositório com `NODE_ENV=production` e proxy HTTPS da mesma origem. Servir somente `dist` e manter `dist-server`, `.env` e imagens fora da raiz pública. Agendar a limpeza a cada 15 minutos. Para publicar atualizações, siga o [procedimento de deploy no aaPanel](docs/arquitetura/Persistencia-e-Compatibilidade.md#github-actions-e-webhook-do-aapanel). A verificação inicial da publicação está no [arquivo do M12](docs/arquivo/marcos/M12-Contas-e-Persistencia-Remota.md#aceite-e-verificações). Acompanhe a [homologação funcional](docs/tasks/T-001-Homologacao-Funcional-Producao.md) e a [homologação operacional](docs/tasks/T-002-Homologacao-Operacional-Producao.md) nas respectivas tasks. Backup do servidor continua sob administração do responsável.
 
