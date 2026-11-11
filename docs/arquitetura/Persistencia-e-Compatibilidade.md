@@ -198,6 +198,18 @@ Antes de ler/interpretar os corpos, admitir no máximo dois pedidos simultâneos
 
 ### Configuração e banco
 
+Para desenvolvimento local, `npm run db:setup:local` executa o preparo descrito nesta seção. O comando solicita conexão administrativa superuser com senha oculta e aceita apenas `127.0.0.1`, `localhost` ou `::1`; `localhost` é conectado como `127.0.0.1`. Confere PostgreSQL da linha 18 e recursos existentes antes de alterar o banco. Roles com atributos privilegiados ou associações a outras roles, banco de outro proprietário/encoding e objetos incompatíveis no schema geram conflito explícito.
+
+As perguntas do terminal exibem endereço, porta e usuário padrão entre colchetes e instruem o desenvolvedor a pressionar Enter para aceitá-los. O pedido da senha identifica a entrada oculta.
+
+O setup cria os recursos ausentes, aplica a migração existente e as concessões da API e verifica os privilégios efetivos e operações de dados em transação revertida. A migração utiliza uma sessão administrativa com identidade efetiva `ecovit_owner` via `SET ROLE`. A credencial administrativa fica em memória. Roles novas recebem senha SCRAM; senhas existentes são preservadas. A credencial de execução já configurada é reutilizada, e uma senha existente ausente é solicitada localmente.
+
+Para tabelas existentes, o setup compara tipos, colunas, defaults, collation, restrições e ativação de RLS com o schema da migração, além da propriedade. A descrição de referência vem do próprio `schema.sql` aplicado em schema isolado dentro de uma transação sempre revertida. Divergências encerram o preparo antes de alterar o arquivo de ambiente ou os dados existentes.
+
+O `.env` é criado a partir de `.env.example` quando ausente. O setup configura `DATABASE_URL` e gera `SESSION_SECRET` com 32 bytes criptograficamente aleatórios em base64url se a variável estiver ausente, vazia ou contiver somente espaços. Preserva um segredo já preenchido, as outras configurações e comentários e mantém o segredo fora dos logs. Rejeita destino diferente, opções de conexão adicionais e definições duplicadas de `DATABASE_URL` ou `SESSION_SECRET`. Grava a credencial de execução antes da criação das roles para permitir retomada após interrupção. A substituição do arquivo é atômica e confere alterações concorrentes. Um lock administrativo impede dois setups simultâneos na mesma instância. Reexecuções preservam dados e credenciais e retomam os passos faltantes. O README descreve os campos de ambiente ainda preenchidos pelo desenvolvedor.
+
+A edição do arquivo distingue definições ativas de texto dentro de valores entre aspas, inclusive multilinha. Preserva BOM UTF-8, quebras de linha, comentários e a representação de valores já configurados.
+
 Usar Node 24.x e npm ci com o lockfile. Copiar .env.example para arquivo privado .env, preencher DATABASE_URL da role de execução, APP_ORIGIN, DATA_DIR absoluto fora de dist, SESSION_SECRET aleatório, RESEND_API_KEY e MAIL_FROM. Nunca usar prefixo VITE_ para esses valores. Restringir o arquivo e diretório ao usuário do serviço, sem root. Gerar o segredo com node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"; não compartilhar a saída em mensagens ou versioná-la.
 
 Administrador cria banco UTF8 exclusivo ecovit e roles distintas ecovit_owner e ecovit, com senhas SCRAM e conexão privada. A role owner executa a migração; a role da API não é superuser, dona do banco/schema nem possui CREATE. Exemplo de concessões no banco dedicado, executadas pelo administrador após a migração (ajustar nomes se necessário):

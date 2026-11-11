@@ -12,22 +12,25 @@ No PowerShell, dentro de C:\Projects\ecovit:
 
 ```powershell
 node --version
-npm ci
-Copy-Item .env.example .env
+npm ci --include=dev
+npm run db:setup:local
 ```
 
-Não sobrescrever um .env já configurado. Edite esse arquivo privado com DATABASE_URL da role de execução, APP_ORIGIN=http://127.0.0.1:5173, API_PORT=3001, DATA_DIR exclusivo, RESEND_API_KEY e MAIL_FROM. Gere SESSION_SECRET localmente:
+O setup pede endereço, porta, usuário administrador PostgreSQL com privilégio superuser e senha oculta. Os padrões são `127.0.0.1`, `5432` e `postgres`. Use a senha definida na instalação do PostgreSQL. O comando cria o banco `ecovit` e as roles `ecovit_owner` e `ecovit`, aplica as migrações e permissões e valida o acesso da API. Cria `.env` quando necessário e configura `DATABASE_URL`, preservando os demais valores e comentários. As credenciais administrativas ficam apenas nessa execução.
+
+Cada pergunta mostra seu valor padrão entre colchetes. Pressione Enter para aceitá-lo ou digite outro valor. No pedido da senha, os caracteres ficam ocultos durante a digitação.
+
+O comando pode ser repetido após uma falha. Ele preserva os dados e as senhas existentes. Se a role `ecovit` já existir e sua senha estiver ausente no `.env`, o setup solicita essa senha com entrada oculta. Conflitos de propriedade, privilégios ou destino da conexão são informados para correção antes de continuar. O comando aceita apenas a instância local em loopback.
+
+O setup gera `SESSION_SECRET` com 32 bytes aleatórios quando a variável estiver ausente, vazia ou contiver somente espaços. Um valor já configurado é preservado. O segredo é gravado no `.env` e fica fora da saída do terminal.
+
+Complete o `.env` privado com `APP_ORIGIN=http://127.0.0.1:5173`, `API_PORT=3001`, `DATA_DIR` exclusivo, `RESEND_API_KEY` e `MAIL_FROM`. Depois de completar o ambiente, inicie o aplicativo:
 
 ```powershell
-node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"
-```
-
-Copie a saída para SESSION_SECRET, sem compartilhá-la. Crie banco/roles e aplique a migração com a role proprietária, usando temporariamente DATABASE_MIGRATION_URL. Os comandos SQL e privilégios estão em [Configuração e banco](docs/arquitetura/Persistencia-e-Compatibilidade.md#configuração-e-banco). Após migrar, conceda os privilégios de execução indicados e remova a credencial de migração do ambiente de uso diário:
-
-```powershell
-.\Start-Ecovit.ps1 -Task db:migrate
 .\Start-Ecovit.ps1 -Task dev
 ```
+
+Para migrações administrativas posteriores ou implantação em servidor, consulte [Configuração e banco](docs/arquitetura/Persistencia-e-Compatibilidade.md#configuração-e-banco). O setup local aplica a migração com a identidade `ecovit_owner` por uma sessão administrativa com `SET ROLE`, sem armazenar a senha proprietária no ambiente da API.
 
 O comando dev inicia frontend em **http://127.0.0.1:5173/** e API em loopback, com configuração .env. Mantenha o terminal aberto; Ctrl+C encerra a instância iniciada nesse terminal. Não iniciar outra instância se essa porta já estiver em uso. Chrome e Edge desktop são os navegadores previstos. Entre com seu e-mail e o código recebido. A API não é opcional: abrir só o frontend não permite entrar ou salvar. Consulte /api/health pelo mesmo endereço para verificar a API; configuração incompleta é informada no terminal.
 
