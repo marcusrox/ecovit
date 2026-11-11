@@ -86,13 +86,19 @@ export async function login(page: Page, email = `${randomUUID()}@example.com`) {
   ).toBeVisible();
   return email;
 }
-export const test = base.extend({
-  page: async ({ page, context }, provide) => {
+export const publicTest = base.extend({
+  context: async ({ context }, provide) => {
     const ip = [...crypto.getRandomValues(new Uint8Array(3))]
       .map((n) => n || 1)
       .join(".");
     // The isolated loopback test proxy supplies an independent visitor address.
     await context.setExtraHTTPHeaders({ "X-Forwarded-For": `10.${ip}` });
+    await provide(context);
+  },
+});
+
+export const test = publicTest.extend({
+  page: async ({ page }, provide) => {
     await login(page);
     const navigate = page.goto.bind(page);
     page.goto = async (...args) => {
@@ -111,14 +117,12 @@ export const test = base.extend({
     page.reload = async (...args) => {
       const response = await reload(...args);
       await expect(
-        page
-          .getByRole("button", { name: "Conta", exact: true })
-          .or(
-            page.getByRole("heading", {
-              name: "Entrar no Ecovit",
-              exact: true,
-            }),
-          ),
+        page.getByRole("button", { name: "Conta", exact: true }).or(
+          page.getByRole("heading", {
+            name: "Entrar no Ecovit",
+            exact: true,
+          }),
+        ),
       ).toBeVisible();
       return response;
     };

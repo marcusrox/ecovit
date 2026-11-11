@@ -39,6 +39,10 @@ await api.listen({ host: "127.0.0.1", port: 3002 });
 const vite = await createServer({
   server: { host: "127.0.0.1", port: 5174, strictPort: true },
 });
+// Chrome/Windows can stall while reusing the local dev server's HTTP/1.1 sockets.
+// Scope the fix to tests; leave the user's server and production unchanged.
+if (vite.httpServer && "maxRequestsPerSocket" in vite.httpServer)
+  vite.httpServer.maxRequestsPerSocket = 1;
 await vite.listen();
 await mkdir(".tools/m12", { recursive: true });
 await writeFile(

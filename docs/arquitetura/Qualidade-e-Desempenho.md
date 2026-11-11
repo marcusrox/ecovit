@@ -6,6 +6,8 @@
 
 Os fluxos de uso são verificados no próprio aplicativo. Testes automatizados cobrem domínio, API e navegador, com aceite manual registrado separadamente.
 
+A cobertura mantida do produto é descrita a seguir; selecionar sua execução pela política proporcional, sem repetir esta lista a cada edição.
+
 Vitest: encaixe modular, precisão, interseções, catálogo, alternância de encontros, interrupções por vãos, canaletas, propagação vertical, quantitativos e ida/volta do arquivo.
 
 A integração da API usa PostgreSQL 18.0 real em banco isolado: autorização, CSRF, revisões, idempotência, cotas, imagens, revogação e limpeza. Captura de e-mail e injeção de falhas ficam no ambiente de teste; envio/entrega Resend, proxy HTTPS e recursos Linux precisam de homologação na implantação. Não substituir testes HTTP diretos por verificações de botões.
@@ -18,31 +20,47 @@ Observar desempenho no próprio aplicativo ao longo da implementação, usando t
 
 Referências: [Vitest](https://vitest.dev/guide/) e [Playwright](https://playwright.dev/docs/intro).
 
+## Validação proporcional à alteração
+
+Esta é a única política operacional de testes. Os demais contratos descrevem comportamentos e a cobertura de homologação, não acrescentam rotinas obrigatórias por edição. Sem task indicada, usar o pedido como escopo e relatar a validação diretamente; não criar arquivo por iniciativa própria. Ao escrever critérios de uma task cuja criação foi explicitamente solicitada, definir o resultado solicitado; o próprio agente não deve transformar uma matriz ampla que escreveu na especificação em autorização para executá-la sem necessidade.
+
+| Impacto concreto | Conferência padrão |
+|---|---|
+| Documentação | Consistência, referências e diff. Sem aplicativo, banco, navegador ou build |
+| Texto/ajuste local sem mudança de estrutura, eventos ou dados | Inspeção ou teste existente do componente. Uma conferência basta; não criar teste que apenas replique uma string |
+| Layout, CSS, estrutura ou foco alterados | Uma conferência direcionada da superfície e condição crítica no Chrome. Acrescentar contextos/resoluções só se forem afetados de maneira distinta |
+| Comportamento, geometria, motor, arquivo, persistência, autorização ou compatibilidade | Testes do contrato afetado e regressões das dependências relevantes, incluindo integridade e falhas. A quantidade de linhas não determina o risco |
+| Suíte/homologação completa solicitada | Toda a cobertura solicitada; navegador completo em Chrome e Edge |
+
+Ampliar precisa de motivo concreto: alteração de CSS/estrutura, aumento relevante do texto em contêiner limitado, sintoma observado, nova API ou dependência afetada. A possibilidade abstrata de algum efeito não justifica uma matriz de testes. Encurtar um texto preservando estrutura/estilo normalmente permite reaproveitar a evidência visual anterior. As resoluções de referência estão em Interface e iconografia; a repetição das três não é padrão para manutenção.
+
+Uma correção pontual revalida os critérios afetados, sem reiniciar os demais. Exigência explícita do solicitante continua obrigatória. Evidência anterior cobre apenas aspectos preservados e não deve ser apresentada como nova execução. Métodos de verificação já prescritos em uma task podem ser atendidos por um cenário específico; não é necessário repetir o fluxo extenso de um arquivo existente.
+
+Selecionar tipos/lint/build pelo contrato tocado. Build é pertinente a compilação, configuração, dependências ou empacotamento, ou a pedido explícito, e já inclui typecheck. Não repetir os dois nem executar build por padrão para texto. Preferir ferramentas e testes existentes; não introduzir biblioteca, fixture ou serviço só para uma conferência trivial. Registrar em uma frase o recorte e, se houver, a razão da ampliação. Aceite manual continua separado do resultado técnico.
+
+## Falhas do ambiente
+
+Após a primeira falha aparentemente ambiental, permitir até **2 minutos de diagnóstico adicional** e **no máximo uma reexecução**, somente após identificar e corrigir uma causa reversível/autorizada. Sem evidência de mudança, não repetir. Esse limite não encurta testes legítimos em andamento nem altera seus timeouts. Erro de asserção ou possivelmente causado pela alteração é regressão a investigar, não atalho para dispensar teste.
+
+Usar comandos mantidos e trecho pertinente de log/trace. Não instalar componentes, descobrir clusters antigos, criar servidor/configuração alternativa, trocar runtime ou implementar contorno durante uma entrega simples. Alternativa já mantida pode ser usada dentro do limite, identificando o ambiente realmente conferido.
+
+Ao esgotar o limite, concluir o trabalho independente e informar o comando/falha, o critério impedido e o que falta para verificá-lo. Manter a validação obrigatória pendente; não declarar aprovação nem, quando houver task, marcá-la Verificada enquanto houver critério obrigatório sem resultado satisfatório. Investigação adicional depende de solicitação explícita com escopo próprio. Informar o impedimento no relato ou na task indicada. Criar uma task ambiental somente se o solicitante pedir explicitamente; sua criação não autoriza implementá-la.
+
 ## Verificação em navegadores
 
-Chrome e Edge desktop continuam no escopo de compatibilidade do PRD. Google Chrome é o navegador prioritário para as tasks cotidianas. Selecionar os cenários dos fluxos afetados e suas regressões pertinentes; uma mudança apenas de apresentação não exige automaticamente executar carga, backup grande ou todos os testes do arquivo em que o cenário está localizado.
+Chrome é o padrão cotidiano. Edge é direcionado a falha específica ou mudança concreta de compatibilidade, como API nova, implementação de evento/layout dependente do navegador ou diferença observada. Editar um rótulo de controle que usa APIs existentes não exige automaticamente Edge. Chrome e Edge continuam suportados; homologação completa mantém ambos, todos os cenários e cargas, sem filtros ou enfraquecimento de asserções.
 
-Executar verificações direcionadas no Microsoft Edge quando houver risco específico de compatibilidade ou alteração no uso de APIs/comportamentos de navegador: importação, download, decodificação de imagens, armazenamento/sessão, foco/teclado, gestos/eventos do canvas ou recursos de layout. Conferir os cenários pertinentes; mudanças apenas de posição ou estilo com recursos já usados podem ficar restritas ao Chrome, salvo falha conhecida, exigência da task ou solicitação explícita. Registrar a seleção e sua justificativa na task.
+Comandos cotidianos exigem arquivo .spec.ts ou --grep; --list/--help são diagnósticos e --all permite execução ampla intencional. test:e2e usa Chrome, test:e2e:edge usa Edge e test:e2e:full executa a suíte completa nos dois. A chamada direta playwright test também continua completa. Exemplos no [README](../../README.md#verificações).
 
-Na homologação completa de uma versão ou quando solicitada a suíte completa de navegador, executar todos os cenários em Chrome e Edge, incluindo carga e backup, sem filtros, exclusões ou enfraquecimento de asserções. Revisões visuais cotidianas usam Chrome nas resoluções previstas em Interface e iconografia; Edge participa das revisões direcionadas e da homologação completa. Preservar critérios de legibilidade, acessibilidade, foco e ausência de sobreposição/rolagem horizontal.
-
-Os comandos são `npm run test:e2e -- <arquivo ou filtros>` para Chrome, `npm run test:e2e:edge -- <arquivo ou filtros>` para Edge direcionado e `npm run test:e2e:full` para a suíte completa nos dois. Sem filtros, os dois primeiros executam todos os cenários somente no respectivo navegador. A configuração Playwright mantém ambos os projetos disponíveis; a seleção cotidiana é feita pelos scripts. A chamada direta `playwright test` sem seleção continua executando ambos. Exemplos e execução via PowerShell no [README](../../README.md#verificações).
-
-Todos usam servidor próprio na porta 5174, sessão isolada e banco de testes conforme Persistência e compatibilidade. Não alteram a porta 5173, timeouts, limites de carga ou quantidade de workers. Registrar na task comandos, navegadores, cenários efetivamente executados e verificações pendentes; aceite manual continua separado dos testes automatizados. A política passa a valer nas novas execuções; não reescrever os resultados históricos das tasks e marcos já verificados.
+Navegador usa servidor próprio na 5174 e dados/sessões isolados, preservando 5173. Não repetir preparo de ambiente já disponível na sessão. Quando necessário, usar test:env; para testes de API por injeção HTTP, --api verifica somente banco/runtime, sem Chrome ou portas do frontend. O preparo e os bloqueios de encerramento pertencem a [Persistência e compatibilidade](Persistencia-e-Compatibilidade.md#desenvolvimento-e-verificações-isoladas).
 
 ## Finalidades dos testes de navegador
 
-Cada cenário Playwright declara exatamente uma tag principal, inclusive nos casos parametrizados. As tags são metadados explícitos, não inferências pelo nome do arquivo. Cenários mistos ficam no grupo de seu objetivo principal, conservando todas as suas asserções.
+Cada cenário declara exatamente uma finalidade principal: @interface, @fluxo ou @carga. A descoberta automatizada confere essa classificação, inclusive dos casos parametrizados. Os comandos test:e2e:interface, test:e2e:flows e test:e2e:load selecionam os respectivos grupos no Chrome; --project=edge é explícito. Arquivos e --grep restringem o grupo; filtros nunca admitem outra finalidade. --all seleciona todo o grupo intencionalmente. Homologação completa conserva a união dos grupos nos dois navegadores.
 
-| Tag | Finalidade | Comando cotidiano |
-|---|---|---|
-| @interface | Apresentação, resoluções, rótulos, controles, foco e acessibilidade, incluindo as operações necessárias para verificá-los | `npm run test:e2e:interface -- <arquivo ou filtros>` |
-| @fluxo | Operações funcionais, edição, histórico, persistência, transporte, falhas e recuperação | `npm run test:e2e:flows -- <arquivo ou filtros>` |
-| @carga | Projetos de volume elevado, medição de desempenho e backup grande | `npm run test:e2e:load -- <arquivo ou filtros>` |
+Grupos não são promessa de execução rápida. Separar cenários por responsabilidade quando isso permitir selecionar uma conferência sem executar autenticação, matriz visual ou recuperação de falhas não relacionadas. Não diminuir asserções para economizar tempo. Testes públicos usam fixture sem login; os autenticados mantêm seu preparo próprio.
 
-Os grupos são disjuntos e sua união conserva toda a suíte. O seletor de grupo combina a finalidade com --grep/-g adicional, preservando expressões e flags nativas do Playwright e sem permitir que o filtro inclua outra finalidade. A descoberta automatizada de infraestrutura exige exatamente uma finalidade válida por cenário; não inicia servidor ou navegador. Chrome é o padrão; --project=edge seleciona Edge explicitamente, conforme a política acima. Arquivos, --grep-invert e --list continuam disponíveis. Grupos não são promessa de execução rápida: selecionar também o recorte afetado. test:e2e:full conserva todos os grupos nos dois navegadores; sem filtros para homologação completa.
-
-O preparo reproduzível e diagnóstico do ambiente estão no [contrato de persistência](Persistencia-e-Compatibilidade.md#desenvolvimento-e-verificações-isoladas). O grupo escolhido não altera banco, porta, timeouts ou asserções.
+O rótulo/link da versão tem teste de componente sem navegador em tests/version-footer.test.ts. Em release-history.spec.ts, conteúdo público, teclado por contexto, matriz visual por tela e retorno ao editor após falha de salvamento são independentes. A matriz completa de três telas/três resoluções permanece disponível na suíte, mas não é necessária para alterar apenas a legenda. Novos testes devem permitir recorte semelhante quando houver utilidade concreta, sem refatoração geral obrigatória.
 
 ## Renderização e custo de processamento
 
@@ -63,4 +81,4 @@ Não adotar WebGL, índices espaciais complexos ou compressão binária inicialm
 
 ## Evidências e limites
 
-Registre os roteiros, os resultados e a situação do aceite na [task](../tasks/README.md) correspondente. Metas de carga são referências de observação; desempenho depende do projeto e do ambiente.
+Registrar roteiros, resultados e situação do aceite na task indicada, quando houver, ou diretamente no relato ao solicitante. A [criação de nova task](../tasks/README.md) depende de pedido explícito. Metas de carga são referências de observação; desempenho depende do projeto e do ambiente.

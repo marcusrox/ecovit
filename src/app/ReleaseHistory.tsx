@@ -10,7 +10,7 @@ export const releaseHistoryHash = "#historico-de-tasks";
 export function VersionLink() {
   return (
     <span className={styles.versionLabel}>
-      Versão do João:{" "}
+      Versão:{" "}
       <a
         className={styles.versionLink}
         href={releaseHistoryHash}

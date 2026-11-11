@@ -30,11 +30,29 @@ test("filtro adicional restringe a finalidade e nunca admite carga na interface"
 });
 
 test("grupo seleciona Chrome por padrão e permite Edge explícito", () => {
-  expect(groupArguments("flows", [])).toContain("--project=chrome");
+  expect(groupArguments("flows", ["--list"])).toContain("--project=chrome");
   const args = groupArguments("load", ["--project=edge", "--grep=carga"]);
   expect(args).not.toContain("--project=chrome");
   expect(matches(args, "edge carga de paredes @carga")).toBe(true);
   expect(matches(args, "edge carga de paredes @interface")).toBe(false);
+});
+
+test("execução cotidiana exige seleção ou intenção ampla explícita", () => {
+  for (const group of ["all", "interface", "flows", "load"]) {
+    expect(() => groupArguments(group, [])).toThrow(/Selecione/);
+    expect(() => groupArguments(group, ["--reporter=line"])).toThrow(
+      /Selecione/,
+    );
+    expect(() => groupArguments(group, ["--grep", ""])).toThrow(/Selecione/);
+    expect(groupArguments(group, ["--list"])).toContain("--list");
+    expect(groupArguments(group, ["--all"])).not.toContain("--all");
+    expect(
+      groupArguments(group, ["tests/e2e/release-history.spec.ts"]),
+    ).toContain("tests/e2e/release-history.spec.ts");
+  }
+  expect(
+    groupArguments("all", ["--grep", "/histórico/i", "--project=edge"]),
+  ).toEqual(["--project=edge", "--grep", "/histórico/i"]);
 });
 
 test("recusa seleções ambíguas ou inválidas em vez de ampliar o alcance", () => {

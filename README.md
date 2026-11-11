@@ -56,10 +56,12 @@ Use o campo code dessa mensagem. Nenhum e-mail é enviado nesse modo. **O servid
 
 ## Preparação do ambiente de testes
 
-Pré-requisitos: Node.js 24, dependências instaladas com npm ci, PostgreSQL 18 e Google Chrome. Edge é necessário para suas verificações direcionadas e homologação completa. Os comandos não instalam ou baixam esses componentes.
+Pré-requisitos: Node.js 24, dependências instaladas com npm ci e PostgreSQL 18. Chrome é necessário para testes de navegador; Edge para suas verificações direcionadas e homologação completa. O perfil --api dispensa ambos. Os comandos não instalam ou baixam esses componentes.
 
 ```powershell
 npm run test:env
+# Para API por injeção HTTP, sem navegador/portas de frontend:
+npm run test:env -- --api
 # Quando houver verificação no Edge:
 npm run test:env -- --edge
 # Apenas diagnosticar, sem provisionar ou iniciar banco:
@@ -68,20 +70,24 @@ npm run test:env:check
 npm run test:env:stop
 ```
 
-Na primeira execução sem conexão configurada, o preparo cria um PostgreSQL descartável em .tools/test-environment, escutando somente em 127.0.0.1:55432, com role e banco ecovit_test, UTF8 e autenticação local trust. Salva a conexão em .env.test privado e ignorado pelo Git. Repetir o comando reutiliza ou reinicia esse cluster sem apagar dados. O preparo verifica as portas 5174/3002 e os componentes necessários; o servidor do aplicativo de testes continua sendo iniciado pelo runner na 5174. Não usa a porta 5173 nem lê/altera .env.
+Na primeira execução sem conexão configurada, o preparo cria um PostgreSQL descartável em .tools/test-environment, escutando somente em 127.0.0.1:55432, com role e banco ecovit_test, UTF8 e autenticação local trust. Salva a conexão em .env.test privado e ignorado pelo Git. Repetir o comando reutiliza ou reinicia esse cluster sem apagar dados. O preparo normal verifica as portas 5174/3002 e os componentes necessários; --api dispensa essas portas e o navegador; o servidor do aplicativo de testes continua sendo iniciado pelo runner na 5174. Não usa a porta 5173 nem lê/altera .env.
 
 Se M12_TEST_DATABASE_URL já estiver no ambiente ou em .env.test, a conexão é preservada e verificada. Deve apontar exatamente para ecovit_test em PostgreSQL 18/UTF8, com permissão CREATE nesse banco. Banco externo não é criado nem iniciado/encerrado pelo comando. Todos os runners de teste carregam .env.test automaticamente; variáveis já definidas no ambiente têm precedência. A preparação não limpa dados, mas a execução do servidor de navegador reinicializa o schema m12_browser conforme descrito acima.
 
 Para localizar PostgreSQL, o comando procura PATH e a instalação convencional da versão 18. Outras versões no PATH são ignoradas. Se necessário, definir ECOVIT_TEST_PG_BIN com a pasta que contém postgres, initdb e pg_ctl da versão 18; um diretório explícito inválido produz erro, sem fallback silencioso. Porta ocupada, conexão inválida ou componente ausente produz erro com orientação; o comando não encerra instâncias desconhecidas. Logs locais em .tools/test-environment. Em máquinas onde o sandbox impedir o navegador ou o gerenciamento do PostgreSQL, executar o comando com as permissões adequadas, mantendo o mesmo ambiente isolado.
 
-Os mesmos comandos estão disponíveis por ./Start-Ecovit.ps1 -Task test:env, test:env:check e test:env:stop. Acrescentar -TestArguments @('--edge') para verificar também Edge.
+Os mesmos comandos estão disponíveis por ./Start-Ecovit.ps1 -Task test:env, test:env:check e test:env:stop. Acrescentar -TestArguments @('--edge') para verificar também Edge, ou @('--api') para preparar somente API/banco.
 
 ## Verificações
+
+Escolher o recorte pela [validação proporcional](docs/arquitetura/Qualidade-e-Desempenho.md#validação-proporcional-à-alteração): documentação exige revisão; texto simples não exige automaticamente navegador/build/matriz visual; alterações de comportamento exigem os testes dos contratos afetados. Falhas ambientais têm diagnóstico limitado, sem criar infraestrutura de contorno durante uma entrega simples. Registrar validações impedidas; homologação completa permanece integral.
 
 - npm run typecheck, npm run lint, npm test e npm run build verificam tipos, estilo, domínio/estado e builds.
 - npm run test:api exige M12_TEST_DATABASE_URL para PostgreSQL isolado chamado ecovit_test; cobre HTTP real, segurança e persistência.
 - Os comandos de navegador abaixo usam M12_TEST_DATABASE_URL definido no ambiente, banco ecovit_test, schema próprio, captura de e-mail e API/Vite na porta **5174**. Cada execução inicia servidor novo, sem reaproveitar a instância do solicitante.
 - Para verificação interativa isolada, configure .env.test com M12_TEST_DATABASE_URL e execute .\Start-Ecovit.ps1 -Task dev:test. Esse servidor reinicializa as contas de teste; não usar dados pessoais. Códigos ficam apenas em .tools/m12/browser-mail nesse ambiente, sem endpoint especial de login.
+
+Para texto/componente compartilhado, preferir a conferência local existente: `npm test -- tests/version-footer.test.ts` não exige navegador, banco ou autenticação. O critério da task deve descrever o resultado; somente impacto concreto ou solicitação explícita exige ampliar a validação.
 
 Google Chrome é o padrão cotidiano; selecionar arquivos/cenários afetados. Usar Edge em verificações específicas de compatibilidade e ambos na homologação completa, conforme [Qualidade e desempenho](docs/arquitetura/Qualidade-e-Desempenho.md#verificação-em-navegadores). Chrome e Edge continuam suportados.
 
@@ -94,14 +100,14 @@ Google Chrome é o padrão cotidiano; selecionar arquivos/cenários afetados. Us
 | `npm run test:e2e:edge -- <arquivo ou filtros>` | Cenários selecionados no Edge |
 | `npm run test:e2e:full` | Todos os cenários em Chrome e Edge, sem filtros na homologação completa |
 
-Sem filtros, test:e2e e test:e2e:edge executam todos os cenários apenas no respectivo navegador. O comando direto playwright test sem seleção continua usando ambos os projetos. Para conferir a seleção sem iniciar servidor, acrescentar --list.
+Os comandos cotidianos exigem arquivo .spec.ts ou --grep; sem seleção retornam erro com orientação. --all autoriza executar todos os cenários do comando/grupo no respectivo navegador. test:e2e:full permanece a homologação completa nos dois. O comando direto playwright test sem seleção continua usando ambos os projetos. Para conferir a seleção sem iniciar servidor, acrescentar --list.
 
-Cada cenário tem uma tag principal: @interface, @fluxo ou @carga. Os comandos por finalidade combinam --grep adicional com a tag, preservando o grupo e as expressões/flags do Playwright, inclusive /padrão/i. É possível usar --project=edge nesses comandos para verificação direcionada. Para detalhes, consultar o [contrato de finalidades](docs/arquitetura/Qualidade-e-Desempenho.md#finalidades-dos-testes-de-navegador).
+Cada cenário tem uma tag principal: @interface, @fluxo ou @carga. Os comandos por finalidade combinam --grep adicional com a tag, preservando o grupo e as expressões/flags do Playwright, inclusive /padrão/i. Selecionar apenas um grupo não torna o fluxo curto; indicar também o arquivo/cenário afetado. É possível usar --project=edge nesses comandos para verificação direcionada. Para detalhes, consultar o [contrato de finalidades](docs/arquitetura/Qualidade-e-Desempenho.md#finalidades-dos-testes-de-navegador).
 
 Exemplos com um cenário da T-006, incluindo encaminhamento de argumentos pelo script local:
 
 ```powershell
-npm run test:e2e:interface -- tests/e2e/floors.spec.ts --grep 'T-006'
+npm run test:e2e:interface -- tests/e2e/release-history.spec.ts --grep 'teclado e retorno de foco no login'
 npm run test:e2e:interface -- tests/e2e/floors.spec.ts --grep 'T-006' --project=edge
 ./Start-Ecovit.ps1 -Task test:e2e:interface -TestArguments @('tests/e2e/floors.spec.ts', '--grep', 'T-006')
 ./Start-Ecovit.ps1 -Task test:e2e:interface -TestArguments @('tests/e2e/floors.spec.ts', '--grep', 'T-006', '--project=edge')

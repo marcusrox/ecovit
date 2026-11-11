@@ -1,6 +1,7 @@
 import { readReleaseInfo } from "../../scripts/release-info";
-import { expect, rejectSaves, test, type Page } from "./auth";
+import { expect, rejectSaves, test, publicTest, type Page } from "./auth";
 
+const { version, tasks } = readReleaseInfo();
 const versionLink = (page: Page) =>
   page
     .locator("footer")
@@ -13,111 +14,139 @@ const viewports = [
   { width: 900, height: 680 },
 ];
 
-test(
-  "mostra a revisão nos três rodapés e abre o histórico por teclado",
-  { tag: "@interface" },
-  async ({ browser, baseURL, page }, info) => {
-    const { version, tasks } = readReleaseInfo();
-    const anonymous = await browser.newPage({ baseURL });
-    await anonymous.goto("/");
-    await expect(
-      anonymous.getByRole("heading", { name: "Entrar no Ecovit" }),
-    ).toBeVisible();
-    await expect(versionLink(anonymous)).toHaveText(version);
-    const versionText = await versionLink(anonymous).innerText();
+async function openEditor(page: Page) {
+  await page.getByRole("button", { name: /Novo projeto/ }).click();
+  await page.getByLabel("Nome do projeto").fill("Projeto com histórico");
+  await page
+    .getByRole("button", { name: "Criar projeto", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toHaveText("Salvo");
+}
 
-    async function checkFooter(surface: Page, label: string) {
-      for (const viewport of viewports) {
-        await surface.setViewportSize(viewport);
-        const link = versionLink(surface);
-        await expect(link).toHaveText(versionText);
-        const footerLabel = link.locator("..");
-        await expect(footerLabel).toHaveText(`Versão do João: ${versionText}`);
-        await expect(footerLabel.getByRole("link")).toHaveCount(1);
-        await expect(link).toHaveAttribute("href", "#historico-de-tasks");
-        if (label === "lista") await link.scrollIntoViewIfNeeded();
-        await expect(link).toBeInViewport();
-        await expect(footerLabel).toBeInViewport({ ratio: 1 });
-        const footerBoxes = await surface
-          .locator("footer > *")
-          .evaluateAll((elements) =>
-            elements
-              .filter((element) => element.getClientRects().length)
-              .map((element) => {
-                const { left, right } = element.getBoundingClientRect();
-                return { left, right };
-              }),
-          );
-        for (let i = 1; i < footerBoxes.length; i++)
-          expect(footerBoxes[i].left).toBeGreaterThanOrEqual(
-            footerBoxes[i - 1].right,
-          );
-        expect(
-          await surface.evaluate(
-            () => document.documentElement.scrollWidth <= innerWidth,
-          ),
-        ).toBe(true);
-        await link.focus();
-        await surface.keyboard.press("Shift+Tab");
-        await surface.keyboard.press("Tab");
-        await expect(link).toBeFocused();
-        expect(
-          await link.evaluate(
-            (element) => getComputedStyle(element).outlineStyle,
-          ),
-        ).toBe("solid");
-        await surface.screenshot({
-          path: `.tools/t010/${label}-${info.project.name}-${viewport.width}.png`,
-        });
-        await link.press("Enter");
-        await expect(historyHeading(surface)).toBeVisible();
-        const history = surface.getByRole("dialog");
-        await expect(history).toContainText(versionText);
-        if (tasks.length) {
-          await expect(history.getByRole("listitem")).toHaveText(
-            tasks.map(
-              ({ id, title, date }) =>
-                `${id}${title}${date.split("-").reverse().join("/")}`,
-            ),
-          );
-        } else {
-          await expect(history).toContainText(
-            "Nenhuma task implementada nesta versão",
-          );
-        }
-        await surface
-          .getByRole("button", { name: "Voltar", exact: true })
-          .click();
-        await expect(historyHeading(surface)).toHaveCount(0);
-        await expect(link).toBeFocused();
-      }
-    }
+async function checkKeyboard(page: Page) {
+  const link = versionLink(page);
+  await link.scrollIntoViewIfNeeded();
+  await link.focus();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  await expect(link).toBeFocused();
+  expect(await link.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe(
+    "solid",
+  );
+  await link.press("Enter");
+  await expect(historyHeading(page)).toBeVisible();
+  await expect(page.getByRole("dialog")).toContainText(version);
+  await page.getByRole("button", { name: "Voltar", exact: true }).click();
+  await expect(historyHeading(page)).toHaveCount(0);
+  await expect(link).toBeFocused();
+}
 
-    await checkFooter(anonymous, "login");
-    await anonymous.goto("/#historico-de-tasks");
-    await anonymous.reload();
-    await expect(historyHeading(anonymous)).toBeVisible();
+async function checkLayout(page: Page, label: string, browserName: string) {
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    const link = versionLink(page),
+      footerLabel = link.locator("..");
+    await expect(link).toHaveText(version);
+    await expect(footerLabel).toHaveText(`Versão: ${version}`);
+    await expect(footerLabel.getByRole("link")).toHaveCount(1);
+    await expect(link).toHaveAttribute("href", "#historico-de-tasks");
+    await link.scrollIntoViewIfNeeded();
+    await expect(link).toBeInViewport();
+    await expect(footerLabel).toBeInViewport({ ratio: 1 });
+    const boxes = await page.locator("footer > *").evaluateAll((elements) =>
+      elements
+        .filter((el) => el.getClientRects().length)
+        .map((el) => {
+          const { left, right } = el.getBoundingClientRect();
+          return { left, right };
+        }),
+    );
+    for (let i = 1; i < boxes.length; i++)
+      expect(boxes[i].left).toBeGreaterThanOrEqual(boxes[i - 1].right);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await link.focus();
+    await page.keyboard.press("Shift+Tab");
+    await page.keyboard.press("Tab");
+    await expect(link).toBeFocused();
+    expect(await link.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe(
+      "solid",
+    );
+    await page.screenshot({
+      path: `.tools/release-history/${label}-${browserName}-${viewport.width}.png`,
+    });
+  }
+}
+
+publicTest(
+  "histórico público: conteúdo e acesso direto sem autenticação",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    await page.goto("/#historico-de-tasks");
+    await page.reload();
+    await expect(historyHeading(page)).toBeVisible();
     await expect(
-      anonymous.getByRole("heading", { name: "Entrar no Ecovit" }),
+      page.getByRole("heading", { name: "Entrar no Ecovit" }),
     ).toHaveCount(0);
     await expect(
-      anonymous.getByRole("link", { name: "Voltar ao Ecovit" }),
+      page.getByRole("link", { name: "Voltar ao Ecovit" }),
     ).toBeVisible();
-    await anonymous.close();
+    await expect(page.getByRole("main")).toContainText(version);
+    if (tasks.length)
+      await expect(page.getByRole("listitem")).toHaveText(
+        tasks.map(
+          ({ id, title, date }) =>
+            `${id}${title}${date.split("-").reverse().join("/")}`,
+        ),
+      );
+    else
+      await expect(page.getByRole("main")).toContainText(
+        "Nenhuma task implementada nesta versão",
+      );
+  },
+);
 
-    await checkFooter(page, "lista");
-    await page.getByRole("button", { name: /Novo projeto/ }).click();
-    await page.getByLabel("Nome do projeto").fill("Projeto com histórico");
-    await page
-      .getByRole("button", { name: "Criar projeto", exact: true })
-      .click();
-    await expect(page.getByRole("status")).toHaveText("Salvo");
-    await checkFooter(page, "editor");
+publicTest(
+  "histórico: teclado e retorno de foco no login",
+  { tag: "@interface" },
+  async ({ page }) => {
+    await page.goto("/");
+    await expect(
+      page.getByRole("heading", { name: "Entrar no Ecovit" }),
+    ).toBeVisible();
+    await checkKeyboard(page);
+  },
+);
+
+test(
+  "histórico: teclado e retorno de foco na lista",
+  { tag: "@interface" },
+  async ({ page }) => {
+    await checkKeyboard(page);
+  },
+);
+
+test(
+  "histórico: teclado e informações do rodapé do editor",
+  { tag: "@interface" },
+  async ({ page }) => {
+    await openEditor(page);
+    await checkKeyboard(page);
     await expect(page.locator("footer")).toContainText("Face externa");
     await expect(
       page.getByRole("button", { name: /Diagnósticos/ }),
     ).toBeVisible();
+  },
+);
 
+test(
+  "histórico: voltar preserva candidato em memória após falha de salvamento",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    await openEditor(page);
     await rejectSaves(page);
     await page
       .getByRole("textbox", { name: "Nome do projeto" })
@@ -132,5 +161,38 @@ test(
       page.getByRole("textbox", { name: "Nome do projeto" }),
     ).toHaveValue("Candidato em memória");
     await expect(page.getByRole("status")).toHaveText("Não salvo");
+  },
+);
+
+publicTest(
+  "rodapé: matriz visual do login",
+  { tag: "@interface" },
+  async ({ page }, info) => {
+    await page.goto("/");
+    await expect(
+      page.getByRole("heading", { name: "Entrar no Ecovit" }),
+    ).toBeVisible();
+    await checkLayout(page, "login", info.project.name);
+  },
+);
+
+test(
+  "rodapé: matriz visual da lista",
+  { tag: "@interface" },
+  async ({ page }, info) => {
+    await checkLayout(page, "lista", info.project.name);
+  },
+);
+
+test(
+  "rodapé: matriz visual do editor",
+  { tag: "@interface" },
+  async ({ page }, info) => {
+    await openEditor(page);
+    await checkLayout(page, "editor", info.project.name);
+    await expect(page.locator("footer")).toContainText("Face externa");
+    await expect(
+      page.getByRole("button", { name: /Diagnósticos/ }),
+    ).toBeVisible();
   },
 );

@@ -2,6 +2,10 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
+## Recorte de validação da interface
+
+A seleção de verificações pertence somente a [Qualidade e desempenho](Qualidade-e-Desempenho.md#validação-proporcional-à-alteração). Este assunto define os padrões que a interface deve conservar, não uma rotina de testes por edição. As resoluções 1366×768, 1280×720 e 900×680 são referências para a homologação e para os riscos concretamente afetados; não multiplicar automaticamente uma correção por todas as telas/resoluções.
+
 ## M12 — conta e persistência remota
 
 Produto em RF-12/19/20. Entrada por formulário de e-mail e código, com reenviar/tempo de espera, erros legíveis e foco previsível; não exigir múltiplos campos de um dígito. Permitir colar código e usar autocomplete apropriado. Não apresentar senha ou Google. Mostrar conta atual, Sair, uso de cota e acesso à Lixeira/Excluir conta; não misturar essas ações com Configurações do projeto ou Preferências.
@@ -10,7 +14,7 @@ Lista ativa e lixeira têm contextos claros; importação identifica conta de de
 
 Indicador do editor diferencia persistência de cálculo. Mensagens de falha/resultado incerto/conflito permanecem até resolução, com ações explícitas de tentar novamente, entrar por código, baixar e descartar/abrir remoto conforme estado; rede não é representada só por cor. Reautenticar em diálogo na própria página preserva o desenho. Não mostrar Salvo antes da confirmação nem “Falhou” como certeza quando o resultado ainda é desconhecido.
 
-Reusar Icon e controles existentes; eventuais símbolos novos entram no mapa central com nome semântico, sem imports diretos ou catálogo paralelo. Validar foco/teclado/nomes acessíveis, anúncios de status e ausência de rolagem horizontal nas resoluções 1366×768, 1280×720 e 900×680 conforme a [política de verificação em navegadores](Qualidade-e-Desempenho.md#verificação-em-navegadores): Chrome nas tasks cotidianas e Edge em verificações específicas e homologações completas, além das verificações de iconografia deste assunto. Não atribuir essas verificações à especificação: serão executadas na implementação.
+Reusar Icon e controles existentes; eventuais símbolos novos entram no mapa central com nome semântico, sem imports diretos ou catálogo paralelo. Preservar foco/teclado/nomes acessíveis, anúncios de status e ausência de rolagem horizontal. Conferências seguem a política central de qualidade; a especificação não constitui evidência de execução.
 
 ## Tela de entrada
 
@@ -18,7 +22,7 @@ A tela pública usa a marca compartilhada com o restante do aplicativo e uma ima
 
 ## Versão e histórico de tasks
 
-O rodapé do login e da lista de projetos mostra “Versão do João: ” seguido do identificador dinâmico como link, em um grupo de texto alinhado à direita. Somente o identificador é clicável. No editor, o mesmo grupo ocupa a última posição do rodapé compacto, sem quebra interna, preservando sua altura e as informações existentes. O conteúdo da página de histórico conserva sua identificação de versão. O link tem nome acessível com a versão e o destino, sublinhado e foco visível.
+O rodapé do login e da lista de projetos mostra um rótulo de versão seguido do identificador dinâmico como link, em um grupo de texto alinhado à direita. Somente o identificador é clicável. No editor, o mesmo grupo ocupa a última posição do rodapé compacto, sem quebra interna, preservando sua altura e as informações existentes. O conteúdo da página de histórico conserva sua identificação de versão. O link tem nome acessível com a versão e o destino, sublinhado e foco visível.
 
 A página pública abre no fragmento `#historico-de-tasks`. Ao chegar pelo link, a interface usa um diálogo de página inteira e mantém a tela de origem montada. Voltar, Escape e o botão de retorno do navegador fecham a página sem desmontar o editor. O acesso direto ao fragmento mostra a página sem iniciar a autenticação. O conteúdo da lista usa somente os dados públicos da compilação.
 
@@ -60,11 +64,11 @@ O acesso às configurações do projeto usa settings→SlidersHorizontal em bot�
 
 No cabeçalho do editor, Projetos é um botão iconText após o logotipo e antes do separador/nome: nome semântico back→ArrowLeft no mapa central, texto persistente, aparência padrão de [Quantitativos](Quantitativos.md) (borda, fundo, tipografia, hover e foco iguais, inclusive em larguras menores) e dica nativa Voltar à lista de projetos. Carregar/Baixar reutilizam upload/download com iconButton e variante fileAction, área de 32 px, borda zero e fundo transparente em repouso. Nomes acessíveis preservados (Carregar arquivo/Baixar projeto); title/data-tooltip acrescentam `.ecovit`. As dicas desses dois controles abrem abaixo, alinhadas à direita, para caber na janela. Hover e foco seguem as regras gerais. [Quantitativos](Quantitativos.md) e o cabeçalho da lista inicial conservam sua apresentação. Apenas posição/apresentação mudam; handlers, validação, transporte, bloqueios e confirmação de saída com erro de salvamento permanecem.
 
-Verificar imports/paths/glifos restantes, centralização e ausência de sobreposição em todas as superfícies afetadas: início/criação, cabeçalho/status, ferramentas, Fiada, zoom, painéis, configurações/ajuda e diagnósticos. Rodar tipos/lint/build e e2e pertinentes conforme a [política de verificação em navegadores](Qualidade-e-Desempenho.md#verificação-em-navegadores), com revisão visual de 1366×768, 1280×720 e 900×680 e zoom habitual. Reusar verificações de centro (tolerância 1 px para a caixa SVG) e texto que não excede botões; validar também legibilidade óptica e estados. ESLint bloqueia imports/reexports estáticos (incluindo subpaths) e import()/require() literais de lucide-react fora do componente central. A regra foi verificada com casos permitidos e proibidos; não substitui revisão semântica/visual nem é uma barreira contra código deliberadamente ofuscado.
+Na cobertura de iconografia, conferir centralização, legibilidade e estados das superfícies afetadas. Centro da caixa SVG tem tolerância de 1 px e o texto deve caber no botão. O recorte de execução segue a política central de qualidade; editar um rótulo não exige percorrer o catálogo ou todas as superfícies. ESLint bloqueia imports/reexports estáticos (incluindo subpaths) e import()/require() literais de lucide-react fora do componente central. A regra foi verificada com casos permitidos e proibidos; não substitui revisão semântica/visual nem é uma barreira contra código deliberadamente ofuscado.
 
 React oferece suporte a TypeScript; Konva tem integração declarativa com React e eventos para formas. A escolha é uma decisão de adequação ao produto, não uma garantia de desempenho sem medição. Referências: [React e TypeScript](https://react.dev/learn/typescript), [react-konva](https://konvajs.org/docs/react/index.html).
 
-No indicador de composição na parte inferior do canvas, a retenção visual durante recálculo de grautes substitui Processando… por Recalculando grautes…, sem novo ícone ou mensagem na barra de ferramentas. Após falha com desenho retido, mostrar Desenho anterior · resultado desatualizado no mesmo indicador, preservar a mensagem de erro existente e a ação Recalcular. Manter o texto legível nas três resoluções de referência, sem deslocar a barra de ferramentas nem ocultar controles.
+No indicador de composição na parte inferior do canvas, a retenção visual durante recálculo de grautes substitui Processando… por Recalculando grautes…, sem novo ícone ou mensagem na barra de ferramentas. Após falha com desenho retido, mostrar Desenho anterior · resultado desatualizado no mesmo indicador, preservar a mensagem de erro existente e a ação Recalcular. Manter o texto legível nas resoluções suportadas, sem deslocar a barra de ferramentas nem ocultar controles.
 
 ## Painéis de propriedades à direita
 
@@ -132,4 +136,4 @@ Terreno usa Icon/terrain→LandPlot no mapa central, acompanhado de rótulo na b
 
 ### Rosa dos ventos no terreno
 
-Propriedades do terreno oferecem somente a checkbox Mostrar rosa dos ventos, inicialmente desligada, e instrução curta de arraste/alças, sem campos numéricos adicionais. Selecione a rosa pelo corpo ou pela lista de elementos. Desenho vetorial N/L/S/O em verde profundo e fundo claro segue o tamanho/ângulo escolhidos; não é ícone de ação. Alças de canto quadradas e alça circular externa seguem a linguagem de manipulação do canvas. Reusar controles, disabled, texto e foco existentes, sem nova biblioteca ou import de ícones. Ajuda geral informa seleção, movimento, tamanho e giro no canvas. Conferir checkbox, instrução e desenho nas três resoluções usuais, inclusive somente leitura e sobreposição, seguindo a [política de verificação em navegadores](Qualidade-e-Desempenho.md#verificação-em-navegadores).
+Propriedades do terreno oferecem somente a checkbox Mostrar rosa dos ventos, inicialmente desligada, e instrução curta de arraste/alças, sem campos numéricos adicionais. Selecione a rosa pelo corpo ou pela lista de elementos. Desenho vetorial N/L/S/O em verde profundo e fundo claro segue o tamanho/ângulo escolhidos; não é ícone de ação. Alças de canto quadradas e alça circular externa seguem a linguagem de manipulação do canvas. Reusar controles, disabled, texto e foco existentes, sem nova biblioteca ou import de ícones. Ajuda geral informa seleção, movimento, tamanho e giro no canvas. A cobertura da rosa inclui checkbox, instrução, desenho, somente leitura e sobreposição; selecionar sua execução conforme a política central de qualidade.

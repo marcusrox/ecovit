@@ -83,4 +83,4 @@ Editor e API usam o [fluxo sequencial](arquitetura/Estado-Historico-e-Operacoes.
 
 ## Manutenção
 
-Cada contrato tem um assunto responsável. Atualize o assunto afetado junto com a implementação e registre os critérios, as evidências e a situação do aceite na task correspondente. Os [registros dos marcos](arquivo/Ecovit-Plano-Implementacao.md) preservam a rastreabilidade histórica.
+Cada contrato tem um assunto responsável. Atualize o assunto afetado junto com a implementação e registre os critérios, as evidências e a situação do aceite na task indicada, quando houver, ou no relato ao solicitante. A criação de uma nova task depende de pedido explícito, conforme o [guia de tasks](tasks/README.md). Os [registros dos marcos](arquivo/Ecovit-Plano-Implementacao.md) preservam a rastreabilidade histórica.

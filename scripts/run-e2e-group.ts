@@ -8,12 +8,17 @@ export function groupArguments(group: string, args: string[]) {
     flows: "@fluxo",
     load: "@carga",
   };
-  if (!Object.hasOwn(tags, group))
-    throw new Error("Finalidade inválida: use interface, flows ou load.");
+  if (group !== "all" && !Object.hasOwn(tags, group))
+    throw new Error("Finalidade inválida: use all, interface, flows ou load.");
   const remaining: string[] = [];
   let filter: string | undefined;
+  let explicitAll = false;
   for (let i = 0; i < args.length; i++) {
     const argument = args[i];
+    if (argument === "--all") {
+      explicitAll = true;
+      continue;
+    }
     if (
       argument === "--grep" ||
       argument === "-g" ||
@@ -35,19 +40,33 @@ export function groupArguments(group: string, args: string[]) {
       if (filter === undefined) throw new Error("Falta a expressão de --grep.");
     } else remaining.push(argument);
   }
+  const diagnostic = remaining.some((arg) =>
+    ["--list", "--help", "-h"].includes(arg),
+  );
+  const fileSelected = remaining.some(
+    (arg) =>
+      !arg.startsWith("-") &&
+      /\.spec\.[cm]?[jt]sx?(?::\d+(?::\d+)?)?$/.test(arg),
+  );
+  if (!explicitAll && !diagnostic && !fileSelected && !filter)
+    throw new Error(
+      "Selecione um arquivo .spec.ts ou --grep. Para execução ampla, informe --all; homologação completa: npm run test:e2e:full.",
+    );
   // Match Playwright's CLI semantics: /expression/gi, or an implicit gi.
   const literal = filter?.match(/^\/(.*)\/([gi]*)$/);
   const expression =
     filter === undefined
       ? undefined
       : new RegExp(literal ? literal[1] : filter, literal ? literal[2] : "gi");
-  const pattern = `^(?=[\\s\\S]*\\s${tags[group]}$)${expression === undefined ? "" : `(?=[\\s\\S]*(?:${expression.source}))`}[\\s\\S]*$`;
   if (
     !remaining.some(
       (arg) => arg === "--project" || arg.startsWith("--project="),
     )
   )
     remaining.push("--project=chrome");
+  if (group === "all")
+    return filter === undefined ? remaining : [...remaining, "--grep", filter];
+  const pattern = `^(?=[\\s\\S]*\\s${tags[group]}$)${expression === undefined ? "" : `(?=[\\s\\S]*(?:${expression.source}))`}[\\s\\S]*$`;
   return [...remaining, "--grep", `/${pattern}/${expression?.flags ?? "gi"}`];
 }
 

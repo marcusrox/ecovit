@@ -318,10 +318,11 @@ export async function main(args = process.argv.slice(2)) {
   const [mode = "prepare", ...options] = args;
   if (
     !["prepare", "check", "stop"].includes(mode) ||
-    options.some((arg) => arg !== "--edge")
+    options.some((arg) => arg !== "--edge" && arg !== "--api") ||
+    (options.includes("--api") && options.includes("--edge"))
   )
     throw new Error(
-      "Uso: test:env [--edge], test:env:check [--edge] ou test:env:stop.",
+      "Uso: test:env [--api ou --edge], test:env:check [--api ou --edge] ou test:env:stop.",
     );
   if (process.versions.node.split(".")[0] !== "24")
     throw new Error("Use Node.js 24 para preparar os testes.");
@@ -331,13 +332,17 @@ export async function main(args = process.argv.slice(2)) {
     throw new Error("Preparação de testes bloqueada em produção.");
   process.chdir(root);
   if (mode === "stop") return stopManagedDatabase();
-  if (!existsSync(path.join(root, "node_modules/@playwright/test/cli.js")))
+  const apiOnly = options.includes("--api");
+  if (
+    !apiOnly &&
+    !existsSync(path.join(root, "node_modules/@playwright/test/cli.js"))
+  )
     throw new Error(
       "Dependências ausentes. Execute npm ci antes de preparar os testes.",
     );
   let url = process.env.M12_TEST_DATABASE_URL;
   if (url !== undefined) url = validateTestDatabaseUrl(url);
-  await assertFreePorts();
+  if (!apiOnly) await assertFreePorts();
   if (
     mode === "prepare" &&
     (url === undefined || (url === localUrl && existsSync(marker)))
@@ -346,6 +351,12 @@ export async function main(args = process.argv.slice(2)) {
     url = localUrl;
   }
   await verifyDatabase(validateTestDatabaseUrl(url));
+  if (apiOnly) {
+    console.log(
+      "Ambiente API pronto: Node 24 e PostgreSQL 18/ecovit_test. Nenhum navegador iniciado; portas do frontend não são necessárias para testes por injeção HTTP.",
+    );
+    return;
+  }
   const { chromium } = await import("@playwright/test");
   for (const channel of options.includes("--edge")
     ? ["chrome", "msedge"]
