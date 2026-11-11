@@ -499,9 +499,9 @@ Quantitativos e relatórios abrirão em telas separadas, conforme a diretriz exi
 
 ### Critérios de usabilidade
 
-Testar com representantes de arquitetos e autoconstrutores: criar um recinto e um encontro em T, redimensionar parede, inserir janela e editar base/altura, alternar Planta/Fiada, encontrar uma fiada de canaleta, alterar encontro na primeira fiada e salvar/reabrir.
+Na homologação de usabilidade do editor, testar com representantes de arquitetos e autoconstrutores: criar um recinto e um encontro em T, redimensionar parede, inserir janela e editar base/altura, alternar Planta/Fiada, encontrar uma fiada de canaleta, alterar encontro na primeira fiada e salvar/reabrir. Este é um critério de homologação do produto, não uma etapa obrigatória de cada alteração; a validação cotidiana segue a [política proporcional](arquitetura/Qualidade-e-Desempenho.md#validação-proporcional-à-alteração).
 
-Observar confusão entre modos, ações acidentais, compreensão da modulação, descoberta dos controles e percepção do alcance de ajustes. Antes de concluir a implementação do editor, os dois públicos deverão conseguir completar esses fluxos sem instrução verbal do avaliador. Os prints orientam a separação dos modos e o aproveitamento do canvas; os controles finais serão verificados por esses testes.
+Nessa homologação, observar confusão entre modos, ações acidentais, compreensão da modulação, descoberta dos controles e percepção do alcance de ajustes. Para confirmar o aceite de usabilidade do editor, os dois públicos deverão conseguir completar esses fluxos sem instrução verbal do avaliador. Os prints orientam a separação dos modos e o aproveitamento do canvas; os controles finais serão verificados por esses testes de homologação.
 
 **Aceite:** sem seleção, o canvas ocupa a maior parte da área útil; selecionar uma parede ou um vão mostra apenas os controles pertinentes; fechar ou recolher propriedades libera o espaço; explicações extensas só aparecem quando solicitadas. A prévia de arraste, os indicadores dos elementos e os problemas que exigem ação continuam visíveis no desenho.
 

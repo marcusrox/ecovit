@@ -14,9 +14,9 @@ A integração da API usa PostgreSQL 18.0 real em banco isolado: autorização, 
 
 Playwright: desenhar/redimensionar, cancelar gesto, alternar modos, navegar fiadas, editar encontro apenas na primeira, alterar graute respeitando vãos, desfazer, salvar/recarregar e transportar arquivo. Coordenadas dos gestos devem ser calculadas pela câmera/elementos conhecidos, evitando testes frágeis presos a pixels de uma tela específica.
 
-Testar arquivo inválido, falha de cálculo, liberação dos controles após falha, salvamento de rascunho, download após falha de armazenamento e alterações sucessivas em pavimentos diferentes. Usar os casos do Caderno técnico como resultados esperados para o motor; não validar o algoritmo apenas contra sua própria saída.
+A cobertura mantida inclui arquivo inválido, falha de cálculo, liberação dos controles após falha, salvamento de rascunho, download após falha de armazenamento e alterações sucessivas em pavimentos diferentes; executar somente o recorte pertinente à alteração ou à homologação solicitada. Usar os casos do Caderno técnico como resultados esperados para o motor; não validar o algoritmo apenas contra sua própria saída.
 
-Observar desempenho no próprio aplicativo ao longo da implementação, usando também o cenário do PRD. A referência de geração em até 5 segundos é uma meta inicial de observação, sem exigir prova técnica prévia; a espera aceitável será avaliada pelo solicitante durante o uso.
+Observar desempenho no próprio aplicativo quando a alteração afetar processamento/renderização, houver sintoma de lentidão ou solicitação explícita. Selecionar o cenário pelo impacto concreto; usar o cenário de carga do PRD quando pertinente, sem torná-lo rotina por edição. A referência de geração em até 5 segundos é uma meta inicial de observação, sem exigir prova técnica prévia; a espera aceitável será avaliada pelo solicitante durante o uso.
 
 Referências: [Vitest](https://vitest.dev/guide/) e [Playwright](https://playwright.dev/docs/intro).
 
@@ -28,11 +28,11 @@ Esta é a única política operacional de testes. Os demais contratos descrevem 
 |---|---|
 | Documentação | Consistência, referências e diff. Sem aplicativo, banco, navegador ou build |
 | Texto/ajuste local sem mudança de estrutura, eventos ou dados | Inspeção ou teste existente do componente. Uma conferência basta; não criar teste que apenas replique uma string |
-| Layout, CSS, estrutura ou foco alterados | Uma conferência direcionada da superfície e condição crítica no Chrome. Acrescentar contextos/resoluções só se forem afetados de maneira distinta |
+| Layout, CSS, estrutura ou foco alterados | Para ajuste visual trivial cujo efeito seja verificável pelo código e pela evidência preservada, uma inspeção basta. Usar conferência direcionada no Chrome quando houver risco concreto de quebra, sobreposição, responsividade ou foco que a inspeção não resolva. Acrescentar contextos/resoluções só se forem afetados de maneira distinta |
 | Comportamento, geometria, motor, arquivo, persistência, autorização ou compatibilidade | Testes do contrato afetado e regressões das dependências relevantes, incluindo integridade e falhas. A quantidade de linhas não determina o risco |
 | Suíte/homologação completa solicitada | Toda a cobertura solicitada; navegador completo em Chrome e Edge |
 
-Ampliar precisa de motivo concreto: alteração de CSS/estrutura, aumento relevante do texto em contêiner limitado, sintoma observado, nova API ou dependência afetada. A possibilidade abstrata de algum efeito não justifica uma matriz de testes. Encurtar um texto preservando estrutura/estilo normalmente permite reaproveitar a evidência visual anterior. As resoluções de referência estão em Interface e iconografia; a repetição das três não é padrão para manutenção.
+Ampliar precisa de motivo concreto: efeito de CSS/estrutura que a inspeção não resolva, aumento relevante do texto em contêiner limitado, sintoma observado, nova API ou dependência afetada. A mera edição de CSS/estrutura e a possibilidade abstrata de algum efeito não justificam navegador ou matriz de testes. Encurtar um texto preservando estrutura/estilo normalmente permite reaproveitar a evidência visual anterior. As resoluções de referência estão em Interface e iconografia; a repetição das três não é padrão para manutenção.
 
 Uma correção pontual revalida os critérios afetados, sem reiniciar os demais. Exigência explícita do solicitante continua obrigatória. Evidência anterior cobre apenas aspectos preservados e não deve ser apresentada como nova execução. Métodos de verificação já prescritos em uma task podem ser atendidos por um cenário específico; não é necessário repetir o fluxo extenso de um arquivo existente.
 
@@ -73,7 +73,7 @@ O projeto de carga do PRD pode ter 100 mil peças totais; isso não significa de
 - Manter alças e realces em camada de interação, sem redesenhar o projeto inteiro a cada movimento.
 - Simplificar furos e detalhes em zoom distante; preservar precisão de seleção.
 - Calcular apenas após confirmação da edição, evitando geração e cópias integrais a cada evento do mouse.
-- Medir geração, quantidade de formas visíveis e duração de gestos durante o desenvolvimento.
+- Quando a alteração afetar processamento/renderização, houver sintoma de lentidão ou solicitação explícita, medir somente os indicadores pertinentes: geração, quantidade de formas visíveis ou duração de gestos.
 
 O uso de camadas reduzidas e eventos desabilitados em formas sem interação segue as [orientações de desempenho do Konva](https://konvajs.org/docs/performance/All_Performance_Tips.html).
 
