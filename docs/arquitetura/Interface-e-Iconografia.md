@@ -18,7 +18,7 @@ A tela pública usa a marca compartilhada com o restante do aplicativo e uma ima
 
 ## Versão e histórico de tasks
 
-O rodapé do login e da lista de projetos usa um link de texto alinhado à direita. No editor, o mesmo link ocupa a última posição do rodapé compacto, preservando sua altura e as informações existentes. O link tem nome acessível com a versão e o destino, sublinhado e foco visível.
+O rodapé do login e da lista de projetos mostra “Versão do João: ” seguido do identificador dinâmico como link, em um grupo de texto alinhado à direita. Somente o identificador é clicável. No editor, o mesmo grupo ocupa a última posição do rodapé compacto, sem quebra interna, preservando sua altura e as informações existentes. O conteúdo da página de histórico conserva sua identificação de versão. O link tem nome acessível com a versão e o destino, sublinhado e foco visível.
 
 A página pública abre no fragmento `#historico-de-tasks`. Ao chegar pelo link, a interface usa um diálogo de página inteira e mantém a tela de origem montada. Voltar, Escape e o botão de retorno do navegador fecham a página sem desmontar o editor. O acesso direto ao fragmento mostra a página sem iniciar a autenticação. O conteúdo da lista usa somente os dados públicos da compilação.
 

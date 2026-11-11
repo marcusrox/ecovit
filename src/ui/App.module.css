@@ -919,10 +919,18 @@ button.iconButton {
   padding: 8px max(24px, calc((100% - 1160px) / 2));
   text-align: right;
 }
+.versionLabel {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.versionLabel,
 .versionLink {
   color: #556758;
   font-size: 11px;
   white-space: nowrap;
+}
+.versionLink {
   text-underline-offset: 2px;
 }
 .versionLink:focus-visible {

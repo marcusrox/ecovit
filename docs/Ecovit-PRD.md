@@ -447,7 +447,7 @@ A stack e as decisões de implementação estão propostas no documento compleme
 
 ### Versão e histórico de tasks
 
-Exibir no rodapé do login, da lista de projetos e do editor um link discreto com a versão da compilação. Usar a data do commit no fuso de São Paulo em `yyyyddmm`, um hífen e os sete primeiros caracteres do SHA. O link abre o histórico público das tasks de implementação verificadas e datadas na revisão exibida. Mostrar ID, título e data de execução em `DD/MM/AAAA`, da mais recente para a mais antiga, com desempate pelo ID numérico decrescente. Aceite manual pendente não exclui uma implementação verificada. Informar quando não houver tasks elegíveis. Ao retornar ao editor, conservar o projeto e o estado de trabalho, inclusive alterações ainda em memória.
+Exibir no rodapé do login, da lista de projetos e do editor o texto fixo “Versão do João: ” seguido de um link discreto contendo somente o identificador da versão da compilação. Usar a data do commit no fuso de São Paulo em `yyyyddmm`, um hífen e os sete primeiros caracteres do SHA. O link abre o histórico público das tasks de implementação verificadas e datadas na revisão exibida. Mostrar ID, título e data de execução em `DD/MM/AAAA`, da mais recente para a mais antiga, com desempate pelo ID numérico decrescente. Aceite manual pendente não exclui uma implementação verificada. Informar quando não houver tasks elegíveis. Ao retornar ao editor, conservar o projeto e o estado de trabalho, inclusive alterações ainda em memória.
 
 ### Apresentação da página inicial
 

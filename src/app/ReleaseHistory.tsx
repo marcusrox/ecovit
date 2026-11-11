@@ -9,13 +9,16 @@ export const releaseHistoryHash = "#historico-de-tasks";
 
 export function VersionLink() {
   return (
-    <a
-      className={styles.versionLink}
-      href={releaseHistoryHash}
-      aria-label={`Versão ${release.version} · Histórico de tasks`}
-    >
-      {release.version}
-    </a>
+    <span className={styles.versionLabel}>
+      Versão do João:{" "}
+      <a
+        className={styles.versionLink}
+        href={releaseHistoryHash}
+        aria-label={`Versão ${release.version} · Histórico de tasks`}
+      >
+        {release.version}
+      </a>
+    </span>
   );
 }
 

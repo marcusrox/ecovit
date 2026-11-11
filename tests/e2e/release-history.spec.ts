@@ -31,8 +31,27 @@ test(
         await surface.setViewportSize(viewport);
         const link = versionLink(surface);
         await expect(link).toHaveText(versionText);
+        const footerLabel = link.locator("..");
+        await expect(footerLabel).toHaveText(`Versão do João: ${versionText}`);
+        await expect(footerLabel.getByRole("link")).toHaveCount(1);
+        await expect(link).toHaveAttribute("href", "#historico-de-tasks");
         if (label === "lista") await link.scrollIntoViewIfNeeded();
         await expect(link).toBeInViewport();
+        await expect(footerLabel).toBeInViewport({ ratio: 1 });
+        const footerBoxes = await surface
+          .locator("footer > *")
+          .evaluateAll((elements) =>
+            elements
+              .filter((element) => element.getClientRects().length)
+              .map((element) => {
+                const { left, right } = element.getBoundingClientRect();
+                return { left, right };
+              }),
+          );
+        for (let i = 1; i < footerBoxes.length; i++)
+          expect(footerBoxes[i].left).toBeGreaterThanOrEqual(
+            footerBoxes[i - 1].right,
+          );
         expect(
           await surface.evaluate(
             () => document.documentElement.scrollWidth <= innerWidth,
@@ -48,7 +67,7 @@ test(
           ),
         ).toBe("solid");
         await surface.screenshot({
-          path: `.tools/t004/${label}-${info.project.name}-${viewport.width}.png`,
+          path: `.tools/t010/${label}-${info.project.name}-${viewport.width}.png`,
         });
         await link.press("Enter");
         await expect(historyHeading(surface)).toBeVisible();

@@ -2,9 +2,9 @@
 
 **Tipo** — Implementação
 
-**Execução** — Pendente
+**Execução** — Verificada
 
-**Data de execução** — —
+**Data de execução** — 2026-11-11
 
 **Aceite manual** — Pendente
 
@@ -29,18 +29,22 @@ Exemplo visual solicitado: Versão do João: [20261011-c97e5e4](https://ecovit.i
 - Preservar geração/formato do identificador, conteúdo e ordenação do histórico, alinhamento e demais informações dos rodapés. Não acrescentar ícone ou preferência configurável.
 - Conservar foco visível, acesso por teclado e nome acessível coerente com o texto visível e o destino do link, conforme o contrato de interface.
 - Atualizar os trechos pertinentes do PRD e de Interface e iconografia na implementação. Não alterar o texto da versão no conteúdo da página de histórico por efeito desta task.
-- Esta entrega cria somente a especificação; implementar apenas após solicitação explícita.
+- Implementação autorizada pelo solicitante em 11/11/2026; aceite manual permanece pendente.
 
 ## Critérios de aceite
 
-- [ ] **A01** — No login, na lista de projetos e no editor, o rodapé mostra “Versão do João: ” seguido do mesmo identificador real da compilação, com somente o identificador como link. Verificação por teste de navegador.
-- [ ] **A02** — Por clique e Enter, o link continua abrindo o histórico existente; acesso sem login e retorno ao editor preservam os comportamentos da T-004. Foco e nome acessível permanecem adequados. Verificação por teste de navegador e revisão visual.
-- [ ] **A03** — Em 1366×768, 1280×720 e 900×680, a legenda completa permanece legível e não sobrepõe informações, canvas ou controles, nem causa rolagem horizontal. Verificação visual no Chrome; Edge conforme a política de compatibilidade e na homologação completa.
-- [ ] **A04** — A geração da versão e os dados do histórico permanecem iguais aos da compilação correspondente; o exemplo não fica fixado no código. Verificação por inspeção e regressões pertinentes da T-004.
+- [x] **A01** — No login, na lista de projetos e no editor, o rodapé mostra “Versão do João: ” seguido do mesmo identificador real da compilação, com somente o identificador como link. Verificação por teste de navegador.
+- [x] **A02** — Por clique e Enter, o link continua abrindo o histórico existente; acesso sem login e retorno ao editor preservam os comportamentos da T-004. Foco e nome acessível permanecem adequados. Verificação por teste de navegador e revisão visual.
+- [x] **A03** — Em 1366×768, 1280×720 e 900×680, a legenda completa permanece legível e não sobrepõe informações, canvas ou controles, nem causa rolagem horizontal. Verificação visual no Chrome; Edge conforme a política de compatibilidade e na homologação completa.
+- [x] **A04** — A geração da versão e os dados do histórico permanecem iguais aos da compilação correspondente; o exemplo não fica fixado no código. Verificação por inspeção e regressões pertinentes da T-004.
 
 ## Resultado da execução
 
-- **Contratos atualizados** — Nenhum nesta etapa; somente esta task foi criada. Atualizações do PRD e de Interface e iconografia previstas para a implementação.
-- **Verificação automatizada** — Não executada para esta task, restrita à documentação.
-- **Verificação manual ou operacional** — Especificação revisada quanto ao recorte dos três rodapés e à preservação do contrato de versão/histórico. A01–A04 pendentes de implementação.
-- **Aceite do solicitante** — Pendente; nenhuma implementação ou confirmação manual declarada.
+- **Contratos atualizados** — PRD e Interface e iconografia, nas seções Versão e histórico de tasks. Apresentação compartilhada em VersionLink; nenhuma mudança na geração da versão ou no conteúdo do histórico.
+- **A01** — Verificado no login, lista de projetos e editor: texto fixo Versão do João: seguido do identificador real da revisão compilada, com somente o identificador como link. Destino #historico-de-tasks preservado.
+- **A02** — Verificado por navegador: abertura por Enter nos três rodapés, abertura por clique, foco visível e retorno ao acionador, acesso direto sem autenticação e retorno ao editor com candidato ainda em memória após falha de salvamento. Nome acessível da versão e do destino preservado.
+- **A03** — Verificado no Chrome em 1366×768, 1280×720 e 900×680 nas três telas: legenda inteira dentro da janela, rodapé sem sobreposição entre elementos e sem rolagem horizontal. Nove capturas revisadas; após reservar 6 px entre legenda e link para acomodar o contorno de foco, o mesmo cenário foi revalidado integralmente e as três telas foram reinspecionadas em 900×680. Capturas finais em .tools/t010/{login,lista,editor}-chrome-{1366,1280,900}.png. Edge reservado à homologação completa conforme a política; alteração restrita a texto e apresentação com recursos já usados.
+- **A04** — Verificado por inspeção e regressão: identificador dinâmico e fonte de metadados mantidos. tests/release-info.test.ts aprovado (um teste, 2,54 s), cobrindo estabilidade da revisão, filtragem e ordenação do histórico. O cenário de navegador também compara versão e lista com os metadados da compilação.
+- **Verificação automatizada** — Build de produção, incluindo typecheck, e lint aprovados. test:e2e:interface com tests/e2e/release-history.spec.ts aprovado no Chrome/5174: um cenário cobrindo três telas e três resoluções, em 23,5 s na execução final. A execução inicial também passou em 22,8 s; é repetição do mesmo cenário, não cobertura adicional. Logs completos ignorados pelo Git em .tools/t010-*.log. Não foram executadas a suíte completa de navegador ou regressões de carga/domínio sem relação com a alteração.
+- **Verificação visual ou operacional** — Capturas e contorno de foco conferidos pelo Codex; servidor isolado e banco de testes preparado pelo comando test:env. Porta 5173 preservada.
+- **Aceite do solicitante** — Pendente; a verificação técnica não constitui confirmação manual. Commit e push autorizados pelo solicitante em 11/11/2026; essa autorização não constitui aceite manual da interface.
