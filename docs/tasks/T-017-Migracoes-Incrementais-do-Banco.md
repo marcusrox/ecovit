@@ -66,6 +66,7 @@ Task criada em 2026-11-12. Implementação e critérios pendentes; nenhum comand
 Escopo atualizado em 2026-11-12 a pedido do solicitante para incluir migrações no CD antes do reinício da API, interrupção da publicação em caso de falha e proteção da credencial proprietária. Critérios A01–A07 preservados com ajuste documental em A06; acrescentados A08–A09. A validação futura inclui a ordem e os bloqueios do deploy e a exposição de credenciais, pois esses contratos passam a ser afetados. Nenhuma implementação ou publicação realizada nesta atualização.
 
 Nova revisão em 2026-11-12, por solicitação explícita: `DATABASE_MIGRATION_URL` passa a permanecer no `.env` privado existente, dispensando arquivo adicional. Esta decisão substitui a exigência anterior de armazenamento separado e de credencial disponível exclusivamente ao processo de migração. Escopo, procedimento e critérios A05/A09 ajustados; mantidos os usuários PostgreSQL separados e o bloqueio do CD em caso de falha. Nenhum `.env`, código ou banco alterado nesta revisão.
+
 ## Resultado da implementação — 2026-11-12
 
 - **A01–A03 — Verificados.** `server/migrations.ts` mantém a versão inicial em `schema.sql`, seleciona pendências pelo histórico, valida versões consecutivas e usa lock de sessão com transação por versão. Os 12 cenários de `tests/server/migrations.integration.ts` passaram em schemas exclusivos de `ecovit_test` (2,27 s; comando 3,06 s). Cobrem estrutura inicial equivalente, dados e data histórica preservados, reexecução, rollback/retomada, concorrência, sequências inválidas, histórico vazio/com lacunas/futuro e objetos sem histórico. Migrações 2/3 são sintéticas e exclusivas dos testes; não há nova versão funcional entregue.
@@ -81,3 +82,14 @@ Nova revisão em 2026-11-12, por solicitação explícita: `DATABASE_MIGRATION_U
 - **Aceite manual — Pendente.** Os critérios foram verificados tecnicamente em ambiente isolado; não há confirmação manual nem homologação de produção nesta entrega.
 
 Commit e push autorizados pelo solicitante em 2026-11-12, após a entrega técnica. Essa autorização não constitui aceite manual nem confirmação de publicação em produção.
+
+## CI/CD e publicação em produção — 2026-11-12
+
+- **Revisão publicada:** `3124967de6c7c14682ccc6b6cc9856fe17bcfa7b` (`feat: integra migracoes incrementais ao deploy`). Os registros de ausência de publicação acima descrevem a etapa anterior à ativação e permanecem como histórico.
+- **CI do push:** a [execução 43291614185](https://github.com/marcusrox/ecovit/actions/runs/43291614185) concluiu com sucesso. Lint, testes, tipos e build passaram em Node 24.22.1 e 24.x; o job de deploy ficou `skipped`, sem comprovar publicação nessa execução.
+- **Ativação:** o solicitante informou a reativação de `AAPANEL_CD_ENABLED=true` e o disparo manual do workflow na `main`.
+- **CI/CD aprovado:** a [execução manual 43292704932, tentativa 1](https://github.com/marcusrox/ecovit/actions/runs/43292704932), associada ao mesmo SHA, concluiu com `success`. Os dois jobs de CI, em Node 24.22.1 e 24.x, e o job `Implantar revisão validada no aaPanel` passaram.
+- **Publicação confirmada:** o [log do job de deploy](https://github.com/marcusrox/ecovit/actions/runs/43292704932/job/131444165641) registrou `Revisão implantada e verificada em produção: 3124967de6c7c14682ccc6b6cc9856fe17bcfa7b` em 2026-11-12 às 16:44:32, horário de Brasília (19:44:32 UTC). O workflow exigiu recibo da própria tentativa com o SHA publicado, correspondência do hash do HTML servido e resposta saudável de `/api/health` por HTTPS. A confirmação supera a mera aceitação HTTP do webhook.
+- **Limite da evidência:** a conferência foi feita pelos resultados e logs do GitHub Actions; não houve consulta direta ao banco nem inspeção de credenciais ou do log interno do aaPanel. A entrega continua contendo somente a versão SQL funcional 1; não foi acrescentada migração de alteração do schema.
+- **Aceite manual:** permanece pendente. O sucesso técnico do CI/CD e a publicação confirmada não constituem aceite manual do solicitante.
+- **Esta atualização:** somente documentação, conferida por consistência, referências e diff. Commit e push autorizados pelo solicitante; nenhuma nova execução local de testes ou acionamento manual de deploy foi necessário. O push desta atualização pode disparar outra execução do CD habilitado, cujo resultado é independente da publicação aqui registrada.
