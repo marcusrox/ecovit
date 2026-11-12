@@ -18,7 +18,7 @@
     "api:dev": "node --env-file=.env --import tsx server/main.ts",
     "api:start": "node app.js",
     "db:setup:local": "node --import tsx server/setup-local-cli.ts",
-    "db:migrate": "node --env-file=.env --import tsx server/cli.ts migrate",
+    "db:migrate": "node --import tsx server/cli.ts migrate",
     "data:cleanup": "node --env-file=.env --import tsx server/cli.ts cleanup",
     "test:e2e:interface": "node --import tsx scripts/run-e2e-group.ts interface",
     "test:e2e:flows": "node --import tsx scripts/run-e2e-group.ts flows",

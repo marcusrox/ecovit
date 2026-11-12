@@ -4,6 +4,11 @@ import path from "node:path";
 import { parseEnv } from "node:util";
 import { Client, escapeLiteral } from "pg";
 import { database, migrate } from "./db";
+import {
+  loadMigrations,
+  readMigrationVersion,
+  MigrationError,
+} from "./migrations";
 
 export class LocalSetupError extends Error {}
 
@@ -57,6 +62,7 @@ export async function setupLocal(options: SetupOptions) {
   });
   let target: Client | undefined;
   try {
+    const migrations = await loadMigrations();
     const original = await readLocalEnv(options.directory);
     const source =
       original ??
@@ -199,11 +205,8 @@ export async function setupLocal(options: SetupOptions) {
         throw new LocalSetupError(
           "O banco ecovit possui schemas incompatíveis. Confira os recursos existentes antes do setup.",
         );
-      const sql = await readFile(
-        new URL("./schema.sql", import.meta.url),
-        "utf8",
-      );
-      // Ask PostgreSQL to describe the same schema used by migrate(). The
+      const currentVersion = await readMigrationVersion(target, migrations);
+      // Compare against the recorded version, not a future target schema. The
       // reference schema and its data are rolled back even when validation fails.
       const reference = `ecovit_setup_${randomBytes(8).toString("hex")}`;
       await target.query("BEGIN");
@@ -211,7 +214,8 @@ export async function setupLocal(options: SetupOptions) {
         await target.query(
           `CREATE SCHEMA ${reference}; SET LOCAL search_path TO ${reference}`,
         );
-        await target.query(sql);
+        for (const migration of migrations.slice(0, currentVersion))
+          await target.query(migration.sql);
         const compatibility = await target.query(`WITH shapes AS (
           SELECT c.oid, c.relname, c.relkind, c.relnamespace, c.relowner,
             c.relrowsecurity, c.relforcerowsecurity,
@@ -357,7 +361,7 @@ export async function setupLocal(options: SetupOptions) {
         throw new LocalSetupError(
           "A sessão de migração precisa executar como ecovit_owner.",
         );
-      await migrate(owner);
+      await migrate(owner, migrations);
     } finally {
       await owner.end();
     }
@@ -429,6 +433,8 @@ export async function setupLocal(options: SetupOptions) {
     );
   } catch (error) {
     if (error instanceof LocalSetupError) throw error;
+    if (error instanceof MigrationError)
+      throw new LocalSetupError(error.message);
     const code = (error as NodeJS.ErrnoException).code;
     const reason =
       code === "28P01"

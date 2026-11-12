@@ -1,5 +1,5 @@
 import { Pool, type PoolClient } from "pg";
-import { readFile } from "node:fs/promises";
+export { migrate } from "./migrations";
 
 export function database(connectionString: string) {
   const pool = new Pool({
@@ -36,17 +36,4 @@ export async function transaction<T>(
   } finally {
     client.release();
   }
-}
-export async function migrate(pool: Pool) {
-  const version = await pool.query("SHOW server_version_num");
-  if (
-    Number(version.rows[0].server_version_num) < 180000 ||
-    Number(version.rows[0].server_version_num) >= 190000
-  )
-    throw new Error("M12 exige PostgreSQL 18.");
-  const sql = await readFile(new URL("./schema.sql", import.meta.url), "utf8");
-  await transaction(pool, async (client) => {
-    await client.query("SELECT pg_advisory_xact_lock(72120)");
-    await client.query(sql);
-  });
 }

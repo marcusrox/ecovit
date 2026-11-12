@@ -30,13 +30,35 @@ Complete o `.env` privado com `APP_ORIGIN=http://127.0.0.1:5173`, `API_PORT=3001
 .\Start-Ecovit.ps1 -Task dev
 ```
 
-Para migrações administrativas posteriores ou implantação em servidor, consulte [Configuração e banco](docs/arquitetura/Persistencia-e-Compatibilidade.md#configuração-e-banco). O setup local aplica a migração com a identidade `ecovit_owner` por uma sessão administrativa com `SET ROLE`, sem armazenar a senha proprietária no ambiente da API.
+Para migrações administrativas posteriores ou implantação em servidor, consulte [Configuração e banco](docs/arquitetura/Persistencia-e-Compatibilidade.md#configuração-e-banco). O setup local aplica a migração com a identidade `ecovit_owner` por uma sessão administrativa com `SET ROLE`. Para atualizações posteriores e CD, configure `DATABASE_MIGRATION_URL` no mesmo `.env` privado com a conexão proprietária; a API continua usando `DATABASE_URL`. O setup não grava nem troca automaticamente a senha proprietária existente.
 
 O comando dev inicia frontend em **http://127.0.0.1:5173/** e API em loopback, com configuração .env. Mantenha o terminal aberto; Ctrl+C encerra a instância iniciada nesse terminal. Não iniciar outra instância se essa porta já estiver em uso. Chrome e Edge desktop são os navegadores previstos. Entre com seu e-mail e o código recebido. A API não é opcional: abrir só o frontend não permite entrar ou salvar. Consulte /api/health pelo mesmo endereço para verificar a API; configuração incompleta é informada no terminal.
 
 Para abrir a lista diretamente no desenvolvimento local, configure `DEV_LOGIN_EMAIL=seu-email@example.com` no `.env` privado, mantenha `APP_ORIGIN=http://127.0.0.1:5173` e reinicie o comando `dev`. O Ecovit entra na conta correspondente do banco configurado ou cria a conta no primeiro acesso. Para voltar à entrada por código, remova a chave e reinicie. O atalho é exclusivo do desenvolvimento em loopback e deve ser usado em uma instância e um banco de uso local.
 
 Para conferir limpeza durante teste local, execute .\Start-Ecovit.ps1 -Task data:cleanup em outro terminal com o mesmo .env. Sem agendamento, a aplicação revoga acesso normalmente, mas a eliminação física depende da execução desse comando; no servidor deve rodar a cada 15 minutos. Procedimento completo de proxy/aaPanel, limites e monitoramento em [Operação e implantação](docs/arquitetura/Persistencia-e-Compatibilidade.md#operação-e-implantação).
+
+### Atualizar o schema em dev e produção
+
+O histórico SQL é incremental: a versão 1 permanece em `server/schema.sql`; próximas versões usam `server/migrations/002-descricao.sql`, `003-descricao.sql`, etc. Não editar migrações entregues. Cada versão e seu registro são confirmados na mesma transação; reexecuções aplicam somente pendências. A estrutura atual não foi alterada para introduzir esse controle.
+
+**Dev:** prepare a nova migração e verifique criação/atualização com dados em banco isolado. Preencha `DATABASE_MIGRATION_URL` no `.env` existente com a conexão de `ecovit_owner`, proprietária do banco e sem superuser. Se não conhecer a senha gerada no provisionamento, o administrador deve defini-la localmente no PostgreSQL e atualizar essa conexão; o setup não recupera a senha. Execute:
+
+```powershell
+npm run db:migrate
+```
+
+Confira o histórico e as permissões da API e depois inicie o aplicativo. Não precisa repetir o setup nem apagar o banco. Permissões de tabelas novas devem acompanhar a migração. As verificações usam `.env.test` e banco isolado; não use o `.env` do aplicativo nos testes.
+
+**Prod:** antes de ativar o CD atualizado, configure a mesma variável no `.env` privado do servidor e atualize o script do WebHook no aaPanel conforme a arquitetura. O arquivo permanece fora da raiz pública, ignorado pelo Git e com modo 0600; não é necessário outro arquivo de configuração. Não envie a conexão ao GitHub ou ao webhook. A API pode acessar a variável ao carregar o `.env`, mas conecta somente por `DATABASE_URL`.
+
+Com backup recuperável confirmado pelo administrador, publique a revisão aprovada. O CD compila, executa as migrações e somente após sucesso reinicia a API e verifica saúde/recibo. Falha ou falta da credencial interrompe a publicação antes do reinício, sem usar a role da API como alternativa. Para intervenção administrativa, no diretório da aplicação e com os artefatos aprovados:
+
+```sh
+node dist-server/cli.mjs migrate
+```
+
+Como a API anterior permanece ativa durante a migração, o SQL deve ser compatível com ela. Mudanças incompatíveis exigem bloqueio prévio do CD e manutenção coordenada. Após falha, corrigir a causa e retomar; voltar o código não desfaz migrações concluídas, e os arquivos estáticos podem já ter sido atualizados. Procedimento completo de histórico, permissões, backup, manutenção e recuperação em [Migrações incrementais](docs/arquitetura/Persistencia-e-Compatibilidade.md#migrações-incrementais-e-atualização-do-banco).
 
 ### Avaliação descartável sem envio de e-mail
 

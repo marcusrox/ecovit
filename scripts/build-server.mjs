@@ -1,5 +1,5 @@
 import { build } from "esbuild";
-import { copyFile } from "node:fs/promises";
+import { copyFile, cp, rm } from "node:fs/promises";
 await build({
   entryPoints: ["server/main.ts", "server/cli.ts", "server/validate-worker.ts"],
   outdir: "dist-server",
@@ -12,3 +12,9 @@ await build({
   sourcemap: true,
 });
 await copyFile("server/schema.sql", "dist-server/schema.sql");
+
+await rm("dist-server/migrations", { recursive: true, force: true });
+await cp("server/migrations", "dist-server/migrations", {
+  recursive: true,
+  force: true,
+});

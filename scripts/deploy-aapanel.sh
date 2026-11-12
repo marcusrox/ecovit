@@ -81,6 +81,8 @@ npm ci --include=dev --cache "$npm_cache"
 npm run typecheck
 npm exec -- vite build --no-emptyOutDir
 node scripts/build-server.mjs
+echo 'Aplicando migrações do banco antes do reinício da API.'
+node dist-server/cli.mjs migrate
 BUILD
 
 pm2_command restart ecovit

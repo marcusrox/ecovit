@@ -8,6 +8,7 @@ import {
   vi,
 } from "vitest";
 import { randomUUID } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import {
   copyFile,
   mkdir,
@@ -20,6 +21,7 @@ import { parseEnv } from "node:util";
 import { Client } from "pg";
 import { createServer } from "node:net";
 import { setupLocal } from "../server/setup-local";
+import * as migrations from "../server/migrations";
 
 const connection = process.env.ECOVIT_SETUP_TEST_ADMIN_URL;
 
@@ -505,6 +507,92 @@ describe.skipIf(!connection)("local database setup", () => {
     },
   );
 
+  it("upgrades a recorded older schema without comparing it against the future schema", async () => {
+    await setupLocal(options());
+    const previous = await env();
+    const sequence = await migrations.loadMigrations();
+    const spy = vi.spyOn(migrations, "loadMigrations").mockResolvedValue([
+      ...sequence,
+      {
+        version: 2,
+        sql: "ALTER TABLE ecovit_accounts ADD COLUMN setup_probe text",
+      },
+    ]);
+    try {
+      await setupLocal(options());
+      const targetUrl = new URL(connection!);
+      targetUrl.pathname = "/ecovit";
+      const target = new Client({ connectionString: targetUrl.toString() });
+      await target.connect();
+      try {
+        expect(
+          (
+            await target.query(
+              "SELECT version FROM ecovit_migrations ORDER BY version",
+            )
+          ).rows,
+        ).toEqual([{ version: 1 }, { version: 2 }]);
+        await target.query("SELECT setup_probe FROM ecovit_accounts");
+      } finally {
+        await target.end();
+      }
+      expect(await env()).toBe(previous);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+  it("uses owner credentials from the same env in source and compiled CLI without leaking them", async () => {
+    await setupLocal(options());
+    const password = randomUUID();
+    // Change only this disposable fixture's owner password, never application resources.
+    await admin.query(`ALTER ROLE ecovit_owner PASSWORD '${password}'`);
+    await admin.query("ALTER ROLE ecovit_owner SET search_path=pg_catalog");
+    const ownerUrl = new URL(parseEnv(await env()).DATABASE_URL!);
+    ownerUrl.username = "ecovit_owner";
+    ownerUrl.password = password;
+    await writeFile(
+      path.join(directory, ".env"),
+      `${await env()}\nDATABASE_MIGRATION_URL=${ownerUrl}\n`,
+    );
+    const entries = [
+      [
+        "--import",
+        import.meta.resolve("tsx"),
+        path.resolve("server/cli.ts"),
+        "migrate",
+      ],
+    ];
+    if (process.env.ECOVIT_TEST_COMPILED_CLI === "1")
+      entries.push([path.resolve("dist-server/cli.mjs"), "migrate"]);
+    for (const args of entries) {
+      const result = spawnSync(process.execPath, args, {
+        cwd: directory,
+        encoding: "utf8",
+      });
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toContain("Operação concluída");
+      expect(result.stdout + result.stderr).not.toContain(password);
+      expect(result.stdout + result.stderr).not.toContain(ownerUrl.toString());
+    }
+    // Invalid authentication must fail safely even though DATABASE_URL is valid.
+    ownerUrl.password = "invalid-migration-password";
+    await writeFile(
+      path.join(directory, ".env"),
+      (await env()).replace(
+        /^DATABASE_MIGRATION_URL=.*$/m,
+        `DATABASE_MIGRATION_URL=${ownerUrl}`,
+      ),
+    );
+    for (const args of entries) {
+      const result = spawnSync(process.execPath, args, {
+        cwd: directory,
+        encoding: "utf8",
+      });
+      expect(result.status).toBe(1);
+      expect(result.stdout).not.toContain("Operação concluída");
+      expect(result.stderr).not.toContain("invalid-migration-password");
+    }
+  });
   it("migrates public even when the administrator has a different search path", async () => {
     const password = randomUUID();
     await admin.query(
