@@ -1,3 +1,4 @@
+import { labelFontSize } from "./label-font";
 import {
   useCallback,
   useEffect,
@@ -451,7 +452,7 @@ export function useMeasurementCanvas(
                 if (angle <= -Math.PI / 2) angle += Math.PI;
                 ctx.translate((a.x + b.x) / 2, (a.y + b.y) / 2);
                 ctx.rotate(angle);
-                ctx.font = "11px sans-serif";
+                ctx.font = `${labelFontSize(11, camera.scale)}px sans-serif`;
                 ctx.fillStyle = "#234b40";
                 const text = measurementText(m),
                   width = ctx.measureText(text).width;

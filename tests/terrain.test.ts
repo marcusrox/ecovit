@@ -261,6 +261,8 @@ it("M11 formato vigente conserva terreno e lê 9–16 sem mutação ou campos no
     const old = JSON.parse(JSON.stringify(fixture()));
     old.schemaVersion = version;
     delete old.model.terrain;
+    delete old.model.roomLabels;
+    delete old.model.roomBoundaries;
     if (version === 9) delete old.model.measurements;
     if (version < 11) delete old.model.referenceImages;
     if (version < 13) {
@@ -269,7 +271,7 @@ it("M11 formato vigente conserva terreno e lê 9–16 sem mutação ou campos no
     }
     const before = JSON.stringify(old);
     expect(validateProject(old).model.terrain).toBeNull();
-    expect(validateProject(old).schemaVersion).toBe(18);
+    expect(validateProject(old).schemaVersion).toBe(19);
     expect(JSON.stringify(old)).toBe(before);
     expect(() =>
       validateProject({ ...old, model: { ...old.model, terrain: null } }),

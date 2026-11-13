@@ -1,3 +1,4 @@
+import { RoomProperties } from "../editor/Rooms";
 import { AccountButton, AccountShell } from "./Account";
 import {
   ReleaseHistory,
@@ -458,6 +459,18 @@ function Properties({ doc }: { doc: Project }) {
           Medida: clique no ponto inicial, no ponto final e depois posicione a
           linha da cota com um terceiro clique. Alt suspende a atração. Arraste
           o corpo para mover ou uma ponta para ajustar.
+        </p>
+        <p>
+          Etiqueta: clique no interior de uma região fechada para nomear e medir
+          a área. Renomeie nas propriedades e arraste o texto livremente. A
+          referência fica no clique inicial; se perdida, exclua a etiqueta em
+          revisão e crie outra.
+        </p>
+        <p>
+          Fechamento: dois cliques desenham uma linha, com atração suspensa por
+          Alt. Use paredes e linhas ou somente linhas para fechar a área. As
+          linhas não acompanham paredes movidas. Esc cancela o segmento; sem
+          segmento, sai da ferramenta.
         </p>
         <p>
           Portas e janelas: escolha o tipo nas propriedades. Alternar orientação
@@ -1291,6 +1304,34 @@ function EditorApp() {
                     <Icon name="measure" /> Medida
                   </button>
                 )}
+                {mode === "plan" &&
+                  (
+                    [
+                      {
+                        tool: "room",
+                        text: "Etiqueta",
+                        tip: "Etiqueta com área",
+                      },
+                      {
+                        tool: "room-boundary",
+                        text: "Fechamento",
+                        tip: "Fechamento de ambiente",
+                      },
+                    ] as const
+                  ).map((item) => (
+                    <button
+                      key={item.tool}
+                      className={`${styles.iconText} ${tool === item.tool ? styles.active : ""}`}
+                      aria-pressed={tool === item.tool}
+                      title={item.tip}
+                      data-tooltip={item.tip}
+                      disabled={busy || readonly}
+                      onClick={() => changeTool(item.tool)}
+                    >
+                      <Icon name={item.tool} />
+                      {item.text}
+                    </button>
+                  ))}
                 {mode === "plan" && (
                   <button
                     className={styles.iconText}
@@ -1313,6 +1354,8 @@ function EditorApp() {
                   (!!editingDoc!.model.terrain ||
                     !!editingDoc!.model.slabs.length ||
                     !!editingDoc!.model.imageElements.length ||
+                    !!editingDoc!.model.roomLabels.length ||
+                    !!editingDoc!.model.roomBoundaries.length ||
                     !!editingDoc!.model.measurements.length ||
                     !!editingDoc!.model.openings.length) && (
                     <select
@@ -1328,6 +1371,12 @@ function EditorApp() {
                         ) ||
                         editingDoc!.model.imageElements.some(
                           (i) => i.id === selected,
+                        ) ||
+                        editingDoc!.model.roomLabels.some(
+                          (l) => l.id === selected,
+                        ) ||
+                        editingDoc!.model.roomBoundaries.some(
+                          (l) => l.id === selected,
                         ) ||
                         editingDoc!.model.measurements.some(
                           (m) => m.id === selected,
@@ -1368,6 +1417,25 @@ function EditorApp() {
                           {editingDoc!.model.imageElements.map((e) => (
                             <option key={e.id} value={e.id}>
                               {e.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {!!editingDoc!.model.roomLabels.length && (
+                        <optgroup label="Etiquetas">
+                          {editingDoc!.model.roomLabels.map((l) => (
+                            <option key={l.id} value={l.id}>
+                              {l.name}
+                              {l.review ? " · Revisar ambiente" : ""}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {!!editingDoc!.model.roomBoundaries.length && (
+                        <optgroup label="Fechamentos">
+                          {editingDoc!.model.roomBoundaries.map((l, i) => (
+                            <option key={l.id} value={l.id}>
+                              Linha de fechamento {i + 1}
                             </option>
                           ))}
                         </optgroup>
@@ -1456,6 +1524,11 @@ function EditorApp() {
               (!!editingDoc!.model.terrain?.compass &&
                 compassSelectionId(editingDoc!.model.terrain) === selected) ? (
                 <TerrainProperties doc={editingDoc!} />
+              ) : editingDoc!.model.roomLabels.some((l) => l.id === selected) ||
+                editingDoc!.model.roomBoundaries.some(
+                  (l) => l.id === selected,
+                ) ? (
+                <RoomProperties key={selected} doc={editingDoc!} />
               ) : editingDoc!.model.measurements.some(
                   (m) => m.id === selected,
                 ) ? (

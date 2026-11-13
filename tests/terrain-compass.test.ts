@@ -36,8 +36,10 @@ const fixture = () => {
 
 it("rosa inicia desligada em arquivos anteriores; ativação cria posição e tamanho gráficos válidos", () => {
   const d = fixture(),
-    old = { ...d, schemaVersion: 17 };
-  expect(validateProject(old).schemaVersion).toBe(18);
+    old = { ...d, model: { ...d.model }, schemaVersion: 17 };
+  Reflect.deleteProperty(old.model, "roomLabels");
+  Reflect.deleteProperty(old.model, "roomBoundaries");
+  expect(validateProject(old).schemaVersion).toBe(19);
   expect(validateProject(old).model.terrain?.compass).toBeUndefined();
   expect(old.schemaVersion).toBe(17);
   const c = initialCompass(d.model.terrain!);

@@ -140,6 +140,8 @@ export function removeElement<T extends Project>(doc: T, id: string): T {
       ...doc.model,
       walls: doc.model.walls.filter((w) => w.id !== id),
       measurements: doc.model.measurements.filter((m) => m.id !== id),
+      roomLabels: doc.model.roomLabels.filter((m) => m.id !== id),
+      roomBoundaries: doc.model.roomBoundaries.filter((m) => m.id !== id),
       openings: doc.model.openings.filter(
         (o) => o.id !== id && o.wallId !== id,
       ),

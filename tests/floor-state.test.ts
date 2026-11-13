@@ -191,6 +191,8 @@ it.each([false, true])(
     expect(s.doc!.model).toEqual({
       ...original.model,
       terrain: null,
+      roomLabels: [],
+      roomBoundaries: [],
       measurements: [],
       referenceImages: [],
       imageElements: [],
@@ -232,6 +234,8 @@ it.each([false, true])(
     expect(s.doc?.model).toEqual({
       ...original.model,
       terrain: null,
+      roomLabels: [],
+      roomBoundaries: [],
       measurements: [],
       referenceImages: [],
       imageElements: [],
@@ -250,6 +254,8 @@ it.each([false, true])(
     expect(parseFile(serializeFile(s.doc!).text).model).toEqual({
       ...original.model,
       terrain: null,
+      roomLabels: [],
+      roomBoundaries: [],
       measurements: [],
       referenceImages: [],
       imageElements: [],

@@ -1,3 +1,4 @@
+import { reconcileRooms } from "../domain/rooms";
 import { decodeReference, type ImageDraft } from "../domain/reference-image";
 import {
   decodeCustomAssets,
@@ -40,6 +41,8 @@ const changedInputs = (previous: Project, next: Project) =>
       openings: constructionOpenings(previous.model.openings),
       terrain: undefined,
       measurements: undefined,
+      roomLabels: undefined,
+      roomBoundaries: undefined,
       referenceImages: undefined,
       imageElements: undefined,
       customImageAssets: undefined,
@@ -61,6 +64,8 @@ const changedInputs = (previous: Project, next: Project) =>
       openings: constructionOpenings(next.model.openings),
       terrain: undefined,
       measurements: undefined,
+      roomLabels: undefined,
+      roomBoundaries: undefined,
       referenceImages: undefined,
       imageElements: undefined,
       customImageAssets: undefined,
@@ -154,6 +159,7 @@ type State = Inspection & {
       | "floor"
       | "slab"
       | "measure"
+      | "room"
       | "image"
       | "furniture"
       | "terrain"
@@ -572,6 +578,32 @@ export const useStore = create<State>((set, get) => {
           throw new Error(
             "Restaure somente ajustes de graute do pavimento ativo.",
           );
+        if (
+          command === "room" &&
+          [
+            ...candidate.model.roomLabels,
+            ...candidate.model.roomBoundaries,
+            ...s.doc.model.roomLabels,
+            ...s.doc.model.roomBoundaries,
+          ].some(
+            (m) =>
+              m.floorId !== s.activeFloorId &&
+              JSON.stringify(
+                [
+                  ...candidate.model.roomLabels,
+                  ...candidate.model.roomBoundaries,
+                ].find((x) => x.id === m.id),
+              ) !==
+                JSON.stringify(
+                  [
+                    ...s.doc!.model.roomLabels,
+                    ...s.doc!.model.roomBoundaries,
+                  ].find((x) => x.id === m.id),
+                ),
+          )
+        )
+          throw new Error("Edite ambientes somente no pavimento ativo.");
+        candidate = reconcileRooms(s.doc, candidate);
         const changed = changedInputs(s.doc, candidate);
         const doc = validateProject(
           {

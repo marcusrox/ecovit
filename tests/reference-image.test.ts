@@ -144,13 +144,15 @@ it("M8 arquivo 11, leitura 9/10 sem tocar origem e referências inválidas recus
     const old = JSON.parse(JSON.stringify(d));
     old.schemaVersion = version;
     Reflect.deleteProperty(old.model, "terrain");
+    Reflect.deleteProperty(old.model, "roomLabels");
+    Reflect.deleteProperty(old.model, "roomBoundaries");
     delete old.model.imageElements;
     delete old.model.customImageAssets;
     delete old.model.referenceImages;
     if (version === 9) delete old.model.measurements;
     const original = JSON.stringify(old),
       normalized = validateProject(old);
-    expect(normalized.schemaVersion).toBe(18);
+    expect(normalized.schemaVersion).toBe(19);
     expect(normalized.model.referenceImages).toEqual([]);
     expect(JSON.stringify(old)).toBe(original);
     old.model.referenceImages = [];

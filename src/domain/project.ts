@@ -49,6 +49,15 @@ export type Measurement = {
   b: Point;
   offset?: number;
 };
+export type RoomBoundary = { id: string; floorId: string; a: Point; b: Point };
+export type RoomLabel = {
+  id: string;
+  floorId: string;
+  name: string;
+  position: Point;
+  reference: Point;
+  review: boolean;
+};
 export type TerrainCompass = {
   visible: boolean;
   center: Point;
@@ -130,12 +139,14 @@ export type Tool =
   | "wall"
   | "slab"
   | "measure"
+  | "room"
+  | "room-boundary"
   | "furniture"
   | "terrain"
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 18;
+  schemaVersion: 19;
   project: {
     id: string;
     name: string;
@@ -154,11 +165,14 @@ export type Project = {
       name: string;
       level: number;
       defaultHeight: number;
+      roomSequence?: number;
     }[];
     walls: Wall[];
     openings: Opening[];
     slabs: Slab[];
     measurements: Measurement[];
+    roomLabels: RoomLabel[];
+    roomBoundaries: RoomBoundary[];
     referenceImages: ReferenceImage[];
     imageElements: ImageElement[];
     customImageAssets: CustomImageAsset[];
@@ -226,7 +240,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 18,
+    schemaVersion: 19,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -252,6 +266,8 @@ export function createProject(
       openings: [],
       slabs: [],
       measurements: [],
+      roomLabels: [],
+      roomBoundaries: [],
       referenceImages: [],
       imageElements: [],
       customImageAssets: [],

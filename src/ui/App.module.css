@@ -1481,6 +1481,11 @@ button.iconButton {
   max-width: 220px;
   min-width: 0;
 }
+@media (max-width: 1366px) {
+  .editorApp .tools > select {
+    max-width: 160px;
+  }
+}
 .editorApp .fiadaToolbar {
   padding: 0;
   gap: 6px;

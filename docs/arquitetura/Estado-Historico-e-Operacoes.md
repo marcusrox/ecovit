@@ -86,3 +86,9 @@ Contratos implementados de M3.4 para confirmação, prévia e preservação de i
 Não publicar resultados parciais de execução nem marcar gravação falha como sucesso. Retry e download usam a intenção em memória. Revisões remotas e regras de abertura idempotente/hot reload têm fonte única em [Persistência e compatibilidade](Persistencia-e-Compatibilidade.md). Somente leitura permite consultas e preferências, sem mutações do projeto.
 
 Implementação: src/state/store.ts, src/domain/project.ts e src/domain/floors.ts.
+
+## Revisão de etiquetas de área
+
+Antes de validar e registrar o candidato confirmado, reconciliar as etiquetas contra a alteração geométrica (RF-21). Geometria e `roomLabels[].review` pertencem à mesma intenção e à mesma operação de histórico/salvamento; não gravar uma segunda operação após calcular a área. A área e as faces são derivadas, mas revisão obrigatória é persistente e não é removida ao reabrir ou refechar por edição. Desfazer/refazer restaura o snapshot, sem executar a reconciliação como se fosse uma nova edição. Excluir etiquetas/linhas é desfazível.
+
+Excluir etiquetas, linhas e contador de nomes da assinatura de insumos construtivos; mudar apenas nome, posição ou fechamento conserva resultado/diagnósticos da composição. Alterações em paredes mantêm seu fluxo construtivo e reconciliam as etiquetas afetadas no mesmo candidato. Falha remota usa o fluxo único de recuperação existente.

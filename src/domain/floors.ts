@@ -103,6 +103,10 @@ export function removeFloor(doc: Project, floorId: string): Project {
       openings: doc.model.openings.filter((o) => ids.has(o.wallId)),
       slabs: doc.model.slabs.filter((s) => s.floorId !== floorId),
       measurements: doc.model.measurements.filter((m) => m.floorId !== floorId),
+      roomLabels: doc.model.roomLabels.filter((m) => m.floorId !== floorId),
+      roomBoundaries: doc.model.roomBoundaries.filter(
+        (m) => m.floorId !== floorId,
+      ),
       imageElements: doc.model.imageElements.filter(
         (m) => m.floorId !== floorId,
       ),
@@ -129,6 +133,9 @@ export function duplicateFloor(
     name,
     level,
     defaultHeight: source.defaultHeight,
+    ...(source.roomSequence !== undefined
+      ? { roomSequence: source.roomSequence }
+      : {}),
   });
   const target = added.model.floors.find(
     (f) => !doc.model.floors.some((old) => old.id === f.id),
@@ -208,6 +215,30 @@ export function duplicateFloor(
             floorId: target.id,
             a: { ...m.a },
             b: { ...m.b },
+          })),
+      ],
+      roomLabels: [
+        ...doc.model.roomLabels,
+        ...doc.model.roomLabels
+          .filter((l) => l.floorId === floorId)
+          .map((l) => ({
+            ...l,
+            id: crypto.randomUUID(),
+            floorId: target.id,
+            position: { ...l.position },
+            reference: { ...l.reference },
+          })),
+      ],
+      roomBoundaries: [
+        ...doc.model.roomBoundaries,
+        ...doc.model.roomBoundaries
+          .filter((l) => l.floorId === floorId)
+          .map((l) => ({
+            ...l,
+            id: crypto.randomUUID(),
+            floorId: target.id,
+            a: { ...l.a },
+            b: { ...l.b },
           })),
       ],
       openings: [
@@ -318,6 +349,14 @@ export function mergeFloorView(
         ...local.model.imageElements,
       ],
       customImageAssets: local.model.customImageAssets,
+      roomLabels: [
+        ...root.model.roomLabels.filter((l) => l.floorId !== id),
+        ...local.model.roomLabels,
+      ],
+      roomBoundaries: [
+        ...root.model.roomBoundaries.filter((l) => l.floorId !== id),
+        ...local.model.roomBoundaries,
+      ],
       measurements: [
         ...root.model.measurements.filter((m) => m.floorId !== id),
         ...local.model.measurements,

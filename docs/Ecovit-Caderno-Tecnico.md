@@ -527,3 +527,11 @@ Giro simples: folha perpendicular ao vão e arco de 90° com raio igual à largu
 | EX-97 | Giro duplo, correr central e basculante | Duas posições 0→1→0; giro/correr central com folhas iguais; projeção basculante troca face sem representar deslizamento horizontal. |
 | EX-98 | Janela de correr/basculante, rótulos ocultos, comparação e Fiada | Tipos distintos por quadro/folhas/seta/projeção; referência usa mesma geometria sem edição; Fiada não contém folhas/arcos/setas. |
 | EX-99 | Arquivos 9/10/11 com portas/janelas genéricas | Normalização para 12 não inventa tipo/orientação nem modifica origem. Escolha explícita, cópia e round-trip preservam a nova aparência; aparência inválida é recusada. |
+
+## 14. Área de ambientes (CT-18)
+
+Convenção geométrica de planta, sem avaliação estrutural, acabamento ou dedução de revestimentos: regiões são componentes fechados do espaço livre entre as faixas das paredes e os segmentos sem espessura de fechamento. Usar as faces das faixas voltadas à região; ignorar os recortes de portas, janelas e aberturas livres. Terreno, lajes, imagens e mobiliários não fecham ambientes. Um conjunto somente por segmentos também delimita regiões.
+
+Descontar ocupação de paredes isoladas. Um recinto interno fechado, inclusive por linhas, não integra a região externa e pode ser medido separadamente. Interseções e encontros em T conectam os segmentos; trechos coincidentes contam uma vez. Exigir contato real, sem tolerância de zoom ou descarte de pequenas regiões reais. Interseções diagonais podem ser fracionárias em relação à precisão de entrada e não devem ser arredondadas de modo a mudar a conectividade.
+
+Área em m² é a área líquida em unidades internas quadradas dividida por 100.000.000; arredondar somente a apresentação. Exemplo independente: retângulo interno ou de linhas com 30.000 × 40.000 unidades mede 12 m². Um retângulo interno de 10.000 × 10.000 unidades excluído desse contorno deixa 11 m² na região externa e 1 m² na interna. Uma parede isolada de 10.000 × 1.000 unidades desconta 0,10 m². Nome, identidade e comportamento de revisão pertencem aos contratos do editor, não à regra construtiva.

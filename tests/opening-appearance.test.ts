@@ -162,13 +162,15 @@ it("EX-99 transporte/cópias e envelopes anteriores preservam genéricos sem toc
     const old = JSON.parse(JSON.stringify(d));
     old.schemaVersion = version;
     Reflect.deleteProperty(old.model, "terrain");
+    Reflect.deleteProperty(old.model, "roomLabels");
+    Reflect.deleteProperty(old.model, "roomBoundaries");
     delete old.model.imageElements;
     delete old.model.customImageAssets;
     if (version < 11) delete old.model.referenceImages;
     if (version === 9) delete old.model.measurements;
     const original = JSON.stringify(old);
     const restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(18);
+    expect(restored.schemaVersion).toBe(19);
     expect(restored.model.openings[0].appearance).toBeUndefined();
     expect(JSON.stringify(old)).toBe(original);
     old.model.openings[0].appearance = { type: "swing", orientation: 0 };

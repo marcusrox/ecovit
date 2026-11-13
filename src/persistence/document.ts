@@ -1,3 +1,8 @@
+import {
+  validRoomBoundary,
+  validRoomPoint,
+  roomGeometry,
+} from "../domain/rooms";
 import { validateTerrain, MAX_TERRAIN_POINTS } from "../domain/terrain";
 import { validateReference } from "../domain/reference-image";
 import { validMeasurement } from "../domain/measurements";
@@ -146,7 +151,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(18),
+    schemaVersion: z.literal(19),
     project: z
       .object({
         id,
@@ -208,6 +213,12 @@ const schema = z
                 name: z.string().trim().min(1).max(100),
                 level: integer,
                 defaultHeight: positive,
+                roomSequence: z
+                  .number()
+                  .int()
+                  .min(0)
+                  .max(Number.MAX_SAFE_INTEGER)
+                  .optional(),
               })
               .strict(),
           )
@@ -322,6 +333,21 @@ const schema = z
               .strict(),
           )
           .max(4),
+        roomLabels: z.array(
+          z
+            .object({
+              id,
+              floorId: id,
+              name: z.string().trim().min(1).max(100),
+              position: point,
+              reference: point,
+              review: z.boolean(),
+            })
+            .strict(),
+        ),
+        roomBoundaries: z.array(
+          z.object({ id, floorId: id, a: point, b: point }).strict(),
+        ),
         measurements: z.array(
           z
             .object({
@@ -506,13 +532,38 @@ export function validateProject(
     value = { ...value, schemaVersion: 18 };
   }
   if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 18 &&
+    "model" in value &&
+    value.model &&
+    typeof value.model === "object"
+  ) {
+    if (
+      "roomLabels" in value.model ||
+      "roomBoundaries" in value.model ||
+      ("floors" in value.model &&
+        Array.isArray(value.model.floors) &&
+        value.model.floors.some(
+          (f: unknown) => f && typeof f === "object" && "roomSequence" in f,
+        ))
+    )
+      throw new Error("Arquivo inválido: ambientes em formato anterior.");
+    value = {
+      ...value,
+      schemaVersion: 19,
+      model: { ...value.model, roomLabels: [], roomBoundaries: [] },
+    };
+  }
+  if (
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 18
+    value.schemaVersion !== 19
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 18; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 19; demais formatos não são convertidos.",
     );
   const parsed = schema.safeParse(value);
   if (!parsed.success)
@@ -586,6 +637,20 @@ export function validateProject(
     take(measurement.id);
     if (!floors.has(measurement.floorId) || !validMeasurement(measurement))
       throw new Error("Medida com geometria ou pavimento inválido.");
+  }
+  for (const boundary of doc.model.roomBoundaries) {
+    take(boundary.id);
+    if (!floors.has(boundary.floorId) || !validRoomBoundary(boundary))
+      throw new Error("Fechamento com geometria ou pavimento inválido.");
+  }
+  for (const label of doc.model.roomLabels) {
+    take(label.id);
+    if (
+      !floors.has(label.floorId) ||
+      !validRoomPoint(label.position) ||
+      !validRoomPoint(label.reference)
+    )
+      throw new Error("Etiqueta com referência ou pavimento inválido.");
   }
   const slabFloors = new Set<string>();
   let lastSlabFloor = -1;
@@ -678,6 +743,20 @@ export function validateProject(
     throw new Error(
       "A intenção do projeto excede o limite de arquivo de 50 MB.",
     );
+  for (const floor of doc.model.floors) {
+    const labels = doc.model.roomLabels.filter(
+      (l) => l.floorId === floor.id && !l.review,
+    );
+    if (!labels.length) continue;
+    const geometry = roomGeometry(doc, floor.id),
+      used = new Set<object>();
+    for (const label of labels) {
+      const region = geometry.at(label.reference);
+      if (!region || used.has(region))
+        throw new Error("Etiqueta válida sem região fechada exclusiva.");
+      used.add(region);
+    }
+  }
   return doc;
 }
 export function parseFile(text: string): Project {

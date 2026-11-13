@@ -1,4 +1,6 @@
 import {
+  Tag,
+  Spline,
   ImagePlus,
   LandPlot,
   Armchair,
@@ -57,6 +59,8 @@ const icons = {
   settings: SlidersHorizontal,
   preferences: Settings,
   measure: Ruler,
+  room: Tag,
+  "room-boundary": Spline,
   undo: Undo2,
   redo: Redo2,
   left: ChevronLeft,

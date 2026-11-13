@@ -1,6 +1,6 @@
 # Ecovit — Arquitetura Técnica
 
-Aplicação web 2D com editor no navegador, API no mesmo domínio e PostgreSQL. O contrato de transporte usa envelope 18 e composição nominal-v10, conforme a [matriz de compatibilidade](arquitetura/Persistencia-e-Compatibilidade.md#formato-e-leitores-vigentes).
+Aplicação web 2D com editor no navegador, API no mesmo domínio e PostgreSQL. O contrato de transporte usa envelope 19 e composição nominal-v10, conforme a [matriz de compatibilidade](arquitetura/Persistencia-e-Compatibilidade.md#formato-e-leitores-vigentes).
 
 ## Responsabilidades da documentação
 
@@ -22,7 +22,7 @@ Uma decisão de programação não estabelece uma regra construtiva. Antes de mu
 | [Editor e interação](arquitetura/Editor-e-Interacao.md) | Planta/Fiada, câmera, seleção, gestos, camadas e comparação de pavimentos |
 | [Estado, histórico e operações](arquitetura/Estado-Historico-e-Operacoes.md) | Intenção/resultado/sessão, atomicidade, histórico e critério único de recálculo |
 | [Motor e diagnósticos](arquitetura/Motor-e-Diagnosticos.md) | Pipeline nominal-v10, pavimentos, ajustes, encontros, alturas e diagnósticos |
-| [Persistência e compatibilidade](arquitetura/Persistencia-e-Compatibilidade.md) | Envelope, leitores 9–18, validação, armazenamento, transporte e bloqueios |
+| [Persistência e compatibilidade](arquitetura/Persistencia-e-Compatibilidade.md) | Envelope, leitores 9–19, validação, armazenamento, transporte e bloqueios |
 | [Autenticação e acesso](arquitetura/Autenticacao-e-Acesso.md) | código por e-mail, sessões, isolamento por proprietário e exclusão da conta |
 | [Medidas e imagens](arquitetura/Medidas-e-Imagens.md) | Medidas, referências raster, mobiliários, recursos, calibração e cache |
 | [Interface e iconografia](arquitetura/Interface-e-Iconografia.md) | Lucide centralizado, acessibilidade, preferências, status e componentes comuns |

@@ -1,3 +1,5 @@
+import { labelFontSize } from "./label-font";
+import { useRoomCanvas } from "./Rooms";
 import { useTerrainCanvas } from "./Terrain";
 import { useTerrainCompass } from "./TerrainCompass";
 import { useReferenceImageCanvas } from "./ReferenceImage";
@@ -146,6 +148,8 @@ export function Canvas({
   >(null);
   const module = doc.project.base.width,
     walls = doc.model.walls;
+  // Room draft cancellation must run before generic Escape handlers reset store listeners.
+  const rooms = useRoomCanvas(doc, tool, camera, host, panning || spaceHeld);
   const imageCanvas = useReferenceImageCanvas(camera, size);
   const imageDraft = useStore((s) => s.imageDraft);
   const terrain = useTerrainCanvas(doc, tool, setTool, camera, host);
@@ -675,6 +679,7 @@ export function Canvas({
           if (
             (e.button !== 0 && e.button !== 1) ||
             gesture.current ||
+            rooms.isDragging() ||
             measurements.isDragging() ||
             furniture.isDragging() ||
             terrain.isDragging() ||
@@ -737,6 +742,8 @@ export function Canvas({
             return;
           }
           if (readonly) return;
+          if (rooms.down(p, e.altKey)) return;
+          if (tool === "room" || tool === "room-boundary") return;
           if (compass.down(p)) return;
           if (terrain.down(p, e.altKey)) return;
           if (tool === "terrain") return;
@@ -890,11 +897,17 @@ export function Canvas({
           terrain.cancel();
           compass.cancel();
           furniture.cancel();
+          if (rooms.isDragging()) rooms.cancel();
           measurements.cancel();
           cancel();
           slabs.cancel();
         }}
         onMouseMove={(e) => {
+          if (
+            gesture.current?.type !== "pan" &&
+            rooms.move(world(pointer(e.clientX, e.clientY)), e.altKey)
+          )
+            return;
           setMouseScreen(pointer(e.clientX, e.clientY));
           if (
             gesture.current?.type !== "pan" &&
@@ -930,6 +943,12 @@ export function Canvas({
           }
         }}
         onMouseUp={(e) => {
+          if (
+            e.button === 0 &&
+            gesture.current?.type !== "pan" &&
+            rooms.up(world(pointer(e.clientX, e.clientY)), e.altKey)
+          )
+            return;
           if (
             e.button === 0 &&
             gesture.current?.type !== "pan" &&
@@ -1092,6 +1111,7 @@ export function Canvas({
           cancel();
         }}
         onMouseLeave={() => {
+          rooms.leave();
           measurements.leave();
           setHover(null);
           setMouseScreen(null);
@@ -1108,6 +1128,7 @@ export function Canvas({
             if (
               !busy &&
               !gesture.current &&
+              !rooms.isDragging() &&
               !measurements.isDragging() &&
               !terrain.isDragging() &&
               !compass.isDragging()
@@ -1206,7 +1227,7 @@ export function Canvas({
                         camera.y -
                         18
                       }
-                      fontSize={11}
+                      fontSize={labelFontSize(11, camera.scale)}
                       fill="#205d48"
                     />
                   ))}
@@ -1230,7 +1251,7 @@ export function Canvas({
                   26
                 }
                 text={`${display(length(preview))} cm · face externa${wallEdit?.participants.length ? " · continuidade" : ""}${wallEdit?.message ? ` · ${wallEdit.message}` : ""}`}
-                fontSize={13}
+                fontSize={labelFontSize(13, camera.scale)}
                 fill="#174332"
               />
             )}
@@ -1489,7 +1510,7 @@ export function Canvas({
                     const vertical = wall.a.x === wall.b.x;
                     const text = `C: ${display(length(wall))} cm · H: ${display(wall.height)} cm`;
                     ctx.save();
-                    ctx.font = "11px sans-serif";
+                    ctx.font = `${labelFontSize(11, camera.scale)}px sans-serif`;
                     ctx.fillStyle = "#234b40";
                     const metrics = ctx.measureText(text);
                     const ascent = metrics.actualBoundingBoxAscent;
@@ -1574,7 +1595,7 @@ export function Canvas({
                     );
                   ctx.setLineDash([]);
                   ctx.fillStyle = "#234b40";
-                  ctx.font = "11px sans-serif";
+                  ctx.font = `${labelFontSize(11, camera.scale)}px sans-serif`;
                   const label = `${openingLabel[o.kind]} · ${display(o.base)}–${display(o.base + o.height)} cm`,
                     metrics = ctx.measureText(label),
                     ascent = metrics.actualBoundingBoxAscent,
@@ -1660,6 +1681,7 @@ export function Canvas({
           )}
           {slabs.after}
           {measurements.layer}
+          {rooms.layer}
           {furniture.controls}
           {imageCanvas.markers}
           {terrain.controls}
@@ -1671,6 +1693,8 @@ export function Canvas({
       {!walls.length &&
         !doc.model.slabs.length &&
         !doc.model.measurements.length &&
+        !doc.model.roomBoundaries.length &&
+        !doc.model.roomLabels.length &&
         !doc.model.referenceImages.length &&
         !doc.model.imageElements.length &&
         !doc.model.terrain &&
@@ -1793,23 +1817,25 @@ export function Canvas({
                 ? terrain.hint
                 : imageCanvas.hint
                   ? imageCanvas.hint
-                  : furniture.hint
-                    ? furniture.hint
-                    : mode === "course"
-                      ? groutMode
-                        ? groutHover
-                          ? groutPresent(groutHover)
-                            ? "Remover graute · eixo completo"
-                            : "Adicionar graute · eixo completo"
-                          : "Clique num furo · Esc encerra Graute"
-                        : ""
-                      : tool === "furniture"
-                        ? "Clique para posicionar a imagem · Esc cancela"
-                        : tool === "wall"
-                          ? "Arraste para desenhar · Esc cancela"
-                          : tool === "measure"
-                            ? `${measurements.placing ? "Clique para posicionar a linha da cota" : measurements.creating ? "Clique no ponto final" : "Clique no ponto inicial"} · ${measurements.placing ? "Mova o mouse para ajustar o afastamento" : "Alt suspende atração"} · Esc cancela`
-                            : ""}
+                  : rooms.hint
+                    ? rooms.hint
+                    : furniture.hint
+                      ? furniture.hint
+                      : mode === "course"
+                        ? groutMode
+                          ? groutHover
+                            ? groutPresent(groutHover)
+                              ? "Remover graute · eixo completo"
+                              : "Adicionar graute · eixo completo"
+                            : "Clique num furo · Esc encerra Graute"
+                          : ""
+                        : tool === "furniture"
+                          ? "Clique para posicionar a imagem · Esc cancela"
+                          : tool === "wall"
+                            ? "Arraste para desenhar · Esc cancela"
+                            : tool === "measure"
+                              ? `${measurements.placing ? "Clique para posicionar a linha da cota" : measurements.creating ? "Clique no ponto final" : "Clique no ponto inicial"} · ${measurements.placing ? "Mova o mouse para ajustar o afastamento" : "Alt suspende atração"} · Esc cancela`
+                              : ""}
           </span>
         </div>
         <div className={styles.zoom}>

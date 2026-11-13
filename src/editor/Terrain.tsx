@@ -1,3 +1,4 @@
+import { labelFontSize } from "./label-font";
 import {
   useCallback,
   useEffect,
@@ -456,7 +457,7 @@ export function useTerrainCanvas(
               };
               const text = (value: string, p: Point, offset = 0) => {
                 const q = screen(p);
-                ctx.font = "600 12px Arial";
+                ctx.font = `600 ${labelFontSize(12, camera.scale)}px Arial`;
                 const w = ctx.measureText(value).width;
                 ctx.fillStyle = "rgba(255,255,255,.92)";
                 ctx.fillRect(q.x - w / 2 - 6, q.y - 10 + offset, w + 12, 22);

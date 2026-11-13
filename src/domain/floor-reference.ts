@@ -62,6 +62,20 @@ export function floorPlanBounds(
       height: Math.max(...ys) - Math.min(...ys),
     });
   }
+  for (const b of doc.model.roomBoundaries.filter(
+    (b) => b.floorId === measureFloorId,
+  )) {
+    boxes.push({
+      x: Math.min(b.a.x, b.b.x),
+      y: Math.min(b.a.y, b.b.y),
+      width: Math.abs(b.b.x - b.a.x),
+      height: Math.abs(b.b.y - b.a.y),
+    });
+  }
+  for (const l of doc.model.roomLabels.filter(
+    (l) => l.floorId === measureFloorId,
+  ))
+    boxes.push({ ...l.position, width: 0, height: 0 });
   if (includeSlabs)
     for (const slab of doc.model.slabs.filter((s) =>
       floorIds.includes(s.floorId),
