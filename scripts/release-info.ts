@@ -39,7 +39,7 @@ export function readReleaseInfo(cwd = process.cwd()): ReleaseInfo {
   }).formatToParts(new Date(timestamp));
   const part = (type: string) =>
     date.find((entry) => entry.type === type)?.value;
-  const version = `${part("year")}${part("day")}${part("month")}-${sha.slice(0, 7)}`;
+  const version = `${part("year")}${part("month")}${part("day")}-${sha.slice(0, 7)}`;
   const tasks = git(
     "ls-tree",
     "-r",

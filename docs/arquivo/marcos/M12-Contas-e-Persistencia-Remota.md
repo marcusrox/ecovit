@@ -1,6 +1,6 @@
 # M12 — Contas e persistência remota
 
-> Registro histórico. Acompanhe as pendências em [T-001](../../tasks/T-001-Homologacao-Funcional-Producao.md), [T-002](../../tasks/T-002-Homologacao-Operacional-Producao.md) e [T-003](../../tasks/T-003-Conferencia-Manual-Listagem-e-Acesso-Local.md).
+> Registro histórico. Homologação realizada e aceite global confirmado pelo solicitante em 2026-11-13. Evidências em [T-001](../../tasks/T-001-Homologacao-Funcional-Producao.md), [T-002](../../tasks/T-002-Homologacao-Operacional-Producao.md) e [T-003](../../tasks/T-003-Conferencia-Manual-Listagem-e-Acesso-Local.md).
 
 [PRD](../../Ecovit-PRD.md#m12--contas-e-persistência-remota) · [Autenticação](../../arquitetura/Autenticacao-e-Acesso.md) · [Persistência](../../arquitetura/Persistencia-e-Compatibilidade.md)
 
@@ -8,15 +8,14 @@ Contas por código de e-mail, projetos privados em PostgreSQL, importação e do
 
 ## Aceite e verificações
 
+- Em 2026-11-13, o solicitante confirmou explicitamente a homologação da M12 como realizada e o aceite de todas as tasks pendentes. Encerradas a homologação funcional em produção (T-001), a homologação operacional (T-002) e a conferência manual da listagem e do acesso direto local (T-003), com aceite global recebido. A confirmação complementa os relatos anteriores de execução bem-sucedida; não representa nova execução de testes nem acrescenta medições individuais aos registros existentes.
 - O deploy em HTTPS e a confirmação do SHA servido estão validados. O [procedimento de operação](../../arquitetura/Persistencia-e-Compatibilidade.md#github-actions-e-webhook-do-aapanel) define o recibo por tentativa e a checagem pública. O [workflow](https://github.com/marcusrox/ecovit/actions/workflows/aapanel.yml) mostra as publicações.
 - O solicitante confirmou localmente entrada por código, importação, edição preservada ao reabrir, imagens e download. A apresentação de data/hora e a faixa de status da lista têm aceite específico.
 - A verificação automatizada cobre autorização, cotas, falhas de gravação, concorrência, integridade, lixeira e exclusão de conta. A verificação de deploy não constitui homologação funcional.
 
 ## Pendências vigentes
 
-- Homologação funcional em produção e aceite global. Verificar login e reenvio, saída e reentrada, importação/download, edição e recuperação após perda de conexão ou conflito, lixeira e exclusão da conta com dados descartáveis.
-- Homologar remetente e entrega pela Resend, configuração efetiva do proxy, capacidade do servidor, permissões dos recursos privados e agendamento/monitoramento da limpeza. O prazo operacional de exclusão depende dessa rotina.
-- Conferência manual da apresentação da listagem e do acesso direto opcional em desenvolvimento.
+Nenhuma pendência de homologação ou aceite da M12 após a confirmação do solicitante em 2026-11-13. Os critérios e as evidências anteriores permanecem preservados nas tasks T-001 a T-003. A operação contínua, incluindo limpeza e backup sob responsabilidade da administração do servidor, mantém os contratos vigentes.
 
 ## Critérios de aceite
 

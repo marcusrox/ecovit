@@ -6,7 +6,7 @@
 
 **Data de execução** — 2026-11-11
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
 
 ## Referências e pré-condições
 
@@ -56,3 +56,7 @@ Economizar espaço horizontal na barra transferindo a identificação do context
 - **Verificação automatizada** — Build de produção (incluindo typecheck), lint e formatação aprovados. Vitest: 70 testes aprovados nos três arquivos floors.test.ts, floor-state.test.ts e floor-reference.test.ts, em 1,83 s. Playwright: floors.spec.ts e floor-reference.spec.ts executados integralmente, 50 cenários aprovados em Chrome/Edge, em 4,5 min, na porta 5174 e com banco PostgreSQL descartável próprio. Inclui carga de quatro pavimentos/400 paredes/110 mil peças e backup grande. Após ampliar as asserções de bloqueio durante salvamento e de visibilidade ao selecionar parede, os quatro cenários afetados foram revalidados nos dois navegadores, em 31,3 s; são repetições de cobertura, não cenários adicionais. A suíte completa do aplicativo não foi executada.
 - **Ambiente e evidências** — Logs completos ignorados pelo Git em .tools/t006-*.log; capturas em .tools/m41-{chrome,edge}-{1366,1280,900}.png. A primeira tentativa de navegador não iniciou sem conexão de teste; uma tentativa no sandbox teve timeouts na navegação inicial e foi interrompida. A execução fora do sandbox com banco isolado passou sem mudar limites de tempo ou asserções. Nenhum servidor na porta 5173 foi iniciado, encerrado ou reiniciado.
 - **Aceite do solicitante** — Pendente. Critérios verificados tecnicamente; a aprovação visual e funcional manual depende de manifestação explícita do solicitante. Sem publicação nesta entrega.
+
+## Confirmação de aceite — 2026-11-13
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-13, ao solicitar o registro de todos os aceites pendentes. Os registros anteriores preservam a situação de cada etapa; esta confirmação encerra a pendência de aceite desta task, sem alterar as evidências de execução ou representar nova execução de testes.

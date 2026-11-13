@@ -6,7 +6,7 @@
 
 **Data de execução** — 2026-11-10
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
 
 ## Referências e pré-condições
 
@@ -32,3 +32,7 @@ Exibir as perguntas de endereço, porta e usuário com seus valores padrão. Inf
 - **Verificação do Codex** — Três cenários por `npm run db:setup:local` em terminal PowerShell isolado, interceptando o provisionamento: valores padrão por Enter, valores personalizados com edição e cancelamento durante a senha. Os enunciados ficaram visíveis, os valores recebidos foram conferidos por asserções, os caracteres da senha ficaram ocultos inclusive durante edição e Ctrl+C encerrou a operação (A01–A03).
 - **Verificações gerais** — Tipos, lint do inicializador e `git diff --check` passaram. A validação do terminal dispensou a execução das operações SQL.
 - **Aceite do solicitante** — pendente.
+
+## Confirmação de aceite — 2026-11-13
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-13, ao solicitar o registro de todos os aceites pendentes. Os registros anteriores preservam a situação de cada etapa; esta confirmação encerra a pendência de aceite desta task, sem alterar as evidências de execução ou representar nova execução de testes.

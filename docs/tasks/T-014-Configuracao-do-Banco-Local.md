@@ -6,7 +6,7 @@
 
 **Data de execução** — 2026-11-10
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
 
 ## Referências e pré-condições
 
@@ -54,3 +54,7 @@ Foram preservados o setup, sua interface de terminal, seus testes e os contratos
 Conferência após a preservação: typecheck, lint e revisão do diff passaram. A suíte PostgreSQL do setup não foi reexecutada: ECOVIT_SETUP_TEST_ADMIN_URL não está definida nesta sessão. O banco do aplicativo não foi alterado.
 
 Revisão de consistência após o pull: implementação e testes do setup conferidos por hash contra o stash original, sem diferenças. Migração, schema, configuração, modelo de ambiente e lockfile não mudaram no pull. Build de produção (incluindo tipos) aprovado; tipos e lint da preservação anterior continuam aplicáveis, sem mudanças de código posteriores. O comando npm foi executado sem TTY e recusou corretamente a entrada não interativa com código 1. PostgreSQL isolado em 55437 sem resposta; testes de banco não foram repetidos. Não foram encontradas incompatibilidades na integração revisada.
+
+## Confirmação de aceite — 2026-11-13
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-13, ao solicitar o registro de todos os aceites pendentes. Os registros anteriores preservam a situação de cada etapa; esta confirmação encerra a pendência de aceite desta task, sem alterar as evidências de execução ou representar nova execução de testes.

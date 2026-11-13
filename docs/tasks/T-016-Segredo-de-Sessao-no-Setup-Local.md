@@ -6,7 +6,7 @@
 
 **Data de execução** — 2026-11-10
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
 
 ## Referências e pré-condições
 
@@ -33,3 +33,7 @@ Em `npm run db:setup:local`, gerar 32 bytes criptograficamente aleatórios em ba
 - **Verificação do Codex** — `tests/setup-local.test.ts` aprovou 24 cenários em PostgreSQL 18 descartável na porta 55437. A cobertura inclui variável ausente, valor vazio, aspas vazias, espaços simples e entre aspas, espaços em múltiplas linhas, preservação de segredo configurado e repetição após geração, além das regressões de provisionamento e integridade do arquivo (A01–A04). Os testes verificaram comprimento, decodificação dos 32 bytes e ausência do segredo nos relatórios do setup.
 - **Verificações gerais** — Tipos, lint dos arquivos afetados e `git diff --check` passaram. A mensagem final foi revisada para orientar apenas as configurações de e-mail restantes.
 - **Aceite do solicitante** — pendente.
+
+## Confirmação de aceite — 2026-11-13
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-13, ao solicitar o registro de todos os aceites pendentes. Os registros anteriores preservam a situação de cada etapa; esta confirmação encerra a pendência de aceite desta task, sem alterar as evidências de execução ou representar nova execução de testes.

@@ -1090,19 +1090,19 @@ test(
       second.release();
       third.release();
       const fresh = acquireFurnitureBitmap(url);
-      const released = fresh.promise !== first.promise;
+      const retained = fresh.promise === first.promise;
       await fresh.promise;
       fresh.release();
       return {
         shared,
-        released,
+        retained,
         reduced: reduced.crop.width < enlarged.crop.width,
         original: enlarged.image instanceof HTMLImageElement,
       };
     });
     expect(cache).toEqual({
       shared: true,
-      released: true,
+      retained: true,
       reduced: true,
       original: true,
     });

@@ -2,7 +2,7 @@
 
 **Execução** — Verificada
 
-**Aceite manual** — Aceite global pendente
+**Aceite manual** — Confirmado pelo solicitante
 
 ## Referências e pré-condições
 
@@ -24,3 +24,7 @@ O solicitante conduz a conferência na revisão publicada, com conta e projetos 
 Execução bem-sucedida informada pelo solicitante para o conjunto dos critérios. O relato foi global, sem evidências individuais por critério.
 
 O M12 preserva o aceite local de entrada, importação, edição ao reabrir, imagens e download, além da cobertura automatizada anterior. A publicação e a checagem de saúde já verificadas são evidências da implantação.
+
+## Confirmação de aceite — 2026-11-13
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-13, ao solicitar o registro de todos os aceites pendentes. Os registros anteriores preservam a situação de cada etapa; esta confirmação encerra a pendência de aceite desta task, sem alterar as evidências de execução ou representar nova execução de testes.

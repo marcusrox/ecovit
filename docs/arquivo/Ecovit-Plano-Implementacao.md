@@ -1,6 +1,6 @@
 # Ecovit — Índice de requisitos e aceites
 
-> Registro histórico. O desenvolvimento incremental e as verificações pendentes do M12 são acompanhados em [Tasks](../tasks/README.md).
+> Registro histórico. O desenvolvimento incremental e as verificações do M12 são acompanhados em [Tasks](../tasks/README.md).
 
 O [PRD](../Ecovit-PRD.md) define o comportamento atual, a [arquitetura](../Ecovit-Arquitetura-Tecnica.md) define os contratos e o [Caderno técnico](../Ecovit-Caderno-Tecnico.md) reúne convenções, fontes e exemplos. Os registros abaixo relacionam funcionalidades vigentes a seus identificadores e à situação de aceite.
 
@@ -24,6 +24,6 @@ O [PRD](../Ecovit-PRD.md) define o comportamento atual, a [arquitetura](../Ecovi
 | [M9 — Tipos de portas e janelas](marcos/M9-Esquadrias.md) | Nove variantes e símbolos em Planta com botão único de orientação cíclica | BL-08; RF-06; [Elementos construtivos](../arquitetura/Elementos-Construtivos.md#vãos-e-aparência-de-esquadrias); CT-17 | Aceite recebido |
 | [M10 — Mobiliários](marcos/M10-Mobiliarios.md) | Acervo integrado com 59 opções, ocorrências editáveis em Planta e upload incorporado ao arquivo | BL-01; RF-17; [Medidas e imagens](../arquitetura/Medidas-e-Imagens.md#mobiliários-e-acervo) | Aceite recebido |
 | [M11 — Terreno](marcos/M11-Terreno.md) | Terreno global com perímetro livre, aparências, área em m² e ajuste de pontos/posição | RF-18; integração com RF-02/08/09/11/12/16 | Aceite recebido |
-| [M12 — Contas e persistência remota](marcos/M12-Contas-e-Persistencia-Remota.md) | Conta por código de e-mail, projetos privados em PostgreSQL 18.0, lixeira/exclusão da conta e importação manual .ecovit | BL-04, BL-05; RF-12/19/20 | Publicado; homologação funcional e aceite global pendentes |
+| [M12 — Contas e persistência remota](marcos/M12-Contas-e-Persistencia-Remota.md) | Conta por código de e-mail, projetos privados em PostgreSQL 18.0, lixeira/exclusão da conta e importação manual .ecovit | BL-04, BL-05; RF-12/19/20 | Publicado; homologação funcional e operacional realizada; aceite global recebido em 2026-11-13 |
 
-Os aceites de apresentação e operação estão em [Apresentação e operação](marcos/Apresentacao-e-Operacao.md). As pendências funcionais e operacionais em produção estão em [M12](marcos/M12-Contas-e-Persistencia-Remota.md#pendências-vigentes).
+Os aceites de apresentação e operação estão em [Apresentação e operação](marcos/Apresentacao-e-Operacao.md). A conclusão das homologações funcionais e operacionais em produção está em [M12](marcos/M12-Contas-e-Persistencia-Remota.md#aceite-e-verificações).

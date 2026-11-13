@@ -1,12 +1,46 @@
 import type { Layer } from "konva/lib/Layer";
+import catalogCrops from "./furniture-crops.json";
 
 type Crop = { x: number; y: number; width: number; height: number };
 type Level = { image: HTMLImageElement | HTMLCanvasElement; crop: Crop };
 export type FurnitureBitmap = { crop: Crop; levels: Level[] };
-const cache = new Map<
-  string,
-  { users: number; promise: Promise<FurnitureBitmap> }
->();
+type CacheEntry = {
+  users: number;
+  promise: Promise<FurnitureBitmap>;
+  bitmap?: FurnitureBitmap;
+};
+const crops: Readonly<Record<string, Crop>> = catalogCrops;
+const cache = new Map<string, CacheEntry>();
+// Only idle public catalog resources are retained. Mounted users are never evicted.
+const MAX_IDLE_BYTES = 192 * 1024 * 1024;
+const MAX_IDLE_ENTRIES = 32;
+
+function bitmapBytes(bitmap: FurnitureBitmap) {
+  return bitmap.levels.reduce(
+    (bytes, { image }) =>
+      bytes +
+      4 *
+        ("naturalWidth" in image
+          ? image.naturalWidth * image.naturalHeight
+          : image.width * image.height),
+    0,
+  );
+}
+
+function trimIdle() {
+  const idle = [...cache].filter(([, entry]) => entry.users === 0);
+  let bytes = idle.reduce(
+    (sum, [, entry]) => sum + (entry.bitmap ? bitmapBytes(entry.bitmap) : 0),
+    0,
+  );
+  let count = idle.length;
+  for (const [url, entry] of idle) {
+    if (bytes <= MAX_IDLE_BYTES && count <= MAX_IDLE_ENTRIES) break;
+    cache.delete(url);
+    bytes -= entry.bitmap ? bitmapBytes(entry.bitmap) : 0;
+    count--;
+  }
+}
 
 async function load(url: string): Promise<FurnitureBitmap> {
   const image = new Image();
@@ -18,7 +52,9 @@ async function load(url: string): Promise<FurnitureBitmap> {
     width: image.naturalWidth,
     height: image.naturalHeight,
   };
-  if (!url.startsWith("data:")) {
+  if (Object.hasOwn(crops, url)) {
+    crop = { ...crops[url] };
+  } else if (!url.startsWith("data:")) {
     const canvas = document.createElement("canvas");
     canvas.width = image.naturalWidth;
     canvas.height = image.naturalHeight;
@@ -49,19 +85,39 @@ async function load(url: string): Promise<FurnitureBitmap> {
   return { crop, levels: [{ image, crop }] };
 }
 
-// Shared only by mounted occurrences/previews; nothing is added to project data.
+// Public immutable catalog art survives unmounting; private uploads do not.
 export function acquireFurnitureBitmap(url: string) {
   let entry = cache.get(url);
   if (!entry) {
-    entry = { users: 0, promise: load(url) };
+    const created: CacheEntry = { users: 0, promise: load(url) };
+    created.promise = created.promise.then(
+      (bitmap) => {
+        created.bitmap = bitmap;
+        return bitmap;
+      },
+      (error: unknown) => {
+        if (cache.get(url) === created) cache.delete(url);
+        throw error;
+      },
+    );
+    entry = created;
     cache.set(url, entry);
   }
   entry.users++;
   const held = entry;
+  let released = false;
   return {
     promise: held.promise,
     release() {
-      if (--held.users === 0 && cache.get(url) === held) cache.delete(url);
+      if (released) return;
+      released = true;
+      if (--held.users !== 0 || cache.get(url) !== held) return;
+      cache.delete(url);
+      if (held.bitmap && Object.hasOwn(crops, url)) {
+        // Map insertion order is the last-use order of released catalog entries.
+        cache.set(url, held);
+        trimIdle();
+      }
     },
   };
 }

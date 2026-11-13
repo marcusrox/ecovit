@@ -6,7 +6,7 @@
 
 **Data de execução** — 2026-11-11
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
 
 ## Referências e pré-condições
 
@@ -56,3 +56,7 @@ Exemplo visual solicitado: Versão: [20261011-c97e5e4](https://ecovit.idevs.com.
 - **Verificação automatizada desta revisão** — Build, incluindo typecheck, e lint aprovados. As duas tentativas com o servidor Vite de desenvolvimento expiraram na navegação inicial, antes das asserções dos rodapés; o diagnóstico identificou requisições de módulos pendentes. A execução aprovada usou configuração temporária .tools/t010-preview.config.ts, ignorada pelo Git, servindo o aplicativo compilado e reutilizando a preparação da API de teste. Nenhuma asserção ou limite de tempo foi alterado; nenhum arquivo de infraestrutura permanente foi modificado. Logs em .tools/t010-revisao-*.log e diagnóstico em .tools/t010-diagnostic*.log. Não houve nova execução da suíte completa nem dos testes de metadados, cujo código permaneceu inalterado.
 - **Verificação visual desta revisão** — Nove capturas finais em .tools/t010-revisao/{login,lista,editor}-chrome-{1366,1280,900}.png; as três telas foram inspecionadas visualmente em 900×680, além das verificações automatizadas nas três resoluções. Rótulo completo e foco legíveis. Porta 5173 preservada.
 - **Aceite do solicitante** — Pendente. Os registros acima da primeira entrega permanecem como evidência anterior; esta seção registra a validação do rótulo vigente. Sem commit ou push desta revisão.
+
+## Confirmação de aceite — 2026-11-13
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-13, ao solicitar o registro de todos os aceites pendentes. Os registros anteriores preservam a situação de cada etapa; esta confirmação encerra a pendência de aceite desta task, sem alterar as evidências de execução ou representar nova execução de testes.

@@ -6,7 +6,7 @@
 
 **Data de execução** — 2026-11-10
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
 
 ## Referências e pré-condições
 
@@ -40,3 +40,7 @@ O Ecovit deve identificar a revisão em uso no rodapé do login, da lista de pro
 - **Navegador** — `npm run test:e2e -- tests/e2e/release-history.spec.ts tests/e2e/home-status.spec.ts tests/e2e/project-view.spec.ts` aprovou 12 cenários em Chrome e Edge na porta 5174. Na revisão `99146fa`, a versão `20260911-99146fa` apareceu nos três rodapés. As verificações cobriram foco e teclado nas três resoluções, acesso público, estado vazio e retorno a um projeto com edição ainda em memória (A01, A02, A03 e A05).
 - **Build com histórico preenchido** — uma revisão de teste com três tasks elegíveis apresentou a ordem esperada e as datas em `DD/MM/AAAA` no Chrome. A inspeção do bundle confirmou a exclusão das evidências internas, das tasks inelegíveis e dos dados fora do commit (A04).
 - **Aceite do solicitante** — pendente.
+
+## Confirmação de aceite — 2026-11-13
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-13, ao solicitar o registro de todos os aceites pendentes. Os registros anteriores preservam a situação de cada etapa; esta confirmação encerra a pendência de aceite desta task, sem alterar as evidências de execução ou representar nova execução de testes.

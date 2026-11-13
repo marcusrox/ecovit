@@ -2,7 +2,7 @@
 
 **Execução** — Verificada
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
 
 ## Referências e pré-condições
 
@@ -21,3 +21,7 @@ Origem no [registro de pendências do M12](../arquivo/marcos/M12-Contas-e-Persis
 Execução bem-sucedida informada pelo solicitante para o conjunto dos critérios. O relato foi global, sem evidências individuais por critério.
 
 A publicação em HTTPS e a confirmação do SHA servido constam do [aceite histórico do M12](../arquivo/marcos/M12-Contas-e-Persistencia-Remota.md#aceite-e-verificações). Backup segue sob responsabilidade da administração do servidor.
+
+## Confirmação de aceite — 2026-11-13
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-13, ao solicitar o registro de todos os aceites pendentes. Os registros anteriores preservam a situação de cada etapa; esta confirmação encerra a pendência de aceite desta task, sem alterar as evidências de execução ou representar nova execução de testes.

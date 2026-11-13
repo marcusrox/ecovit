@@ -6,7 +6,7 @@
 
 **Data de execução** — 2026-11-12
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
 
 ## Alteração e limites
 
@@ -93,3 +93,7 @@ Commit e push autorizados pelo solicitante em 2026-11-12, após a entrega técni
 - **Limite da evidência:** a conferência foi feita pelos resultados e logs do GitHub Actions; não houve consulta direta ao banco nem inspeção de credenciais ou do log interno do aaPanel. A entrega continua contendo somente a versão SQL funcional 1; não foi acrescentada migração de alteração do schema.
 - **Aceite manual:** permanece pendente. O sucesso técnico do CI/CD e a publicação confirmada não constituem aceite manual do solicitante.
 - **Esta atualização:** somente documentação, conferida por consistência, referências e diff. Commit e push autorizados pelo solicitante; nenhuma nova execução local de testes ou acionamento manual de deploy foi necessário. O push desta atualização pode disparar outra execução do CD habilitado, cujo resultado é independente da publicação aqui registrada.
+
+## Confirmação de aceite — 2026-11-13
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-13, ao solicitar o registro de todos os aceites pendentes. Os registros anteriores preservam a situação de cada etapa; esta confirmação encerra a pendência de aceite desta task, sem alterar as evidências de execução ou representar nova execução de testes.

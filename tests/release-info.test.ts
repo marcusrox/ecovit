@@ -56,7 +56,7 @@ it("publica somente dados de implementações verificadas do commit compilado", 
   git("add", "docs");
 
   const expected = {
-    version: `20262403-${git("rev-parse", "HEAD").slice(0, 7)}`,
+    version: `20260324-${git("rev-parse", "HEAD").slice(0, 7)}`,
     tasks: [
       { id: "T-003", title: "Exemplo T-003", date: "2026-03-01" },
       { id: "T-002", title: "Exemplo T-002", date: "2026-03-01" },
