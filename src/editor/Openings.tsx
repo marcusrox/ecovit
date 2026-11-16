@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { displayDiagnostics } from "./diagnostics";
 import {
   cm,
   display,
@@ -997,7 +998,7 @@ export function Diagnostics({
       {!doc.generationState.diagnostics.length && (
         <p>Nenhuma pendência nominal.</p>
       )}
-      {doc.generationState.diagnostics.map((d, i) => (
+      {displayDiagnostics(doc).map((d, i) => (
         <section key={i} className={`${styles.note} ${styles.propertyGroup}`}>
           <strong>
             {d.severity !== "error"
@@ -1077,7 +1078,7 @@ export function Diagnostics({
               onClick={() => {
                 locate(d.floorId);
                 s.inspect({
-                  focus: { x: d.x, y: d.y },
+                  focus: d.focus,
                   preview: null,
                   diagnosticWalls: d.wallIds,
                 });
@@ -1099,7 +1100,7 @@ export function Diagnostics({
                     ),
                     d.course,
                   ),
-                  focus: { x: d.x, y: d.y },
+                  focus: d.focus,
                   diagnosticWalls: d.wallIds,
                   preview: null,
                 });
@@ -1114,7 +1115,7 @@ export function Diagnostics({
                 s.choose(d.openingIds?.[0] ?? d.wallIds[0] ?? null);
                 s.inspect({
                   mode: "plan",
-                  focus: { x: d.x, y: d.y },
+                  focus: d.focus,
                   diagnosticWalls: d.wallIds,
                   preview: null,
                 });

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { displayDiagnostics } from "./diagnostics";
 import { generateFloor } from "../domain/composition";
 import { display } from "../domain/project";
 import {
@@ -239,6 +240,10 @@ export function FiadaPanel() {
           <span style={{ color: "#b88b67" }}>■</span> Inteiro · dois eixos
           <br />
           <span style={{ color: "#865537" }}>■</span> Meio · um eixo
+          <br />
+          Tracejado cinza: contorno da parede, mesmo sem composição
+          <br />
+          Vermelho: trechos e região do conflito
           <br />○ Eixo nominal, sem diâmetro físico
           <br />▱ Canaleta / meia canaleta · canal longitudinal esquemático
           <br />
@@ -449,7 +454,7 @@ export function FiadaPanel() {
         {!doc.generationState.diagnostics.length && (
           <p>Nenhuma pendência geométrica nominal.</p>
         )}
-        {doc.generationState.diagnostics.map((d, i) => (
+        {displayDiagnostics(s.doc!).map((d, i) => (
           <button
             className={styles.diagnostic}
             key={i}
@@ -466,7 +471,7 @@ export function FiadaPanel() {
                   ),
                   d.course,
                 ),
-                focus: { x: d.x, y: d.y },
+                focus: d.focus,
                 diagnosticWalls: d.wallIds,
                 preview: null,
               });

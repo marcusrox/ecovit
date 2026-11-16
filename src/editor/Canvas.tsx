@@ -1,11 +1,19 @@
 import { labelFontSize } from "./label-font";
+import { displayDiagnostics } from "./diagnostics";
 import { useRoomCanvas } from "./Rooms";
 import { useTerrainCanvas } from "./Terrain";
 import { useTerrainCompass } from "./TerrainCompass";
 import { useReferenceImageCanvas } from "./ReferenceImage";
 import { MIN_CAMERA_SCALE, useProjectCamera } from "./useProjectCamera";
 import type Konva from "konva";
-import { useLayoutEffect, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment as ReactFragment,
+  useLayoutEffect,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Stage, Layer, Rect, Line, Circle, Text, Shape } from "react-konva";
 import {
   bounds,
@@ -148,6 +156,14 @@ export function Canvas({
   >(null);
   const module = doc.project.base.width,
     walls = doc.model.walls;
+  const diagnostics = useMemo(
+    () =>
+      displayDiagnostics(project).filter((d) => d.floorId === doc.viewFloorId),
+    [project, doc.viewFloorId],
+  );
+  const courseWalls = walls.filter(
+    (w) => w.height > (course - 1) * doc.project.base.height,
+  );
   // Room draft cancellation must run before generic Escape handlers reset store listeners.
   const rooms = useRoomCanvas(doc, tool, camera, host, panning || spaceHeld);
   const imageCanvas = useReferenceImageCanvas(camera, size);
@@ -1256,27 +1272,24 @@ export function Canvas({
               />
             )}
           </Layer>
-          <Layer listening={false}>
-            {walls
-              .filter((w) => diagnosticWalls.includes(w.id))
-              .map((w) => {
+          {mode === "course" && (
+            <Layer listening={false}>
+              {courseWalls.map((w) => {
                 const b = bounds(w, module);
                 return (
                   <Rect
-                    key={`diagnostic-${w.id}`}
+                    key={`contour-${w.id}`}
+                    name="course-wall-contour"
                     x={b.x * camera.scale + camera.x}
                     y={b.y * camera.scale + camera.y}
                     width={b.width * camera.scale}
                     height={b.height * camera.scale}
-                    stroke="#bd4930"
-                    strokeWidth={2}
-                    dash={[5, 3]}
+                    stroke="#637969"
+                    strokeWidth={1}
+                    dash={[4, 3]}
                   />
                 );
               })}
-          </Layer>
-          {mode === "course" && (
-            <Layer listening={false}>
               <Shape
                 sceneFunc={(ctx) => {
                   const axes = new Map(
@@ -1473,18 +1486,6 @@ export function Canvas({
                     />
                   )),
                 )}
-              {doc.generationState.diagnostics
-                .filter((d) => d.severity === "error")
-                .map((d, i) => (
-                  <Circle
-                    key={i}
-                    x={(d.x + module / 2) * camera.scale + camera.x}
-                    y={(d.y + module / 2) * camera.scale + camera.y}
-                    radius={9}
-                    stroke="#b74430"
-                    strokeWidth={3}
-                  />
-                ))}
             </Layer>
           )}
           <Layer listening={false}>
@@ -1665,6 +1666,67 @@ export function Canvas({
                 text={`${openingLabel[openingPreview.kind]} · posição ${display(openingPreview.offset)} · largura ${display(openingPreview.width)} cm · base ${display(openingPreview.base)} · topo ${display(openingPreview.base + openingPreview.height)} cm${openingIssue(doc, openingPreview) ? " · medida pendente" : ""}`}
               />
             )}
+          </Layer>
+          <Layer listening={false}>
+            {(mode === "course" ? courseWalls : walls)
+              .filter((w) => diagnosticWalls.includes(w.id))
+              .map((w) => {
+                const b = bounds(w, module);
+                return (
+                  <Rect
+                    key={`diagnostic-${w.id}`}
+                    name="diagnostic-wall"
+                    x={b.x * camera.scale + camera.x}
+                    y={b.y * camera.scale + camera.y}
+                    width={b.width * camera.scale}
+                    height={b.height * camera.scale}
+                    stroke="#bd4930"
+                    strokeWidth={2}
+                    dash={[5, 3]}
+                  />
+                );
+              })}
+            {diagnostics
+              .filter(
+                (d) =>
+                  d.severity === "error" &&
+                  (mode === "course" || d.region) &&
+                  (!d.region ||
+                    mode === "plan" ||
+                    d.wallIds.every((id) =>
+                      courseWalls.some((w) => w.id === id),
+                    )),
+              )
+              .map((d, i) => (
+                <ReactFragment key={i}>
+                  {d.region && (
+                    <Rect
+                      name="diagnostic-conflict"
+                      x={d.region.x * camera.scale + camera.x}
+                      y={d.region.y * camera.scale + camera.y}
+                      width={d.region.width * camera.scale}
+                      height={d.region.height * camera.scale}
+                      fill="rgba(189,73,48,0.25)"
+                      stroke="#b74430"
+                      strokeWidth={3}
+                    />
+                  )}
+                  <Circle
+                    name="diagnostic-marker"
+                    x={
+                      (d.region ? d.focus.x : d.x + module / 2) * camera.scale +
+                      camera.x
+                    }
+                    y={
+                      (d.region ? d.focus.y : d.y + module / 2) * camera.scale +
+                      camera.y
+                    }
+                    radius={9}
+                    stroke="#b74430"
+                    strokeWidth={3}
+                  />
+                </ReactFragment>
+              ))}
           </Layer>
           {moduleHover && (
             <Layer listening={false}>

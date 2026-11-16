@@ -36,7 +36,19 @@ await db.query(
 );
 const api = await createApi(db, config);
 await api.listen({ host: "127.0.0.1", port: 3002 });
+let clientReady = false;
 const vite = await createServer({
+  plugins: [
+    {
+      name: "test-client-readiness",
+      configureServer(server) {
+        server.middlewares.use((_req, res, next) => {
+          if (clientReady) return next();
+          res.writeHead(503).end("Preparando módulos do cliente de testes.");
+        });
+      },
+    },
+  ],
   server: { host: "127.0.0.1", port: 5174, strictPort: true },
 });
 // Chrome/Windows can stall while reusing the local dev server's HTTP/1.1 sockets.
@@ -71,3 +83,8 @@ const parentWatch = setInterval(() => {
   }
 }, 1000);
 parentWatch.unref();
+// An HTTP listener alone is not readiness: process the initial static imports
+// before Playwright starts the scenario's unchanged 30-second budget.
+await vite.environments.client.transformRequest("/src/main.tsx");
+await vite.environments.client.waitForRequestsIdle();
+clientReady = true;
