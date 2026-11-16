@@ -1,13 +1,20 @@
 import { readReleaseInfo } from "../../scripts/release-info";
-import { expect, rejectSaves, test, publicTest, type Page } from "./auth";
+import {
+  expect,
+  login,
+  rejectSaves,
+  test,
+  publicTest,
+  type Page,
+} from "./auth";
 
-const { version, tasks } = readReleaseInfo();
+const { version, commit, tasks } = readReleaseInfo();
 const versionLink = (page: Page) =>
   page
     .locator("footer")
-    .getByRole("link", { name: /Versão .*Histórico de tasks/ });
+    .getByRole("link", { name: /Versão .*Histórico de Alterações/ });
 const historyHeading = (page: Page) =>
-  page.getByRole("heading", { name: "Histórico de tasks" });
+  page.getByRole("heading", { name: "Histórico de Alterações" });
 const viewports = [
   { width: 1366, height: 768 },
   { width: 1280, height: 720 },
@@ -36,20 +43,28 @@ async function checkKeyboard(page: Page) {
   await link.press("Enter");
   await expect(historyHeading(page)).toBeVisible();
   await expect(page.getByRole("dialog")).toContainText(version);
-  await page.getByRole("button", { name: "Voltar", exact: true }).click();
+  await page.getByRole("button", { name: "Fechar", exact: true }).click();
   await expect(historyHeading(page)).toHaveCount(0);
   await expect(link).toBeFocused();
 }
 
-async function checkLayout(page: Page, label: string, browserName: string) {
-  for (const viewport of viewports) {
+async function checkLayout(
+  page: Page,
+  label: string,
+  browserName: string,
+  sizes = viewports,
+) {
+  for (const viewport of sizes) {
     await page.setViewportSize(viewport);
     const link = versionLink(page),
       footerLabel = link.locator("..");
-    await expect(link).toHaveText(version);
+    await expect(link).toHaveText(commit);
     await expect(footerLabel).toHaveText(`Versão: ${version}`);
     await expect(footerLabel.getByRole("link")).toHaveCount(1);
     await expect(link).toHaveAttribute("href", "#historico-de-tasks");
+    await expect(link).toHaveAccessibleName(
+      `Versão ${version} · Histórico de Alterações`,
+    );
     await link.scrollIntoViewIfNeeded();
     await expect(link).toBeInViewport();
     await expect(footerLabel).toBeInViewport({ ratio: 1 });
@@ -82,6 +97,100 @@ async function checkLayout(page: Page, label: string, browserName: string) {
 }
 
 publicTest(
+  "T-021: versão com hora nos três rodapés compactos",
+  { tag: "@interface" },
+  async ({ page }, info) => {
+    const sizes = [{ width: 900, height: 680 }];
+    await page.goto("/");
+    await checkLayout(page, "t021-login", info.project.name, sizes);
+    await checkKeyboard(page);
+    await login(page);
+    await checkLayout(page, "t021-lista", info.project.name, sizes);
+    await openEditor(page);
+    const height = await page
+      .locator("footer")
+      .evaluate((el) => el.getBoundingClientRect().height);
+    await checkLayout(page, "t021-editor", info.project.name, sizes);
+    await versionLink(page).click();
+    await expect(page.getByRole("dialog")).toContainText(version);
+    await page.getByRole("button", { name: "Fechar", exact: true }).click();
+    await expect(
+      page.getByRole("textbox", { name: "Nome do projeto" }),
+    ).toHaveValue("Projeto com histórico");
+    expect(height).toBe(26);
+  },
+);
+
+publicTest(
+  "T-022: popup compacto, foco e origem nos três contextos",
+  { tag: "@interface" },
+  async ({ page }) => {
+    const dialog = page.getByRole("dialog", {
+      name: "Histórico de Alterações",
+    });
+    const close = dialog.getByRole("button", { name: "Fechar", exact: true });
+    await page.setViewportSize({ width: 900, height: 680 });
+    await page.goto("/");
+    await versionLink(page).click();
+    await expect(dialog).toBeVisible();
+    expect(await dialog.evaluate((el) => el.matches(":modal"))).toBe(true);
+    const bounds = await dialog.boundingBox();
+    expect(bounds!.x).toBeGreaterThan(0);
+    expect(bounds!.y).toBeGreaterThan(0);
+    expect(bounds!.width).toBeGreaterThan(850);
+    expect(bounds!.height).toBeGreaterThan(630);
+    await close.focus();
+    await page.keyboard.press("Tab");
+    await expect(dialog.getByRole("main")).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(close).toBeFocused();
+    await versionLink(page).evaluate((el) => el.focus());
+    await expect(close).toBeFocused();
+    await page.screenshot({ path: ".tools/t022-login-900.png" });
+    await page.setViewportSize({ width: 390, height: 640 });
+    expect(
+      await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth),
+    ).toBe(true);
+    await expect(close).toBeInViewport();
+    await page.screenshot({ path: ".tools/t022-login-390.png" });
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(versionLink(page)).toBeFocused();
+    await page.setViewportSize({ width: 900, height: 680 });
+    await login(page);
+    await versionLink(page).click();
+    await expect(dialog).toBeVisible();
+    await page.screenshot({ path: ".tools/t022-lista-900.png" });
+    await close.click();
+    await expect(versionLink(page)).toBeFocused();
+    await openEditor(page);
+    await versionLink(page).click();
+    await page.setViewportSize({ width: 900, height: 420 });
+    await expect(dialog).toBeVisible();
+    const headerTop = await close.evaluate(
+      (el) => el.getBoundingClientRect().top,
+    );
+    const list = dialog.getByRole("main");
+    expect(await list.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(
+      true,
+    );
+    await list.evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+    });
+    expect(await close.evaluate((el) => el.getBoundingClientRect().top)).toBe(
+      headerTop,
+    );
+    await page.screenshot({ path: ".tools/t022-editor-900.png" });
+    await page.goBack();
+    await expect(dialog).toHaveCount(0);
+    await expect(versionLink(page)).toBeFocused();
+    await expect(
+      page.getByRole("textbox", { name: "Nome do projeto" }),
+    ).toHaveValue("Projeto com histórico");
+  },
+);
+
+publicTest(
   "histórico público: conteúdo e acesso direto sem autenticação",
   { tag: "@fluxo" },
   async ({ page }) => {
@@ -92,20 +201,22 @@ publicTest(
       page.getByRole("heading", { name: "Entrar no Ecovit" }),
     ).toHaveCount(0);
     await expect(
-      page.getByRole("link", { name: "Voltar ao Ecovit" }),
+      page.getByRole("button", { name: "Voltar ao Ecovit" }),
     ).toBeVisible();
-    await expect(page.getByRole("main")).toContainText(version);
+    await expect(page.getByRole("dialog")).toContainText(version);
     if (tasks.length)
       await expect(page.getByRole("listitem")).toHaveText(
-        tasks.map(
-          ({ id, title, date }) =>
-            `${id}${title}${date.split("-").reverse().join("/")}`,
-        ),
+        tasks.map(({ id, title, dateTime }) => `${id}${title}${dateTime}`),
       );
     else
       await expect(page.getByRole("main")).toContainText(
-        "Nenhuma task implementada nesta versão",
+        "Nenhuma alteração disponível nesta versão.",
       );
+    await page.getByRole("button", { name: "Voltar ao Ecovit" }).click();
+    await expect(historyHeading(page)).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Entrar no Ecovit" }),
+    ).toBeVisible();
   },
 );
 

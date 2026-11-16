@@ -10,13 +10,13 @@ export const releaseHistoryHash = "#historico-de-tasks";
 export function VersionLink() {
   return (
     <span className={styles.versionLabel}>
-      Versão:{" "}
+      <span>Versão: {release.dateTime} ·</span>{" "}
       <a
         className={styles.versionLink}
         href={releaseHistoryHash}
-        aria-label={`Versão ${release.version} · Histórico de tasks`}
+        aria-label={`Versão ${release.version} · Histórico de Alterações`}
       >
-        {release.version}
+        {release.commit}
       </a>
     </span>
   );
@@ -35,44 +35,20 @@ export function ReleaseHistory({ back }: { back?: () => void }) {
   const title = useRef<HTMLHeadingElement>(null);
   useLayoutEffect(() => {
     const page = dialog.current;
+    const origin = document.activeElement;
     page?.showModal();
     title.current?.focus();
-    return () => page?.close();
+    return () => {
+      page?.close();
+      if (origin instanceof HTMLElement && origin.isConnected) origin.focus();
+    };
   }, []);
 
-  const content = (
-    <main className={styles.releaseContent}>
-      {back ? (
-        <button type="button" onClick={back}>
-          Voltar
-        </button>
-      ) : (
-        <a className={styles.versionLink} href="./">
-          Voltar ao Ecovit
-        </a>
-      )}
-      <h1 id="release-title" ref={title} tabIndex={-1}>
-        Histórico de tasks
-      </h1>
-      <p>Versão {release.version}</p>
-      {release.tasks.length ? (
-        <ol className={styles.releaseTasks}>
-          {release.tasks.map(({ id, title, date }) => (
-            <li key={id}>
-              <strong>{id}</strong>
-              <span>{title}</span>
-              <time dateTime={date}>{date.split("-").reverse().join("/")}</time>
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p className={styles.releaseTasks}>
-          Nenhuma task implementada nesta versão
-        </p>
-      )}
-    </main>
-  );
-  if (!back) return content;
+  const close = () => {
+    if (back) back();
+    else window.location.hash = "";
+  };
+
   return (
     <dialog
       ref={dialog}
@@ -81,10 +57,47 @@ export function ReleaseHistory({ back }: { back?: () => void }) {
       onKeyDown={(event) => event.stopPropagation()}
       onCancel={(event) => {
         event.preventDefault();
-        back();
+        close();
       }}
     >
-      {content}
+      <header className={styles.releaseHeader}>
+        <div>
+          <h1 id="release-title" ref={title} tabIndex={-1}>
+            Histórico de Alterações
+          </h1>
+          <p>Versão {release.version}</p>
+        </div>
+        <button type="button" onClick={close}>
+          {back ? "Fechar" : "Voltar ao Ecovit"}
+        </button>
+      </header>
+      <main className={styles.releaseContent}>
+        <div className={styles.releaseColumns} aria-hidden="true">
+          <span>ID</span>
+          <span>Alteração</span>
+          <span>Entrega · horário de São Paulo</span>
+        </div>
+        {release.tasks.length ? (
+          <ol className={styles.releaseTasks}>
+            {release.tasks.map(({ id, title, date, dateTime }) => (
+              <li key={id}>
+                <strong>{id}</strong>
+                <span>{title}</span>
+                <time
+                  dateTime={date}
+                  aria-label={`Entrega em ${dateTime}, horário de São Paulo`}
+                >
+                  {dateTime}
+                </time>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className={styles.releaseEmpty}>
+            Nenhuma alteração disponível nesta versão.
+          </p>
+        )}
+      </main>
     </dialog>
   );
 }

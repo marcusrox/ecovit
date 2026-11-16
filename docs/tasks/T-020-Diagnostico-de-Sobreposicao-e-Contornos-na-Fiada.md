@@ -6,7 +6,7 @@
 
 **Data de execução** — 2026-11-16
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
 
 ## Alteração e limites
 
@@ -60,3 +60,7 @@ Corrigida a prontidão de `server/test-main.ts`: o servidor responde 503 durante
 Os resultados unitários e estáticos da primeira rodada foram aproveitados, sem repetir os recortes preservados. Seus caminhos em `test-results/`, assim como os logs das primeiras falhas de carregamento, são registros históricos: a limpeza automática do runner substituiu esses arquivos. As evidências da conclusão foram copiadas para `.tools/t020-validacao/`, ignorado pelo Git, para preservá-las nas próximas execuções.
 
 Verificação técnica concluída nos quatro critérios. Aceite manual permanece pendente; aprovação técnica não representa manifestação do solicitante.
+
+## Confirmação de aceite — 2026-11-16
+
+Aceite manual confirmado explicitamente pelo solicitante ao pedir o registro dos dois aceites pendentes, T-018 e T-020. Esta confirmação encerra a pendência manual desta task, preservando as evidências técnicas e os registros históricos anteriores, sem representar nova execução de testes.

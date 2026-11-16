@@ -6,7 +6,7 @@
 
 **Data de execução** — 2026-11-13
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
 
 ## Alteração e limites
 
@@ -155,3 +155,7 @@ Quatro cenários distintos da T-018 passaram no Chrome: revisão/histórico/recr
 Após merge e push autorizados para publicação, a [CI da revisão 90d115b](https://github.com/marcusrox/ecovit/actions/runs/43788379920) encontrou uma expectativa legada em `tests/unequal-heights.test.ts` (EX-78/79): o objeto esperado não incluía as coleções vazias `roomLabels` e `roomBoundaries`, acrescentadas pela normalização do envelope 19. O deploy foi bloqueado antes de publicar essa revisão. Atualizada somente a expectativa de normalização, preservando a comparação integral do modelo e as demais asserções de geometria, fiadas, ida/volta e recusa de arquivo adulterado; nenhuma mudança no aplicativo ou enfraquecimento de teste.
 
 Revalidação local direcionada: 11 testes aprovados no arquivo em 2,44 s, código de saída 0, com log em `.tools/t018-publish-legacy-test.log`. O novo push será submetido novamente ao workflow completo de CI e deploy. Este registro complementa as evidências anteriores e não altera o aceite manual da task.
+
+## Confirmação de aceite — 2026-11-16
+
+Aceite manual confirmado explicitamente pelo solicitante ao pedir o registro dos dois aceites pendentes, T-018 e T-020. Esta confirmação encerra a pendência manual desta task, preservando as evidências técnicas e os registros históricos anteriores, sem representar nova execução de testes.

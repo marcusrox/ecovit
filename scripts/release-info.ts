@@ -1,9 +1,21 @@
 import { execFileSync } from "node:child_process";
 
-type PublishedTask = { id: string; title: string; date: string };
-export type ReleaseInfo = { version: string; tasks: PublishedTask[] };
+type PublishedTask = {
+  id: string;
+  title: string;
+  date: string;
+  dateTime: string;
+};
+export type ReleaseInfo = {
+  version: string;
+  dateTime: string;
+  commit: string;
+  tasks: PublishedTask[];
+};
 
-function publishedTask(markdown: string): PublishedTask | undefined {
+function publishedTask(
+  markdown: string,
+): Omit<PublishedTask, "dateTime"> | undefined {
   const heading = /^# (T-\d+) — (.+)$/m.exec(markdown);
   const metadata =
     heading &&
@@ -25,22 +37,39 @@ function publishedTask(markdown: string): PublishedTask | undefined {
   return { id: heading[1], title: heading[2].trim(), date };
 }
 
-export function readReleaseInfo(cwd = process.cwd()): ReleaseInfo {
-  const git = (...args: string[]) =>
-    execFileSync("git", args, { cwd, encoding: "utf8" });
-  const [sha, timestamp] = git("show", "-s", "--format=%H%n%cI", "HEAD")
-    .trim()
-    .split(/\r?\n/);
+function formatDateTime(timestamp: string): string {
   const date = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Sao_Paulo",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
   }).formatToParts(new Date(timestamp));
   const part = (type: string) =>
     date.find((entry) => entry.type === type)?.value;
-  const version = `${part("year")}${part("month")}${part("day")}-${sha.slice(0, 7)}`;
-  const tasks = git(
+  return `${part("day")}/${part("month")}/${part("year")} ${part("hour")}:${part("minute")}`;
+}
+
+export function readReleaseInfo(cwd = process.cwd()): ReleaseInfo {
+  const git = (...args: string[]) =>
+    execFileSync("git", args, {
+      cwd,
+      encoding: "utf8",
+      maxBuffer: 16 * 1024 * 1024,
+    });
+  if (git("rev-parse", "--is-shallow-repository").trim() === "true")
+    throw new Error(
+      "Histórico de Alterações requer histórico Git completo; obtenha os ancestrais antes de gerar os metadados.",
+    );
+  const [sha, timestamp] = git("show", "-s", "--format=%H%n%cI", "HEAD")
+    .trim()
+    .split(/\r?\n/);
+  const dateTime = formatDateTime(timestamp);
+  const commit = sha.slice(0, 7);
+  const version = `${dateTime} · ${commit}`;
+  const files = git(
     "ls-tree",
     "-r",
     "-z",
@@ -50,13 +79,87 @@ export function readReleaseInfo(cwd = process.cwd()): ReleaseInfo {
     "docs/tasks/",
   )
     .split("\0")
-    .filter((file) => /^docs\/tasks\/T-[^/]*\.md$/.test(file))
-    .map((file) => publishedTask(git("show", `${sha}:${file}`)))
+    .filter((file) => /^docs\/tasks\/T-[^/]*\.md$/.test(file));
+  const history: { revision: string; timestamp: string; file: string }[] = [];
+  let revision = "",
+    deliveredAt = "";
+  for (const line of git(
+    "log",
+    "--reverse",
+    "--topo-order",
+    "--full-history",
+    "--no-renames",
+    "--diff-filter=AM",
+    "--format=COMMIT %H %cI",
+    "--name-only",
+    sha,
+    "--",
+    "docs/tasks/",
+  ).split(/\r?\n/)) {
+    if (line.startsWith("COMMIT ")) [, revision, deliveredAt] = line.split(" ");
+    else if (/^docs\/tasks\/T-[^/]*\.md$/.test(line))
+      history.push({ revision, timestamp: deliveredAt, file: line });
+  }
+  const specs = [
+    ...new Set([
+      ...files.map((file) => `${sha}:${file}`),
+      ...history.map((entry) => `${entry.revision}:${entry.file}`),
+    ]),
+  ];
+  const snapshots = new Map<string, string>();
+  if (specs.length) {
+    const output = execFileSync("git", ["cat-file", "--batch"], {
+      cwd,
+      input: specs.join("\n") + "\n",
+      maxBuffer: 16 * 1024 * 1024,
+    });
+    let offset = 0;
+    for (const spec of specs) {
+      const headerEnd = output.indexOf(10, offset);
+      const header = output.subarray(offset, headerEnd).toString("utf8");
+      const match = /^[0-9a-f]+ blob (\d+)$/.exec(header);
+      if (!match)
+        throw new Error(
+          `Objeto Git indisponível para o Histórico de Alterações: ${spec}`,
+        );
+      const size = Number(match[1]);
+      offset = headerEnd + 1;
+      snapshots.set(
+        spec,
+        output.subarray(offset, offset + size).toString("utf8"),
+      );
+      offset += size + 1;
+    }
+  }
+  const deliveries = new Map<string, string>();
+  for (const entry of history) {
+    const task = publishedTask(
+      snapshots.get(`${entry.revision}:${entry.file}`)!,
+    );
+    if (task && !deliveries.has(task.id))
+      deliveries.set(task.id, entry.timestamp);
+  }
+  const tasks = files
+    .map((file): PublishedTask | undefined => {
+      const task = publishedTask(snapshots.get(`${sha}:${file}`)!);
+      if (!task) return;
+      const timestamp = deliveries.get(task.id);
+      if (!timestamp)
+        throw new Error(
+          `Não foi possível determinar o commit de entrega de ${task.id}. Verifique o histórico Git de ${file}.`,
+        );
+      return {
+        id: task.id,
+        title: task.title,
+        date: timestamp,
+        dateTime: formatDateTime(timestamp),
+      };
+    })
     .filter((task) => task !== undefined);
   tasks.sort(
     (a, b) =>
-      b.date.localeCompare(a.date) ||
+      Date.parse(b.date) - Date.parse(a.date) ||
       Number(b.id.slice(2)) - Number(a.id.slice(2)),
   );
-  return { version, tasks };
+  return { version, dateTime, commit, tasks };
 }
