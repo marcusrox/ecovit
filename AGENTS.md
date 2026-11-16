@@ -16,7 +16,11 @@
 - Atualizar contratos quando mudar uma regra ou comportamento acordado. Manter cada regra em seu documento responsável, preservando IDs e aceites anteriores. Texto literal de interface fica no componente e, quando solicitado, no critério da task; não duplicá-lo desnecessariamente no PRD e na arquitetura.
 - Para geometria/motor, consultar o Caderno Técnico antes dos algoritmos. Não inventar peças, espaçamentos, apoios ou regras construtivas nem tratar convenções nominais como comprovação física/estrutural.
 - Não introduzir bibliotecas, serviços ou abstrações sem necessidade concreta e compatibilidade arquitetural.
-- Corrigir falhas pertinentes antes de declarar a entrega pronta. Registrar o resultado real; confirmar aceite manual somente após manifestação explícita. Integração de tasks e decisão de publicar são etapas distintas.
+- Corrigir falhas pertinentes antes de declarar a entrega pronta. Registrar o resultado real; confirmar aceite manual somente após manifestação explícita. A autorização de implementação, por si só, não autoriza publicar; pedidos de commit e push seguem a autorização abaixo.
+
+## Commit, push e publicação
+
+Quando o solicitante pedir **commit e push**, considerar expressamente autorizado criar o commit das alterações da tarefa, integrá-las e enviá-las para a branch **main** do repositório **marcusrox/ecovit** (`https://github.com/marcusrox/ecovit.git`) e publicar pelo workflow existente. Não criar outra branch nem pedir nova confirmação de destino, conteúdo ou publicação. Essa autorização abrange somente as alterações da tarefa e deve respeitar eventual instrução explícita em contrário.
 
 ## Validação
 
