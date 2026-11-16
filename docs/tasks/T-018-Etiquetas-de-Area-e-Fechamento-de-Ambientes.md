@@ -149,3 +149,9 @@ Quatro cenários distintos da T-018 passaram no Chrome: revisão/histórico/recr
 **Logs locais ignorados pelo Git** — `.tools/t018-validation-summary.log`, `t018-contracts.log`, `t018-contracts-final.log`, `t018-rooms-final.log`, `t018-build-final.log`, `t018-lint-final.log`, `t018-lint-last.log`, `t018-format-check.log`, `t018-e2e.log`, `t018-e2e-correction.log`, `t018-e2e-final.log` e `t018-interface-final.log` (todos sob `.tools/`). Execuções de navegador usaram servidor próprio na 5174, banco e contas isolados; a porta 5173 não foi iniciada, encerrada ou reiniciada.
 
 **Aceite do solicitante** — Pendente. Os critérios acima foram verificados tecnicamente; confirmação manual depende de manifestação explícita do solicitante. Sem publicação nesta entrega.
+
+## Verificação de integração — 2026-11-15
+
+Após merge e push autorizados para publicação, a [CI da revisão 90d115b](https://github.com/marcusrox/ecovit/actions/runs/43788379920) encontrou uma expectativa legada em `tests/unequal-heights.test.ts` (EX-78/79): o objeto esperado não incluía as coleções vazias `roomLabels` e `roomBoundaries`, acrescentadas pela normalização do envelope 19. O deploy foi bloqueado antes de publicar essa revisão. Atualizada somente a expectativa de normalização, preservando a comparação integral do modelo e as demais asserções de geometria, fiadas, ida/volta e recusa de arquivo adulterado; nenhuma mudança no aplicativo ou enfraquecimento de teste.
+
+Revalidação local direcionada: 11 testes aprovados no arquivo em 2,44 s, código de saída 0, com log em `.tools/t018-publish-legacy-test.log`. O novo push será submetido novamente ao workflow completo de CI e deploy. Este registro complementa as evidências anteriores e não altera o aceite manual da task.
