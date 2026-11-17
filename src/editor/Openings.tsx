@@ -854,7 +854,10 @@ export function OpeningSettingsDialog({
                     <p>
                       As categorias geram uma proposta automática. Desabilitar
                       preserva inclusões manuais; remover graute não cria
-                      substitutos. Restaurar padrões preserva os ajustes.
+                      substitutos. Restaurar padrões preserva os ajustes. A
+                      modalidade Simples/Reforçado é escolhida nas propriedades
+                      de cada pavimento. Restaurar estes padrões altera somente
+                      as categorias e a distância máxima.
                     </p>
                   </SettingsHelp>
                 </div>
@@ -881,6 +884,7 @@ export function OpeningSettingsDialog({
                     </label>
                   ))}
                 </div>
+
                 <Field
                   label="Distância máxima de graute"
                   value={distance}

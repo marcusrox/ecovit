@@ -1,9 +1,56 @@
 import { useEffect, useRef, useState } from "react";
-import { addFloor, duplicateFloor, removeFloor } from "../domain/floors";
+import {
+  addFloor,
+  duplicateFloor,
+  removeFloor,
+  editFloor,
+} from "../domain/floors";
 import { cm, display } from "../domain/project";
 import { useStore } from "../state/store";
 import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
+
+export function FloorGroutMode() {
+  const s = useStore(),
+    doc = s.doc!,
+    floor = doc.model.floors.find((f) => f.id === s.activeFloorId)!;
+  return (
+    <section className={styles.propertyGroup} aria-label="Graute do pavimento">
+      <h3>Graute vertical</h3>
+      <label className={styles.field}>
+        Graute nos encontros
+        <select
+          aria-label="Graute nos encontros"
+          value={floor.groutMode ?? "simple"}
+          disabled={
+            s.busy ||
+            s.readonly ||
+            !!s.imageDraft ||
+            !doc.project.groutSettings.junctions
+          }
+          onChange={(e) =>
+            void s.commit(
+              editFloor(doc, floor.id, {
+                groutMode: e.target.value as "simple" | "reinforced",
+              }),
+              "floor",
+            )
+          }
+        >
+          <option value="simple">Simples</option>
+          <option value="reinforced">Reforçado</option>
+        </select>
+      </label>
+      <p className={styles.note}>
+        Somente neste pavimento. Reforçado: 3 furos no L, 4 no T e 5 na cruz,
+        incluindo o centro. Distribuição nominal, sem dimensionamento
+        estrutural.
+        {!doc.project.groutSettings.junctions &&
+          " Ative Encontros nas Configurações do projeto para usar esta opção."}
+      </p>
+    </section>
+  );
+}
 
 export function FloorControls({
   properties = false,

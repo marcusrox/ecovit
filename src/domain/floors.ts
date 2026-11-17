@@ -9,6 +9,12 @@ import { validateSlab } from "./slabs";
 
 export type Floor = Project["model"]["floors"][number];
 export function validateFloor(doc: Project, floor: Floor) {
+  if (
+    floor.groutMode !== undefined &&
+    floor.groutMode !== "simple" &&
+    floor.groutMode !== "reinforced"
+  )
+    throw new Error("Escolha graute Simples ou Reforçado para o pavimento.");
   const h = doc.project.base.height;
   if (!floor.name.trim() || floor.name.trim().length > 100)
     throw new Error("Informe um nome de pavimento com até 100 caracteres.");
@@ -133,6 +139,7 @@ export function duplicateFloor(
     name,
     level,
     defaultHeight: source.defaultHeight,
+    ...(source.groutMode !== undefined ? { groutMode: source.groutMode } : {}),
     ...(source.roomSequence !== undefined
       ? { roomSequence: source.roomSequence }
       : {}),

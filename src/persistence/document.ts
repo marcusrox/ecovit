@@ -151,7 +151,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(19),
+    schemaVersion: z.literal(21),
     project: z
       .object({
         id,
@@ -213,6 +213,7 @@ const schema = z
                 name: z.string().trim().min(1).max(100),
                 level: integer,
                 defaultHeight: positive,
+                groutMode: z.enum(["simple", "reinforced"]).optional(),
                 roomSequence: z
                   .number()
                   .int()
@@ -446,6 +447,41 @@ export function validateProject(
     value &&
     typeof value === "object" &&
     "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion <= 20 &&
+    "model" in value &&
+    value.model &&
+    typeof value.model === "object" &&
+    "floors" in value.model &&
+    Array.isArray(value.model.floors) &&
+    value.model.floors.some(
+      (f: unknown) => f && typeof f === "object" && "groutMode" in f,
+    )
+  )
+    throw new Error(
+      "Arquivo inválido: graute por pavimento em formato anterior.",
+    );
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion <= 19 &&
+    "project" in value &&
+    value.project &&
+    typeof value.project === "object" &&
+    "groutSettings" in value.project &&
+    value.project.groutSettings &&
+    typeof value.project.groutSettings === "object" &&
+    "junctionMode" in value.project.groutSettings
+  )
+    throw new Error(
+      "Arquivo inválido: modalidade de graute em formato anterior.",
+    );
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
     (value.schemaVersion === 9 ||
       value.schemaVersion === 10 ||
       value.schemaVersion === 11 ||
@@ -557,13 +593,64 @@ export function validateProject(
     };
   }
   if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 19
+  )
+    value = { ...value, schemaVersion: 20 };
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 20 &&
+    "project" in value &&
+    value.project &&
+    typeof value.project === "object" &&
+    "groutSettings" in value.project &&
+    value.project.groutSettings &&
+    typeof value.project.groutSettings === "object" &&
+    "model" in value &&
+    value.model &&
+    typeof value.model === "object" &&
+    "floors" in value.model &&
+    Array.isArray(value.model.floors)
+  ) {
+    const { junctionMode, ...groutSettings } = value.project
+      .groutSettings as Record<string, unknown>;
+    if (
+      junctionMode !== undefined &&
+      junctionMode !== "simple" &&
+      junctionMode !== "reinforced"
+    )
+      throw new Error("Arquivo inválido: modalidade de graute não suportada.");
+    value = {
+      ...value,
+      schemaVersion: 21,
+      project: { ...value.project, groutSettings },
+      model: {
+        ...value.model,
+        floors: value.model.floors.map((f: unknown) =>
+          f && typeof f === "object"
+            ? {
+                ...f,
+                ...(junctionMode !== undefined
+                  ? { groutMode: junctionMode }
+                  : {}),
+              }
+            : f,
+        ),
+      },
+    };
+  }
+  if (
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 19
+    value.schemaVersion !== 21
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 19; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 21; demais formatos não são convertidos.",
     );
   const parsed = schema.safeParse(value);
   if (!parsed.success)

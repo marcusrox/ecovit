@@ -70,6 +70,10 @@ React oferece suporte a TypeScript; Konva tem integração declarativa com React
 
 No indicador de composição na parte inferior do canvas, a retenção visual durante recálculo de grautes substitui Processando… por Recalculando grautes…, sem novo ícone ou mensagem na barra de ferramentas. Após falha com desenho retido, mostrar Desenho anterior · resultado desatualizado no mesmo indicador, preservar a mensagem de erro existente e a ação Recalcular. Manter o texto legível nas resoluções suportadas, sem deslocar a barra de ferramentas nem ocultar controles.
 
+## Modalidade de graute nos encontros
+
+No painel Propriedades do Pavimento, a escolha Simples/Reforçado usa seletor com nome acessível e vale somente para o pavimento ativo. Aplicação imediata com recálculo, salvamento e desfazer/refazer pelo fluxo de alteração do pavimento. Desabilitar quando Encontros global estiver desligado, houver imagem em ajuste, somente leitura ou processamento, conservando a escolha. Novos pavimentos usam Simples; duplicação copia a modalidade. Nas Configurações do projeto permanecem somente as categorias automáticas e a distância máxima; restaurar padrões globais não altera modalidades dos pavimentos. A ajuda explica os padrões de CT-10 e seu limite nominal, sem controles por encontro.
+
 ## Painéis de propriedades à direita
 
 ### Controles de pavimento

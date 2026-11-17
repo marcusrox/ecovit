@@ -9,7 +9,7 @@ import {
 import { TerrainProperties } from "../editor/Terrain";
 import { compassSelectionId } from "../domain/terrain-compass";
 import { ReferenceImageProperties } from "../editor/ReferenceImage";
-import { FloorControls } from "./Floors";
+import { FloorControls, FloorGroutMode } from "./Floors";
 import { PreferencesDialog } from "./Preferences";
 import { MeasurementProperties } from "../editor/Measurements";
 import { ImageCatalog, ImageElementProperties } from "../editor/ImageElements";
@@ -380,6 +380,7 @@ function Properties({ doc }: { doc: Project }) {
             )}
           </section>
           <FloorControls properties />
+          <FloorGroutMode />
           <ReferenceImageProperties key={floor.id} />
           <section
             className={styles.propertyGroup}

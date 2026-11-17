@@ -283,7 +283,29 @@ export function applyGrout(doc: Project, result: Composition): Composition {
 
   for (const comp of result.components)
     for (const j of comp.junctions) {
-      if (settings.junctions) add(j, `junction:${j.kind}:${groutId(j)}`);
+      if (!settings.junctions) continue;
+      const origin = `junction:${j.kind}:${groutId(j)}`;
+      add(j, origin);
+      if (f.groutMode !== "reinforced") continue;
+      const center = cells.get(groutId(j));
+      if (!center) continue;
+      for (const [dx, dy] of [
+        [m, 0],
+        [-m, 0],
+        [0, m],
+        [0, -m],
+      ]) {
+        const p = { x: j.x + dx, y: j.y + dy };
+        const neighbor = cells.get(groutId(p));
+        if (
+          neighbor &&
+          neighbor.wallIds.some((id) => comp.wallIds.includes(id)) &&
+          neighbor.intervals.some((a) =>
+            center.intervals.some((b) => a.bottom < b.top && b.bottom < a.top),
+          )
+        )
+          add(p, origin);
+      }
     }
   if (settings.openings)
     for (const o of doc.model.openings) {

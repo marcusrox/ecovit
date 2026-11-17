@@ -146,7 +146,7 @@ export type Tool =
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 19;
+  schemaVersion: 21;
   project: {
     id: string;
     name: string;
@@ -165,6 +165,7 @@ export type Project = {
       name: string;
       level: number;
       defaultHeight: number;
+      groutMode?: "simple" | "reinforced";
       roomSequence?: number;
     }[];
     walls: Wall[];
@@ -240,7 +241,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 19,
+    schemaVersion: 21,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
