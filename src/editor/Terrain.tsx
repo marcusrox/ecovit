@@ -45,14 +45,36 @@ function MaterialPreview({ material }: { material: Terrain["material"] }) {
 }
 export function TerrainProperties({ doc }: { doc: LocalProject }) {
   const { busy, readonly, terrainEditing } = useStore();
+  const collapsed = useStore((s) => s.propertiesCollapsed);
+  const setCollapsed = useStore((s) => s.setPropertiesCollapsed);
   const terrain = doc.model.terrain;
   if (!terrain) return null;
+  if (collapsed)
+    return (
+      <button
+        className={`${styles.reopen} ${styles.iconText}`}
+        onClick={() => setCollapsed(false)}
+      >
+        Propriedades do terreno <Icon name="left" />
+      </button>
+    );
   return (
     <aside
       className={`${styles.properties} ${styles.terrainProperties}`}
       aria-label="Propriedades do terreno"
     >
-      <div className={styles.panelTitle}>TERRENO DO PROJETO</div>
+      <div className={styles.panelTitle}>
+        <span>TERRENO DO PROJETO</span>
+        <button
+          aria-label="Recolher propriedades"
+          className={styles.iconButton}
+          title="Recolher propriedades"
+          data-tooltip="Recolher propriedades"
+          onClick={() => setCollapsed(true)}
+        >
+          <Icon name="right" />
+        </button>
+      </div>
       <h2>Terreno</h2>
       <p className={styles.propertyInfo}>
         Área: <strong>{terrainAreaText(terrain.contour)}</strong>

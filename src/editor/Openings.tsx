@@ -229,7 +229,8 @@ function OpeningForm({
   const diagnostics = doc.generationState.diagnostics.filter((d) =>
     d.openingIds?.includes(o.id),
   );
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = useStore((s) => s.propertiesCollapsed);
+  const setCollapsed = useStore((s) => s.setPropertiesCollapsed);
   if (collapsed)
     return (
       <button

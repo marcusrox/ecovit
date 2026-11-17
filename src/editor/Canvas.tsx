@@ -671,6 +671,12 @@ export function Canvas({
         ref={host}
         className={styles.canvas}
         data-testid="drawing"
+        onDoubleClick={(e) => {
+          if (e.button !== 0 || (e.target as HTMLElement).closest("button"))
+            return;
+          if (rooms.doubleClick(world(pointer(e.clientX, e.clientY))))
+            e.preventDefault();
+        }}
         data-camera={JSON.stringify(camera)}
         data-module={module}
         data-module-hover={moduleHover ? JSON.stringify(moduleHover) : ""}

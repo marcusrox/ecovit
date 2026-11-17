@@ -30,6 +30,77 @@ async function settled(page: Page) {
     })
     .toBe(true);
 }
+
+test(
+  "barra lateral compartilhada preserva recolhimento entre parede e mobiliário",
+  { tag: "@interface" },
+  async ({ page }) => {
+    const doc = createProject("Barra lateral compartilhada", {
+      length: 2500,
+      width: 1250,
+      height: 700,
+    });
+    const floorId = doc.model.floors[0].id;
+    const wallId = crypto.randomUUID();
+    doc.model.walls.push({
+      id: wallId,
+      floorId,
+      a: { x: 0, y: 0 },
+      b: { x: 10000, y: 0 },
+      side: 1,
+      height: 28000,
+    });
+    const furniture = {
+      ...standardElement(imageCatalog[0], floorId),
+      x: 5000,
+      y: 10000,
+    };
+    doc.model.imageElements.push(furniture);
+    await page.getByTestId("import-file").setInputFiles({
+      name: "barra.ecovit",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(doc)),
+    });
+    await settled(page);
+    const select = page.getByLabel("Selecionar elemento", { exact: true });
+    const wall = await at(page, 5000, 625);
+    await page.mouse.click(wall.x, wall.y);
+    await page
+      .getByRole("button", { name: "Recolher propriedades", exact: true })
+      .click();
+    const before = await state(page);
+    await select.selectOption(furniture.id);
+    await expect(
+      page.getByRole("complementary", { name: "Propriedades do mobiliário" }),
+    ).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "Propriedade do mobiliário", exact: true })
+      .click();
+    await expect(
+      page.getByRole("complementary", { name: "Propriedades do mobiliário" }),
+    ).toBeVisible();
+    const location = await at(page, 5000, 625);
+    await page.mouse.click(location.x, location.y);
+    await expect(
+      page.getByRole("complementary", { name: "Propriedades", exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Recolher propriedades", exact: true })
+      .click();
+    await page.getByRole("button", { name: "Fiada", exact: true }).click();
+    await expect(
+      page.getByRole("complementary", { name: "Inspeção de fiadas" }),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Planta", exact: true }).click();
+    await select.selectOption(furniture.id);
+    await expect(
+      page.getByRole("complementary", { name: "Propriedades do mobiliário" }),
+    ).toHaveCount(0);
+    const after = await state(page);
+    expect(after.doc).toEqual(before.doc);
+    expect(after.history).toEqual(before.history);
+  },
+);
 async function open(page: Page) {
   await page.goto("/");
   const d = createProject("M10 teste", {

@@ -72,6 +72,8 @@ export function SlabProperties({
   const slab = doc.model.slabs[0],
     opening = slab?.openings.find((o) => o.id === selected);
   const [text, setText] = useState(slab ? display(slab.thickness) : "");
+  const collapsed = useStore((s) => s.propertiesCollapsed);
+  const setCollapsed = useStore((s) => s.setPropertiesCollapsed);
   useEffect(() => setText(slab ? display(slab.thickness) : ""), [slab]);
   if (!slab) return null;
   const disabled = busy || readonly || editing;
@@ -81,10 +83,29 @@ export function SlabProperties({
       .getState()
       .inspect({ slabDraft: startDraft(slab, id), slabEditing: true });
   };
+  if (collapsed)
+    return (
+      <button
+        className={`${styles.reopen} ${styles.iconText}`}
+        onClick={() => setCollapsed(false)}
+      >
+        {opening ? "Propriedades da abertura de laje" : "Propriedades da laje"}
+        <Icon name="left" />
+      </button>
+    );
   return (
     <aside className={styles.properties} aria-label="Propriedades da laje">
       <div className={styles.panelTitle}>
-        {opening ? "ABERTURA DE LAJE" : "LAJE SELECIONADA"}
+        <span>{opening ? "ABERTURA DE LAJE" : "LAJE SELECIONADA"}</span>
+        <button
+          aria-label="Recolher propriedades"
+          className={styles.iconButton}
+          title="Recolher propriedades"
+          data-tooltip="Recolher propriedades"
+          onClick={() => setCollapsed(true)}
+        >
+          <Icon name="right" />
+        </button>
       </div>
       <h2>
         {opening ? `Abertura ${slab.openings.indexOf(opening) + 1}` : "Laje"} ·{" "}

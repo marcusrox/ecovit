@@ -342,6 +342,8 @@ export function ImageElementProperties({ doc }: { doc: LocalProject }) {
     setDepth(display(e.depth));
     setAngle(String(e.angle));
   }, [e]);
+  const collapsed = useStore((s) => s.propertiesCollapsed);
+  const setCollapsed = useStore((s) => s.setPropertiesCollapsed);
   const ratio = e.width / e.depth;
   function size(value: string, axis: "width" | "depth") {
     if (axis === "width") setWidth(value);
@@ -376,12 +378,32 @@ export function ImageElementProperties({ doc }: { doc: LocalProject }) {
       setError(err instanceof Error ? err.message : String(err));
     }
   }
+  if (collapsed)
+    return (
+      <button
+        className={`${styles.reopen} ${styles.iconText}`}
+        onClick={() => setCollapsed(false)}
+      >
+        Propriedade do mobiliário <Icon name="left" />
+      </button>
+    );
   return (
     <aside
       className={`${styles.properties} ${styles.furnitureProperties}`}
       aria-label="Propriedades do mobiliário"
     >
-      <div className={styles.panelTitle}>MOBILIÁRIOS</div>
+      <div className={styles.panelTitle}>
+        <span>PROPRIEDADE DO MOBILIÁRIO</span>
+        <button
+          aria-label="Recolher propriedades"
+          className={styles.iconButton}
+          title="Recolher propriedades"
+          data-tooltip="Recolher propriedades"
+          onClick={() => setCollapsed(true)}
+        >
+          <Icon name="right" />
+        </button>
+      </div>
       <h2>{e.name}</h2>
       <fieldset disabled={busy || readonly}>
         <section

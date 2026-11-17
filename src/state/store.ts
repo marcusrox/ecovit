@@ -105,6 +105,7 @@ type Inspection = {
   preview: Composition | null;
   focus: { x: number; y: number } | null;
   pendingOpening: Opening | null;
+  roomNameRequest: string | null;
   channelBand: string | null;
   groutMode: boolean;
   groutCell: { x: number; y: number; wallIds: string[] } | null;
@@ -127,12 +128,15 @@ const inspection: Inspection = {
   preview: null,
   focus: null,
   pendingOpening: null,
+  roomNameRequest: null,
   channelBand: null,
   groutMode: false,
   groutCell: null,
   diagnosticWalls: [],
 };
 type State = Inspection & {
+  propertiesCollapsed: boolean;
+  setPropertiesCollapsed: (collapsed: boolean) => void;
   inspect: (change: Partial<Inspection>) => void;
   doc: Project | null;
   retainedGroutResult: Project["generated"];
@@ -302,6 +306,9 @@ export const useStore = create<State>((set, get) => {
   }
   return {
     ...inspection,
+    propertiesCollapsed: false,
+    setPropertiesCollapsed: (propertiesCollapsed) =>
+      set({ propertiesCollapsed }),
     inspect: (change) =>
       set((s) => {
         const direction = s.busy

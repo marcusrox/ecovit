@@ -208,7 +208,7 @@ publicTest(
       await expect(page.getByRole("listitem")).toHaveText(
         tasks.map(
           ({ id, title, summary, commit, dateTime }) =>
-            `${id}${title}${summary ? ` - (${summary})` : ""}${commit}${dateTime}`,
+            `${id}${title}${summary ? ` — ${summary}` : ""}${commit}${dateTime}`,
         ),
       );
     else

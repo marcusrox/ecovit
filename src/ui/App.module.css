@@ -1024,6 +1024,12 @@ button.iconButton {
   color: #526c59;
   font-size: 12px;
 }
+.releaseSummary {
+  color: #5f6561;
+}
+.releaseTasks li:nth-child(even) {
+  background: #f1f4ef;
+}
 .releaseCommit,
 .releaseTasks time {
   color: #647164;

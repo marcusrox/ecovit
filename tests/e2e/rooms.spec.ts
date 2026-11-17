@@ -78,7 +78,9 @@ test(
       .toBe(1);
     await expect(page.getByLabel("Nome do ambiente")).toHaveValue("Ambiente 1");
     await expect(
-      page.getByText("Área: 12,00 m²", { exact: true }),
+      page
+        .getByRole("region", { name: "Área do ambiente" })
+        .getByText("12,00 m²", { exact: true }),
     ).toBeVisible();
     await expect(page.getByLabel("Nome do ambiente")).not.toBeFocused();
     await page.getByLabel("Nome do ambiente").fill("Sala de estar");
@@ -122,6 +124,63 @@ test(
     expect((await state(page)).model.roomLabels).toEqual(
       exported.model.roomLabels,
     );
+  },
+);
+
+test(
+  "Etiqueta: painel recolhível, duplo clique e nome aplicado ao sair do campo",
+  { tag: "@interface" },
+  async ({ page }) => {
+    await open(page);
+    await page.getByRole("button", { name: "Etiqueta", exact: true }).click();
+    await click(page, 15000, 15000);
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    const original = (await state(page)).model.roomLabels[0];
+    const panel = page.getByRole("complementary", {
+      name: "Propriedades da etiqueta",
+    });
+    await expect(
+      panel.getByText("PROPRIEDADES DA ETIQUETA", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByLabel("Nome do ambiente")).not.toBeFocused();
+    await panel.getByRole("button", { name: "Recolher propriedades" }).click();
+    await expect(panel).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "Propriedades da etiqueta", exact: true })
+      .click();
+    await expect(panel).toBeVisible();
+    await panel.getByRole("button", { name: "Recolher propriedades" }).click();
+    const p = await point(page, original.position.x, original.position.y);
+    await page.mouse.dblclick(p.x, p.y);
+    const name = page.getByLabel("Nome do ambiente");
+    await expect(name).toBeFocused();
+    await name.fill("Sala/Cozinha");
+    await expect
+      .poll(async () => (await state(page)).model.roomLabels[0].name)
+      .toBe(original.name);
+    await panel
+      .getByRole("heading", { name: original.name, exact: true })
+      .click();
+    await expect
+      .poll(async () => (await state(page)).model.roomLabels[0].name)
+      .toBe("Sala/Cozinha");
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    expect((await state(page)).model.roomLabels[0]).toEqual({
+      ...original,
+      name: "Sala/Cozinha",
+    });
+    await page.screenshot({ path: ".tools/room-label-properties.png" });
+    const renamed = await point(page, original.position.x, original.position.y);
+    await page.mouse.dblclick(renamed.x, renamed.y);
+    await expect(name).toBeFocused();
+    await name.fill("Nome cancelado");
+    await name.press("Escape");
+    await name.press("Tab");
+    expect((await state(page)).model.roomLabels[0].name).toBe("Sala/Cozinha");
+    await blockEditing(page);
+    await page.mouse.dblclick(renamed.x, renamed.y);
+    await expect(name).toBeDisabled();
+    await expect(name).not.toBeFocused();
   },
 );
 

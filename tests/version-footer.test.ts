@@ -24,7 +24,7 @@ test("histórico mostra título e resumo, commit de entrega e data nessa ordem",
   for (const [index, task] of release.tasks.entries()) {
     const text = items[index][1].replace(/<[^>]*>/g, "");
     expect(text).toBe(
-      `${task.id}${task.title}${task.summary ? ` - (${task.summary})` : ""}${task.commit}${task.dateTime}`,
+      `${task.id}${task.title}${task.summary ? ` — ${task.summary}` : ""}${task.commit}${task.dateTime}`,
     );
     expect(items[index][1]).toContain(`dateTime="${task.date}"`);
     expect(items[index][1]).toContain("horário de São Paulo");

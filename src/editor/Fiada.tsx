@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { displayDiagnostics } from "./diagnostics";
 import { generateFloor } from "../domain/composition";
 import { display } from "../domain/project";
@@ -163,7 +163,8 @@ export function FiadaToolbar() {
   );
 }
 export function FiadaPanel() {
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = useStore((s) => s.propertiesCollapsed);
+  const setCollapsed = useStore((s) => s.setPropertiesCollapsed);
   const s = useStore(),
     doc = useEditingProject()!,
     generated = doc.generated;

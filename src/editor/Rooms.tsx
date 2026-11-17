@@ -34,10 +34,32 @@ import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
 
 export function RoomProperties({ doc }: { doc: LocalProject }) {
-  const { select, busy, readonly, commit, choose, notify } = useStore();
+  const {
+    select,
+    busy,
+    readonly,
+    commit,
+    choose,
+    notify,
+    roomNameRequest,
+    inspect,
+  } = useStore();
   const label = doc.model.roomLabels.find((l) => l.id === select);
   const boundary = doc.model.roomBoundaries.find((l) => l.id === select);
   const [name, setName] = useState(label?.name ?? "");
+  const collapsed = useStore((s) => s.propertiesCollapsed);
+  const setCollapsed = useStore((s) => s.setPropertiesCollapsed);
+  const nameInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (label && roomNameRequest === label.id && !busy && !readonly) {
+      if (collapsed) setCollapsed(false);
+      else {
+        nameInput.current?.focus();
+        nameInput.current?.select();
+        inspect({ roomNameRequest: null });
+      }
+    }
+  }, [label, roomNameRequest, busy, readonly, collapsed, inspect]);
   useEffect(() => {
     setName(label?.name ?? "");
   }, [label?.name]);
@@ -67,6 +89,16 @@ export function RoomProperties({ doc }: { doc: LocalProject }) {
       "room",
     );
   };
+  if (collapsed)
+    return (
+      <button
+        className={`${styles.reopen} ${styles.iconText}`}
+        onClick={() => setCollapsed(false)}
+      >
+        {label ? "Propriedades da etiqueta" : "Propriedades do fechamento"}
+        <Icon name="left" />
+      </button>
+    );
   return (
     <aside
       className={styles.properties}
@@ -75,33 +107,60 @@ export function RoomProperties({ doc }: { doc: LocalProject }) {
       }
     >
       <div className={styles.panelTitle}>
-        {label ? "ETIQUETA SELECIONADA" : "FECHAMENTO SELECIONADO"}
+        <span>
+          {label ? "PROPRIEDADES DA ETIQUETA" : "FECHAMENTO SELECIONADO"}
+        </span>
+        <button
+          aria-label="Recolher propriedades"
+          className={styles.iconButton}
+          title="Recolher propriedades"
+          data-tooltip="Recolher propriedades"
+          onClick={() => setCollapsed(true)}
+        >
+          <Icon name="right" />
+        </button>
       </div>
       <h2>{label?.name ?? "Linha de fechamento"}</h2>
       {label && (
         <>
-          <label>
-            Nome do ambiente
-            <input
-              value={name}
-              maxLength={100}
-              disabled={busy || readonly}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={saveName}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") e.currentTarget.blur();
-                if (e.key === "Escape") {
-                  e.preventDefault();
-                  setName(label.name);
-                }
-              }}
-            />
-          </label>
-          <p className={styles.propertyInfo}>
-            {label.review
-              ? "Revisar ambiente"
-              : `Área: ${region ? roomAreaText(region.area) : "Revisar ambiente"}`}
-          </p>
+          <section
+            className={styles.propertyGroup}
+            aria-label="Identificação do ambiente"
+          >
+            <label className={styles.field}>
+              Nome do ambiente
+              <input
+                ref={nameInput}
+                value={name}
+                maxLength={100}
+                disabled={busy || readonly}
+                onChange={(e) => setName(e.target.value)}
+                onBlur={saveName}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    setName(label.name);
+                  }
+                }}
+              />
+            </label>
+          </section>
+          <section
+            className={styles.propertyInfo}
+            aria-label="Área do ambiente"
+          >
+            <dl className={styles.propertyFacts}>
+              <dt>Área</dt>
+              <dd>
+                {label.review
+                  ? "Revisar ambiente"
+                  : region
+                    ? roomAreaText(region.area)
+                    : "Revisar ambiente"}
+              </dd>
+            </dl>
+          </section>
           <p className={styles.note}>
             {label.review
               ? "A referência foi perdida. Exclua esta etiqueta e crie outra no ambiente desejado."
@@ -489,6 +548,22 @@ export function useRoomCanvas(
     ? geometry.at(selectedLabel.reference)
     : undefined;
   return {
+    doubleClick: (p: Point) => {
+      if (!enabled || navigating || !["select", "room"].includes(tool))
+        return false;
+      const label = [...doc.model.roomLabels].reverse().find((l) => {
+        const box = layout(l);
+        return (
+          Math.abs(p.x - l.position.x) * camera.scale <= box.width / 2 &&
+          Math.abs(p.y - l.position.y) * camera.scale <= box.height / 2
+        );
+      });
+      if (!label) return false;
+      cancel();
+      useStore.getState().choose(label.id);
+      useStore.getState().inspect({ roomNameRequest: label.id });
+      return true;
+    },
     down,
     move,
     up,
@@ -575,13 +650,6 @@ export function useRoomCanvas(
                     labelPreview?.id === original.id ? labelPreview : original,
                   box = layout(l),
                   p = screen(l.position);
-                native.fillStyle = "rgba(255,255,250,0.92)";
-                native.fillRect(
-                  p.x - box.width / 2,
-                  p.y - box.height / 2,
-                  box.width,
-                  box.height,
-                );
                 if (l.id === select) {
                   native.strokeStyle = "#156d46";
                   native.lineWidth = 1;

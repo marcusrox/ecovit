@@ -42,11 +42,33 @@ type Drag = {
 
 export function MeasurementProperties({ doc }: { doc: LocalProject }) {
   const { select, busy, readonly } = useStore();
+  const collapsed = useStore((s) => s.propertiesCollapsed);
+  const setCollapsed = useStore((s) => s.setPropertiesCollapsed);
   const m = doc.model.measurements.find((m) => m.id === select);
   if (!m) return null;
+  if (collapsed)
+    return (
+      <button
+        className={`${styles.reopen} ${styles.iconText}`}
+        onClick={() => setCollapsed(false)}
+      >
+        Propriedades da medida <Icon name="left" />
+      </button>
+    );
   return (
     <aside className={styles.properties} aria-label="Propriedades da medida">
-      <div className={styles.panelTitle}>MEDIDA SELECIONADA</div>
+      <div className={styles.panelTitle}>
+        <span>MEDIDA SELECIONADA</span>
+        <button
+          aria-label="Recolher propriedades"
+          className={styles.iconButton}
+          title="Recolher propriedades"
+          data-tooltip="Recolher propriedades"
+          onClick={() => setCollapsed(true)}
+        >
+          <Icon name="right" />
+        </button>
+      </div>
       <h2>Medida {doc.model.measurements.indexOf(m) + 1}</h2>
       <p className={styles.propertyInfo}>
         Comprimento: <strong>{measurementText(m)}</strong>

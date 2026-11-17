@@ -155,8 +155,9 @@ function Properties({ doc }: { doc: Project }) {
     floor = doc.model.floors[0],
     disabled = busy || readonly || !!imageDraft;
   const [end, setEnd] = useState<"a" | "b">("b"),
-    [alternatives, setAlternatives] = useState<number[]>([]),
-    [collapsed, setCollapsed] = useState(false);
+    [alternatives, setAlternatives] = useState<number[]>([]);
+  const collapsed = useStore((s) => s.propertiesCollapsed);
+  const setCollapsed = useStore((s) => s.setPropertiesCollapsed);
   useEffect(() => setAlternatives([]), [selected]);
   const updateFloor = (key: "level" | "defaultHeight", n: number) => {
     const root = useStore.getState().doc!;

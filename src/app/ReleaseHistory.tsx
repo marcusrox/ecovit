@@ -86,7 +86,11 @@ export function ReleaseHistory({ back }: { back?: () => void }) {
                   <strong>{id}</strong>
                   <span>
                     {title}
-                    {summary ? ` - (${summary})` : ""}
+                    {summary && (
+                      <span className={styles.releaseSummary}>
+                        {` — ${summary}`}
+                      </span>
+                    )}
                   </span>
                   <code className={styles.releaseCommit}>{commit}</code>
                   <time
