@@ -199,7 +199,10 @@ describe("M3.3 grautes nominais", () => {
       )!,
     );
     const g = generate(d);
-    expect(g.grouts).toHaveLength(1);
+    expect(g.grouts!.map((a) => [a.x, a.y])).toEqual([
+      [0, 0],
+      [0, 1250],
+    ]);
     expect(g.grouts![0].origins).toHaveLength(1);
     expect(g.grouts![0].origins[0].length).toBeLessThan(80);
   });

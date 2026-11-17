@@ -6,9 +6,16 @@ import {
 } from "./project";
 import { componentId, signature } from "./composition";
 import { validateSlab } from "./slabs";
+import { validateClampSettings } from "./clamps";
 
 export type Floor = Project["model"]["floors"][number];
 export function validateFloor(doc: Project, floor: Floor) {
+  if (floor.clamps)
+    validateClampSettings(
+      floor.clamps,
+      doc.project.base.width,
+      doc.project.base.height,
+    );
   if (
     floor.groutMode !== undefined &&
     floor.groutMode !== "simple" &&
@@ -140,6 +147,7 @@ export function duplicateFloor(
     level,
     defaultHeight: source.defaultHeight,
     ...(source.groutMode !== undefined ? { groutMode: source.groutMode } : {}),
+    ...(source.clamps ? { clamps: structuredClone(source.clamps) } : {}),
     ...(source.roomSequence !== undefined
       ? { roomSequence: source.roomSequence }
       : {}),

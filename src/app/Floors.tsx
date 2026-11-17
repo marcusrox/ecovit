@@ -42,7 +42,8 @@ export function FloorGroutMode() {
         </select>
       </label>
       <p className={styles.note}>
-        Somente neste pavimento. Reforçado: 3 furos no L, 4 no T e 5 na cruz,
+        Somente neste pavimento. Simples: 1 furo no L e na cruz; 2 no T (centro
+        e primeiro furo do ramal). Reforçado: 3 furos no L, 4 no T e 5 na cruz,
         incluindo o centro. Distribuição nominal, sem dimensionamento
         estrutural.
         {!doc.project.groutSettings.junctions &&

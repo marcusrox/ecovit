@@ -81,7 +81,7 @@ function coverage(d: Project, g = generate(d)) {
 }
 function current(
   d: Project,
-  convention: Composition["convention"] = "nominal-v10",
+  convention: Composition["convention"] = "nominal-v12",
 ) {
   const g = generate(d, convention);
   return {

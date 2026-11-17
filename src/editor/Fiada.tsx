@@ -11,6 +11,7 @@ import styles from "../ui/App.module.css";
 import { Icon } from "../ui/Icon";
 import { restoreSuppression, suppressBand } from "../domain/channels";
 import { GroutPanel } from "./Grout";
+import { ClampsPanel } from "./Clamps";
 
 export function FiadaToolbar() {
   const displayComposition = useCourseDisplayComposition();
@@ -318,6 +319,7 @@ export function FiadaPanel() {
         ))}
       </section>
       <GroutPanel />
+      <ClampsPanel />
       <section className={styles.propertyGroup} aria-label="Encontros">
         <h3>Encontros</h3>
         {generated?.components

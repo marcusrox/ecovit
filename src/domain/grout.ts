@@ -221,8 +221,40 @@ export function applyGrout(doc: Project, result: Composition): Composition {
       })
     : [];
   const freeEnds = new Map<string, { p: Point; wallId: string }>();
+  const simpleTs =
+    f.groutMode !== "reinforced" && settings.junctions
+      ? result.components.flatMap((c) =>
+          c.junctions.filter((j) => j.kind === "T"),
+        )
+      : [];
+  const tBranches = new Map<string, Map<string, Point>>();
   for (const row of result.courses) {
     const currentCells = courseCells(doc, result, row.number);
+    if (simpleTs.length) {
+      const map = new Map(currentCells.map((c) => [groutId(c), c]));
+      for (const j of simpleTs) {
+        if (!map.has(groutId(j))) continue;
+        const neighbors = [
+          [m, 0],
+          [-m, 0],
+          [0, m],
+          [0, -m],
+        ]
+          .map(([dx, dy]) => ({ x: j.x + dx, y: j.y + dy }))
+          .filter((p) => map.has(groutId(p)));
+        if (neighbors.length !== 3) continue;
+        const branch = neighbors.find(
+          (p) =>
+            !neighbors.some(
+              (opposite) =>
+                opposite.x === 2 * j.x - p.x && opposite.y === 2 * j.y - p.y,
+            ),
+        )!;
+        const branches = tBranches.get(groutId(j)) ?? new Map<string, Point>();
+        branches.set(groutId(branch), branch);
+        tBranches.set(groutId(j), branches);
+      }
+    }
     if (ends.length) {
       const map = new Map(currentCells.map((c) => [groutId(c), c]));
       for (const end of ends) {
@@ -286,7 +318,12 @@ export function applyGrout(doc: Project, result: Composition): Composition {
       if (!settings.junctions) continue;
       const origin = `junction:${j.kind}:${groutId(j)}`;
       add(j, origin);
-      if (f.groutMode !== "reinforced") continue;
+      if (f.groutMode !== "reinforced") {
+        if (j.kind === "T")
+          for (const p of tBranches.get(groutId(j))?.values() ?? [])
+            add(p, origin);
+        continue;
+      }
       const center = cells.get(groutId(j));
       if (!center) continue;
       for (const [dx, dy] of [

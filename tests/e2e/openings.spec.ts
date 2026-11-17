@@ -136,8 +136,8 @@ test(
       "window",
       "opening",
     ]);
-    expect(initial.schemaVersion).toBe(22);
-    expect(initial.generated!.convention).toBe("nominal-v10");
+    expect(initial.schemaVersion).toBe(23);
+    expect(initial.generated!.convention).toBe("nominal-v12");
     await page
       .getByRole("button", { name: "Selecionar", exact: false })
       .first()

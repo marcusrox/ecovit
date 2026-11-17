@@ -34,6 +34,7 @@ export function root(
         components: doc.generated.components,
         channels: doc.generated.channels,
         grouts: doc.generated.grouts,
+        clamps: doc.generated.clamps,
         diagnostics: doc.generated.diagnostics,
       }
     : null;
@@ -41,7 +42,7 @@ export function root(
     ...data,
     generated: output
       ? {
-          convention: "nominal-v10",
+          convention: "nominal-v12",
           floors: [{ ...output, floorId: viewFloorId }],
           diagnostics: output.diagnostics,
         }

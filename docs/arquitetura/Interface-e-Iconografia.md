@@ -149,3 +149,9 @@ Propriedades do terreno oferecem somente a checkbox Mostrar rosa dos ventos, ini
 ## Ferramentas de ambientes
 
 Os acessos de RF-21 ficam próximos de Medida, com texto visível e dicas conforme T-018. Mapa central: room→Tag para a etiqueta; room-boundary→Spline para o limite geométrico. São ícones Lucide de contorno; linhas interrompidas, realce e alças do canvas são geometria, não pictogramas de interface. Reusar o painel de propriedades e os controles existentes, sem novo painel ou redesenho da barra. Seleção, nomes acessíveis, foco e estado disabled permanecem nos controles HTML.
+
+## Grampos dos encontros
+
+A seção de configuração integra as Propriedades do Pavimento, após a modalidade de graute, usando o recolhimento existente. Formulário com ativação, diâmetro em mm, comprimento nominal total em cm, decomposição das duas pontas, programação por lista/intervalo e prévia; Aplicar confirma os campos em conjunto. Lista→intervalo preserva sequência aritmética; para lista irregular exige nova definição, sem aproximação. Padrões e precisão seguem CT-17; não preencher periodicidade estrutural. Erros mantêm dados para correção; bloqueio de salvamento mantém candidato e acesso à recuperação. Reusar campos e botão textual, sem novo ícone.
+
+No canvas de Fiada, desenhar só ligações elegíveis da fiada ativa, em traço laranja com halo claro, independente do diâmetro físico, sem capturar clique de edição. Hover identifica fiada, Ø, total e pontas; a inspeção de fiadas oferece identificação textual acessível por teclado e pendências. Não mostrar ligações antigas enquanto busy/desatualizado, ligações pendentes como executadas ou grampos na Planta. Não alterar o comportamento de ferramentas/gestos. A identificação é consulta e não gera histórico.

@@ -108,6 +108,50 @@ const current = (doc: Project): Project => {
 };
 
 describe("T-023 padrões nominais de graute nos encontros", () => {
+  it("T simples inclui o ramal que encosta pela face e Encontros desligado remove ambos", () => {
+    const { doc } = fixture("T");
+    doc.model.walls.find((w) => w.a.x === w.b.x)!.a.y = 1250;
+    expect(points(doc)).toEqual([
+      [0, 0],
+      [0, 1250],
+    ]);
+    doc.project.groutSettings.junctions = false;
+    expect(points(doc)).toEqual([]);
+  });
+  it("T simples preserva exclusão do ramal, alturas e descarta snapshot v10 sem mudar intenção", () => {
+    let { doc } = fixture("T");
+    const stem = doc.model.walls.find((w) => w.a.x === w.b.x)!;
+    stem.height = 700;
+    const result = generate(doc);
+    expect(
+      result.floors[0].grouts!.map((a) => [a.x, a.y, a.intervals]),
+    ).toEqual([
+      [0, 0, [{ bottom: 0, top: 2100 }]],
+      [0, 1250, [{ bottom: 0, top: 700 }]],
+    ]);
+    const old = JSON.parse(serializeFile(current(doc)).text);
+    old.generated.convention = "nominal-v10";
+    old.generated.floors[0].grouts = old.generated.floors[0].grouts.filter(
+      (a: { y: number }) => a.y === 0,
+    );
+    const source = structuredClone(old);
+    const loaded = validateProject(old);
+    expect(loaded.generated).toBeNull();
+    expect(loaded.generationState.status).toBe("outdated");
+    expect(loaded.model).toEqual(doc.model);
+    expect(old).toEqual(source);
+    expect(points(loaded)).toEqual([
+      [0, 0],
+      [0, 1250],
+    ]);
+    doc = toggleGrout(doc, result.floors[0].grouts![1], true);
+    expect(points(doc)).toEqual([[0, 0]]);
+    doc = restoreAutomaticGrouts(doc, doc.model.floors[0].id);
+    expect(points(doc)).toEqual([
+      [0, 0],
+      [0, 1250],
+    ]);
+  });
   it("modalidade independente por pavimento, novo em Simples e cópia preservada sem vínculo", () => {
     let { doc } = fixture("cross");
     const first = doc.model.floors[0].id;
@@ -350,7 +394,17 @@ describe("T-023 padrões nominais de graute nos encontros", () => {
             expect(
               simple.diagnostics.filter((d) => d.severity === "error"),
             ).toEqual([]);
-            expect(points(doc)).toEqual([[0, 0]]);
+            expect(sorted(points(doc))).toEqual(
+              sorted(
+                kind === "T"
+                  ? expected.filter(
+                      ([x, y]) =>
+                        (x === 0 && y === 0) ||
+                        !expected.some(([ox, oy]) => ox === -x && oy === -y),
+                    )
+                  : [[0, 0]],
+              ),
+            );
             doc.model.floors[0].groutMode = "reinforced";
             const reinforced = generate(doc);
             expect(points(doc)).toEqual(sorted(expected));
@@ -498,7 +552,7 @@ describe("T-023 padrões nominais de graute nos encontros", () => {
     };
     const source = JSON.stringify(old);
     const restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(22);
+    expect(restored.schemaVersion).toBe(23);
     expect(restored.model.floors.map((f) => f.groutMode)).toEqual([
       "reinforced",
       "reinforced",
@@ -537,7 +591,7 @@ describe("T-023 padrões nominais de graute nos encontros", () => {
           },
         }),
       ).toThrow("estrutura");
-    expect(() => validateProject({ ...doc, schemaVersion: 23 })).toThrow(
+    expect(() => validateProject({ ...doc, schemaVersion: 24 })).toThrow(
       "incompatível",
     );
     const invalid = current(doc);

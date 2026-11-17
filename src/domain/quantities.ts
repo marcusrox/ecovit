@@ -47,7 +47,7 @@ export function quantities(doc: Project, busy = false): QuantityReport {
     };
   if (
     doc.generationState.status !== "current" ||
-    doc.generated?.convention !== "nominal-v10"
+    doc.generated?.convention !== "nominal-v12"
   )
     return {
       available: false,

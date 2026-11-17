@@ -64,6 +64,7 @@ import { drawOpeningSymbol } from "./opening-symbol";
 import { defaultAppearance } from "../domain/opening-appearance";
 import { usePreferences } from "../state/preferences";
 import { CompositionStatus } from "./CompositionStatus";
+import { ClampsCanvas } from "./Clamps";
 import { useMeasurementCanvas } from "./Measurements";
 import { useImageElements } from "./ImageElements";
 import {
@@ -1754,6 +1755,9 @@ export function Canvas({
           {imageCanvas.markers}
           {terrain.controls}
           {compass.layer}
+          {mode === "course" && (
+            <ClampsCanvas camera={camera} width={size.width} />
+          )}
         </Stage>
         {measurements.menu}
       </div>

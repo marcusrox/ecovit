@@ -23,6 +23,7 @@ import {
 } from "../domain/project";
 import { MAX_GROUT_ADJUSTMENTS } from "../domain/grout";
 import { generate } from "../domain/composition";
+import { validateClampSettings } from "../domain/clamps";
 import { MAX_OPENINGS, openingBox } from "../domain/openings";
 import { validAppearance } from "../domain/opening-appearance";
 import {
@@ -93,6 +94,25 @@ const composition = z
     ),
     components: z.array(component),
     diagnostics: z.array(diagnostic),
+    clamps: z
+      .array(
+        z
+          .object({
+            id: z.string(),
+            course: positive,
+            top: integer,
+            a: point,
+            b: point,
+            diameter: positive,
+            length: positive,
+            leg: positive,
+            origins: z.array(z.string()),
+            wallIds: z.array(id),
+            pending: z.string().optional(),
+          })
+          .strict(),
+      )
+      .optional(),
     grouts: z.array(
       z
         .object({
@@ -143,7 +163,12 @@ const scope = z.discriminatedUnion("kind", [
 ]);
 const generated = z
   .object({
-    convention: z.enum(["nominal-v9", "nominal-v10"]),
+    convention: z.enum([
+      "nominal-v9",
+      "nominal-v10",
+      "nominal-v11",
+      "nominal-v12",
+    ]),
     floors: z.array(composition).min(1).max(4),
     diagnostics: z.array(diagnostic),
   })
@@ -151,7 +176,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(22),
+    schemaVersion: z.literal(23),
     project: z
       .object({
         id,
@@ -243,6 +268,30 @@ const schema = z
                 level: integer,
                 defaultHeight: positive,
                 groutMode: z.enum(["simple", "reinforced"]).optional(),
+                clamps: z
+                  .object({
+                    enabled: z.boolean(),
+                    diameter: positive,
+                    length: positive,
+                    schedule: z.discriminatedUnion("mode", [
+                      z
+                        .object({
+                          mode: z.literal("list"),
+                          courses: z.array(positive),
+                        })
+                        .strict(),
+                      z
+                        .object({
+                          mode: z.literal("interval"),
+                          first: positive,
+                          every: positive,
+                          last: positive,
+                        })
+                        .strict(),
+                    ]),
+                  })
+                  .strict()
+                  .optional(),
                 roomSequence: z
                   .number()
                   .int()
@@ -477,6 +526,22 @@ export function validateProject(
     typeof value === "object" &&
     "schemaVersion" in value &&
     typeof value.schemaVersion === "number" &&
+    value.schemaVersion <= 22 &&
+    "model" in value &&
+    value.model &&
+    typeof value.model === "object" &&
+    "floors" in value.model &&
+    Array.isArray(value.model.floors) &&
+    value.model.floors.some(
+      (f: unknown) => f && typeof f === "object" && "clamps" in f,
+    )
+  )
+    throw new Error("Arquivo inválido: grampos em formato anterior.");
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
     value.schemaVersion <= 21 &&
     "project" in value &&
     value.project &&
@@ -692,20 +757,27 @@ export function validateProject(
   )
     value = { ...value, schemaVersion: 22 };
   if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 22
+  )
+    value = { ...value, schemaVersion: 23 };
+  if (
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 22
+    value.schemaVersion !== 23
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 22; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 23; demais formatos não são convertidos.",
     );
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");
-  // Old results are disposable; never weaken validation of the drawing or of v10 snapshots.
+  // Old results are disposable; never weaken validation of the drawing or of current snapshots.
   const doc = (
-    parsed.data.generated?.convention === "nominal-v9"
+    parsed.data.generated && parsed.data.generated.convention !== "nominal-v12"
       ? {
           ...parsed.data,
           generated: null,
@@ -756,6 +828,7 @@ export function validateProject(
         "Pavimentos devem ter cotas modulares distintas e estar ordenados pela cota.",
       );
     checked([f.level + f.defaultHeight]);
+    if (f.clamps) validateClampSettings(f.clamps, m, h);
   }
   const walls = new Map(doc.model.walls.map((w) => [w.id, w]));
   for (const asset of doc.model.customImageAssets) {
