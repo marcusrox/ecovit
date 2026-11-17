@@ -298,7 +298,7 @@ test(
     const output = parseFile(
       await readFile((await (await download).path())!, "utf8"),
     );
-    expect(output.schemaVersion).toBe(21);
+    expect(output.schemaVersion).toBe(22);
     expect(output.model.measurements).toEqual(
       (await state(page)).model.measurements,
     );

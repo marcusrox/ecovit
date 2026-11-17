@@ -74,6 +74,10 @@ No indicador de composição na parte inferior do canvas, a retenção visual du
 
 No painel Propriedades do Pavimento, a escolha Simples/Reforçado usa seletor com nome acessível e vale somente para o pavimento ativo. Aplicação imediata com recálculo, salvamento e desfazer/refazer pelo fluxo de alteração do pavimento. Desabilitar quando Encontros global estiver desligado, houver imagem em ajuste, somente leitura ou processamento, conservando a escolha. Novos pavimentos usam Simples; duplicação copia a modalidade. Nas Configurações do projeto permanecem somente as categorias automáticas e a distância máxima; restaurar padrões globais não altera modalidades dos pavimentos. A ajuda explica os padrões de CT-10 e seu limite nominal, sem controles por encontro.
 
+## Orçamento
+
+O acesso do cabeçalho passa a Orçamento, conservando o ícone central quantities e a apresentação iconText. Popup nativo amplo segue releasePage/releaseHeader do histórico: margens externas, fundo atenuado, cabeçalho e fechamento fixos enquanto o conteúdo rola. No Resumo do projeto, manter as colunas quantitativas, acrescentar preço unitário por tipo e custo como última coluna. Campos monetários têm nomes acessíveis por tipo, inputMode decimal, validação associada e bloqueio em somente leitura/processamento. Confirmar preço ao sair do campo ou por Enter; prévia válida dos custos acompanha a digitação, sem salvar até confirmar. Entrada inválida não confirma nem mostra custo antigo como válido. O popup informa o estado do salvamento; fechamento dá acesso à recuperação existente no editor. Detalhamento quantitativo continua consultável e o foco retorna ao botão Orçamento ao fechar.
+
 ## Painéis de propriedades à direita
 
 ### Controles de pavimento

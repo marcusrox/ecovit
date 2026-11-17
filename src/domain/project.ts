@@ -146,7 +146,7 @@ export type Tool =
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 21;
+  schemaVersion: 22;
   project: {
     id: string;
     name: string;
@@ -157,6 +157,9 @@ export type Project = {
     openingSettings: OpeningSettings;
     channelLevels: ChannelLevel[];
     groutSettings: GroutSettings;
+    unitPrices?: Partial<
+      Record<"whole" | "half" | "channel" | "half-channel", number>
+    >;
   };
   model: {
     terrain: Terrain | null;
@@ -241,7 +244,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 21,
+    schemaVersion: 22,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),

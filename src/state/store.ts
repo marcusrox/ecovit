@@ -169,7 +169,8 @@ type State = Inspection & {
       | "image"
       | "furniture"
       | "terrain"
-      | "restore-grouts",
+      | "restore-grouts"
+      | "budget",
   ) => Promise<void>;
   undo: (redo?: boolean) => Promise<void>;
   notify: (message: string) => void;

@@ -2080,22 +2080,25 @@ button.iconButton {
   gap: 8px;
 }
 .quantityScreen {
-  position: fixed;
-  inset: 0;
-  margin: 0;
-  border: 0;
-  padding: 24px 32px;
-  box-sizing: border-box;
-  width: 100%;
-  max-width: none;
-  height: 100dvh;
-  max-height: none;
-  overflow: auto;
   background: #fffefb;
-  color: #183e34;
 }
-.quantityScreen::backdrop {
-  background: #fffefb;
+.quantityContent {
+  min-height: 0;
+  overflow: auto;
+  padding: 0 24px 20px;
+}
+.budgetPrice {
+  width: 130px;
+  max-width: 100%;
+  text-align: right;
+}
+.budgetPriceError {
+  display: block;
+  max-width: 210px;
+  white-space: normal;
+  color: #9b382e;
+  font-size: 12px;
+  margin-top: 6px;
 }
 .quantityScreen h1 {
   margin: 0 0 8px;

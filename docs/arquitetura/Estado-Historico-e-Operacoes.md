@@ -52,11 +52,11 @@ Zustand coordena documento confirmado, resultado gerado e estado transitório de
 | Operação | Persistência e histórico | Composição |
 |---|---|---|
 | Mudança de insumos construtivos: base/configurações, geometria de pavimentos/paredes/vãos/lajes ou ajustes | Salvar intenção, registrar uma operação | Invalidar e recalcular o projeto inteiro |
-| Renomeação; edição exclusiva de medidas, referência raster, terreno ou mobiliários; aparência de esquadrias | Salvar e registrar uma operação quando houver mudança | Preservar resultado e diagnósticos, inclusive já desatualizados |
-| Seleção, câmera, troca de pavimento/fiada, hover, prévia e consulta de quantitativos | Não salvar nem registrar intenção | Não recalcular |
+| Renomeação; edição de preços unitários; edição exclusiva de medidas, referência raster, terreno ou mobiliários; aparência de esquadrias | Salvar e registrar uma operação quando houver mudança | Preservar resultado e diagnósticos, inclusive já desatualizados |
+| Seleção, câmera, troca de pavimento/fiada, hover, prévia e consulta de orçamento/quantitativos sem editar preços | Não salvar nem registrar intenção | Não recalcular |
 | Preferências globais de apresentação | Gravar somente no armazenamento de preferências | Não recalcular |
 
-A comparação de insumos exclui terrain, measurements, referenceImages, imageElements, customImageAssets e opening.appearance; nomes dos pavimentos também são excluídos, mantendo id/level/defaultHeight. Mudança de altura padrão segue a comparação construtiva existente. Uma edição visual não promove resultado desatualizado a atual. Não classificar uma operação pela aparência do gesto; comparar os insumos reais antes/depois.
+A comparação de insumos exclui terrain, measurements, referenceImages, imageElements, customImageAssets e opening.appearance; nomes dos pavimentos e project.unitPrices também são excluídos, mantendo id/level/defaultHeight/groutMode entre os insumos dos pavimentos. Mudança de altura padrão segue a comparação construtiva existente. Uma edição visual não promove resultado desatualizado a atual. Não classificar uma operação pela aparência do gesto; comparar os insumos reais antes/depois.
 
 ## Fluxo sequencial
 

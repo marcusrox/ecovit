@@ -151,7 +151,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(21),
+    schemaVersion: z.literal(22),
     project: z
       .object({
         id,
@@ -162,6 +162,35 @@ const schema = z
           .strict(),
         origin: point,
         initialWallHeight: positive.optional(),
+        unitPrices: z
+          .object({
+            whole: z
+              .number()
+              .int()
+              .min(0)
+              .max(Number.MAX_SAFE_INTEGER)
+              .optional(),
+            half: z
+              .number()
+              .int()
+              .min(0)
+              .max(Number.MAX_SAFE_INTEGER)
+              .optional(),
+            channel: z
+              .number()
+              .int()
+              .min(0)
+              .max(Number.MAX_SAFE_INTEGER)
+              .optional(),
+            "half-channel": z
+              .number()
+              .int()
+              .min(0)
+              .max(Number.MAX_SAFE_INTEGER)
+              .optional(),
+          })
+          .strict()
+          .optional(),
         openingSettings: z.object({ base: integer, top: integer }).strict(),
         channelLevels: z
           .array(z.object({ id, top: integer }).strict())
@@ -448,6 +477,18 @@ export function validateProject(
     typeof value === "object" &&
     "schemaVersion" in value &&
     typeof value.schemaVersion === "number" &&
+    value.schemaVersion <= 21 &&
+    "project" in value &&
+    value.project &&
+    typeof value.project === "object" &&
+    "unitPrices" in value.project
+  )
+    throw new Error("Arquivo inválido: preços em formato anterior.");
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
     value.schemaVersion <= 20 &&
     "model" in value &&
     value.model &&
@@ -644,13 +685,20 @@ export function validateProject(
     };
   }
   if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 21
+  )
+    value = { ...value, schemaVersion: 22 };
+  if (
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 21
+    value.schemaVersion !== 22
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 21; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 22; demais formatos não são convertidos.",
     );
   const parsed = schema.safeParse(value);
   if (!parsed.success)

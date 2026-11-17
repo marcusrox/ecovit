@@ -79,7 +79,7 @@ async function snapshot(page: Page) {
   });
 }
 const report = (page: Page) =>
-  page.getByRole("dialog", { name: "Quantitativos", exact: true });
+  page.getByRole("dialog", { name: "Orçamento", exact: true });
 const summary = (page: Page) =>
   report(page).getByRole("region", { name: "Resumo do projeto" });
 
@@ -92,26 +92,22 @@ test(
     const before = await snapshot(page),
       camera = await page.getByTestId("drawing").getAttribute("data-camera"),
       document = await exported(page);
-    await page
-      .getByRole("button", { name: "Quantitativos", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await expect(
-      summary(page).getByRole("row", { name: "Inteiro 11 0 11", exact: true }),
+      summary(page).getByRole("row", { name: /^Inteiro 11 0 11(?:\s|$)/ }),
     ).toBeVisible();
     await expect(
       summary(page).getByRole("row", {
-        name: "Total de peças 13 0 13",
-        exact: true,
+        name: /^Total de peças 13 0 13(?:\s|$)/,
       }),
     ).toBeVisible();
     await report(page).getByLabel("Perdas (%)").fill("10");
     await expect(
-      summary(page).getByRole("row", { name: "Inteiro 11 2 13", exact: true }),
+      summary(page).getByRole("row", { name: /^Inteiro 11 2 13(?:\s|$)/ }),
     ).toBeVisible();
     await expect(
       summary(page).getByRole("row", {
-        name: "Total de peças 13 3 16",
-        exact: true,
+        name: /^Total de peças 13 3 16(?:\s|$)/,
       }),
     ).toBeVisible();
     await report(page)
@@ -125,11 +121,11 @@ test(
     await report(page).getByLabel("Perdas (%)").fill("-1");
     await expect(report(page).getByRole("alert")).toContainText("não negativo");
     await expect(
-      summary(page).getByRole("row", { name: "Inteiro 11 — —", exact: true }),
+      summary(page).getByRole("row", { name: /^Inteiro 11 — —(?:\s|$)/ }),
     ).toBeVisible();
     await report(page).getByLabel("Perdas (%)").fill("2,50");
     await report(page)
-      .getByRole("heading", { name: "Quantitativos", exact: true })
+      .getByRole("heading", { name: "Orçamento", exact: true })
       .focus();
     await page.keyboard.press("Control+z");
     await page.keyboard.press("Delete");
@@ -138,23 +134,19 @@ test(
       .getByRole("button", { name: "Voltar ao desenho" })
       .click();
     await expect(
-      page.getByRole("button", { name: "Quantitativos", exact: true }),
+      page.getByRole("button", { name: "Orçamento", exact: true }),
     ).toBeFocused();
     expect(await page.getByTestId("drawing").getAttribute("data-camera")).toBe(
       camera,
     );
     expect(await exported(page)).toEqual(document);
-    await page
-      .getByRole("button", { name: "Quantitativos", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await expect(report(page).getByLabel("Perdas (%)")).toHaveValue("2,50");
     await page.keyboard.press("Escape");
     await expect(report(page)).not.toBeVisible();
     await page.reload();
     await page.getByRole("button", { name: /Quantitativos M5/ }).click();
-    await page
-      .getByRole("button", { name: "Quantitativos", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await expect(report(page).getByLabel("Perdas (%)")).toHaveValue("0");
   },
 );
@@ -186,9 +178,7 @@ test(
     await expect(
       page.getByRole("button", { name: "Confirmar contorno", exact: true }),
     ).toBeVisible();
-    await page
-      .getByRole("button", { name: "Quantitativos", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await report(page)
       .getByRole("button", { name: "Voltar ao desenho" })
       .click();
@@ -244,12 +234,11 @@ test(
       .click();
     await blockEditing(second);
     await second
-      .getByRole("button", { name: "Quantitativos", exact: true })
+      .getByRole("button", { name: "Orçamento", exact: true })
       .click();
     await expect(
       summary(second).getByRole("row", {
-        name: "Total de peças 13 0 13",
-        exact: true,
+        name: /^Total de peças 13 0 13(?:\s|$)/,
       }),
     ).toBeVisible();
   },
@@ -271,16 +260,13 @@ test(
     )!;
     d.model.walls.push(w, { ...w, id: crypto.randomUUID() });
     await load(page, d);
-    await page
-      .getByRole("button", { name: "Quantitativos", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await expect(
       report(page).getByText("Parcial — há pendências", { exact: true }),
     ).toBeVisible();
     await expect(
       summary(page).getByRole("row", {
-        name: "Total de peças 13 0 13",
-        exact: true,
+        name: /^Total de peças 13 0 13(?:\s|$)/,
       }),
     ).toBeVisible();
     await report(page)
@@ -290,20 +276,20 @@ test(
     await expect(
       page.getByRole("button", { name: "Localizar", exact: true }).first(),
     ).toBeVisible();
-    await page
-      .getByRole("button", { name: "Quantitativos", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await page.evaluate(async () => {
       const path = "/src/state/store.ts";
       const { useStore } = await import(path);
       useStore.setState({ busy: true });
     });
     await expect(report(page).getByRole("alert")).toContainText("andamento");
-    await expect(summary(page)).toHaveCount(0);
+    await expect(
+      summary(page).locator("tbody tr").first().locator("td"),
+    ).toHaveText(["—", "—", "—", "", "—"]);
     await page.keyboard.press("Escape");
     await expect(report(page)).not.toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Quantitativos", exact: true }),
+      page.getByRole("button", { name: "Orçamento", exact: true }),
     ).toBeDisabled();
     await page.evaluate(async () => {
       const path = "/src/state/store.ts";
@@ -311,11 +297,9 @@ test(
       useStore.setState({ busy: false });
     });
     await expect(
-      page.getByRole("button", { name: "Quantitativos", exact: true }),
+      page.getByRole("button", { name: "Orçamento", exact: true }),
     ).toBeFocused();
-    await page
-      .getByRole("button", { name: "Quantitativos", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await page.evaluate(async () => {
       const path = "/src/state/store.ts";
       const { useStore } = await import(path);
@@ -330,7 +314,9 @@ test(
       });
     });
     await expect(report(page).getByRole("alert")).toContainText("indisponível");
-    await expect(summary(page)).toHaveCount(0);
+    await expect(
+      summary(page).locator("tbody tr").first().locator("td"),
+    ).toHaveText(["—", "—", "—", "", "—"]);
   },
 );
 
@@ -349,11 +335,11 @@ test(
     ]) {
       await page.setViewportSize({ width, height });
       await page
-        .getByRole("button", { name: "Quantitativos", exact: true })
+        .getByRole("button", { name: "Orçamento", exact: true })
         .click();
       await expect(
         report(page).getByRole("heading", {
-          name: "Quantitativos",
+          name: "Orçamento",
           exact: true,
         }),
       ).toBeFocused();
@@ -440,13 +426,10 @@ test(
         );
     await load(page, d);
     const start = Date.now();
-    await page
-      .getByRole("button", { name: "Quantitativos", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await expect(
       summary(page).getByRole("row", {
-        name: "Total de peças 110.000 0 110.000",
-        exact: true,
+        name: /^Total de peças 110\.000 0 110\.000(?:\s|$)/,
       }),
     ).toBeVisible();
     console.log(
@@ -463,9 +446,7 @@ test(
     await page
       .getByLabel("Nome do projeto", { exact: true })
       .fill("Nome confirmado M5");
-    await page
-      .getByRole("button", { name: "Quantitativos", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await expect(report(page)).toBeVisible();
     await expect(report(page)).toContainText("Nome confirmado M5");
     await report(page)
@@ -473,7 +454,7 @@ test(
       .click();
     await expect(page.getByRole("status")).toContainText("Salvo");
     await expect(
-      page.getByRole("button", { name: "Quantitativos", exact: true }),
+      page.getByRole("button", { name: "Orçamento", exact: true }),
     ).toBeFocused();
     expect((await exported(page)).project.name).toBe("Nome confirmado M5");
   },
@@ -495,16 +476,13 @@ test(
     });
     await expect(page.getByRole("status")).toHaveText("Não salvo");
     const memory = await snapshot(page);
-    await page
-      .getByRole("button", { name: "Quantitativos", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await expect(report(page)).toContainText(
       /desatualizado|Recalcular|recalcule/i,
     );
     await expect(
       summary(page).getByRole("row", {
-        name: "Total de peças 4 0 4",
-        exact: true,
+        name: /^Total de peças 4 0 4(?:\s|$)/,
       }),
     ).toHaveCount(0);
     await report(page)
@@ -523,20 +501,16 @@ test(
       .click();
     await expect(page.getByRole("status")).toHaveText("Salvo");
     const confirmed = await snapshot(page);
-    await page
-      .getByRole("button", { name: "Quantitativos", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await expect(
       summary(page).getByRole("row", {
-        name: "Total de peças 4 0 4",
-        exact: true,
+        name: /^Total de peças 4 0 4(?:\s|$)/,
       }),
     ).toBeVisible();
     await report(page).getByLabel("Perdas (%)").fill("10");
     await expect(
       summary(page).getByRole("row", {
-        name: "Total de peças 4 1 5",
-        exact: true,
+        name: /^Total de peças 4 1 5(?:\s|$)/,
       }),
     ).toBeVisible();
     await report(page)
