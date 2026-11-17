@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Organiza os cenários de navegador por interface, fluxo e carga, com comandos e filtros próprios para selecionar a finalidade desejada, preservando a execução completa quando a homologação for solicitada.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-11

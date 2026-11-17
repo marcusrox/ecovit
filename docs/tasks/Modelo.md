@@ -4,6 +4,8 @@ Usar este modelo somente quando o solicitante pedir explicitamente a criação d
 
 **Tipo** — Implementação / Verificação
 
+**Resumo** — Para implementação, escrever cerca de 200 caracteres de explicação pública da mudança, sem repetir o título nem incluir evidências internas.
+
 **Execução** — Pendente / Em execução / Verificada / Bloqueada
 
 **Data de execução** — AAAA-MM-DD ou — enquanto pendente

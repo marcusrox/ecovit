@@ -994,7 +994,7 @@ button.iconButton {
 .releaseColumns,
 .releaseTasks li {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) 210px;
+  grid-template-columns: 64px minmax(0, 1fr) 80px 150px;
   gap: 16px;
   align-items: baseline;
 }
@@ -1024,6 +1024,7 @@ button.iconButton {
   color: #526c59;
   font-size: 12px;
 }
+.releaseCommit,
 .releaseTasks time {
   color: #647164;
   font-size: 12px;
@@ -1061,7 +1062,8 @@ button.iconButton {
     column-gap: 10px;
     row-gap: 4px;
   }
-  .releaseColumns span:last-child,
+  .releaseColumns span:nth-child(n + 3),
+  .releaseCommit,
   .releaseTasks time {
     grid-column: 2;
   }

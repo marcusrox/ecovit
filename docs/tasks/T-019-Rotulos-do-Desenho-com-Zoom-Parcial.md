@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Faz os rótulos de paredes, vãos, medidas, terreno, ambientes e demais textos do desenho acompanharem parcialmente o zoom, com limites de legibilidade, preservando a geometria e os controles do editor.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-13

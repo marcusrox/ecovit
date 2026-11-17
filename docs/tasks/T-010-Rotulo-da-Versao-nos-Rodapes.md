@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Acrescenta a identificação de versão aos rodapés do login, da lista de projetos e do editor, mantendo o código da revisão como acesso ao histórico e preservando as informações e os controles existentes.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-11

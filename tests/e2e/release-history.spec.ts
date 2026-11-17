@@ -206,7 +206,10 @@ publicTest(
     await expect(page.getByRole("dialog")).toContainText(version);
     if (tasks.length)
       await expect(page.getByRole("listitem")).toHaveText(
-        tasks.map(({ id, title, dateTime }) => `${id}${title}${dateTime}`),
+        tasks.map(
+          ({ id, title, summary, commit, dateTime }) =>
+            `${id}${title}${summary ? ` - (${summary})` : ""}${commit}${dateTime}`,
+        ),
       );
     else
       await expect(page.getByRole("main")).toContainText(

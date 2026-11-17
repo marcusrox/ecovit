@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Prepara e confere o ambiente isolado de testes, incluindo runtime, banco e navegador conforme a finalidade, sem usar os dados do aplicativo nem instalar dependências automaticamente durante a verificação.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-11

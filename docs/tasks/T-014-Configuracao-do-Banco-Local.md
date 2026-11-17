@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Automatiza a preparação da conexão e do banco local por um comando de setup, conferindo os pré-requisitos e a estrutura necessária, com mensagens de diagnóstico e preservação das configurações existentes.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-10

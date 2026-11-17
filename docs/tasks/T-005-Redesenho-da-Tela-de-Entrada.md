@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Reorganiza a entrada com imagem de arquitetura em tijolo ecológico e formulário de acesso por e-mail e código, adaptando a composição ao espaço disponível e preservando os avisos e o acesso à versão.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-10

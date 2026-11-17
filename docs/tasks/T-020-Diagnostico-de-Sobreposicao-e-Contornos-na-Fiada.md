@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Localiza os trechos realmente sobrepostos e mostra os contornos das paredes com composição suspensa em Fiada, destacando a causa do conflito e mantendo visíveis as peças dos conjuntos independentes.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-16

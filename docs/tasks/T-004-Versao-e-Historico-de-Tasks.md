@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Identifica a revisão do aplicativo nos rodapés e oferece acesso público ao histórico das implementações entregues, gerado a partir das tasks verificadas presentes na mesma revisão usada na compilação.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-10

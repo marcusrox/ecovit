@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Torna visíveis as perguntas interativas do setup local durante sua execução, permitindo acompanhar e responder às solicitações de configuração sem alterar as regras de validação ou expor segredos.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-10

@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Corrige a prontidão do servidor isolado para aguardar o processamento inicial dos módulos do aplicativo antes dos testes de navegador, preservando os limites de espera e as asserções dos cenários.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-11

@@ -56,8 +56,10 @@ Para comprimento `L`, largura `W` e altura `h`, manter `L = 2W` e módulo `m = W
 |---|---|---|---|
 | Inteiro | `2m × m × h` | Duas células adjacentes | Dois marcadores, nos centros das células |
 | Meio | `m × m × h` | Uma célula | Um marcador no centro |
+| Canaleta | `2m × m × h` | Duas células adjacentes | Dois eixos nominais; canal longitudinal esquemático conforme CT-09 |
+| Meia canaleta | `m × m × h` | Uma célula | Um eixo nominal; canal longitudinal esquemático conforme CT-09 |
 
-Rotações apenas de 0° e 90°. Meio é uma peça nominal do catálogo; não declarar que um inteiro cortado produz dois meios utilizáveis. Não gerar peças especiais, cortes, canaletas ou meia canaleta nesta entrega. Não modelar saliências, rebaixos ou espessuras de paredes internas do tijolo sem cotas verificadas.
+Os quatro tipos estão implementados; a geração de canaletas e meias canaletas segue CT-09. Rotações apenas de 0° e 90°. Meio é uma peça nominal do catálogo; não declarar que um inteiro cortado produz dois meios utilizáveis. Peças especiais, procedimentos de corte e representação de preparação na obra ficam para evolução futura, condicionada à documentação exigida em L4 e CT-16. Não modelar saliências, rebaixos ou espessuras de paredes internas do tijolo sem cotas verificadas.
 
 Os marcadores indicam **eixos nominais**, sem diâmetro físico. O tamanho do símbolo é visual e não participa de validação. A coincidência dos centros permite conferir alinhamento nominal, mas não passagem livre para graute ou instalações. Centros de células podem cair em meia unidade interna quando `m` é ímpar: compará-los por coordenadas duplicadas inteiras; não arredondar nem mudar a precisão do projeto.
 
@@ -186,7 +188,7 @@ L1/L2/L4 são limitações físicas conhecidas do modelo nominal. L3/L5 registra
 | P2 | Principal contínua e ramal encostado; aviso de ligação complementar | F3/F6; CT-05; EX-10/13 | Geometria derivada para o Ecovit, sem dimensionar ligação |
 | P3 | Cruz com continuidade alternada | CT-12; EX-11/51–55 | Convenção nominal sem verificação resistente |
 | P4 | Compatibilidade por ocupação e alternância em todas as fases | CT-05; EX-17/18 | Sem distância mínima universal ou busca genérica de solução |
-| P5 | L → reta com continuidade de fase | CT-02; EX-15/16 | Convenção nominal; outras transições ainda fora do suporte |
+| P5 | L → reta com continuidade de fase; suporte ampliado a T, cruz e múltiplos encontros por ocupação ativa em CT-14 | CT-02/14; EX-15/16 e EX-75–79 | Convenção nominal implementada; combinações sem solução nas fases exigidas continuam diagnosticadas |
 
 **Limites de aplicação:** dimensões físicas de furos/encaixes antes de inferir passagem para graute ou instalações (L2); procedimento e perdas de corte antes de contabilizar peças preparadas (L4). Passo físico de fabricante (L1) só será necessário se o produto passar a prometer fidelidade a esse sistema, mediante revisão explícita da convenção atual.
 
@@ -494,7 +496,7 @@ RF-11/12 define o produto; [Quantitativos](arquitetura/Quantitativos.md#projeç�
 
 Contar unidades das peças finais, após subtração de vãos e tipagem/recomposição de canaletas, uma vez por pavimento/fiada. Inteiro e canaleta inteira ocupam duas células; meio e meia canaleta, uma, mas cada um conta como uma peça. Paredes de um encontro e origens coincidentes são associações de uma peça, não multiplicadores. Somar peças de todos os andares mesmo que suas coordenadas horizontais coincidam; referências visuais não são material adicional. A soma dos quatro tipos deve fechar tanto entre fiadas e pavimentos quanto entre pavimentos e projeto.
 
-O meio é peça nominal do catálogo, conforme CT-01/08 e L4. CT-09 representa canaletas nominais e não peças preparadas na obra. Não há procedimento ou informação de origem suficiente para converter cada meio/canaleta em consumo de inteiros, determinar aproveitamento de sobras, largura de corte ou taxa de preparação. M5 conta os quatro tipos separadamente e informa essa lacuna; consumo não determinado não equivale a zero. Peças especiais não geradas não recebem linhas fictícias. Lajes, eixos de graute e seus intervalos não entram em contagem de tijolos. Não calcular concreto, aço, área líquida de laje, cavidade ou volume de graute. Estas regras são convenções de contagem da composição existente, sem pesquisa construtiva nova ou comprovação física.
+O meio é peça nominal do catálogo, conforme CT-01/08 e L4. CT-09 representa canaletas nominais e não peças preparadas na obra. Não há procedimento ou informação de origem suficiente para converter cada meio/canaleta em consumo de inteiros, determinar aproveitamento de sobras, largura de corte ou taxa de preparação. A consulta implementada conta os quatro tipos separadamente e informa essa lacuna; consumo não determinado não equivale a zero. Peças especiais e contagem de peças-base consumidas na preparação ficam para evolução futura, dependente de procedimentos documentados com dimensões finais, perdas de corte e dados de rendimento, conforme L4. A margem percentual de perdas existente não determina esse consumo. Peças especiais não geradas não recebem linhas fictícias. Lajes, eixos de graute e seus intervalos não entram em contagem de tijolos. Não calcular concreto, aço, área líquida de laje, cavidade ou volume de graute. Estas regras são convenções de contagem da composição existente, sem pesquisa construtiva nova ou comprovação física.
 
 Margem de perdas é estimativa aritmética indicada pelo usuário. Arredondar para cima por tipo sobre o total geométrico do projeto, uma vez, sem converter meios em inteiros. Não aplicar à quantidade de fiadas, a eixos ou a percentuais de ocupação. Geometria e perdas têm totais separados; estimativa de um projeto parcial também é parcial. Os exemplos de percentual não recomendam taxas para a obra.
 

@@ -31,10 +31,11 @@ it("publica somente dados de implementações verificadas do commit compilado", 
     date: string,
     type = "Implementação",
     status = "Verificada",
+    summary = "Resumo público da alteração.",
   ) =>
     writeFileSync(
       join(taskDir, `${id}-exemplo.md`),
-      `# ${id} — Exemplo ${id}\n\n**Tipo** — ${type}\n**Execução** — ${status}\n**Data de execução** — ${date}\n**Aceite manual** — Pendente\n\n## Resultado\nEvidência interna.`,
+      `# ${id} — Exemplo ${id}\n\n**Tipo** — ${type}\n**Resumo** — ${summary}\n**Execução** — ${status}\n**Data de execução** — ${date}\n**Aceite manual** — Pendente\n\n## Resultado\nEvidência interna.`,
     );
   git("init", "--quiet");
   git("config", "user.name", "Ecovit Teste");
@@ -67,18 +68,24 @@ it("publica somente dados de implementações verificadas do commit compilado", 
       {
         id: "T-003",
         title: "Exemplo T-003",
+        summary: "Resumo público da alteração.",
+        commit: git("rev-parse", "HEAD").slice(0, 7),
         date: "2026-03-25T02:00:00Z",
         dateTime: "24/03/2026 23:00",
       },
       {
         id: "T-002",
         title: "Exemplo T-002",
+        summary: "Resumo público da alteração.",
+        commit: git("rev-parse", "HEAD").slice(0, 7),
         date: "2026-03-25T02:00:00Z",
         dateTime: "24/03/2026 23:00",
       },
       {
         id: "T-001",
         title: "Exemplo T-001",
+        summary: "Resumo público da alteração.",
+        commit: git("rev-parse", "HEAD").slice(0, 7),
         date: "2026-03-25T02:00:00Z",
         dateTime: "24/03/2026 23:00",
       },
@@ -117,10 +124,10 @@ it("preserva a entrega original em merges e edições posteriores, limitada à r
     ).trim();
   const taskDir = join(repo, "docs", "tasks");
   mkdirSync(taskDir, { recursive: true });
-  const task = (id: string, status: string, title = id) =>
+  const task = (id: string, status: string, title = id, summary = "") =>
     writeFileSync(
       join(taskDir, `${id}.md`),
-      `# ${id} — ${title}\n\n**Tipo** — Implementação\n**Execução** — ${status}\n**Data de execução** — 2026-01-01\n**Aceite manual** — Pendente\n`,
+      `# ${id} — ${title}\n\n**Tipo** — Implementação\n**Resumo** — ${summary}\n**Execução** — ${status}\n**Data de execução** — 2026-01-01\n**Aceite manual** — Pendente\n`,
     );
   const commit = () => {
     git("add", "docs");
@@ -134,6 +141,8 @@ it("preserva a entrega original em merges e edições posteriores, limitada à r
   commit();
   const delivered = readReleaseInfo(repo).tasks[0];
   expect(delivered.dateTime).toBe("16/11/2026 00:00");
+  expect(delivered.commit).toBe(git("rev-parse", "HEAD").slice(0, 7));
+  expect(delivered.summary).toBe("");
   git("checkout", "--quiet", "-b", "entrega");
   timestamp = "2026-11-16T10:30:00Z";
   task("T-002", "Verificada");
@@ -141,10 +150,19 @@ it("preserva a entrega original em merges e edições posteriores, limitada à r
   commit();
   git("checkout", "--quiet", "main");
   timestamp = "2026-11-16T12:00:00Z";
-  task("T-001", "Verificada", "Título atualizado após aceite");
+  task(
+    "T-001",
+    "Verificada",
+    "Título atualizado após aceite",
+    "Resumo público acrescentado depois da entrega.",
+  );
   commit();
   expect(readReleaseInfo(repo).tasks).toEqual([
-    { ...delivered, title: "Título atualizado após aceite" },
+    {
+      ...delivered,
+      title: "Título atualizado após aceite",
+      summary: "Resumo público acrescentado depois da entrega.",
+    },
   ]);
   timestamp = "2026-11-16T13:00:00Z";
   git("merge", "--quiet", "--no-ff", "entrega", "-m", "Integração");
@@ -155,6 +173,10 @@ it("preserva a entrega original em merges e edições posteriores, limitada à r
     { id: "T-001", dateTime: "16/11/2026 00:00" },
   ]);
   expect(readReleaseInfo(repo)).toEqual(release);
+  expect(release.tasks.find((task) => task.id === "T-001")?.commit).toBe(
+    delivered.commit,
+  );
+  expect(release.tasks[0].commit).toBe(git("rev-parse", "entrega").slice(0, 7));
 });
 
 it("diagnostica checkout raso sem atribuir horários fictícios", () => {

@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Orienta a escolha de verificações pelo impacto concreto da alteração e limita o diagnóstico de falhas ambientais, preservando as asserções e separando a verificação técnica do aceite manual do solicitante.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-11

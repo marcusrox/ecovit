@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Adiciona etiquetas com nome e área de regiões fechadas e segmentos independentes de fechamento em Planta, com medição pelas faces internas, atualização geométrica e indicação persistente de revisão.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-13

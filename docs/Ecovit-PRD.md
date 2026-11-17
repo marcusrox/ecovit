@@ -24,9 +24,9 @@ A validação é geométrica e nominal. Cargas, resistência, armaduras, apoios,
 
 ### RF-01 — Catálogo automático a partir do tijolo-base
 
-O usuário escolhe **25 × 12,5 × 7 cm**, **30 × 15 × 7 cm** ou informa comprimento, largura e altura personalizados. Essa definição permite gerar o catálogo padrão suportado: tijolo inteiro, meio tijolo, canaleta, meia canaleta e somente as peças especiais com procedimentos de preparação documentados no caderno técnico.
+O usuário escolhe **25 × 12,5 × 7 cm**, **30 × 15 × 7 cm** ou informa comprimento, largura e altura personalizados. Essa definição gera o catálogo nominal implementado: tijolo inteiro, meio tijolo, canaleta e meia canaleta.
 
-O meio tijolo tem metade do comprimento-base, mantendo largura e altura. As demais variantes serão derivadas por procedimentos internos de composição e modificação. Peças especiais terão representação da preparação necessária, como corte ou abertura, e identificação nos desenhos e quantitativos.
+O meio tijolo tem metade do comprimento-base, mantendo largura e altura. Canaleta e meia canaleta usam os envelopes nominais de inteiro e meio, com canal longitudinal esquemático, conforme CT-09. Peças especiais, procedimentos de corte ou abertura e representação da preparação necessária nos desenhos e quantitativos ficam para evolução futura, condicionada a procedimentos documentados no caderno técnico. O catálogo atual não registra peças preparadas na obra.
 
 O módulo mínimo horizontal é sempre o meio tijolo: 12,5 cm e 15 cm nos dois tamanhos iniciais, respectivamente. Não é necessário cadastrar fabricante, peças, furos, encaixes ou conjuntos de regras para habilitar a automação. O Ecovit adota uma geometria padrão derivada das dimensões-base, com hipóteses documentadas.
 
@@ -34,7 +34,7 @@ O catálogo representa essa hipótese geométrica, sem garantir correspondência
 
 Dimensões personalizadas terão comprimento igual ao dobro da largura, garantindo meio tijolo quadrado em planta. A altura é configurável. Medidas devem ser positivas; o formulário valida a proporção 2:1 e mostra como corrigir valores incompatíveis antes de criar o projeto. O tamanho-base é definido no início e aplicado a todos os pavimentos; não há mistura de tamanhos na construção.
 
-**Aceite:** selecionar ou informar um tamanho-base compatível gera o catálogo padrão suportado e o grid sem cadastro adicional. A criação valida comprimento igual ao dobro da largura; todos os pavimentos usam a mesma base. Peças modificadas na obra são identificadas separadamente.
+**Aceite:** selecionar ou informar um tamanho-base compatível gera o catálogo nominal dos quatro tipos e o grid sem cadastro adicional. A criação valida comprimento igual ao dobro da largura; todos os pavimentos usam a mesma base. A identificação separada de peças modificadas na obra pertence à evolução futura descrita acima.
 
 ### RF-02 — Editor de planta baixa: modo Planta
 
@@ -70,13 +70,13 @@ Antes de iniciar paredes, portas, janelas ou vãos, destacar o quadrado do módu
 
 A modulação vertical considerará altura-base, passo de assentamento e fiadas. Alturas de parede, peitoris e vãos serão compatibilizadas com as fiadas, mostrando diferenças para a altura solicitada.
 
-O motor verificará o fechamento das paredes conectadas, usando inteiros, meios, canaletas e especiais derivados. Modificações necessárias na obra serão permitidas e identificadas.
+O motor verifica o fechamento das paredes conectadas usando os quatro tipos do catálogo nominal implementado. Peças especiais e identificação de modificações necessárias na obra seguem a evolução futura de RF-01.
 
 **Aceite:** paredes e vãos horizontais são confirmados apenas na malha de meio tijolo; cotas correspondem ao desenho gerado; recintos fecham sem colisões ou lacunas indevidas.
 
 ### RF-04 — Modo Fiada: inspeção e ajustes construtivos
 
-O modo Fiada exibe a distribuição real de peças da fiada selecionada, com contornos individuais, furos, orientação e tipos. Inteiro, meio tijolo, canaleta, meia canaleta e peça especial deverão ser distinguíveis por representação geométrica, símbolos e cores. A legenda será compacta e recolhível.
+O modo Fiada exibe a distribuição nominal de peças da fiada selecionada, com contornos individuais, eixos de furos, orientação e tipos. Inteiro, meio tijolo, canaleta e meia canaleta são distinguíveis por representação geométrica, símbolos e cores. A legenda é compacta e recolhível. A representação de peças especiais depende da evolução futura de RF-01.
 
 Um controle mostra **Fiada atual / total**, com anterior, próxima e escolha direta pelo número. Mostrar também o intervalo de altura em relação à referência vertical do pavimento, usando o passo vertical efetivo; em M4, essa referência será sua cota única. Nos extremos, anterior/próxima fica indisponível. Paredes conectadas podem ter alturas diferentes. O cálculo considera somente a alvenaria presente em cada fiada: cada trecho termina na própria altura, sem prolongamento, igualação ou reinício da alternância. Diferença de altura por si só não gera pendência; combinações sem solução nominal verificada continuam diagnosticadas na primeira fiada afetada, suspendendo apenas o conjunto conectado correspondente. CT-14/EX-75–79 definem os casos de referência.
 
@@ -124,7 +124,7 @@ As propriedades editáveis incluirão largura, **altura** e **base**. Base é a 
 
 Ao informar altura ou base, o Ecovit validará sua compatibilidade com os limites das fiadas, considerando o passo vertical efetivo e a referência vertical aplicável ao contrato. Tanto os vãos quanto as fiadas partem da cota única do pavimento. A base e o topo deverão coincidir com limites realizáveis das fiadas. Valores incompatíveis mostrarão alternativas antes da confirmação, sem arredondamento silencioso.
 
-Os campos principais serão largura e altura do vão bruto de alvenaria e sua base. Dimensão da esquadria e folgas de instalação, quando informadas, ficarão em opções adicionais, sem alterar automaticamente o vão bruto. Posicionar automaticamente vergas e contravergas aplicáveis e atualizar os elementos associados quando posição, largura, base ou altura forem alteradas.
+Os campos implementados são posição, largura e altura do vão bruto de alvenaria e sua base, além do tipo e da orientação da representação de portas e janelas. Campos opcionais próprios para dimensões da esquadria e folgas de instalação ficam para evolução futura, ainda sem contrato detalhado; a previsão é mantê-los separados, sem alterar automaticamente o vão bruto. O aplicativo posiciona as faixas nominais de canaletas acima e abaixo dos vãos conforme RF-07 e §14, atualizando os elementos associados quando posição, largura, base ou altura são alteradas.
 
 As propriedades serão apresentadas de forma compacta e contextual ao selecionar o elemento. Explicações sobre base, altura e modulação estarão disponíveis por ícone informativo, sem ocupar permanentemente o canvas.
 
@@ -240,7 +240,7 @@ As peças são geradas pelo motor, sem substituição, orientação ou bloqueio 
 
 Após cada alteração geométrica ou construtiva confirmada que afete os insumos do motor, marcar o resultado como desatualizado e recalcular automaticamente o projeto inteiro, uma operação por vez. Alterações de nome, seleção, câmera e medidas independentes não exigem cálculo. É aceitável aguardar o processamento com novas edições temporariamente indisponíveis; não há fila de edições ou botão de regeneração no fluxo normal. Preservar ajustes compatíveis. Ajustes incompatíveis permanecem registrados como pendentes, sem aplicação à composição, com ação para localizar e corrigir ou descartar o ajuste. Uma falha de cálculo mantém o modelo editável e permite tentar novamente.
 
-A geração não aplica orçamento ou teto por quantidade de módulos, células, fiadas, peças, eixos ou intervalos derivados. Manter validações geométricas existentes e limites de integridade de arquivos/dados; falhas reais de processamento preservam a intenção. A análise de quantidades pelo usuário pertence aos quantitativos futuros de M5, sem criar controle de orçamento em M4.1.
+A geração não aplica orçamento ou teto por quantidade de módulos, células, fiadas, peças, eixos ou intervalos derivados. Manter validações geométricas existentes e limites de integridade de arquivos/dados; falhas reais de processamento preservam a intenção. A análise de quantidades pelo usuário está implementada na consulta de quantitativos de RF-11, sem impor teto à geração ou controle de orçamento.
 
 **Aceite:** ambas as extremidades permitem redimensionar paredes; alterações confirmadas recalculam automaticamente; ajustes incompatíveis não desaparecem silenciosamente; resultados desatualizados não são apresentados como atuais nem usados nos quantitativos.
 
@@ -254,7 +254,7 @@ Mostrar de forma simples se o resultado está atualizado e se há pendências ge
 
 ### RF-11 — Quantitativos e arquivo nativo
 
-Contar peças por tipo, pavimento e fiada, sem duplicar peças dos encontros. Separar cortes e peças especiais. Para peças modificadas na obra, distinguir a peça-base consumida da peça resultante, evitando dupla contagem. Eventual margem de perdas será informada pelo usuário e separada da quantidade geométrica.
+A consulta implementada conta peças por tipo, pavimento e fiada, sem duplicar peças dos encontros, e permite margem de perdas informada pelo usuário, separada da quantidade geométrica. Separação de cortes e peças especiais e cálculo de consumo de peças-base para preparação ficam para evolução futura, condicionada aos procedimentos e dados de rendimento exigidos em CT-16/L4. Nessa evolução, distinguir a peça-base consumida da peça resultante, evitando dupla contagem.
 
 **Consulta:** acesso identificado como Quantitativos no projeto aberto, em tela própria, com retorno ao desenho. Ao acessar durante renomeação, abrir no primeiro clique; a saída do campo confirma o nome pelo fluxo normal e a consulta aguarda a operação antes de apresentar quantidades. Mostrar o nome do projeto e a base nominal, resumo do projeto e detalhamento de um pavimento por vez, com totais e linhas por fiada local. Ordenar pavimentos pela cota e identificar também sua cota, distinguindo nomes repetidos. Contar os quatro tipos realmente gerados: inteiro, meio, canaleta e meia canaleta, em unidades inteiras; o total de peças soma esses tipos. Usar as peças finais da composição, sem contar novamente suas paredes participantes, origens de canaletas, células, grautes ou referências de comparação. Pavimento vazio, inclusive com somente laje, tem totais zero e nenhuma fiada artificial.
 
@@ -264,7 +264,7 @@ O catálogo atual não registra peças preparadas na obra nem rendimento de cort
 
 **Atualidade e pendências:** consultar somente o resultado vigente e atualizado do documento em memória, inclusive em somente leitura ou após falha de salvamento remoto. Resultado atualizado com erros de composição pode ser consultado como **Parcial — há pendências**, contando apenas peças efetivamente geradas; identificar os pavimentos afetados e oferecer acesso aos diagnósticos existentes. Não exigir correção ou aprovação técnica para consultar o parcial. Resultado desatualizado, ausente ou em cálculo não apresenta números antigos nem zeros que simulem cálculo concluído: informar indisponibilidade e manter o fluxo existente de recálculo. Avisos informativos sem erro não tornam a contagem parcial. Não há novo cálculo ao apenas consultar. Abrir a consulta cancela prévias sem confirmá-las; voltar conserva pavimento, modo, câmera e seleção confirmada do editor, sem aplicar ajustes ou gerar histórico.
 
-Quantitativos são consultados em tela separada do canvas. A única exportação inicial será o arquivo nativo, para baixar e reabrir o projeto. PDF, SVG, CSV e documentos de impressão ficam para evolução posterior.
+Quantitativos são consultados em tela separada do canvas. A exportação implementada é o arquivo nativo `.ecovit`, para baixar e reabrir o projeto. Exportações PDF, SVG, CSV e documentos de impressão não estão implementados e ficam para evolução futura, fora do escopo atual.
 
 Não estimar volume de graute nem quantidade de aço sem dados suficientes; a consulta cobre peças da composição.
 
@@ -457,7 +457,7 @@ A stack e as decisões de implementação estão propostas no documento compleme
 
 ### Versão e histórico de tasks
 
-Exibir no rodapé do login, da lista de projetos e do editor a identificação da revisão compilada com data e hora do commit (timestamp de committer), convertidas para `America/Sao_Paulo`, em `DD/MM/AAAA HH:mm` (24 horas), seguidas de um separador e dos sete primeiros caracteres do SHA. Somente o código do commit é link; data e hora permanecem visíveis como texto. Recompilar ou republicar a mesma revisão conserva a identificação, sem depender do relógio ou fuso do navegador. O link abre o histórico público das tasks de implementação verificadas e datadas na revisão exibida, cuja identificação inclui a mesma data, hora e código. Mostrar ID, título e data/hora de entrega em `DD/MM/AAAA HH:mm`, usando o timestamp de committer do primeiro commit ancestral elegível de cada task no fuso de São Paulo. Ordenar pelo instante de entrega decrescente, com desempate pelo ID numérico decrescente. Edições documentais e aceites posteriores não mudam a entrega original. Aceite manual pendente não exclui uma implementação verificada. Apresentar o histórico em popup modal amplo, compacto e com margens que deixem a origem perceptível; manter cabeçalho e fechamento disponíveis durante a rolagem da lista. Permitir fechar por controle explícito, Escape ou retorno do navegador, restaurando o foco ao acionador. O acesso direto continua público, com a mesma apresentação e retorno à entrada. Informar quando não houver tasks elegíveis. Ao retornar ao editor, conservar o projeto e o estado de trabalho, inclusive alterações ainda em memória.
+Exibir no rodapé do login, da lista de projetos e do editor a identificação da revisão compilada com data e hora do commit (timestamp de committer), convertidas para `America/Sao_Paulo`, em `DD/MM/AAAA HH:mm` (24 horas), seguidas de um separador e dos sete primeiros caracteres do SHA. Somente o código do commit é link; data e hora permanecem visíveis como texto. Recompilar ou republicar a mesma revisão conserva a identificação, sem depender do relógio ou fuso do navegador. O link abre o histórico público das tasks de implementação verificadas e datadas na revisão exibida, cuja identificação inclui a mesma data, hora e código. Mostrar ID, título acompanhado de resumo público de cerca de 200 caracteres, código de sete caracteres do commit de entrega e data/hora de entrega em `DD/MM/AAAA HH:mm`, nessa ordem. Resumo e título usam a revisão compilada; commit e horário correspondem ao primeiro commit ancestral elegível de cada task, usando seu timestamp de committer no fuso de São Paulo. Ordenar pelo instante de entrega decrescente, com desempate pelo ID numérico decrescente. Edições documentais e aceites posteriores não mudam a entrega original. Aceite manual pendente não exclui uma implementação verificada. Apresentar o histórico em popup modal amplo, compacto e com margens que deixem a origem perceptível; manter cabeçalho e fechamento disponíveis durante a rolagem da lista. Permitir fechar por controle explícito, Escape ou retorno do navegador, restaurando o foco ao acionador. O acesso direto continua público, com a mesma apresentação e retorno à entrada. Informar quando não houver tasks elegíveis. Ao retornar ao editor, conservar o projeto e o estado de trabalho, inclusive alterações ainda em memória.
 
 ### Apresentação da página inicial
 
@@ -675,7 +675,7 @@ Grautes ocupam eixos nominais e todos os intervalos de alvenaria correspondentes
 
 Canaletas são visíveis apenas em Fiada, desenhadas com canal longitudinal e distinção de inteiro/meio nominal; não se infere corte executado ou dimensão física de cavidades. Selecionar faixa na fiada oferece Remover e realça o alcance inteiro antes da ação. A célula volta a tijolo comum da mesma paginação; remover canaleta não abre buraco na alvenaria. Supressão vale também quando várias origens automáticas exigem a mesma faixa.
 
-Ajustes autorizados neste recorte: incluir/remover grautes e remover/restaurar canaletas; configurar níveis globais. Movimento livre de elementos, apoios, aço, grampos, dimensionamento e verificações físicas ficam fora. Retirar um elemento não representa erro estrutural nem demanda reposição compulsória. Diagnósticos cobrem somente integridade, modulação, ocupação e ajustes sem alvo geométrico. Desenhos são o objetivo atual; quantitativos permanecem previstos para evolução futura, sem volumes de graute inferidos de furos sem dimensões.
+Ajustes autorizados neste recorte: incluir/remover grautes e remover/restaurar canaletas; configurar níveis globais. Movimento livre de elementos, apoios, aço, grampos, dimensionamento e verificações físicas ficam fora. Retirar um elemento não representa erro estrutural nem demanda reposição compulsória. Diagnósticos cobrem somente integridade, modulação, ocupação e ajustes sem alvo geométrico. Os desenhos nominais e a contagem dos quatro tipos de peças estão implementados, com consulta de quantitativos conforme RF-11/CT-16, sem volumes de graute inferidos de furos sem dimensões.
 
 CT-09/10 e exemplos do [caderno, seção 8](Ecovit-Caderno-Tecnico.md) definem as convenções nominais; as fontes não constituem parâmetros estruturais do aplicativo. Na migração para M3.2, níveis globais iniciam vazios e sua ativação exige configuração explícita; as faixas locais de vãos existentes seguem CT-09 automaticamente. Na migração para M3.3, categorias automáticas de graute iniciam desligadas, ativadas explicitamente por configuração; níveis/supressões existentes são preservados. Canaletas e controles de graute aparecem somente na Fiada.
 

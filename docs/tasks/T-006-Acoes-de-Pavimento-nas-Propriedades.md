@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Reúne duplicação, exclusão e contagem de pavimentos nas propriedades do andar ativo, liberando espaço na barra do editor e preservando as validações de cota, a cópia independente e o histórico de edição.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-11

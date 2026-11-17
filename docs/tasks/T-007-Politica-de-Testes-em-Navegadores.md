@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Define Chrome como navegador das verificações cotidianas e reserva Edge para impactos específicos ou homologações completas, mantendo a cobertura disponível e tornando a seleção dos testes mais objetiva.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-11

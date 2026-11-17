@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Introduz migrações SQL incrementais com controle das versões aplicadas, integradas ao setup e à publicação, permitindo evoluir a estrutura do banco sem reaplicar versões já entregues ou apagar projetos.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-12

@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Gera o segredo de sessão durante a configuração local quando necessário, mantendo valores existentes e evitando que o administrador precise criar manualmente esse dado para iniciar a autenticação.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-10

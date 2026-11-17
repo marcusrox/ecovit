@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Apresenta o histórico em um popup sobre a tela atual, com lista rolável e data e hora do commit de entrega de cada alteração, preservando o contexto do editor e restaurando o foco ao fechar o diálogo.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-16

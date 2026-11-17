@@ -75,22 +75,29 @@ export function ReleaseHistory({ back }: { back?: () => void }) {
         <div className={styles.releaseColumns} aria-hidden="true">
           <span>ID</span>
           <span>Alteração</span>
-          <span>Entrega · horário de São Paulo</span>
+          <span>Commit</span>
+          <span>Data/Hora</span>
         </div>
         {release.tasks.length ? (
           <ol className={styles.releaseTasks}>
-            {release.tasks.map(({ id, title, date, dateTime }) => (
-              <li key={id}>
-                <strong>{id}</strong>
-                <span>{title}</span>
-                <time
-                  dateTime={date}
-                  aria-label={`Entrega em ${dateTime}, horário de São Paulo`}
-                >
-                  {dateTime}
-                </time>
-              </li>
-            ))}
+            {release.tasks.map(
+              ({ id, title, summary, commit, date, dateTime }) => (
+                <li key={id}>
+                  <strong>{id}</strong>
+                  <span>
+                    {title}
+                    {summary ? ` - (${summary})` : ""}
+                  </span>
+                  <code className={styles.releaseCommit}>{commit}</code>
+                  <time
+                    dateTime={date}
+                    aria-label={`Entrega em ${dateTime}, horário de São Paulo`}
+                  >
+                    {dateTime}
+                  </time>
+                </li>
+              ),
+            )}
           </ol>
         ) : (
           <p className={styles.releaseEmpty}>

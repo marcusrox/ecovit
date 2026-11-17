@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Exibe nos rodapés a data e a hora do commit da versão, convertidas para São Paulo e acompanhadas do código da revisão, mantendo a identificação estável ao recompilar e o acesso ao histórico de alterações.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-16

@@ -2,6 +2,8 @@
 
 **Tipo** — Implementação
 
+**Resumo** — Simplifica a seleção dos testes com filtros explícitos para verificações cotidianas e execução ampla identificada, centralizando a política de validação e evitando homologações completas por rotina.
+
 **Execução** — Verificada
 
 **Data de execução** — 2026-11-11

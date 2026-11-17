@@ -3,6 +3,8 @@ import { execFileSync } from "node:child_process";
 type PublishedTask = {
   id: string;
   title: string;
+  summary: string;
+  commit: string;
   date: string;
   dateTime: string;
 };
@@ -15,7 +17,7 @@ export type ReleaseInfo = {
 
 function publishedTask(
   markdown: string,
-): Omit<PublishedTask, "dateTime"> | undefined {
+): Omit<PublishedTask, "dateTime" | "commit"> | undefined {
   const heading = /^# (T-\d+) — (.+)$/m.exec(markdown);
   const metadata =
     heading &&
@@ -34,7 +36,8 @@ function publishedTask(
   const parsed = new Date(date);
   if (isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date)
     return;
-  return { id: heading[1], title: heading[2].trim(), date };
+  const summary = /^\*\*Resumo\*\* — (.+)$/m.exec(metadata)?.[1].trim() ?? "";
+  return { id: heading[1], title: heading[2].trim(), summary, date };
 }
 
 function formatDateTime(timestamp: string): string {
@@ -131,26 +134,28 @@ export function readReleaseInfo(cwd = process.cwd()): ReleaseInfo {
       offset += size + 1;
     }
   }
-  const deliveries = new Map<string, string>();
+  const deliveries = new Map<string, { timestamp: string; revision: string }>();
   for (const entry of history) {
     const task = publishedTask(
       snapshots.get(`${entry.revision}:${entry.file}`)!,
     );
-    if (task && !deliveries.has(task.id))
-      deliveries.set(task.id, entry.timestamp);
+    if (task && !deliveries.has(task.id)) deliveries.set(task.id, entry);
   }
   const tasks = files
     .map((file): PublishedTask | undefined => {
       const task = publishedTask(snapshots.get(`${sha}:${file}`)!);
       if (!task) return;
-      const timestamp = deliveries.get(task.id);
-      if (!timestamp)
+      const delivery = deliveries.get(task.id);
+      if (!delivery)
         throw new Error(
           `Não foi possível determinar o commit de entrega de ${task.id}. Verifique o histórico Git de ${file}.`,
         );
+      const { timestamp, revision } = delivery;
       return {
         id: task.id,
         title: task.title,
+        summary: task.summary,
+        commit: revision.slice(0, 7),
         date: timestamp,
         dateTime: formatDateTime(timestamp),
       };
