@@ -4,6 +4,7 @@ import { display } from "../domain/project";
 import type { ChannelReinforcement } from "../domain/channel-reinforcement";
 import { useEditingProject, useStore } from "../state/store";
 import styles from "../ui/App.module.css";
+import { channelReinforcementLines } from "./channel-reinforcement-drawing";
 
 const description = (r: ChannelReinforcement) =>
   `Fiada ${r.course} · ${r.count} ${r.count === 1 ? "barra" : "barras"} de Ø ${display(r.diameter * 10)} mm · trecho nominal ${display(Math.abs(r.b.x - r.a.x) + Math.abs(r.b.y - r.a.y))} cm`;
@@ -25,19 +26,21 @@ export function ChannelReinforcementCanvas({
       : [];
   const current = segments.find((r) => r.id === hover),
     m = doc.project.base.width;
+  const drawings = channelReinforcementLines(segments, m, camera);
   return (
     <Layer>
-      {segments.map((r) => {
-        const horizontal = r.a.y === r.b.y;
-        const x1 = (r.a.x + (horizontal ? 0 : m / 2)) * camera.scale + camera.x,
-          x2 = (r.b.x + (horizontal ? 0 : m / 2)) * camera.scale + camera.x,
-          y1 = (r.a.y + (horizontal ? m / 2 : 0)) * camera.scale + camera.y,
-          y2 = (r.b.y + (horizontal ? m / 2 : 0)) * camera.scale + camera.y;
-        const visible = Math.min(
-            r.count,
-            Math.max(1, Math.min(6, Math.floor((m * camera.scale) / 4))),
-          ),
-          span = Math.min(12, m * camera.scale * 0.55);
+      {drawings.flatMap((d) =>
+        d.lines.map((points, i) => (
+          <Line
+            key={`halo-${d.id}-${i}`}
+            points={points}
+            stroke="#fff8e9"
+            strokeWidth={4}
+            listening={false}
+          />
+        )),
+      )}
+      {drawings.map((r) => {
         return (
           <Group
             name="channel-reinforcement"
@@ -45,23 +48,9 @@ export function ChannelReinforcementCanvas({
             onMouseEnter={() => setHover(r.id)}
             onMouseLeave={() => setHover(null)}
           >
-            {Array.from({ length: visible }, (_, i) => {
-              const offset =
-                visible === 1 ? 0 : (i / (visible - 1) - 0.5) * span;
-              const points = [
-                x1 + (horizontal ? 0 : offset),
-                y1 + (horizontal ? offset : 0),
-                x2 + (horizontal ? 0 : offset),
-                y2 + (horizontal ? offset : 0),
-              ];
+            {r.lines.map((points, i) => {
               return (
                 <Group key={i}>
-                  <Line
-                    points={points}
-                    stroke="#fff8e9"
-                    strokeWidth={4}
-                    listening={false}
-                  />
                   <Line
                     name="reinforcement-bar"
                     points={points}

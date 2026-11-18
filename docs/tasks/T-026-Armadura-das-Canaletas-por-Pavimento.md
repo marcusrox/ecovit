@@ -8,7 +8,9 @@
 
 **Data de execução** — 2026-11-18
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
+
+**Data do aceite manual** — 2026-11-18
 
 ## Alteração e limites
 
@@ -113,6 +115,10 @@ Após pedido explícito de investigação em 2026-11-18, o servidor voltou a ini
 
 Na primeira execução efetiva, o cenário de recuperação passou e o cenário de interface identificou uma diferença de rasterização: o traço de 1,8 px não produzia núcleo de cor sólida no alinhamento usado pelo canvas (RGB observado 122/82/168, em vez de 107/63/160), embora as duas barras estivessem visíveis. Corrigido o traço nominal para 2 px, preservando geometria, quantidade, asserções e limites de tempo do teste. O diagnóstico temporário de cores foi removido.
 
-**Validação final no Chrome:** dois cenários aprovados em 25,1 segundos, com servidor pronto em 5,6 segundos. A01/A04/A06 concluídos: configuração comum a cintas/vergas/contravergas, independência entre pavimentos, desfazer/refazer, recusa de valor inválido sem gravá-lo, barras reais no canvas nas fiadas corretas, ausência em outras fiadas/Planta, arquivo, reabertura remota, recolher/reabrir painel e falha/recuperação de salvamento. Capturas `.tools/t026-propriedades.png` e `.tools/t026-fiada.png` conferidas visualmente. Tipos de frontend/servidor e lint do recorte corrigido aprovados. Evidências em `.tools/t026-server-investigation.log`, `.tools/t026-render-diagnosis.log`, `.tools/t026-e2e-final.log`, `.tools/t026-final-types.log` e `.tools/t026-final-lint.log`. A task está tecnicamente Verificada; aceite manual permanece pendente.
+**Validação final no Chrome:** dois cenários aprovados em 25,1 segundos, com servidor pronto em 5,6 segundos. A01/A04/A06 concluídos: configuração comum a cintas/vergas/contravergas, independência entre pavimentos, desfazer/refazer, recusa de valor inválido sem gravá-lo, barras reais no canvas nas fiadas corretas, ausência em outras fiadas/Planta, arquivo, reabertura remota, recolher/reabrir painel e falha/recuperação de salvamento. Capturas `.tools/t026-propriedades.png` e `.tools/t026-fiada.png` conferidas visualmente. Tipos de frontend/servidor e lint do recorte corrigido aprovados. Evidências em `.tools/t026-server-investigation.log`, `.tools/t026-render-diagnosis.log`, `.tools/t026-e2e-final.log`, `.tools/t026-final-types.log` e `.tools/t026-final-lint.log`. A task foi tecnicamente verificada nessa etapa; o aceite manual foi confirmado posteriormente, conforme registro abaixo.
 
 Para conferir no ambiente local do solicitante, reiniciar `./Start-Ecovit.ps1 -Task dev` e reabrir o projeto, carregando o leitor 24. Nenhum processo do solicitante na porta 5173 foi alterado.
+
+## Aceite manual — 2026-11-18
+
+Confirmado explicitamente pelo solicitante nesta data: “A T-026 está aprovada.” A aprovação abrange a entrega do commit 4a41391. As datas de execução e as evidências técnicas anteriores permanecem preservadas.

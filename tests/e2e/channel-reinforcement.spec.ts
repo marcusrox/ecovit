@@ -69,6 +69,109 @@ async function pixels(page: Page) {
     }, 0),
   );
 }
+async function connectedBars(page: Page) {
+  return page.locator("canvas").evaluateAll((elements) => {
+    let components = 0;
+    for (const node of elements) {
+      const c = node as HTMLCanvasElement,
+        ctx = c.getContext("2d");
+      if (!ctx) continue;
+      const data = ctx.getImageData(0, 0, c.width, c.height).data,
+        mask = new Uint8Array(c.width * c.height);
+      for (let p = 0; p < mask.length; p++) {
+        const i = p * 4;
+        if (
+          data[i] === 107 &&
+          data[i + 1] === 63 &&
+          data[i + 2] === 160 &&
+          data[i + 3] > 0
+        )
+          mask[p] = 1;
+      }
+      for (let p = 0; p < mask.length; p++)
+        if (mask[p]) {
+          const stack = [p];
+          mask[p] = 0;
+          let size = 0;
+          while (stack.length) {
+            const index = stack.pop()!,
+              x = index % c.width,
+              y = Math.floor(index / c.width);
+            size++;
+            for (let dy = -1; dy <= 1; dy++)
+              for (let dx = -1; dx <= 1; dx++) {
+                const nx = x + dx,
+                  ny = y + dy,
+                  n = ny * c.width + nx;
+                if (
+                  nx >= 0 &&
+                  nx < c.width &&
+                  ny >= 0 &&
+                  ny < c.height &&
+                  mask[n]
+                ) {
+                  mask[n] = 0;
+                  stack.push(n);
+                }
+              }
+          }
+          if (size > 5) components++;
+        }
+    }
+    return components;
+  });
+}
+test(
+  "Armaduras: continuidade visual nos encontros L e T sem alterar o projeto",
+  { tag: "@interface" },
+  async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    const d = createProject(
+        "Continuidade L e T",
+        { length: 2500, width: 1250, height: 700 },
+        7000,
+      ),
+      m = 1250,
+      f = d.model.floors[0];
+    d.project.channelLevels = [{ id: crypto.randomUUID(), top: 3500 }];
+    d.project.groutSettings = {
+      ...defaultGroutSettings(false),
+      junctions: true,
+    };
+    f.groutMode = "reinforced";
+    f.channelReinforcement = { enabled: true, count: 2, diameter: 80 };
+    d.model.walls = [
+      makeWall({ x: 0, y: 0 }, { x: 8 * m, y: 0 }, m, f.id, 7000, 1)!,
+      makeWall({ x: 0, y: m }, { x: 0, y: 6 * m }, m, f.id, 7000, 1)!,
+      makeWall({ x: 12 * m, y: 0 }, { x: 12 * m, y: 8 * m }, m, f.id, 7000, 1)!,
+      makeWall(
+        { x: 7 * m, y: 4 * m },
+        { x: 12 * m, y: 4 * m },
+        m,
+        f.id,
+        7000,
+        1,
+      )!,
+    ];
+    await page
+      .getByTestId("import-file")
+      .setInputFiles({
+        name: "encontros.ecovit",
+        mimeType: "application/json",
+        buffer: Buffer.from(JSON.stringify(d)),
+      });
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    const before = await state(page);
+    expect(before.generated!.floors[0].reinforcement).toHaveLength(4);
+    await page.getByRole("button", { name: "Fiada", exact: true }).click();
+    await page.getByLabel("Número da fiada", { exact: true }).fill("5");
+    await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
+    // Two complete L paths, plus one connected network at T. The former gaps yielded eight components.
+    await expect.poll(() => connectedBars(page)).toBe(3);
+    await page.screenshot({ path: ".tools/reinforcement-junctions.png" });
+    expect(await state(page)).toEqual(before);
+  },
+);
 test(
   "T-026 configuração compartilhada, pavimentos, histórico, arquivo e barras reais na Fiada",
   { tag: "@interface" },
