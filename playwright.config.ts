@@ -20,6 +20,7 @@ export default defineConfig({
     { name: "edge", use: { channel: "msedge" } },
   ],
   webServer: {
+    stdout: "pipe",
     env: { M12_RUN_ID: runId },
     command: `"${process.execPath}" --import tsx server/test-main.ts`,
     url: "http://127.0.0.1:5174",

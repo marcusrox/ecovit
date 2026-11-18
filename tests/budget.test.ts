@@ -122,7 +122,7 @@ it("A04 leitor normaliza 21 sem preço e recusa preços inválidos ou disfarçad
   const old = { ...doc, schemaVersion: 21 },
     source = JSON.stringify(old);
   const restored = validateProject(old);
-  expect(restored.schemaVersion).toBe(23);
+  expect(restored.schemaVersion).toBe(24);
   expect(restored.project.unitPrices).toBeUndefined();
   expect(JSON.stringify(old)).toBe(source);
   expect(() =>

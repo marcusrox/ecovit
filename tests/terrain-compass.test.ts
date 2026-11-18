@@ -39,7 +39,7 @@ it("rosa inicia desligada em arquivos anteriores; ativação cria posição e ta
     old = { ...d, model: { ...d.model }, schemaVersion: 17 };
   Reflect.deleteProperty(old.model, "roomLabels");
   Reflect.deleteProperty(old.model, "roomBoundaries");
-  expect(validateProject(old).schemaVersion).toBe(23);
+  expect(validateProject(old).schemaVersion).toBe(24);
   expect(validateProject(old).model.terrain?.compass).toBeUndefined();
   expect(old.schemaVersion).toBe(17);
   const c = initialCompass(d.model.terrain!);

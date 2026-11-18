@@ -8,7 +8,9 @@
 
 **Data de execução** — 2026-11-17
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
+
+**Data do aceite manual** — 2026-11-18
 
 ## Alteração e limites
 
@@ -69,7 +71,7 @@ Persistir a modalidade por pavimento no arquivo `.ecovit`, salvamento remoto, re
 
 ## Resultado da implementação inicial, com modalidade global
 
-Implementado em 2026-11-17 no formulário e no motor existentes, sem biblioteca, serviço ou migração SQL. Aceite manual pendente.
+Implementado em 2026-11-17 no formulário e no motor existentes, sem biblioteca, serviço ou migração SQL. Na conclusão dessa etapa, o aceite manual ainda estava pendente.
 
 - **A01/A06** — Cenário direcionado de Chrome aprovado: padrão Simples, escolha global em dois pavimentos, desabilitação com categoria desligada sem perder a escolha, cancelamento, aplicação, desfazer/refazer, restauração dos padrões no formulário e bloqueio dos controles em somente leitura. Paredes conferidas integralmente por ID, respeitando a reordenação já existente das coleções em commits de visão de pavimento; peças por fiada preservadas. Captura ".tools/t023-settings.png" conferida visualmente.
 - **A02/A03/A04** — Dez testes específicos aprovados, com expectativas independentes para L/T/cruz em rotações/reflexões, sentidos invertidos e módulos 12,5/15/12,51 cm. Cobrem deduplicação com duas origens, vãos e alturas diferentes, candidato ausente sem substituição, âncoras de intervalos, exclusões sem compensação, inclusões e pendências preservadas, restauração e isolamento entre andares. As 44 regressões mantidas de graute, cruz e restauração também passaram.
@@ -86,7 +88,7 @@ O solicitante identificou ausência de reforço em braços que apenas encostam n
 
 A elegibilidade agora exige célula adjacente do mesmo componente conectado e intervalos de alvenaria sobrepostos aos do centro. Mantidas as regras de material existente, origens, ajustes manuais e isolamento entre pavimentos. Não mudou o padrão 3/4/5, apenas o reconhecimento dos braços válidos. CT-10, EX-100–102 e Motor e diagnósticos corrigidos.
 
-Validação da correção: 55 testes de domínio aprovados em quatro arquivos, incluindo o conjunto de sete paredes com quatro cantos L, quatro T e uma cruz, verificando coordenadas exatas e origens dos nove encontros com todas as categorias automáticas ligadas. Logs .tools/t023-contact-reproduce.log (falha reproduzida antes da correção) e .tools/t023-contact-domain.log (correção aprovada). Cenário direcionado de Chrome aprovado (1 cenário, 20,4 s), com captura conferida visualmente em .tools/t023-contatos-corrigidos.png e log .tools/t023-contact-e2e.log. Tipos e lint aprovados; logs .tools/t023-contact-types.log e .tools/t023-contact-lint.log. Aceite manual permanece pendente.
+Validação da correção: 55 testes de domínio aprovados em quatro arquivos, incluindo o conjunto de sete paredes com quatro cantos L, quatro T e uma cruz, verificando coordenadas exatas e origens dos nove encontros com todas as categorias automáticas ligadas. Logs .tools/t023-contact-reproduce.log (falha reproduzida antes da correção) e .tools/t023-contact-domain.log (correção aprovada). Cenário direcionado de Chrome aprovado (1 cenário, 20,4 s), com captura conferida visualmente em .tools/t023-contatos-corrigidos.png e log .tools/t023-contact-e2e.log. Tipos e lint aprovados; logs .tools/t023-contact-types.log e .tools/t023-contact-lint.log. Na conclusão dessa etapa, o aceite manual ainda estava pendente.
 
 ## Revisão: modalidade por pavimento — 2026-11-17
 
@@ -94,4 +96,8 @@ A pedido do solicitante, a modalidade deixou de ser global. Somente Simples/Refo
 
 Formato vigente 21, leitores 9–21. A leitura do formato 20 transfere a modalidade global válida para cada pavimento, removendo o campo global sem mutar a fonte e preservando snapshots consistentes. Ausência implica Simples. Campos novos em envelopes anteriores, modalidade inválida e campo global em 21 são recusados. Sem mudança de versão SQL ou da representação remota.
 
-Conferência técnica: 71 testes de domínio/grautes/pavimentos e 147 testes de compatibilidade passaram; dois cenários no Chrome aprovados, incluindo conjunto conectado com braços encostados e alternância independente de dois pavimentos (5/1, 5/5, 1/5 e desfazer/refazer), seletor ausente do diálogo global, categorias globais, salvamento/reabertura, download e somente leitura. Captura .tools/t023-por-pavimento.png conferida visualmente. Logs .tools/t023-floor-domain.log, .tools/t023-floor-compatibility.log e .tools/t023-floor-e2e.log. PRD, Caderno Técnico e contratos pertinentes atualizados. Aceite manual continua pendente; sem commit ou push.
+Conferência técnica: 71 testes de domínio/grautes/pavimentos e 147 testes de compatibilidade passaram; dois cenários no Chrome aprovados, incluindo conjunto conectado com braços encostados e alternância independente de dois pavimentos (5/1, 5/5, 1/5 e desfazer/refazer), seletor ausente do diálogo global, categorias globais, salvamento/reabertura, download e somente leitura. Captura .tools/t023-por-pavimento.png conferida visualmente. Logs .tools/t023-floor-domain.log, .tools/t023-floor-compatibility.log e .tools/t023-floor-e2e.log. PRD, Caderno Técnico e contratos pertinentes atualizados. Na conclusão dessa etapa, o aceite manual ainda estava pendente; não houve commit ou push nessa etapa.
+
+## Aceite manual — 2026-11-18
+
+Confirmado explicitamente pelo solicitante nesta data: “As T-023, T-024 e T-025 estão aprovadas.” A aprovação inclui os ajustes entregues até o commit 481b023. Os resultados técnicos e as datas de execução anteriores permanecem preservados; as menções de aceite pendente nos relatos anteriores descrevem a situação naquelas etapas.

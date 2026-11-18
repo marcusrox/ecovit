@@ -2,7 +2,7 @@
 
 Este caderno define regras e convenções geométricas/construtivas, suas fontes, justificativas, exemplos independentes e limites de validade. Não especifica stack, estruturas de armazenamento, componentes de interface ou ciclo de operações: esses contratos pertencem à [Arquitetura Técnica](Ecovit-Arquitetura-Tecnica.md). O software implementa as convenções aqui identificadas por CT/EX; convenção nominal não equivale a medida física verificada ou aprovação estrutural.
 
-**Convenção vigente:** nominal-v12; extensão de alturas em CT-14.
+**Convenção vigente:** nominal-v13; extensão de alturas em CT-14.
 Os IDs CT, EX, P e F identificam regras, exemplos, decisões geométricas e fontes. O [contrato de arquivos](arquitetura/Persistencia-e-Compatibilidade.md#formato-e-leitores-vigentes) define a leitura de snapshots e a compatibilidade.
 
 ## 1. Evidência, convenção e limite
@@ -237,7 +237,7 @@ A alvenaria acima de uma abertura segue a composição nominal. As faixas de can
 
 ### CT-09 — Canaletas nominais configuráveis
 
-Decisão confirmada: faixas globais por parede em níveis configurados e uma fiada automática imediatamente acima/abaixo de qualquer vão. Sem armadura, apoio calculado, extensão lateral resistente, verificação de cavidade ou peça preparada na obra. Canaleta inteira/meia usa envelope nominal de inteiro/meio e canal longitudinal esquemático. Contornos da malha e fase permanecem; símbolo de canal distingue a peça de um tijolo comum. Encontro mostra trajeto nominal; não gera pendência apenas porque falta dimensão física de conexão.
+Decisão confirmada: faixas globais por parede em níveis configurados e uma fiada automática imediatamente acima/abaixo de qualquer vão. Armadura longitudinal nominal conforme a extensão abaixo; sem apoio calculado, extensão lateral resistente, verificação de cavidade ou peça preparada na obra. Canaleta inteira/meia usa envelope nominal de inteiro/meio e canal longitudinal esquemático. Contornos da malha e fase permanecem; símbolo de canal distingue a peça de um tijolo comum. Encontro mostra trajeto nominal; não gera pendência apenas porque falta dimensão física de conexão.
 
 Nível global `c` é topo da fiada em relação ao piso: `k=(F+c−S)/h`, inteiro positivo. A faixa ocupa `[F+c−h,F+c)`. Se esse intervalo não estiver contido na parede, não criar material adicional; nível fora da altura daquela parede não gera peças ali. Valor fora dos limites de fiada pede alternativa explícita. Valores iniciais estão na [tabela normativa do PRD §14](Ecovit-PRD.md#padrões-nominais); não hardcodificar número de fiada independentemente de h/piso/início.
 
@@ -246,6 +246,16 @@ Vão `[B,T)`: faixa superior `[T,T+h)` se houver alvenaria até `T+h`; inferior 
 Alcance horizontal: largura do vão mais meio tijolo de cada lado. Para posição s, largura w e módulo m, intervalo solicitado [s−m,s+w+m), comprimento w+2m. Extensão por lado: 12,5 cm na base 25, 15 cm na base 30 e 14 cm na base 28. É convenção nominal de desenho, sem dimensionamento de apoio e sem depender de eixo de graute. Intersectar com alvenaria existente da parede; não prolongar a parede ou preencher aberturas para completar a extensão. Descontar todos os vãos que interceptam a fiada, inclusive um segundo vão mais alto. Unificar demandas globais/de vãos em uma única ocupação, com múltiplas origens. Nos encontros, compor pela união de células e preservar uma única peça compartilhada; representar conexões apenas nominalmente. Onde uma demanda cobre uma célula de um inteiro e não a outra, separar em dois meios nominais (um canaleta e um comum), sem mudar a fase restante; não ampliar a faixa nem invadir abertura para manter inteiro.
 
 A remoção confirmada cobre toda a faixa da parede naquela fiada, não um trecho ou tijolo. Inclui trechos separados por aberturas; preserva outras fiadas. A seleção deve identificar a parede hospedeira. Realçar antes de remover, inclusive células compartilhadas afetadas. Converter área suprimida em tijolos comuns da mesma paginação, recompondo pares quando possível; não apagar alvenaria. Supressão prevalece sobre todas as origens automáticas coincidentes, inclusive vizinhas, e é preservada após regeneração. Não recriar uma faixa por outra origem nem gerar alerta de reforço faltante.
+
+#### Armadura longitudinal nominal — T-026
+
+Configuração única e independente por pavimento para todas as canaletas: cintas de níveis, vergas e contravergas. Ativação inicialmente desligada, duas barras longitudinais de 8 mm como preferência editável. Quantidade inteira positiva representável; diâmetro positivo em unidades inteiras de 0,1 mm, dentro dos limites do editor. Não criar perfis distintos por origem nem nova programação de fiadas. O padrão combina os dois ferros horizontais de F3 (seção Canaletas) com a bitola de 8 mm de F5 (PDF p.10, impressas 18–19); é preferência nominal definida pelo solicitante, não solução estrutural universal.
+
+Derivar somente das células de canaleta/meia canaleta finais após união e supressões. Orientação vem da faixa/parede hospedeira. Para cada pavimento/fiada/direção/faixa transversal, unir intervalos colineares coincidentes ou contíguos pelas faces das células, conservando paredes e origens. Vazio ou material comum interrompe a barra. Não duplicar aço por demanda simultânea de nível e vão ou por paredes contíguas. Eixos perpendiculares nos encontros são conjuntos distintos; cruzamento gráfico não define solda, dobra, emenda ou ancoragem.
+
+Comprimento nominal é a extensão retilínea entre as faces inicial/final do trecho. Quatro canaletas de 25 cm em reta produzem trecho de 100 cm, identificado como duas barras de Ø8 no padrão inicial. Isso não constitui duas peças comerciais ou comprimento de corte. Não acrescentar ou descontar ganchos, emendas, dobras, ancoragens ou cobrimento. Espessura/afastamento dos traços são esquemáticos, sem comprovação de acomodação física no canal. Quantidade e bitola na identificação permanecem exatas quando o zoom impede separar todos os traços.
+
+Resultado ausente/desatualizado não expõe armadura antiga como atual. A configuração não altera peças, faixas, grautes ou grampos; ausência legítima de canaleta não é erro de armadura. CT-16 e Orçamento continuam restritos às peças de tijolo. Detalhamento de fabricação, aço misto, estribos, ancoragens, peso e preço de aço ficam para evolução futura.
 
 ### CT-10 — Graute nominal automático e clique por furo
 

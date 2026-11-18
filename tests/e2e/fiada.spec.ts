@@ -213,7 +213,7 @@ for (const snapshot of ["legacy", "v2"])
       ).toBeVisible();
       let d = await exported(page);
       expect(d.model).toEqual(reference.model);
-      expect(d.generated!.convention).toBe("nominal-v12");
+      expect(d.generated!.convention).toBe("nominal-v13");
       expect(
         d
           .generated!.floors[0].courses[0].pieces.filter(

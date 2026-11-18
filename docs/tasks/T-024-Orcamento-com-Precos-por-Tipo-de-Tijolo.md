@@ -8,7 +8,9 @@
 
 **Data de execução** — 2026-11-17
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
+
+**Data do aceite manual** — 2026-11-18
 
 ## Alteração e limites
 
@@ -75,6 +77,10 @@ O orçamento cobre somente os quatro tipos de peças nominais gerados. Não acre
 
 Implementada em 2026-11-17. O acesso Orçamento abre um popup amplo no padrão do histórico. O resumo preserva as quantidades, permite preços por tipo, calcula custos sobre o total estimado com perdas e distingue preços ausentes, zero e entradas inválidas. Preços são persistidos em centavos no formato nativo 22 e no documento remoto, com leitura compatível das versões 9–21, cópia, desfazer/refazer e recuperação de falha de salvamento. Alterar preços não dispara composição construtiva. Contratos pertinentes atualizados; CT-16 e suas regras de contagem preservados.
 
-Validação proporcional: 24 testes de orçamento/quantitativos e 192 testes dos contratos de compatibilidade afetados aprovados; cinco cenários selecionados no Chrome aprovados em 39 segundos, cobrindo preços, perdas, persistência, histórico, falha e recuperação de salvamento, consulta sem escrita, resultado indisponível/parcial e apresentação em três resoluções. Tipos do frontend/servidor, lint do recorte alterado e conferência do diff aprovados. Inspeção visual do popup registrada em `.tools/t024-orcamento.png`. Logs locais em `.tools/t024-budget.log`, `.tools/t024-compatibility.log`, `.tools/t024-e2e-final.log`, `.tools/t024-types-final.log` e `.tools/t024-lint.log`. Verificação técnica não representa aceite manual, que permanece pendente.
+Validação proporcional: 24 testes de orçamento/quantitativos e 192 testes dos contratos de compatibilidade afetados aprovados; cinco cenários selecionados no Chrome aprovados em 39 segundos, cobrindo preços, perdas, persistência, histórico, falha e recuperação de salvamento, consulta sem escrita, resultado indisponível/parcial e apresentação em três resoluções. Tipos do frontend/servidor, lint do recorte alterado e conferência do diff aprovados. Inspeção visual do popup registrada em `.tools/t024-orcamento.png`. Logs locais em `.tools/t024-budget.log`, `.tools/t024-compatibility.log`, `.tools/t024-e2e-final.log`, `.tools/t024-types-final.log` e `.tools/t024-lint.log`. A verificação técnica foi registrada separadamente do aceite manual, confirmado posteriormente abaixo.
 
 O servidor local do solicitante precisa ser reiniciado com `./Start-Ecovit.ps1 -Task dev` antes da conferência, pois a API em desenvolvimento não recarrega automaticamente o leitor do formato nativo. Nenhum processo do solicitante na porta 5173 foi alterado.
+
+## Aceite manual — 2026-11-18
+
+Confirmado explicitamente pelo solicitante nesta data: “As T-023, T-024 e T-025 estão aprovadas.” A aprovação inclui os ajustes entregues até o commit 481b023. Os resultados técnicos e as datas de execução anteriores permanecem preservados; as menções de aceite pendente nos relatos anteriores descrevem a situação naquelas etapas.

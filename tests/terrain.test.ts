@@ -271,7 +271,7 @@ it("M11 formato vigente conserva terreno e lê 9–16 sem mutação ou campos no
     }
     const before = JSON.stringify(old);
     expect(validateProject(old).model.terrain).toBeNull();
-    expect(validateProject(old).schemaVersion).toBe(23);
+    expect(validateProject(old).schemaVersion).toBe(24);
     expect(JSON.stringify(old)).toBe(before);
     expect(() =>
       validateProject({ ...old, model: { ...old.model, terrain: null } }),

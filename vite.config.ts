@@ -10,6 +10,8 @@ export default defineConfig({
   plugins: [react()],
   define: { __ECOVIT_RELEASE__: JSON.stringify(readReleaseInfo()) },
   server: {
+    // Logs, databases and extracted traces are diagnostics, not application inputs.
+    watch: { ignored: ["**/.tools/**", "**/playwright-report/**"] },
     proxy: {
       "/api": {
         target: process.env.API_PROXY ?? "http://127.0.0.1:3001",

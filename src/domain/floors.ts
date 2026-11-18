@@ -7,9 +7,12 @@ import {
 import { componentId, signature } from "./composition";
 import { validateSlab } from "./slabs";
 import { validateClampSettings } from "./clamps";
+import { validateChannelReinforcement } from "./channel-reinforcement";
 
 export type Floor = Project["model"]["floors"][number];
 export function validateFloor(doc: Project, floor: Floor) {
+  if (floor.channelReinforcement)
+    validateChannelReinforcement(floor.channelReinforcement);
   if (floor.clamps)
     validateClampSettings(
       floor.clamps,
@@ -148,6 +151,9 @@ export function duplicateFloor(
     defaultHeight: source.defaultHeight,
     ...(source.groutMode !== undefined ? { groutMode: source.groutMode } : {}),
     ...(source.clamps ? { clamps: structuredClone(source.clamps) } : {}),
+    ...(source.channelReinforcement
+      ? { channelReinforcement: { ...source.channelReinforcement } }
+      : {}),
     ...(source.roomSequence !== undefined
       ? { roomSequence: source.roomSequence }
       : {}),

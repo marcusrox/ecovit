@@ -11,6 +11,7 @@ import { compassSelectionId } from "../domain/terrain-compass";
 import { ReferenceImageProperties } from "../editor/ReferenceImage";
 import { FloorControls, FloorGroutMode } from "./Floors";
 import { FloorClamps } from "./FloorClamps";
+import { FloorChannelReinforcement } from "./FloorChannelReinforcement";
 import { PreferencesDialog } from "./Preferences";
 import { MeasurementProperties } from "../editor/Measurements";
 import { ImageCatalog, ImageElementProperties } from "../editor/ImageElements";
@@ -383,6 +384,9 @@ function Properties({ doc }: { doc: Project }) {
           <FloorControls properties />
           <FloorGroutMode />
           <FloorClamps key={floor.id + JSON.stringify(floor.clamps)} />
+          <FloorChannelReinforcement
+            key={floor.id + JSON.stringify(floor.channelReinforcement)}
+          />
           <ReferenceImageProperties key={floor.id} />
           <section
             className={styles.propertyGroup}

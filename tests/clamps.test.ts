@@ -273,7 +273,7 @@ describe("T-025 grampos nominais", () => {
     delete old.generated.floors[0].clamps;
     const source = structuredClone(old),
       restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(23);
+    expect(restored.schemaVersion).toBe(24);
     expect(restored.generated).toBeNull();
     expect(restored.model.floors[0].clamps).toBeUndefined();
     expect(old).toEqual(source);
@@ -294,7 +294,7 @@ describe("T-025 grampos nominais", () => {
     const bad = structuredClone(d);
     bad.generated!.floors[0].clamps!.pop();
     expect(() => validateProject(bad)).toThrow("inconsistente");
-    expect(() => validateProject({ ...d, schemaVersion: 24 })).toThrow(
+    expect(() => validateProject({ ...d, schemaVersion: 25 })).toThrow(
       "incompatível",
     );
   });

@@ -96,3 +96,7 @@ Excluir etiquetas, linhas e contador de nomes da assinatura de insumos construti
 ## Configuração de grampos
 
 model.floors[].clamps é intenção construtiva local: confirmar parâmetros/programação salva e registra uma operação, invalida o resultado e recalcula. Não altera o resultado de tijolos/grautes/canaletas por si; somente acrescenta ligações/pendências derivadas. Criar pavimento não herda a configuração de outro; duplicar copia por valor. Desfazer/refazer e exclusão/restauração preservam a configuração. Rascunhos do formulário, prévia das fiadas e hover de ligação são sessão, sem salvamento. Respeitar busy/somente leitura e a recuperação existente, conservando candidato e dados em caso de rejeição.
+
+## Armadura das cintas por pavimento
+
+model.floors[].channelReinforcement é intenção construtiva local, com enabled/count/diameter. A confirmação conjunta usa a operação de pavimento existente: salvar, registrar uma operação, invalidar e recalcular o resultado. Desfazer/refazer recupera o conjunto completo, sem alterar tijolos/canaletas/grautes/grampos por essa configuração. Rascunhos e hover são sessão, sem gravação. Campos confirmados em candidato com falha seguem recuperação e bloqueio existentes; não anunciar como salvo nem apagar o candidato. Criar pavimento usa ausência/desativado; duplicar copia o objeto por valor; excluir/desfazer e copiar/importar projeto preservam intenção no alcance correto.

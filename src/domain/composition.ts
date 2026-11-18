@@ -3,6 +3,10 @@ import { openingBox, openingIssue } from "./openings";
 import { applyChannels, type ChannelBand } from "./channels";
 import { applyGrout, type GroutAxis } from "./grout";
 import { applyClamps, type Clamp } from "./clamps";
+import {
+  applyChannelReinforcement,
+  type ChannelReinforcement,
+} from "./channel-reinforcement";
 export type Diagnostic = {
   floorId?: string;
   code: string;
@@ -56,10 +60,11 @@ export type Component = {
   phase: 0 | 1;
 };
 export type Composition = {
-  convention: "nominal-v12";
+  convention: "nominal-v13";
   channels?: ChannelBand[];
   grouts?: GroutAxis[];
   clamps?: Clamp[];
+  reinforcement?: ChannelReinforcement[];
   courses: {
     number: number;
     bottom: number;
@@ -287,7 +292,7 @@ function composeFloor(doc: Project): Composition {
   const { width: m, height: h } = doc.project.base,
     floor = doc.model.floors[0];
   const result: Composition = {
-    convention: "nominal-v12",
+    convention: "nominal-v13",
     courses: [],
     components: [],
     diagnostics: [],
@@ -645,13 +650,16 @@ function composeFloor(doc: Project): Composition {
       result.diagnostics.at(-1)!.adjustmentIds = [a.id!];
     }
   applyChannels(doc, result);
-  return applyClamps(doc, applyGrout(doc, result));
+  return applyChannelReinforcement(
+    doc,
+    applyClamps(doc, applyGrout(doc, result)),
+  );
 }
 export type FloorComposition = Omit<Composition, "convention"> & {
   floorId: string;
 };
 export type ProjectComposition = {
-  convention: "nominal-v12";
+  convention: "nominal-v13";
   floors: FloorComposition[];
   diagnostics: Diagnostic[];
 };
@@ -667,7 +675,7 @@ export function floorView(
     doc.generated && "floors" in doc.generated
       ? (() => {
           const f = doc.generated.floors.find((f) => f.floorId === floorId);
-          return f ? { ...f, convention: "nominal-v12" as const } : null;
+          return f ? { ...f, convention: "nominal-v13" as const } : null;
         })()
       : doc.generated;
   return {
@@ -712,6 +720,7 @@ export function generateFloor(
   for (const b of result.channels ?? []) b.id = `${floorId}:${b.id}`;
   for (const a of result.grouts ?? []) a.id = `${floorId}:${a.id}`;
   for (const a of result.clamps ?? []) a.id = `${floorId}:${a.id}`;
+  for (const a of result.reinforcement ?? []) a.id = `${floorId}:${a.id}`;
   for (const d of result.diagnostics) d.floorId = floorId;
   return { ...result, floorId };
 }
@@ -727,11 +736,12 @@ export function generate(doc: Project): ProjectComposition {
         channels: result.channels,
         grouts: result.grouts,
         clamps: result.clamps,
+        reinforcement: result.reinforcement,
         diagnostics: result.diagnostics,
       };
     });
   return {
-    convention: "nominal-v12",
+    convention: "nominal-v13",
     floors,
     diagnostics: floors.flatMap((f) => f.diagnostics),
   };

@@ -160,6 +160,8 @@ Permitir remover canaletas somente na Fiada onde aparecem; renderizar canaletas 
 
 **Aceite:** configurações persistidas; faixas e grautes automáticos gerados pelas regras nominais documentadas; clique +/− afeta todo eixo respeitando vãos; remoção de canaleta afeta somente o alcance indicado na prévia; nenhuma escolha reaparece silenciosamente; desenho distinto por tipo de peça.
 
+**Armadura das cintas — T-026:** nas Propriedades do Pavimento, permitir ativação, quantidade de barras e diâmetro, com confirmação conjunta. Configuração única para cintas, vergas e contravergas, sem perfis separados ou outra programação de fiadas. Padrão editável de duas barras de 8 mm, inicialmente desativado em novos pavimentos e documentos anteriores. Persistir no projeto/arquivo, com desfazer/refazer e cópia independente. Em Fiada, representar somente os trechos finais de canaleta da fiada ativa, com identificação de quantidade, Ø e extensão nominal, segundo CT-09. Não alterar o Orçamento de tijolos nem conferir resistência, acomodação física ou detalhamento de corte/dobra.
+
 ### RF-22 — Grampos dos encontros por pavimento
 
 Nas Propriedades do Pavimento, permitir ativar grampos e programar fiadas por intervalo (primeira, passo e última) ou lista, com prévia antes de aplicar. Configuração independente por pavimento, salva no projeto/arquivo, com desfazer/refazer e recuperação de falha. Novos pavimentos e projetos antigos começam desativados e sem periodicidade definida; duplicação copia por valor. Diâmetro e comprimento total nominal de cada peça são editáveis; forma, padrões, elegibilidade e comprimentos seguem CT-17.

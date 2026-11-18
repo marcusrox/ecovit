@@ -10,6 +10,12 @@ import {
 } from "../scripts/load-test-env";
 
 loadTestEnvironment();
+const started = performance.now();
+const stage = (message: string) =>
+  console.info(
+    `[test-server +${Math.round(performance.now() - started)}ms] ${message}`,
+  );
+stage("Validando ambiente e preparando schema isolado");
 if (process.env.NODE_ENV === "production")
   throw new Error("Servidor de testes bloqueado em produção.");
 const url = validateTestDatabaseUrl(process.env.M12_TEST_DATABASE_URL);
@@ -30,11 +36,14 @@ const config = readConfig({
   MAIL_CAPTURE_DIR: ".tools/m12/browser-mail",
 });
 const db = database(config.databaseUrl);
+stage("Aplicando migrações do schema de navegador");
 await migrate(db);
+stage("Limpando dados do ensaio anterior");
 await db.query(
   "TRUNCATE ecovit_accounts,ecovit_challenges,ecovit_deletions,ecovit_rate_limits CASCADE",
 );
 const api = await createApi(db, config);
+stage("Iniciando API isolada na porta 3002");
 await api.listen({ host: "127.0.0.1", port: 3002 });
 let clientReady = false;
 const vite = await createServer({
@@ -51,6 +60,7 @@ const vite = await createServer({
   ],
   server: { host: "127.0.0.1", port: 5174, strictPort: true },
 });
+stage("Iniciando frontend isolado na porta 5174");
 // Chrome/Windows can stall while reusing the local dev server's HTTP/1.1 sockets.
 // Scope the fix to tests; leave the user's server and production unchanged.
 if (vite.httpServer && "maxRequestsPerSocket" in vite.httpServer)
@@ -86,5 +96,7 @@ parentWatch.unref();
 // An HTTP listener alone is not readiness: process the initial static imports
 // before Playwright starts the scenario's unchanged 30-second budget.
 await vite.environments.client.transformRequest("/src/main.tsx");
+stage("Aguardando transformação dos módulos do cliente");
 await vite.environments.client.waitForRequestsIdle();
 clientReady = true;
+stage("Servidor de testes pronto");

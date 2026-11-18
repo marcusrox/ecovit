@@ -24,6 +24,7 @@ import {
 import { MAX_GROUT_ADJUSTMENTS } from "../domain/grout";
 import { generate } from "../domain/composition";
 import { validateClampSettings } from "../domain/clamps";
+import { validateChannelReinforcement } from "../domain/channel-reinforcement";
 import { MAX_OPENINGS, openingBox } from "../domain/openings";
 import { validAppearance } from "../domain/opening-appearance";
 import {
@@ -94,6 +95,23 @@ const composition = z
     ),
     components: z.array(component),
     diagnostics: z.array(diagnostic),
+    reinforcement: z
+      .array(
+        z
+          .object({
+            id: z.string(),
+            course: positive,
+            top: integer,
+            a: point,
+            b: point,
+            count: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+            diameter: positive,
+            wallIds: z.array(id),
+            origins: z.array(z.string()),
+          })
+          .strict(),
+      )
+      .optional(),
     clamps: z
       .array(
         z
@@ -168,6 +186,7 @@ const generated = z
       "nominal-v10",
       "nominal-v11",
       "nominal-v12",
+      "nominal-v13",
     ]),
     floors: z.array(composition).min(1).max(4),
     diagnostics: z.array(diagnostic),
@@ -176,7 +195,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(23),
+    schemaVersion: z.literal(24),
     project: z
       .object({
         id,
@@ -268,6 +287,18 @@ const schema = z
                 level: integer,
                 defaultHeight: positive,
                 groutMode: z.enum(["simple", "reinforced"]).optional(),
+                channelReinforcement: z
+                  .object({
+                    enabled: z.boolean(),
+                    count: z
+                      .number()
+                      .int()
+                      .positive()
+                      .max(Number.MAX_SAFE_INTEGER),
+                    diameter: positive,
+                  })
+                  .strict()
+                  .optional(),
                 clamps: z
                   .object({
                     enabled: z.boolean(),
@@ -526,6 +557,24 @@ export function validateProject(
     typeof value === "object" &&
     "schemaVersion" in value &&
     typeof value.schemaVersion === "number" &&
+    value.schemaVersion <= 23 &&
+    "model" in value &&
+    value.model &&
+    typeof value.model === "object" &&
+    "floors" in value.model &&
+    Array.isArray(value.model.floors) &&
+    value.model.floors.some(
+      (f: unknown) => f && typeof f === "object" && "channelReinforcement" in f,
+    )
+  )
+    throw new Error(
+      "Arquivo inválido: armadura das canaletas em formato anterior.",
+    );
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
     value.schemaVersion <= 22 &&
     "model" in value &&
     value.model &&
@@ -764,20 +813,27 @@ export function validateProject(
   )
     value = { ...value, schemaVersion: 23 };
   if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 23
+  )
+    value = { ...value, schemaVersion: 24 };
+  if (
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 23
+    value.schemaVersion !== 24
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 23; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 24; demais formatos não são convertidos.",
     );
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");
   // Old results are disposable; never weaken validation of the drawing or of current snapshots.
   const doc = (
-    parsed.data.generated && parsed.data.generated.convention !== "nominal-v12"
+    parsed.data.generated && parsed.data.generated.convention !== "nominal-v13"
       ? {
           ...parsed.data,
           generated: null,
@@ -829,6 +885,8 @@ export function validateProject(
       );
     checked([f.level + f.defaultHeight]);
     if (f.clamps) validateClampSettings(f.clamps, m, h);
+    if (f.channelReinforcement)
+      validateChannelReinforcement(f.channelReinforcement);
   }
   const walls = new Map(doc.model.walls.map((w) => [w.id, w]));
   for (const asset of doc.model.customImageAssets) {

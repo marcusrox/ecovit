@@ -8,7 +8,9 @@
 
 **Data de execução** — 2026-11-17
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
+
+**Data do aceite manual** — 2026-11-18
 
 ## Alteração e limites
 
@@ -126,4 +128,8 @@ Conferência proporcional: dez testes novos do domínio aprovados, cobrindo padr
 
 Dois cenários selecionados no Chrome aprovados em 25,1 segundos: edição por lista/intervalo, dimensões, prévia, desfazer/refazer, validação sem gravar valor inválido, preservação de composição/grautes, desenho real no canvas apenas na fiada programada, arquivo, reabertura remota e falha/recuperação de salvamento. Inspeção visual em `.tools/t025-propriedades.png` e `.tools/t025-fiada.png`. Logs ignorados pelo Git: `.tools/t025-domain-final.log`, `.tools/t025-compatibility.log`, `.tools/t025-document-flows.log`, `.tools/t025-e2e-final.log`, `.tools/t025-types.log`, `.tools/t025-lint.log` e `.tools/t025-diff-check.log`.
 
-Aceite manual permanece pendente. A API local do solicitante precisa ser reiniciada com `./Start-Ecovit.ps1 -Task dev` para carregar o leitor 23; em seguida, reabrir o projeto. Nenhum processo do solicitante na porta 5173 foi alterado.
+Na conclusão dessa etapa, o aceite manual ainda estava pendente. A API local do solicitante precisa ser reiniciada com `./Start-Ecovit.ps1 -Task dev` para carregar o leitor 23; em seguida, reabrir o projeto. Nenhum processo do solicitante na porta 5173 foi alterado.
+
+## Aceite manual — 2026-11-18
+
+Confirmado explicitamente pelo solicitante nesta data: “As T-023, T-024 e T-025 estão aprovadas.” A aprovação inclui os ajustes entregues até o commit 481b023. Os resultados técnicos e as datas de execução anteriores permanecem preservados; as menções de aceite pendente nos relatos anteriores descrevem a situação naquelas etapas.

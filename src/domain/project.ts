@@ -5,6 +5,7 @@ import type {
   JunctionChoice,
 } from "./composition";
 import type { ClampSettings } from "./clamps";
+import type { ChannelReinforcementSettings } from "./channel-reinforcement";
 export type Point = { x: number; y: number };
 export type CustomImageAsset = {
   id: string;
@@ -147,7 +148,7 @@ export type Tool =
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 23;
+  schemaVersion: 24;
   project: {
     id: string;
     name: string;
@@ -171,6 +172,7 @@ export type Project = {
       defaultHeight: number;
       groutMode?: "simple" | "reinforced";
       clamps?: ClampSettings;
+      channelReinforcement?: ChannelReinforcementSettings;
       roomSequence?: number;
     }[];
     walls: Wall[];
@@ -246,7 +248,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 23,
+    schemaVersion: 24,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),

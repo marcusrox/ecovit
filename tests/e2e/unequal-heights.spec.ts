@@ -25,7 +25,7 @@ test(
       buffer: Buffer.from(text),
     });
     const updated = await exported(page);
-    expect(updated.generated!.convention).toBe("nominal-v12");
+    expect(updated.generated!.convention).toBe("nominal-v13");
     expect(updated.model).toEqual({
       ...original.model,
       measurements: [],
@@ -145,7 +145,7 @@ test(
     const updated = await exported(page);
     expect(updated.project.id).not.toBe(original.project.id);
     expect(updated.model.walls).toEqual(original.model.walls);
-    expect(updated.generated!.convention).toBe("nominal-v12");
+    expect(updated.generated!.convention).toBe("nominal-v13");
     expect(
       await readFile("tests/fixtures/unequal-heights-v9.ecovit", "utf8"),
     ).toBe(text);
