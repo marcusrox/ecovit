@@ -1,3 +1,4 @@
+import { openFerragens, closeFerragens } from "./floor-reinforcement-helpers";
 import { test, expect, blockEditing, type Page } from "./auth";
 import {
   createProject,
@@ -117,13 +118,11 @@ test(
     ];
     doc = duplicateFloor(doc, floorId, 28000, "Superior");
     const upper = doc.model.floors[1].id;
-    await page
-      .getByTestId("import-file")
-      .setInputFiles({
-        name: "pavimentos.ecovit",
-        mimeType: "application/json",
-        buffer: Buffer.from(JSON.stringify(doc)),
-      });
+    await page.getByTestId("import-file").setInputFiles({
+      name: "pavimentos.ecovit",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(doc)),
+    });
     await expect(page.getByRole("status")).toContainText("Salvo");
     const counts = async () =>
       (await state(page)).generated?.floors.map((f) => f.grouts?.length);
@@ -134,7 +133,9 @@ test(
       exact: true,
     });
     const dialog = page.getByRole("dialog");
+    await openFerragens(page);
     await expect(mode).toHaveValue("simple");
+    await closeFerragens(page);
     await settings.click();
     await expect(
       dialog.getByLabel("Graute nos encontros", { exact: true }),
@@ -146,20 +147,35 @@ test(
     await dialog
       .getByRole("button", { name: "Aplicar configurações", exact: true })
       .click();
-    await expect(mode).toBeDisabled();
     await expect(page.getByRole("status")).toContainText("Salvo");
+    await openFerragens(page);
+    await expect(mode).toBeDisabled();
+    await closeFerragens(page);
     await settings.click();
     await dialog.getByLabel("Encontros", { exact: true }).check();
     await dialog
       .getByRole("button", { name: "Aplicar configurações", exact: true })
       .click();
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    await openFerragens(page);
     await expect(mode).toBeEnabled();
     await mode.selectOption("reinforced");
+    await page
+      .getByRole("button", { name: "Aplicar alterações", exact: true })
+      .click();
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    await closeFerragens(page);
     await expect.poll(counts).toEqual([5, 1]);
     await expect(page.getByRole("status")).toContainText("Salvo");
     await floor.selectOption(upper);
+    await openFerragens(page);
     await expect(mode).toHaveValue("simple");
     await mode.selectOption("reinforced");
+    await page
+      .getByRole("button", { name: "Aplicar alterações", exact: true })
+      .click();
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    await closeFerragens(page);
     await expect.poll(counts).toEqual([5, 5]);
     await expect(page.getByRole("status")).toContainText("Salvo");
     await page.getByRole("button", { name: /Desfazer/ }).click();
@@ -169,8 +185,14 @@ test(
     await expect.poll(counts).toEqual([5, 5]);
     await expect(page.getByRole("status")).toContainText("Salvo");
     await floor.selectOption(floorId);
+    await openFerragens(page);
     await expect(mode).toHaveValue("reinforced");
     await mode.selectOption("simple");
+    await page
+      .getByRole("button", { name: "Aplicar alterações", exact: true })
+      .click();
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    await closeFerragens(page);
     await expect.poll(counts).toEqual([1, 5]);
     await expect(page.getByRole("status")).toContainText("Salvo");
     await page.screenshot({ path: ".tools/t023-por-pavimento.png" });
@@ -180,7 +202,7 @@ test(
       .click();
     const file = await download;
     const loaded = parseFile(await readFile((await file.path())!, "utf8"));
-    expect(loaded.schemaVersion).toBe(24);
+    expect(loaded.schemaVersion).toBe(25);
     expect(loaded.model.floors.map((f) => f.groutMode)).toEqual([
       "simple",
       "reinforced",
@@ -194,8 +216,11 @@ test(
     await expect(page.getByRole("status")).toContainText("Salvo");
     await expect.poll(counts).toEqual([1, 5]);
     await floor.selectOption(upper);
+    await openFerragens(page);
     await expect(mode).toHaveValue("reinforced");
+    await closeFerragens(page);
     await blockEditing(page);
+    await openFerragens(page);
     await expect(mode).toBeDisabled();
   },
 );

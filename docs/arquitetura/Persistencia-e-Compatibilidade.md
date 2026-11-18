@@ -138,7 +138,7 @@ Fontes: PostgreSQL 18 — [JSON](https://www.postgresql.org/docs/18/datatype-jso
 
 ## Formato e leitores vigentes
 
-Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=24; leitura aceita somente envelopes 9–24. O envelope não versiona as regras construtivas: a composição vigente é nominal-v13. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; arquivos incompatíveis não substituem o trabalho aberto; registros IndexedDB anteriores não são consultados nem apagados.
+Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=25; leitura aceita somente envelopes 9–25. O envelope não versiona as regras construtivas: a composição vigente é nominal-v13. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; arquivos incompatíveis não substituem o trabalho aberto; registros IndexedDB anteriores não são consultados nem apagados.
 
 | Envelope lido | Normalização em memória para 24 |
 |---|---|
@@ -156,6 +156,7 @@ Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schem
 | 22 | Preservar project.unitPrices opcional; grampos ausentes/desativados |
 | 23 | Preservar model.floors[].clamps opcional; armadura de canaletas ausente/desativada |
 | 24 | Validar também model.floors[].channelReinforcement opcional |
+| 25 | Validar model.floors[].groutDiameter opcional: 80/100/125 em unidades de 0,1 mm |
 
 Envelopes 9–16 recebem model.terrain=null em memória; recusar esse campo nesses formatos, inclusive null. O formato 17 persiste a intenção global do terreno e sua revisão de material, sem bytes de textura ou rasterização da área. O catálogo de aparências inclui soft (Verde suave) na revisão 1, já suportado no contrato 17 e preservado em 18. Leitores anteriores que não conheçam soft podem recusar essa aparência; não substituí-la silenciosamente. Os cinco materiais anteriores permanecem válidos. Revisão/material desconhecidos e anéis inválidos são recusados. O formato 17 conserva composição nominal-v10; aplicativos anteriores podem recusá-lo.
 
@@ -361,6 +362,12 @@ Normalizar envelopes 9–22 para 23 somente em memória, sem injetar grampos/per
 
 ### Formato 24 — armadura das canaletas por pavimento
 
-channelReinforcement opcional no pavimento contém enabled booleano, count inteiro positivo seguro e diameter inteiro positivo em unidades de 0,1 mm, respeitando o limite numérico do editor. Objeto estrito, sem categorias de verga/contraverga ou outros parâmetros implícitos. Ausência significa desativado com preferência de duas barras de 8 mm no formulário. Recusar esse campo em envelopes até 23, mesmo desativado; normalizar 9–23 para 24 somente em memória, preservando fonte, IDs, preços, configurações de graute/grampos e ajustes. Novos leitores aceitam 9–24; leitores limitados a 23 recusam 24.
+channelReinforcement opcional no pavimento contém enabled booleano, count inteiro positivo seguro e diameter inteiro positivo em unidades de 0,1 mm, respeitando o limite numérico do editor. Objeto estrito, sem categorias de verga/contraverga ou outros parâmetros implícitos. Ausência significa desativado; a preferência atual do formulário é de duas barras de 10 mm. Valores explicitamente gravados são preservados. Recusar esse campo em envelopes até 23, mesmo desativado; normalizar 9–23 para 24 somente em memória, preservando fonte, IDs, preços, configurações de graute/grampos e ajustes. Novos leitores aceitam 9–24; leitores limitados a 23 recusam 24.
 
 Resultado nominal-v13 acrescenta reinforcement por pavimento, derivado das canaletas finais e conferido por recomposição. Snapshots de v9 a v12 são descartados/recalculados; resultado atual adulterado é recusado. Transporte, cópia e operações de pavimentos conservam intenção, sem compartilhar mutações da configuração copiada. Representação remota continua versão 1, sem migração SQL.
+
+## Bitolas das ferragens por pavimento
+
+Formato 25 acrescenta groutDiameter opcional no pavimento, inteiro 80/100/125 em unidades de 0,1 mm; ausência significa 8 mm. Recusar esse campo em envelopes até 24 e valores fora do catálogo. Normalizar 9–24 para 25 somente em memória, sem alterar fonte, IDs ou bitolas existentes. Cópias, histórico, transporte e persistência remota preservam o valor por pavimento. Representação remota continua versão 1, sem migração SQL. nominal-v13 e símbolos de furos permanecem inalterados; a bitola de graute isolada não invalida a composição.
+
+Grampos passam a sugerir 6,3 mm (opções 5/6,3/8); cintas sugerem 10 mm (opções 8/10/12,5). A validação legada de diâmetros positivos em precisão de 0,1 mm permanece para preservar projetos existentes; a interface conserva valores fora da lista como opção salva desabilitada e permite escolher explicitamente um dos novos valores. Não substituir bitolas ao abrir ou aplicar outro grupo.

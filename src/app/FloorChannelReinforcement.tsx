@@ -1,23 +1,24 @@
-import { useState } from "react";
-import {
-  defaultChannelReinforcement,
-  parseChannelReinforcement,
-} from "../domain/channel-reinforcement";
+import { parseChannelReinforcement } from "../domain/channel-reinforcement";
 import { display } from "../domain/project";
-import { editFloor } from "../domain/floors";
-import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
 
-export function FloorChannelReinforcement() {
-  const s = useStore(),
-    doc = s.doc!,
-    floor = doc.model.floors.find((f) => f.id === s.activeFloorId)!;
-  const original = floor.channelReinforcement ?? defaultChannelReinforcement();
-  const [enabled, setEnabled] = useState(original.enabled);
-  const [count, setCount] = useState(String(original.count));
-  const [diameter, setDiameter] = useState(display(original.diameter * 10));
-  const [error, setError] = useState("");
-  const blocked = s.busy || s.readonly || !!s.imageDraft;
+import type { ReinforcementDraft } from "./floor-reinforcement-draft";
+import { BarDiameterSelect } from "./BarDiameterSelect";
+export function FloorChannelReinforcement({
+  draft,
+  change,
+  blocked,
+  error,
+}: {
+  draft: ReinforcementDraft;
+  change: (draft: ReinforcementDraft) => void;
+  blocked: boolean;
+  error?: string;
+}) {
+  const { enabled, count, diameter } = draft;
+  const setEnabled = (enabled: boolean) => change({ ...draft, enabled });
+  const setCount = (count: string) => change({ ...draft, count });
+  const setDiameter = (diameter: string) => change({ ...draft, diameter });
   let preview = "",
     invalid = "";
   try {
@@ -33,42 +34,7 @@ export function FloorChannelReinforcement() {
         Configuração única neste pavimento, aplicada às cintas, vergas e
         contravergas. As barras acompanham as canaletas existentes.
       </p>
-      <form
-        onChange={() => setError("")}
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (blocked) return;
-          try {
-            const candidate = parseChannelReinforcement(
-                enabled,
-                count,
-                diameter,
-              ),
-              state = useStore.getState();
-            if (
-              !state.doc ||
-              state.doc.project.id !== doc.project.id ||
-              state.activeFloorId !== floor.id ||
-              state.busy ||
-              state.readonly
-            )
-              return;
-            setError("");
-            if (
-              JSON.stringify(candidate) !==
-              JSON.stringify(floor.channelReinforcement)
-            )
-              await state.commit(
-                editFloor(state.doc, floor.id, {
-                  channelReinforcement: candidate,
-                }),
-                "floor",
-              );
-          } catch (err) {
-            setError((err as Error).message);
-          }
-        }}
-      >
+      <div>
         <fieldset
           disabled={blocked}
           style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
@@ -91,10 +57,11 @@ export function FloorChannelReinforcement() {
           </label>
           <label className={styles.field}>
             Diâmetro das barras (mm)
-            <input
-              inputMode="decimal"
+            <BarDiameterSelect
+              label="Diâmetro das barras (mm)"
+              options={["8", "10", "12,5"]}
               value={diameter}
-              onChange={(e) => setDiameter(e.target.value)}
+              onChange={setDiameter}
             />
           </label>
           <p className={styles.note}>Conjunto: {invalid ? "—" : preview}.</p>
@@ -103,14 +70,8 @@ export function FloorChannelReinforcement() {
               {error || invalid}
             </p>
           )}
-          <button type="submit">Aplicar armadura das cintas</button>
         </fieldset>
-        {s.saved !== "saved" && s.saved !== "saving" && (
-          <p role="alert" className={styles.errorText}>
-            Não salvo. {s.message} Use a recuperação no aviso do projeto.
-          </p>
-        )}
-      </form>
+      </div>
       <p className={styles.note}>
         Representação nominal, sem escala física de diâmetro ou cobrimento; não
         substitui o detalhamento estrutural ou de fabricação.

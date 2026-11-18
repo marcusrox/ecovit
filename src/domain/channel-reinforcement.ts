@@ -22,7 +22,7 @@ export const defaultChannelReinforcement =
   (): ChannelReinforcementSettings => ({
     enabled: false,
     count: 2,
-    diameter: 80,
+    diameter: 100,
   });
 export function validateChannelReinforcement(
   settings: ChannelReinforcementSettings,

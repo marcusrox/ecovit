@@ -1,3 +1,4 @@
+import { openFerragens, closeFerragens } from "./floor-reinforcement-helpers";
 import { test, expect, rejectSaves, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import {
@@ -44,12 +45,11 @@ async function open(page: Page, multiple = false) {
     buffer: Buffer.from(JSON.stringify(d)),
   });
   await expect(page.getByRole("status")).toContainText("Salvo");
+  await openFerragens(page);
   return d;
 }
 const apply = (page: Page) =>
-  page
-    .getByRole("button", { name: "Aplicar armadura das cintas", exact: true })
-    .click();
+  page.getByRole("button", { name: "Aplicar alterações", exact: true }).click();
 async function pixels(page: Page) {
   return page.locator("canvas").evaluateAll((elements) =>
     elements.reduce((sum, node) => {
@@ -153,16 +153,15 @@ test(
         1,
       )!,
     ];
-    await page
-      .getByTestId("import-file")
-      .setInputFiles({
-        name: "encontros.ecovit",
-        mimeType: "application/json",
-        buffer: Buffer.from(JSON.stringify(d)),
-      });
+    await page.getByTestId("import-file").setInputFiles({
+      name: "encontros.ecovit",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(d)),
+    });
     await expect(page.getByRole("status")).toContainText("Salvo");
     const before = await state(page);
     expect(before.generated!.floors[0].reinforcement).toHaveLength(4);
+    await closeFerragens(page);
     await page.getByRole("button", { name: "Fiada", exact: true }).click();
     await page.getByLabel("Número da fiada", { exact: true }).fill("5");
     await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
@@ -190,7 +189,7 @@ test(
       }),
       diameter = page.getByLabel("Diâmetro das barras (mm)", { exact: true });
     await expect(count).toHaveValue("2");
-    await expect(diameter).toHaveValue("8");
+    await expect(diameter).toHaveValue("10");
     await expect(form).toContainText("cintas, vergas e contravergas");
     await page
       .getByLabel("Ativar armadura das canaletas", { exact: true })
@@ -203,7 +202,7 @@ test(
     ]);
     expect(
       doc.generated!.floors[0].reinforcement!.every(
-        (r) => r.count === 2 && r.diameter === 80,
+        (r) => r.count === 2 && r.diameter === 100,
       ),
     ).toBe(true);
     expect(doc.generated!.floors[0].courses).toEqual(
@@ -216,15 +215,19 @@ test(
       initial.generated!.floors[0].clamps,
     );
     await count.fill("3");
-    await diameter.fill("6,3");
+    await diameter.selectOption("12,5");
     await apply(page);
     await expect(page.getByRole("status")).toContainText("Salvo");
+    await closeFerragens(page);
     await page.getByRole("button", { name: /Desfazer/ }).click();
     await expect(page.getByRole("status")).toContainText("Salvo");
+    await openFerragens(page);
     await expect(count).toHaveValue("2");
+    await closeFerragens(page);
     await page.getByRole("button", { name: /Refazer/ }).click();
     await expect(page.getByRole("status")).toContainText("Salvo");
-    await expect(diameter).toHaveValue("6,3");
+    await openFerragens(page);
+    await expect(diameter).toHaveValue("12,5");
     await count.fill("1.5");
     await apply(page);
     await expect(form.getByRole("alert")).toContainText("inteira positiva");
@@ -232,7 +235,9 @@ test(
       (await state(page)).model.floors[0].channelReinforcement!.count,
     ).toBe(3);
     await count.fill("3");
+    await closeFerragens(page);
     await page.getByLabel("Pavimento", { exact: true }).selectOption(upper);
+    await openFerragens(page);
     await expect(count).toHaveValue("2");
     await expect(
       page.getByLabel("Ativar armadura das canaletas", { exact: true }),
@@ -243,14 +248,17 @@ test(
     await count.fill("1");
     await apply(page);
     await expect(page.getByRole("status")).toContainText("Salvo");
+    await closeFerragens(page);
     await page.getByLabel("Pavimento", { exact: true }).selectOption(first);
+    await openFerragens(page);
     await expect(count).toHaveValue("3");
     // Return to the default two bars to inspect their distinct parallel rendering.
     await count.fill("2");
-    await diameter.fill("8");
+    await diameter.selectOption("8");
     await apply(page);
     await expect(page.getByRole("status")).toContainText("Salvo");
     await page.screenshot({ path: ".tools/t026-propriedades.png" });
+    await closeFerragens(page);
     await page.getByRole("button", { name: "Fiada", exact: true }).click();
     await page.getByLabel("Número da fiada", { exact: true }).fill("3");
     await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
@@ -283,7 +291,7 @@ test(
       await readFile((await (await exported).path())!, "utf8"),
     );
     expect(downloaded.model.floors).toEqual(doc.model.floors);
-    expect(downloaded.schemaVersion).toBe(24);
+    expect(downloaded.schemaVersion).toBe(25);
     await page.reload();
     await page.getByText(doc.project.name, { exact: true }).click();
     await expect(page.getByRole("status")).toContainText("Salvo");
@@ -298,6 +306,7 @@ test(
     await page
       .getByRole("button", { name: "Propriedades", exact: true })
       .click();
+    await openFerragens(page);
     await expect(form).toBeAttached();
   },
 );
@@ -311,26 +320,26 @@ test(
       .getByLabel("Ativar armadura das canaletas", { exact: true })
       .check();
     await apply(page);
-    const form = page.getByRole("region", {
-      name: "Armadura das cintas",
-      exact: true,
-    });
-    await expect(form.getByRole("alert")).toContainText("Não salvo");
+    await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
+      "Não salvo",
+    );
     await expect(
       page.getByLabel("Quantidade de barras longitudinais", { exact: true }),
     ).toBeDisabled();
     expect((await state(page)).model.floors[0].channelReinforcement).toEqual({
       enabled: true,
       count: 2,
-      diameter: 80,
+      diameter: 100,
     });
     await page.evaluate(() => {
       (window as unknown as { restorePut: () => void }).restorePut();
     });
+    await closeFerragens(page);
     await page
       .getByRole("button", { name: "Tentar novamente", exact: true })
       .click();
     await expect(page.getByRole("status")).toContainText("Salvo");
+    await openFerragens(page);
     await expect(
       page.getByLabel("Quantidade de barras longitudinais", { exact: true }),
     ).toBeEnabled();

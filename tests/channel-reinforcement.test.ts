@@ -72,7 +72,7 @@ describe("T-026 armaduras longitudinais nominais", () => {
             course: 5,
             top: 3500,
             count: 2,
-            diameter: 80,
+            diameter: 100,
             a: { x: 0, y: 0 },
             b: vertical ? { x: 0, y: 8 * m } : { x: 8 * m, y: 0 },
           });
@@ -193,7 +193,7 @@ describe("T-026 armaduras longitudinais nominais", () => {
     expect(defaultChannelReinforcement()).toEqual({
       enabled: false,
       count: 2,
-      diameter: 80,
+      diameter: 100,
     });
     expect(parseChannelReinforcement(true, "3", "6,3")).toEqual({
       enabled: true,
@@ -256,7 +256,7 @@ describe("T-026 armaduras longitudinais nominais", () => {
     delete old.generated.floors[0].reinforcement;
     const source = structuredClone(old),
       loaded = validateProject(old);
-    expect(loaded.schemaVersion).toBe(24);
+    expect(loaded.schemaVersion).toBe(25);
     expect(loaded.model.floors[0].channelReinforcement).toBeUndefined();
     expect(loaded.generated).toBeNull();
     expect(old).toEqual(source);
@@ -276,7 +276,7 @@ describe("T-026 armaduras longitudinais nominais", () => {
     const bad = structuredClone(d);
     bad.generated!.floors[0].reinforcement![0].count = 7;
     expect(() => validateProject(bad)).toThrow("inconsistente");
-    expect(() => validateProject({ ...d, schemaVersion: 25 })).toThrow(
+    expect(() => validateProject({ ...d, schemaVersion: 26 })).toThrow(
       "incompatível",
     );
   });

@@ -1,3 +1,4 @@
+import { openFerragens, closeFerragens } from "./floor-reinforcement-helpers";
 import { test, expect, rejectSaves, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import {
@@ -35,6 +36,7 @@ async function open(page: Page) {
     buffer: Buffer.from(JSON.stringify(d)),
   });
   await expect(page.getByRole("status")).toContainText("Salvo");
+  await openFerragens(page);
   return d;
 }
 async function configure(page: Page) {
@@ -45,7 +47,7 @@ async function configure(page: Page) {
     .getByLabel("Ativar grampos neste pavimento", { exact: true })
     .check();
   await page
-    .getByRole("button", { name: "Aplicar grampos", exact: true })
+    .getByRole("button", { name: "Aplicar alterações", exact: true })
     .click();
   await expect(page.getByRole("status")).toContainText("Salvo");
 }
@@ -80,12 +82,25 @@ test(
     });
     await expect(
       page.getByLabel("Diâmetro do ferro (mm)", { exact: true }),
-    ).toHaveValue("8");
+    ).toHaveValue("6,3");
     await expect(
       page.getByLabel("Comprimento nominal de cada grampo (cm)", {
         exact: true,
       }),
     ).toHaveValue("32,5");
+    await page
+      .getByLabel("Fiadas dos grampos", { exact: true })
+      .fill("5, 8, 13");
+    await page
+      .getByLabel("Programação dos grampos", { exact: true })
+      .selectOption("interval");
+    await expect(panel.getByRole("alert")).toContainText("Lista irregular");
+    await expect(
+      page.getByLabel("Primeira fiada dos grampos", { exact: true }),
+    ).toHaveValue("");
+    await page
+      .getByLabel("Programação dos grampos", { exact: true })
+      .selectOption("list");
     const before = (await state(page)).generated!.floors[0];
     await configure(page);
     const doc = await state(page);
@@ -113,9 +128,9 @@ test(
       .fill("40,5");
     await page
       .getByLabel("Diâmetro do ferro (mm)", { exact: true })
-      .fill("6,3");
+      .selectOption("6,3");
     await page
-      .getByRole("button", { name: "Aplicar grampos", exact: true })
+      .getByRole("button", { name: "Aplicar alterações", exact: true })
       .click();
     await expect(page.getByRole("status")).toContainText("Salvo");
     expect((await state(page)).model.floors[0].clamps).toMatchObject({
@@ -123,18 +138,22 @@ test(
       length: 4050,
       schedule: { mode: "interval", first: 5, every: 4, last: 14 },
     });
+    await closeFerragens(page);
     await page.getByRole("button", { name: /Desfazer/ }).click();
     await expect(page.getByRole("status")).toContainText("Salvo");
+    await openFerragens(page);
     await expect(
       page.getByLabel("Programação dos grampos", { exact: true }),
     ).toHaveValue("list");
+    await closeFerragens(page);
     await page.getByRole("button", { name: /Refazer/ }).click();
     await expect(page.getByRole("status")).toContainText("Salvo");
+    await openFerragens(page);
     await page
       .getByLabel("Comprimento nominal de cada grampo (cm)", { exact: true })
       .fill("12,51");
     await page
-      .getByRole("button", { name: "Aplicar grampos", exact: true })
+      .getByRole("button", { name: "Aplicar alterações", exact: true })
       .click();
     await expect(panel.getByRole("alert")).toContainText("duas pontas");
     expect((await state(page)).model.floors[0].clamps!.length).toBe(4050);
@@ -142,6 +161,7 @@ test(
       .getByLabel("Comprimento nominal de cada grampo (cm)", { exact: true })
       .fill("40,5");
     await page.screenshot({ path: ".tools/t025-propriedades.png" });
+    await closeFerragens(page);
     await page.getByRole("button", { name: "Fiada", exact: true }).click();
     await page.getByLabel("Número da fiada", { exact: true }).fill("5");
     await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
@@ -175,6 +195,7 @@ test(
     await page.reload();
     await page.getByText(name, { exact: true }).click();
     await expect(page.getByRole("status")).toContainText("Salvo");
+    await openFerragens(page);
     await expect(
       page.getByLabel("Diâmetro do ferro (mm)", { exact: true }),
     ).toHaveValue("6,3");
@@ -192,15 +213,13 @@ test(
       .getByLabel("Ativar grampos neste pavimento", { exact: true })
       .check();
     await page
-      .getByRole("button", { name: "Aplicar grampos", exact: true })
+      .getByRole("button", { name: "Aplicar alterações", exact: true })
       .click();
+    await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
+      "Não salvo",
+    );
     await expect(
-      page
-        .getByRole("region", { name: "Grampos dos encontros", exact: true })
-        .getByRole("alert"),
-    ).toContainText("Não salvo");
-    await expect(
-      page.getByRole("button", { name: "Aplicar grampos", exact: true }),
+      page.getByRole("button", { name: "Aplicar alterações", exact: true }),
     ).toBeDisabled();
     expect((await state(page)).model.floors[0].clamps!.schedule).toEqual({
       mode: "list",
@@ -209,12 +228,14 @@ test(
     await page.evaluate(() => {
       (window as unknown as { restorePut: () => void }).restorePut();
     });
+    await closeFerragens(page);
     await page
       .getByRole("button", { name: "Tentar novamente", exact: true })
       .click();
     await expect(page.getByRole("status")).toContainText("Salvo");
+    await openFerragens(page);
     await expect(
-      page.getByRole("button", { name: "Aplicar grampos", exact: true }),
+      page.getByRole("button", { name: "Aplicar alterações", exact: true }),
     ).toBeEnabled();
     expect((await state(page)).generated!.floors[0].clamps).toHaveLength(3);
   },

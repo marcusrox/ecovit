@@ -195,7 +195,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(24),
+    schemaVersion: z.literal(25),
     project: z
       .object({
         id,
@@ -287,6 +287,9 @@ const schema = z
                 level: integer,
                 defaultHeight: positive,
                 groutMode: z.enum(["simple", "reinforced"]).optional(),
+                groutDiameter: z
+                  .union([z.literal(80), z.literal(100), z.literal(125)])
+                  .optional(),
                 channelReinforcement: z
                   .object({
                     enabled: z.boolean(),
@@ -552,6 +555,24 @@ export function validateProject(
   value: unknown,
   checkGenerated = true,
 ): Project {
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion <= 24 &&
+    "model" in value &&
+    value.model &&
+    typeof value.model === "object" &&
+    "floors" in value.model &&
+    Array.isArray(value.model.floors) &&
+    value.model.floors.some(
+      (f: unknown) => f && typeof f === "object" && "groutDiameter" in f,
+    )
+  )
+    throw new Error(
+      "Arquivo inválido: diâmetro do graute em formato anterior.",
+    );
   if (
     value &&
     typeof value === "object" &&
@@ -823,11 +844,12 @@ export function validateProject(
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 24
+    (value.schemaVersion !== 24 && value.schemaVersion !== 25)
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 24; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 25; demais formatos não são convertidos.",
     );
+  if (value.schemaVersion === 24) value = { ...value, schemaVersion: 25 };
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");

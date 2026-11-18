@@ -6,7 +6,7 @@
 
 | Registro | Contrato vigente |
 |---|---|
-| `model.floors[]` | `{ id, name, level, defaultHeight, groutMode? }`; groutMode aceita simple/reinforced, ausência significa Simples; duplicação preserva e novos pavimentos iniciam Simples. Remover `start`. `level` é a única cota global do pavimento. Array com 1–4 registros, ordenado por `level` crescente, cotas distintas e `level % base.height === 0`. Nome aparado, 1–100 caracteres; nomes repetidos permitidos. `defaultHeight` positivo e modular. |
+| `model.floors[]` | `{ id, name, level, defaultHeight, groutMode?, groutDiameter? }`; groutMode aceita simple/reinforced, ausência significa Simples; groutDiameter opcional aceita 80/100/125 em unidades de 0,1 mm, ausência significa 8 mm, sem efeito na geometria nominal; duplicação preserva e novos pavimentos iniciam Simples. Remover `start`. `level` é a única cota global do pavimento. Array com 1–4 registros, ordenado por `level` crescente, cotas distintas e `level % base.height === 0`. Nome aparado, 1–100 caracteres; nomes repetidos permitidos. `defaultHeight` positivo e modular. |
 | `model.walls[]` | Manter `{ id, floorId, a, b, side, height }`. `floorId` obrigatório, referenciando pavimento existente. Coordenadas horizontais mundiais na malha; altura relativa à cota do pavimento. Não armazenar base/topo duplicados na parede. |
 | `model.openings[]` | Manter vínculo por `wallId`, sem `floorId` redundante; proprietário derivado da parede. `base` e `height` são medidas relativas, com as validações locais existentes. |
 | `model.slabs[]` | Lajes independentes por pavimento, conforme a seção Lajes deste documento. |

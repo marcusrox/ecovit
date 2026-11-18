@@ -220,7 +220,7 @@ it("M10-A08 lê envelope 13 preservando ocorrências e bytes sem modificar a ori
   Reflect.deleteProperty(old.model, "roomBoundaries");
   const original = JSON.stringify(old);
   const restored = validateProject(old);
-  expect(restored.schemaVersion).toBe(24);
+  expect(restored.schemaVersion).toBe(25);
   expect(restored.model).toEqual(d.model);
   expect(JSON.stringify(old)).toBe(original);
 });
@@ -284,7 +284,7 @@ it("M10-A08 leitura 9–12 normaliza coleções vazias sem modificar origem ou a
     if (version === 9) delete old.model.measurements;
     const original = JSON.stringify(old),
       restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(24);
+    expect(restored.schemaVersion).toBe(25);
     expect(restored.model.imageElements).toEqual([]);
     expect(JSON.stringify(old)).toBe(original);
     old.model.imageElements = [];
@@ -390,7 +390,7 @@ it.each([
     }
     const decoded = parseFile(serializeFile(d).text);
     expect(decoded.model).toEqual(d.model);
-    expect(decoded.schemaVersion).toBe(24);
+    expect(decoded.schemaVersion).toBe(25);
     expect(importedCopy(decoded).model).toEqual(d.model);
     const floors = duplicateFloor(
       decoded,
@@ -416,7 +416,7 @@ it("formato 14 mantém a aparência sem espelhamento; campos novos disfarçados 
   Reflect.deleteProperty(old.model, "roomBoundaries");
   const before = JSON.stringify(old);
   const decoded = validateProject(old);
-  expect(decoded.schemaVersion).toBe(24);
+  expect(decoded.schemaVersion).toBe(25);
   expect(decoded.model).toEqual(d.model);
   expect(JSON.stringify(old)).toBe(before);
   for (const flag of [true, false, "true", 1, null]) {

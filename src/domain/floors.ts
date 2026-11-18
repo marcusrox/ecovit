@@ -11,6 +11,13 @@ import { validateChannelReinforcement } from "./channel-reinforcement";
 
 export type Floor = Project["model"]["floors"][number];
 export function validateFloor(doc: Project, floor: Floor) {
+  if (
+    floor.groutDiameter !== undefined &&
+    ![80, 100, 125].includes(floor.groutDiameter)
+  )
+    throw new Error(
+      "Escolha diâmetro de 8, 10 ou 12,5 mm para as barras do graute vertical.",
+    );
   if (floor.channelReinforcement)
     validateChannelReinforcement(floor.channelReinforcement);
   if (floor.clamps)
@@ -150,6 +157,9 @@ export function duplicateFloor(
     level,
     defaultHeight: source.defaultHeight,
     ...(source.groutMode !== undefined ? { groutMode: source.groutMode } : {}),
+    ...(source.groutDiameter !== undefined
+      ? { groutDiameter: source.groutDiameter }
+      : {}),
     ...(source.clamps ? { clamps: structuredClone(source.clamps) } : {}),
     ...(source.channelReinforcement
       ? { channelReinforcement: { ...source.channelReinforcement } }

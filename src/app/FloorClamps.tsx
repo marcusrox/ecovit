@@ -1,80 +1,43 @@
 import { useState } from "react";
-import { cm, display } from "../domain/project";
-import { editFloor } from "../domain/floors";
+import { display } from "../domain/project";
 import {
   clampCourses,
   clampCourseLimit,
-  defaultClampSettings,
   intervalFromList,
   parseClampList,
-  validateClampSettings,
-  type ClampSettings,
 } from "../domain/clamps";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
 
-export function FloorClamps() {
+import { parseClamps, type ClampsDraft } from "./floor-reinforcement-draft";
+import { BarDiameterSelect } from "./BarDiameterSelect";
+
+export function FloorClamps({
+  draft,
+  change,
+  blocked,
+  error,
+}: {
+  draft: ClampsDraft;
+  change: (draft: ClampsDraft) => void;
+  blocked: boolean;
+  error?: string;
+}) {
   const s = useStore(),
     doc = s.doc!,
     floor = doc.model.floors.find((f) => f.id === s.activeFloorId)!;
-  const original = floor.clamps ?? defaultClampSettings(doc.project.base.width);
-  const [enabled, setEnabled] = useState(original.enabled);
-  const [diameter, setDiameter] = useState(
-    String(original.diameter / 10).replace(".", ","),
-  );
-  const [length, setLength] = useState(display(original.length));
-  const [mode, setMode] = useState(original.schedule.mode);
-  const [list, setList] = useState(
-    original.schedule.mode === "list"
-      ? original.schedule.courses.join(", ")
-      : "",
-  );
-  const [first, setFirst] = useState(
-    original.schedule.mode === "interval"
-      ? String(original.schedule.first)
-      : "",
-  );
-  const [every, setEvery] = useState(
-    original.schedule.mode === "interval"
-      ? String(original.schedule.every)
-      : "",
-  );
-  const [last, setLast] = useState(
-    original.schedule.mode === "interval" ? String(original.schedule.last) : "",
-  );
-  const [error, setError] = useState("");
+  const { enabled, diameter, length, mode, list, first, every, last } = draft;
+  const setEnabled = (enabled: boolean) => change({ ...draft, enabled });
+  const setDiameter = (diameter: string) => change({ ...draft, diameter });
+  const setLength = (length: string) => change({ ...draft, length });
+  const setList = (list: string) => change({ ...draft, list });
+  const setFirst = (first: string) => change({ ...draft, first });
+  const setEvery = (every: string) => change({ ...draft, every });
+  const setLast = (last: string) => change({ ...draft, last });
+  const [conversionError, setError] = useState("");
   const max = clampCourseLimit(doc, floor.id),
     m = doc.project.base.width;
-  const blocked = s.busy || s.readonly || !!s.imageDraft;
-  const settings = (): ClampSettings => {
-    const value = diameter.trim().replace(",", ".");
-    if (!/^\d+(\.\d)?$/.test(value))
-      throw new Error("Use diâmetro em mm, com até uma casa decimal (0,1 mm).");
-    const [whole, part = "0"] = value.split(".");
-    if (
-      mode === "interval" &&
-      ![first, every, last].every((n) => /^\d+$/.test(n.trim()))
-    )
-      throw new Error(
-        "Informe fiadas e intervalo como números inteiros positivos.",
-      );
-    const candidate: ClampSettings = {
-      enabled,
-      diameter: Number(whole) * 10 + Number(part),
-      length: cm(length),
-      schedule:
-        mode === "list"
-          ? { mode, courses: parseClampList(list) }
-          : {
-              mode,
-              first: Number(first),
-              every: Number(every),
-              last: Number(last),
-            },
-    };
-    validateClampSettings(candidate, m, doc.project.base.height);
-    return candidate;
-  };
+  const settings = () => parseClamps(draft, doc);
   let preview = "",
     leg = "—",
     invalid = "";
@@ -92,29 +55,35 @@ export function FloorClamps() {
   } catch (e) {
     invalid = (e as Error).message;
   }
-  const changeMode = (value: "list" | "interval") => {
+  const changeMode = (mode: "list" | "interval") => {
     setError("");
     try {
       const current = settings();
-      if (value === "list")
-        setList([...clampCourses(current.schedule)].join(", "));
+      if (mode === "list")
+        change({
+          ...draft,
+          mode,
+          list: [...clampCourses(current.schedule)].join(", "),
+        });
       else {
         const interval = intervalFromList(parseClampList(list));
-        if (interval.mode === "interval") {
-          setFirst(String(interval.first));
-          setEvery(String(interval.every));
-          setLast(String(interval.last));
-        }
+        if (interval.mode === "interval")
+          change({
+            ...draft,
+            mode,
+            first: String(interval.first),
+            every: String(interval.every),
+            last: String(interval.last),
+          });
       }
     } catch (e) {
-      if (value === "interval") {
-        setFirst("");
-        setEvery("");
-        setLast("");
-      }
+      change({
+        ...draft,
+        mode,
+        ...(mode === "interval" ? { first: "", every: "", last: "" } : {}),
+      });
       setError((e as Error).message);
     }
-    setMode(value);
   };
   return (
     <section
@@ -122,41 +91,7 @@ export function FloorClamps() {
       aria-label="Grampos dos encontros"
     >
       <h3>Grampos dos encontros</h3>
-      <form
-        onChange={() => setError("")}
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (blocked) return;
-          try {
-            const candidate = settings();
-            const upper =
-              candidate.schedule.mode === "list"
-                ? (candidate.schedule.courses.at(-1) ?? 0)
-                : candidate.schedule.last;
-            if (candidate.enabled && (max < 1 || upper > max))
-              throw new Error(
-                `Escolha fiadas entre 1 e ${max}; use a altura das paredes existentes.`,
-              );
-            const state = useStore.getState();
-            if (
-              !state.doc ||
-              state.doc.project.id !== doc.project.id ||
-              state.activeFloorId !== floor.id ||
-              state.busy ||
-              state.readonly
-            )
-              return;
-            setError("");
-            if (JSON.stringify(candidate) !== JSON.stringify(floor.clamps))
-              await state.commit(
-                editFloor(state.doc, floor.id, { clamps: candidate }),
-                "floor",
-              );
-          } catch (err) {
-            setError((err as Error).message);
-          }
-        }}
-      >
+      <div onChangeCapture={() => setError("")}>
         <fieldset
           disabled={blocked}
           style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
@@ -171,10 +106,11 @@ export function FloorClamps() {
           </label>
           <label className={styles.field}>
             Diâmetro do ferro (mm)
-            <input
-              inputMode="decimal"
+            <BarDiameterSelect
+              label="Diâmetro do ferro (mm)"
+              options={["5", "6,3", "8"]}
               value={diameter}
-              onChange={(e) => setDiameter(e.target.value)}
+              onChange={setDiameter}
             />
           </label>
           <label className={styles.field}>
@@ -241,20 +177,13 @@ export function FloorClamps() {
           <p className={styles.note}>
             Sobre as fiadas: {invalid ? "—" : preview}. Limite atual: {max}.
           </p>
-          {(error || invalid) && (
+          {(error || invalid || conversionError) && (
             <p className={styles.errorText} role="alert">
-              {error || invalid}
+              {error || conversionError || invalid}
             </p>
           )}
-          <button type="submit">Aplicar grampos</button>
         </fieldset>
-        {s.saved !== "saved" && s.saved !== "saving" && (
-          <p className={styles.errorText} role="alert">
-            Não salvo. {s.message} Use a recuperação de salvamento no aviso do
-            projeto.
-          </p>
-        )}
-      </form>
+      </div>
       <p className={styles.note}>
         Dimensões e distribuição nominais; não substituem o detalhamento
         estrutural. O total inclui as duas pontas e não é comprimento de

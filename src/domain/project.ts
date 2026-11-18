@@ -148,7 +148,7 @@ export type Tool =
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 24;
+  schemaVersion: 25;
   project: {
     id: string;
     name: string;
@@ -171,6 +171,7 @@ export type Project = {
       level: number;
       defaultHeight: number;
       groutMode?: "simple" | "reinforced";
+      groutDiameter?: 80 | 100 | 125;
       clamps?: ClampSettings;
       channelReinforcement?: ChannelReinforcementSettings;
       roomSequence?: number;
@@ -248,7 +249,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 24,
+    schemaVersion: 25,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),

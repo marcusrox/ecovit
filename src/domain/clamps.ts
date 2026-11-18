@@ -26,7 +26,7 @@ export type Clamp = {
 };
 export const defaultClampSettings = (module: number): ClampSettings => ({
   enabled: false,
-  diameter: 80,
+  diameter: 63,
   length: module + 2000,
   schedule: { mode: "list", courses: [] },
 });
