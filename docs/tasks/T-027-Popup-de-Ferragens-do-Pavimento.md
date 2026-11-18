@@ -8,7 +8,9 @@
 
 **Data de execução** — 2026-11-18
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
+
+**Data do aceite manual** — 2026-11-18
 
 ## Alteração e limites
 
@@ -92,13 +94,13 @@ Validação proporcional: mudança de modal/foco/layout e confirmação atômica
 - Typecheck aprovado; lint aprovado com um aviso preexistente de dependência de useEffect em src/editor/Rooms.tsx, sem erros; diff conferido. Logs e códigos de saída em .tools/t027/.
 - A primeira preparação foi bloqueada pelo sandbox na verificação de porta; a execução autorizada do mesmo test:env confirmou o ambiente isolado e permitiu concluir os testes. Nenhum processo desconhecido foi encerrado e a porta 5173 foi preservada.
 
-**Aceite manual permanece pendente**, separado da verificação técnica. Sem commit ou push nesta execução.
+O aceite manual estava pendente ao concluir a verificação técnica desta etapa. Sem commit ou push nesta execução.
 
 ### Ajuste de apresentação após a entrega inicial
 
 A pedido do solicitante, o popup passou a acompanhar o conteúdo, com largura máxima de 1180 px e altura fit-content limitada à janela; conserva a rolagem central em telas estreitas. Espaçamento do acesso na lateral ajustado; Duplicar/Excluir pavimento centralizados e alinhados, mantendo title nativo e retirando data-tooltip personalizado. Contratos de interface e PRD atualizados.
 
-Dois cenários direcionados no Chrome aprovados (13,4 s), com conferência visual de desktop/largura estreita e da lateral. A primeira conferência identificou que height:auto ainda esticava o diálogo nativo; corrigido para fit-content e revalidado sem ampliar timeout ou cobertura. Capturas e logs em .tools/t027/. Aceite manual permanece pendente.
+Dois cenários direcionados no Chrome aprovados (13,4 s), com conferência visual de desktop/largura estreita e da lateral. A primeira conferência identificou que height:auto ainda esticava o diálogo nativo; corrigido para fit-content e revalidado sem ampliar timeout ou cobertura. Capturas e logs em .tools/t027/. O aceite manual ainda aguardava confirmação nesta etapa.
 
 ### Listas de bitolas e barras do graute vertical
 
@@ -108,4 +110,8 @@ Valores anteriores permanecem intactos, inclusive bitolas fora do catálogo, apr
 
 Validação direcionada: 64 casos distintos dos arquivos floor-reinforcement-draft, clamps, channel-reinforcement, transport e floors conferidos. A primeira execução revelou expectativas antigas de padrão e recusa da versão 25, agora vigente; atualizadas para os novos padrões e para recusa de 26, mantendo todas as asserções de validade/adulteração. A execução de cinco arquivos teve 63 sucessos e somente o caso do novo limite de versão falhou; o recorte de dez envelopes passou após corrigir essa expectativa, sem repetir os aspectos já aprovados.
 
-Seis cenários distintos do Chrome aprovados: listas/nomes/padrões, aplicação atômica, desfazer/refazer/reabertura, arquivo, visualização e recuperação de falhas de grampos/cintas, preservação de bitolas legadas ao editar somente o graute. Cinco passaram na rodada de 41 s; o cenário legado passou em 8,9 s após usar a propriedade DOM disabled da option, que não é reconhecida por toBeDisabled do Playwright. Typecheck e lint aprovados, com somente o aviso preexistente em Rooms.tsx. Logs locais em .tools/t027/diameters-*. Sem testes amplos ou build. Aceite manual continua pendente; sem commit/push.
+Seis cenários distintos do Chrome aprovados: listas/nomes/padrões, aplicação atômica, desfazer/refazer/reabertura, arquivo, visualização e recuperação de falhas de grampos/cintas, preservação de bitolas legadas ao editar somente o graute. Cinco passaram na rodada de 41 s; o cenário legado passou em 8,9 s após usar a propriedade DOM disabled da option, que não é reconhecida por toBeDisabled do Playwright. Typecheck e lint aprovados, com somente o aviso preexistente em Rooms.tsx. Logs locais em .tools/t027/diameters-*. Sem testes amplos ou build. O aceite manual ainda aguardava confirmação nesta etapa; sem commit/push.
+
+### Aceite manual
+
+Em 2026-11-18, o solicitante aprovou explicitamente a T-027, incluindo o popup Ferragens do pavimento, os ajustes de apresentação e da lateral e as configurações de diâmetro das ferragens. Aceite manual confirmado, separado dos resultados técnicos registrados acima.

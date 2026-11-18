@@ -101,7 +101,7 @@ test(
         name: /^Total de peças 13 0 13(?:\s|$)/,
       }),
     ).toBeVisible();
-    await report(page).getByLabel("Perdas (%)").fill("10");
+    await report(page).getByLabel("Perdas de tijolos (%)").fill("10");
     await expect(
       summary(page).getByRole("row", { name: /^Inteiro 11 2 13(?:\s|$)/ }),
     ).toBeVisible();
@@ -118,12 +118,12 @@ test(
         "Este pavimento não tem fiadas. Quantidades zero.",
       ),
     ).toBeVisible();
-    await report(page).getByLabel("Perdas (%)").fill("-1");
+    await report(page).getByLabel("Perdas de tijolos (%)").fill("-1");
     await expect(report(page).getByRole("alert")).toContainText("não negativo");
     await expect(
       summary(page).getByRole("row", { name: /^Inteiro 11 — —(?:\s|$)/ }),
     ).toBeVisible();
-    await report(page).getByLabel("Perdas (%)").fill("2,50");
+    await report(page).getByLabel("Perdas de tijolos (%)").fill("2,50");
     await report(page)
       .getByRole("heading", { name: "Orçamento", exact: true })
       .focus();
@@ -141,13 +141,13 @@ test(
     );
     expect(await exported(page)).toEqual(document);
     await page.getByRole("button", { name: "Orçamento", exact: true }).click();
-    await expect(report(page).getByLabel("Perdas (%)")).toHaveValue("2,50");
+    await expect(report(page).getByLabel("Perdas de tijolos (%)")).toHaveValue("2,50");
     await page.keyboard.press("Escape");
     await expect(report(page)).not.toBeVisible();
     await page.reload();
     await page.getByRole("button", { name: /Quantitativos M5/ }).click();
     await page.getByRole("button", { name: "Orçamento", exact: true }).click();
-    await expect(report(page).getByLabel("Perdas (%)")).toHaveValue("0");
+    await expect(report(page).getByLabel("Perdas de tijolos (%)")).toHaveValue("0");
   },
 );
 
@@ -507,7 +507,7 @@ test(
         name: /^Total de peças 4 0 4(?:\s|$)/,
       }),
     ).toBeVisible();
-    await report(page).getByLabel("Perdas (%)").fill("10");
+    await report(page).getByLabel("Perdas de tijolos (%)").fill("10");
     await expect(
       summary(page).getByRole("row", {
         name: /^Total de peças 4 1 5(?:\s|$)/,

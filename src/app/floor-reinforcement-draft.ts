@@ -1,6 +1,11 @@
 import { cm, display, type Project } from "../domain/project";
 import type { Floor } from "../domain/floors";
 import {
+  defaultSteelBudget,
+  validateSteelBudget,
+} from "../domain/steel-budget";
+import { parseLossPercent } from "../domain/quantities";
+import {
   defaultClampSettings,
   parseClampList,
   validateClampSettings,
@@ -30,6 +35,9 @@ export type ReinforcementDraft = {
 export type FerragensDraft = {
   groutMode: "simple" | "reinforced";
   groutDiameter: string;
+  usefulLength: string;
+  overlapLength: string;
+  horizontalExtra: string;
   clamps: ClampsDraft;
   reinforcement: ReinforcementDraft;
 };
@@ -41,9 +49,13 @@ export function floorReinforcementDraft(
 ): FerragensDraft {
   const c = floor.clamps ?? defaultClampSettings(doc.project.base.width);
   const r = floor.channelReinforcement ?? defaultChannelReinforcement();
+  const b = floor.steelBudget ?? defaultSteelBudget();
   return {
     groutMode: floor.groutMode ?? "simple",
     groutDiameter: display((floor.groutDiameter ?? 80) * 10),
+    usefulLength: display(b.usefulLength),
+    overlapLength: display(b.overlapLength),
+    horizontalExtra: `${BigInt(b.horizontalExtra) / 100n},${String(BigInt(b.horizontalExtra) % 100n).padStart(2, "0")}`,
     clamps: {
       enabled: c.enabled,
       diameter: display(c.diameter * 10),
@@ -105,10 +117,40 @@ export function floorReinforcementChanges(
   const changes: Partial<
     Pick<
       Floor,
-      "groutMode" | "groutDiameter" | "clamps" | "channelReinforcement"
+      | "groutMode"
+      | "groutDiameter"
+      | "clamps"
+      | "channelReinforcement"
+      | "steelBudget"
     >
   > = {};
   const errors: FerragensErrors = {};
+  const b = floor.steelBudget ?? defaultSteelBudget();
+  const candidateBudget = { ...b };
+  try {
+    candidateBudget.usefulLength = cm(d.usefulLength);
+    validateSteelBudget({ ...b, usefulLength: candidateBudget.usefulLength });
+  } catch (e) {
+    errors.usefulLength = (e as Error).message;
+  }
+  try {
+    candidateBudget.overlapLength = cm(d.overlapLength);
+    validateSteelBudget({ ...b, overlapLength: candidateBudget.overlapLength });
+  } catch (e) {
+    errors.overlapLength = (e as Error).message;
+  }
+  try {
+    candidateBudget.horizontalExtra = parseLossPercent(d.horizontalExtra);
+  } catch (e) {
+    errors.horizontalExtra = (e as Error).message;
+  }
+  if (
+    !errors.usefulLength &&
+    !errors.overlapLength &&
+    !errors.horizontalExtra &&
+    JSON.stringify(candidateBudget) !== JSON.stringify(b)
+  )
+    changes.steelBudget = candidateBudget;
   const groutDiameters: Record<string, 80 | 100 | 125> = {
     "8": 80,
     "10": 100,

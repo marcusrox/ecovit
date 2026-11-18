@@ -85,7 +85,7 @@ test(
     expect(priced.doc.generationState).toEqual(before.doc.generationState);
     expect(priced.doc.model).toEqual(before.doc.model);
     expect(priced.history.past.length).toBe(before.history.past.length + 2);
-    await dialog.getByLabel("Perdas (%)").fill("10");
+    await dialog.getByLabel("Perdas de tijolos (%)").fill("10");
     await expect(total).toHaveText("R$ 36,10");
     await whole.fill("-1");
     await whole.press("Tab");
@@ -120,7 +120,7 @@ test(
       .toBe(120);
     await expect(page.getByRole("status")).toContainText("Salvo");
     await page.getByRole("button", { name: "Orçamento", exact: true }).click();
-    await expect(dialog.getByLabel("Perdas (%)")).toHaveValue("10");
+    await expect(dialog.getByLabel("Perdas de tijolos (%)")).toHaveValue("10");
     await expect(total).toHaveText("R$ 36,10");
     await page.keyboard.press("Escape");
     const download = page.waitForEvent("download");
@@ -137,7 +137,7 @@ test(
       .click();
     await expect(page.getByRole("status")).toContainText("Salvo");
     await page.getByRole("button", { name: "Orçamento", exact: true }).click();
-    await expect(dialog.getByLabel("Perdas (%)")).toHaveValue("0");
+    await expect(dialog.getByLabel("Perdas de tijolos (%)")).toHaveValue("0");
     await expect(whole).toHaveValue("2,50");
     await expect(half).toHaveValue("1,20");
     await expect(total).toHaveText("R$ 29,90");

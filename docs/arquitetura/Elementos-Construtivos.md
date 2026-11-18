@@ -95,3 +95,9 @@ Opening mantém id, wallId, kind (door/window/opening), offset, width, base e he
 Offset é longitudinal desde a menor coordenada da parede; base e altura são relativas à cota do proprietário. Redimensionamento de parede preserva a posição mundial do vão e recalcula offset; translação preserva a relação e união remapeia dependentes. Geometria indireta incompatível preserva intenção para diagnóstico, sem apagar o vão. O campo appearance não altera o vão bruto nem os insumos da composição.
 
 Implementação: src/domain/project.ts, src/domain/floors.ts, src/domain/openings.ts, src/domain/slabs.ts e src/domain/opening-appearance.ts. Geometria nominal em CT-07/08/11/13/17; exemplos e justificativas pertencem ao Caderno.
+
+## Parâmetros de orçamento das ferragens
+
+model.floors[].steelBudget opcional é metadado orçamentário independente por pavimento: usefulLength (0,1 mm, positivo, até LIMIT), overlapLength (0,1 mm, não negativo, até LIMIT) e horizontalExtra (centésimos de ponto percentual, inteiro não negativo seguro). Ausência equivale a 15000/2000/1000, isto é, 150 cm/20 cm/10%. O objeto, quando presente, é completo e estrito; não se confunde com comprimento do grampo ou count/diameter da armadura.
+
+Editar confirma com os demais grupos do popup; duplicar copia por valor; novo pavimento usa ausência/padrões, sem herdar de outro andar. Remover elementos ou desativar categorias não apaga parâmetros. Alterar apenas steelBudget não muda composição; confirmar valores equivalentes aos padrões ausentes não materializa campos. Preços são comuns ao projeto por material, conforme Quantitativos/Persistência. As fórmulas e massas pertencem ao Caderno Técnico.

@@ -205,6 +205,35 @@ function FerragensSession({
                 {errors.groutDiameter}
               </p>
             )}
+            {(
+              [
+                ["usefulLength", "Comprimento útil por trecho (cm)"],
+                ["overlapLength", "Sobreposição por emenda (cm)"],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key} className={styles.field}>
+                {label}
+                <input
+                  inputMode="decimal"
+                  value={draft[key]}
+                  aria-invalid={!!errors[key]}
+                  onChange={(e) => {
+                    setDraft({ ...draft, [key]: e.target.value });
+                    setErrors({ ...errors, [key]: undefined });
+                    setMessage("");
+                  }}
+                />
+                {errors[key] && (
+                  <span role="alert" className={styles.errorText}>
+                    {errors[key]}
+                  </span>
+                )}
+              </label>
+            ))}
+            <p className={styles.note}>
+              Orçamento: uma barra por eixo, com sobreposição a cada trecho
+              útil. Sem arranques entre pavimentos; não é plano de corte.
+            </p>
             <p className={styles.note}>
               Somente neste pavimento. Simples: 1 furo no L e na cruz; 2 no T
               (centro e primeiro furo do ramal). Reforçado: 3 furos no L, 4 no T
@@ -237,6 +266,13 @@ function FerragensSession({
             draft={draft.reinforcement}
             blocked={blocked}
             error={errors.reinforcement}
+            horizontalExtra={draft.horizontalExtra}
+            extraError={errors.horizontalExtra}
+            changeExtra={(horizontalExtra) => {
+              setDraft({ ...draft, horizontalExtra });
+              setErrors({ ...errors, horizontalExtra: undefined });
+              setMessage("");
+            }}
             change={(reinforcement) => {
               setDraft({ ...draft, reinforcement });
               setErrors({ ...errors, reinforcement: undefined });

@@ -256,7 +256,7 @@ describe("T-026 armaduras longitudinais nominais", () => {
     delete old.generated.floors[0].reinforcement;
     const source = structuredClone(old),
       loaded = validateProject(old);
-    expect(loaded.schemaVersion).toBe(25);
+    expect(loaded.schemaVersion).toBe(26);
     expect(loaded.model.floors[0].channelReinforcement).toBeUndefined();
     expect(loaded.generated).toBeNull();
     expect(old).toEqual(source);
@@ -276,7 +276,7 @@ describe("T-026 armaduras longitudinais nominais", () => {
     const bad = structuredClone(d);
     bad.generated!.floors[0].reinforcement![0].count = 7;
     expect(() => validateProject(bad)).toThrow("inconsistente");
-    expect(() => validateProject({ ...d, schemaVersion: 26 })).toThrow(
+    expect(() => validateProject({ ...d, schemaVersion: 27 })).toThrow(
       "incompatível",
     );
   });

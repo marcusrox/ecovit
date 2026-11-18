@@ -33,6 +33,7 @@ import {
 } from "../domain/channels";
 const integer = z.number().int().min(-LIMIT).max(LIMIT);
 const positive = integer.refine((n) => n > 0);
+const cents = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 const point = z.object({ x: integer, y: integer }).strict();
 const id = z.string().uuid();
 const diagnostic = z
@@ -195,7 +196,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(25),
+    schemaVersion: z.literal(26),
     project: z
       .object({
         id,
@@ -206,6 +207,16 @@ const schema = z
           .strict(),
         origin: point,
         initialWallHeight: positive.optional(),
+        steelPrices: z
+          .object({
+            "ca60-5": cents.optional(),
+            "ca50-6.3": cents.optional(),
+            "ca50-8": cents.optional(),
+            "ca50-10": cents.optional(),
+            "ca50-12.5": cents.optional(),
+          })
+          .strict()
+          .optional(),
         unitPrices: z
           .object({
             whole: z
@@ -287,6 +298,14 @@ const schema = z
                 level: integer,
                 defaultHeight: positive,
                 groutMode: z.enum(["simple", "reinforced"]).optional(),
+                steelBudget: z
+                  .object({
+                    usefulLength: positive,
+                    overlapLength: integer.refine((n) => n >= 0),
+                    horizontalExtra: cents,
+                  })
+                  .strict()
+                  .optional(),
                 groutDiameter: z
                   .union([z.literal(80), z.literal(100), z.literal(125)])
                   .optional(),
@@ -555,6 +574,30 @@ export function validateProject(
   value: unknown,
   checkGenerated = true,
 ): Project {
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion <= 25
+  ) {
+    const legacy = value as {
+      project?: object;
+      model?: { floors?: unknown[] };
+    };
+    if (
+      (legacy.project &&
+        typeof legacy.project === "object" &&
+        "steelPrices" in legacy.project) ||
+      (Array.isArray(legacy.model?.floors) &&
+        legacy.model.floors.some(
+          (f) => f && typeof f === "object" && "steelBudget" in f,
+        ))
+    )
+      throw new Error(
+        "Arquivo inválido: orçamento de ferragens em formato anterior.",
+      );
+  }
   if (
     value &&
     typeof value === "object" &&
@@ -844,12 +887,15 @@ export function validateProject(
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    (value.schemaVersion !== 24 && value.schemaVersion !== 25)
+    (value.schemaVersion !== 24 &&
+      value.schemaVersion !== 25 &&
+      value.schemaVersion !== 26)
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 25; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 26; demais formatos não são convertidos.",
     );
-  if (value.schemaVersion === 24) value = { ...value, schemaVersion: 25 };
+  if (value.schemaVersion === 24 || value.schemaVersion === 25)
+    value = { ...value, schemaVersion: 26 };
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");

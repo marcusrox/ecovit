@@ -16,6 +16,11 @@ import {
 } from "../domain/budget";
 import { useStore } from "../state/store";
 import { Icon } from "../ui/Icon";
+import {
+  useSteelBudget,
+  SteelBudgetSummary,
+  SteelBudgetDetail,
+} from "./SteelBudget";
 import styles from "../ui/App.module.css";
 
 const number = (n: number) => n.toLocaleString("pt-BR");
@@ -160,6 +165,14 @@ export function Quantities({
     });
   };
   const invalidPrices = Object.keys(priceErrors).length > 0;
+  const steel = useSteelBudget(
+    doc,
+    open,
+    busy,
+    readonly,
+    priceSaving,
+    setPriceSaving,
+  );
   return (
     <>
       <button
@@ -212,7 +225,8 @@ export function Quantities({
           <p className={styles.note}>
             Quantidade geométrica nominal. Consumo de peças-base para preparação
             não determinado: meios e canaletas não são automaticamente cortes de
-            inteiros. Lajes, concreto, graute e aço não incluídos.
+            inteiros. Ferragens são estimativas nominais; concreto, volume de
+            graute, lajes e mão de obra não incluídos.
           </p>
           {!report.available && <p role="alert">{report.reason}</p>}
           <>
@@ -235,9 +249,9 @@ export function Quantities({
               </button>
             )}
             <label className={styles.quantityLoss}>
-              Perdas (%)
+              Perdas de tijolos (%)
               <input
-                aria-label="Perdas (%)"
+                aria-label="Perdas de tijolos (%)"
                 inputMode="decimal"
                 value={percent}
                 aria-invalid={!!lossError}
@@ -247,10 +261,11 @@ export function Quantities({
             </label>
             <p id="loss-note" className={styles.note}>
               Opcional. Percentual da sessão, não salvo no projeto. Aplicado por
-              tipo sobre o total do projeto, com arredondamento para cima.
-              Custos usam o total estimado, incluindo perdas. Preços unitários
-              ficam salvos no projeto; ao reabri-lo, as perdas voltam a 0%. Saia
-              do campo de preço ou pressione Enter para salvar a edição.
+              tipo de tijolo sobre o total do projeto, com arredondamento para
+              cima. Não afeta ferragens. Custos usam o total estimado, incluindo
+              perdas. Preços unitários ficam salvos no projeto; ao reabri-lo, as
+              perdas voltam a 0%. Saia do campo de preço ou pressione Enter para
+              salvar a edição.
             </p>
             <p role="status" aria-live="polite">
               {priceSaving || saved === "saving"
@@ -374,6 +389,11 @@ export function Quantities({
                   peças. Preço não informado é diferente de zero.
                 </p>
               )}
+            <SteelBudgetSummary
+              model={steel}
+              brickTotal={!invalidPrices ? budget?.total : undefined}
+              brickPartial={report.available && report.partial}
+            />
             {report.available && (
               <>
                 <h2>Detalhamento por pavimento</h2>
@@ -401,6 +421,10 @@ export function Quantities({
                         : ""}
                       . Quantidades geométricas, sem perdas.
                     </p>
+                    <SteelBudgetDetail
+                      model={steel}
+                      floorId={selectedFloor.id}
+                    />
                     <div
                       className={styles.quantityTable}
                       tabIndex={0}

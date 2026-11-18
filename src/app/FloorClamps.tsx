@@ -11,6 +11,7 @@ import styles from "../ui/App.module.css";
 
 import { parseClamps, type ClampsDraft } from "./floor-reinforcement-draft";
 import { BarDiameterSelect } from "./BarDiameterSelect";
+import { steelCatalog } from "../domain/steel-budget";
 
 export function FloorClamps({
   draft,
@@ -91,6 +92,13 @@ export function FloorClamps({
       aria-label="Grampos dos encontros"
     >
       <h3>Grampos dos encontros</h3>
+      <p className={styles.note}>
+        Aço para orçamento:{" "}
+        {steelCatalog.find(
+          (s) => s.diameter === Number(diameter.replace(",", ".")) * 10,
+        )?.category ?? "bitola sem cadastro"}
+        .
+      </p>
       <div onChangeCapture={() => setError("")}>
         <fieldset
           disabled={blocked}

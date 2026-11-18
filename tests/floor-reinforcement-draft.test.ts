@@ -37,7 +37,7 @@ describe("Confirmação conjunta das ferragens", () => {
     const copy = duplicateFloor(next, floor.id, 14000, "Superior");
     expect(copy.model.floors[1].groutDiameter).toBe(125);
     const restored = parseFile(serializeFile(copy).text);
-    expect(restored.schemaVersion).toBe(25);
+    expect(restored.schemaVersion).toBe(26);
     expect(restored.model.floors.map((f) => f.groutDiameter)).toEqual([
       125, 125,
     ]);
@@ -69,7 +69,7 @@ describe("Confirmação conjunta das ferragens", () => {
     const old = { ...doc, schemaVersion: 24 };
     const source = JSON.stringify(old);
     const loaded = validateProject(old);
-    expect(loaded.schemaVersion).toBe(25);
+    expect(loaded.schemaVersion).toBe(26);
     expect(loaded.model.floors[0]).toEqual(floor);
     expect(JSON.stringify(old)).toBe(source);
     const draft = floorReinforcementDraft(loaded.model.floors[0], loaded);

@@ -8,9 +8,11 @@ import { componentId, signature } from "./composition";
 import { validateSlab } from "./slabs";
 import { validateClampSettings } from "./clamps";
 import { validateChannelReinforcement } from "./channel-reinforcement";
+import { validateSteelBudget } from "./steel-budget";
 
 export type Floor = Project["model"]["floors"][number];
 export function validateFloor(doc: Project, floor: Floor) {
+  if (floor.steelBudget) validateSteelBudget(floor.steelBudget);
   if (
     floor.groutDiameter !== undefined &&
     ![80, 100, 125].includes(floor.groutDiameter)
@@ -160,6 +162,7 @@ export function duplicateFloor(
     ...(source.groutDiameter !== undefined
       ? { groutDiameter: source.groutDiameter }
       : {}),
+    ...(source.steelBudget ? { steelBudget: { ...source.steelBudget } } : {}),
     ...(source.clamps ? { clamps: structuredClone(source.clamps) } : {}),
     ...(source.channelReinforcement
       ? { channelReinforcement: { ...source.channelReinforcement } }

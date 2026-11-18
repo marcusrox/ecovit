@@ -626,6 +626,23 @@ button.iconButton {
   width: 100%;
   touch-action: none;
 }
+.clampTooltip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  padding: 10px;
+  border: 1px solid #c4d5c7;
+  border-radius: 6px;
+  background: #fffefb;
+  box-shadow: 0 3px 12px #173a2b24;
+  color: #214c40;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.clampTooltip p {
+  margin: 5px 0 0;
+}
 .canvasHint {
   position: absolute;
   left: 50%;
@@ -2098,6 +2115,25 @@ button.iconButton {
   min-height: 0;
   overflow: auto;
   padding: 0 24px 20px;
+}
+.materialTotals {
+  display: grid;
+  gap: 8px;
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #d7e1d9;
+  border-radius: 8px;
+  background: #f3f7f0;
+}
+.materialTotals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.materialTotals dd {
+  margin: 0;
+  white-space: nowrap;
+  font-weight: 600;
 }
 .ferragensDialog {
   width: min(1180px, calc(100% - 40px));

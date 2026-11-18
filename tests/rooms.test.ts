@@ -408,7 +408,7 @@ describe("T-018 referências e intenção", () => {
     old.schemaVersion = 18;
     delete old.model.roomLabels;
     delete old.model.roomBoundaries;
-    expect(validateProject(old).schemaVersion).toBe(25);
+    expect(validateProject(old).schemaVersion).toBe(26);
     expect(validateProject(old).model.roomLabels).toEqual([]);
     old.model.roomLabels = [];
     expect(() => validateProject(old)).toThrow(/anterior/);

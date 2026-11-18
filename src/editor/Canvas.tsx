@@ -64,7 +64,7 @@ import { drawOpeningSymbol } from "./opening-symbol";
 import { defaultAppearance } from "../domain/opening-appearance";
 import { usePreferences } from "../state/preferences";
 import { CompositionStatus } from "./CompositionStatus";
-import { ClampsCanvas } from "./Clamps";
+import { ClampsCanvas, ClampsTooltip, type ClampHover } from "./Clamps";
 import { ChannelReinforcementCanvas } from "./ChannelReinforcement";
 import { useMeasurementCanvas } from "./Measurements";
 import { useImageElements } from "./ImageElements";
@@ -126,6 +126,7 @@ export function Canvas({
         !project.model.slabs.some((s) => s.floorId === reference.id));
   const stage = useRef<Konva.Stage>(null);
   const announcedReady = useRef(false);
+  const [clampHover, setClampHover] = useState<ClampHover | null>(null);
   const host = useRef<HTMLDivElement>(null),
     gesture = useRef<Gesture | null>(null),
     space = useRef(false);
@@ -1140,6 +1141,7 @@ export function Canvas({
           setHover(null);
           setMouseScreen(null);
           setGroutHover(null);
+          setClampHover(null);
           if (!gesture.current) setTarget(null);
         }}
       >
@@ -1757,12 +1759,18 @@ export function Canvas({
           {terrain.controls}
           {compass.layer}
           {mode === "course" && (
-            <ClampsCanvas camera={camera} width={size.width} />
-          )}
-          {mode === "course" && (
             <ChannelReinforcementCanvas camera={camera} width={size.width} />
           )}
+          {mode === "course" && (
+            <ClampsCanvas camera={camera} onHover={setClampHover} />
+          )}
         </Stage>
+        <ClampsTooltip
+          hover={clampHover}
+          camera={camera}
+          width={size.width}
+          height={size.height}
+        />
         {measurements.menu}
       </div>
       {slabs.controls}

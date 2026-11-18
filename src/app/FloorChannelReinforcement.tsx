@@ -4,16 +4,23 @@ import styles from "../ui/App.module.css";
 
 import type { ReinforcementDraft } from "./floor-reinforcement-draft";
 import { BarDiameterSelect } from "./BarDiameterSelect";
+import { steelCatalog } from "../domain/steel-budget";
 export function FloorChannelReinforcement({
   draft,
   change,
   blocked,
   error,
+  horizontalExtra,
+  changeExtra,
+  extraError,
 }: {
   draft: ReinforcementDraft;
   change: (draft: ReinforcementDraft) => void;
   blocked: boolean;
   error?: string;
+  horizontalExtra: string;
+  changeExtra: (value: string) => void;
+  extraError?: string;
 }) {
   const { enabled, count, diameter } = draft;
   const setEnabled = (enabled: boolean) => change({ ...draft, enabled });
@@ -65,6 +72,31 @@ export function FloorChannelReinforcement({
             />
           </label>
           <p className={styles.note}>Conjunto: {invalid ? "—" : preview}.</p>
+          <p className={styles.note}>
+            Aço para orçamento:{" "}
+            {steelCatalog.find(
+              (s) => s.diameter === Number(diameter.replace(",", ".")) * 10,
+            )?.category ?? "bitola sem cadastro"}
+            .
+          </p>
+          <label className={styles.field}>
+            Acréscimo para emendas e dobras (%)
+            <input
+              inputMode="decimal"
+              value={horizontalExtra}
+              aria-invalid={!!extraError}
+              onChange={(e) => changeExtra(e.target.value)}
+            />
+          </label>
+          <p className={styles.note}>
+            Estimativa de orçamento para cintas, vergas e contravergas. Não se
+            aplica aos grampos nem modifica o desenho.
+          </p>
+          {extraError && (
+            <p role="alert" className={styles.errorText}>
+              {extraError}
+            </p>
+          )}
           {(error || invalid) && (
             <p role="alert" className={styles.errorText}>
               {error || invalid}

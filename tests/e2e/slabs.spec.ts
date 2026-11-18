@@ -174,7 +174,7 @@ test(
     await opening(page);
     const before = await exported(page),
       slab = before.model.slabs[0];
-    expect(before.schemaVersion).toBe(25);
+    expect(before.schemaVersion).toBe(26);
     expect(slab.openings).toHaveLength(1);
     await page
       .getByLabel("Selecionar elemento", { exact: true })

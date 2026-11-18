@@ -5,6 +5,7 @@ import type {
   JunctionChoice,
 } from "./composition";
 import type { ClampSettings } from "./clamps";
+import type { SteelBudgetSettings, SteelPrices } from "./steel-budget";
 import type { ChannelReinforcementSettings } from "./channel-reinforcement";
 export type Point = { x: number; y: number };
 export type CustomImageAsset = {
@@ -148,7 +149,7 @@ export type Tool =
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 25;
+  schemaVersion: 26;
   project: {
     id: string;
     name: string;
@@ -159,6 +160,7 @@ export type Project = {
     openingSettings: OpeningSettings;
     channelLevels: ChannelLevel[];
     groutSettings: GroutSettings;
+    steelPrices?: SteelPrices;
     unitPrices?: Partial<
       Record<"whole" | "half" | "channel" | "half-channel", number>
     >;
@@ -172,6 +174,7 @@ export type Project = {
       defaultHeight: number;
       groutMode?: "simple" | "reinforced";
       groutDiameter?: 80 | 100 | 125;
+      steelBudget?: SteelBudgetSettings;
       clamps?: ClampSettings;
       channelReinforcement?: ChannelReinforcementSettings;
       roomSequence?: number;
@@ -249,7 +252,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 25,
+    schemaVersion: 26,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
