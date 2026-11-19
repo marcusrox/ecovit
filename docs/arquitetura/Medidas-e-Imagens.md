@@ -56,7 +56,7 @@ Usar seção compacta em Propriedades do pavimento: controles essenciais no esta
 
 ### Catálogo e preparação das artes
 
-Distribuir o acervo como arquivos estáticos do Ecovit e manifesto local, sem API/CDN ou novo serviço. Cada opção tem ID estável, categoria, nome em português, recurso/revisão da arte e dimensões iniciais em cm. Uma arte pode atender mais de uma opção; Armário de Cozinha/Lavanderia pode compartilhar recurso, conservando as duas entradas do catálogo. As quatro camas têm proporções/dimensões próprias, mesmo quando derivadas de um desenho-base. A contagem vigente de 62 refere-se a opções, atendidas por 61 artes vigentes, além das revisões históricas do bloco de contenção e da TV. Ampliações acrescentam IDs/recursos sem substituir revisões existentes ou alterar o envelope do projeto. As dimensões sugeridas e a procedência constam do manifesto e de provenance.json.
+Distribuir o acervo como arquivos estáticos do Ecovit e manifesto local, sem API/CDN ou novo serviço. Cada opção tem ID estável, categoria, nome em português, recurso/revisão da arte e dimensões iniciais em cm. Uma arte pode atender mais de uma opção; Armário de Cozinha/Lavanderia pode compartilhar recurso, conservando as duas entradas do catálogo. As quatro camas têm proporções/dimensões próprias, mesmo quando derivadas de um desenho-base. A contagem vigente de 64 refere-se a opções, atendidas por 63 artes vigentes, além das revisões históricas do bloco de contenção e da TV. Ampliações acrescentam IDs/recursos sem substituir revisões existentes ou alterar o envelope do projeto. As dimensões sugeridas e a procedência constam do manifesto e de provenance.json.
 
 Usar imagens individuais PNG com alpha real, margens transparentes reduzidas e orientação superior ortogonal, conforme padrão visual de RF-17. Preparar miniaturas a partir dos mesmos recursos. O catálogo usa cores suaves e folhagem simplificada. Resoluções e dimensões iniciais constam dos recursos distribuídos e de src/domain/image-catalog.ts. As dimensões são ilustrativas. O renderizador identifica os limites alpha da arte padrão sem alterar o arquivo original e ajusta esse recorte integralmente à largura e à profundidade da ocorrência, com escala independente por eixo. Os limites do recorte coincidem com o retângulo de seleção, sem folga adicional por diferença entre a proporção da arte e a nominal; áreas transparentes internas ao recorte permanecem. Por exemplo, a cama de solteiro ocupa 90 × 190 cm quando inserida com as dimensões do catálogo. A regra vale para todas as artes/revisões suportadas, nas prévias e em ocorrências novas ou já salvas, preservando suas dimensões, posição, rotação e espelhamento persistidos; substitui o encaixe uniforme anterior. Uploads conservam as margens originais e ajustam a imagem completa ao retângulo da ocorrência. Cantos e campos numéricos preservam a proporção atual da ocorrência. Recursos em public/catalog/m10 e registro de geração/procedência em provenance.json.
 
@@ -75,9 +75,9 @@ As artes da categoria Arquitetura são desenhos vetoriais originais em `public/c
 | Lavanderia | Tanque; Máquina de lavar; Armário | 3 |
 | Outros | Carro; Bicicleta; Caixa-d’água; Condensadora de ar; Extintor | 5 |
 | Varanda | Mesa redonda; Banco; Banqueta; Espreguiçadeira; Piscina; Churrasqueira | 6 |
-| Paisagismo | Árvore ornamental; Vaso com planta; Canteiro; Cerca viva | 4 |
+| Paisagismo | Árvore ornamental; Vaso com planta; Planta de folhas largas; Costela-de-adão; Canteiro; Cerca viva | 6 |
 | Arquitetura | Escada reta; Escada em U; Escada em U assimétrica; Escada em L; Escada em U com 3 lances (todas com 16 degraus); Caminho de placas de concreto; Caminho de blocos intertravados; Bloco de concreto para contenção; Rampa reta; Floreira de concreto; Banco de concreto | 11 |
-| Total | Opções de catálogo, com possibilidade de compartilhar artes | 62 |
+| Total | Opções de catálogo, com possibilidade de compartilhar artes | 64 |
 
 ### Redução e suavização em tela
 

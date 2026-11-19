@@ -6,6 +6,7 @@ test(
   "T-030 relatório, filtro global, localização e consulta sem gravação",
   { tag: "@interface" },
   async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 768 });
     let d = createProject("T-030 Áreas do projeto", {
       length: 2000,
       width: 1000,
@@ -76,6 +77,11 @@ test(
     await expect(
       modal.getByRole("heading", { name: "Áreas do projeto", exact: true }),
     ).toBeFocused();
+    expect(
+      await modal.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth,
+      ),
+    ).toBe(true);
     const summary = modal.getByRole("region", { name: "Resumo do projeto" });
     await expect(summary.getByText("10,00 m²", { exact: true })).toHaveCount(2);
     await expect(

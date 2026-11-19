@@ -66,10 +66,10 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-it("M10-A01 catálogo tem nove categorias e 62 opções com referências únicas e dimensões genéricas", () => {
+it("M10-A01 catálogo tem nove categorias e 64 opções com referências únicas e dimensões genéricas", () => {
   expect(imageCategories).toHaveLength(9);
-  expect(imageCatalog).toHaveLength(62);
-  expect(new Set(imageCatalog.map((i) => i.id)).size).toBe(62);
+  expect(imageCatalog).toHaveLength(64);
+  expect(new Set(imageCatalog.map((i) => i.id)).size).toBe(64);
   expect(imageCatalog.filter((i) => i.asset === "armario")).toHaveLength(2);
   expect(
     imageCatalog.every(
@@ -82,6 +82,20 @@ it("M10-A01 catálogo tem nove categorias e 62 opções com referências únicas
   ).toBe(true);
 });
 it.each([
+  {
+    id: "planta-folhas-largas",
+    category: "Paisagismo",
+    name: "Planta de folhas largas",
+    width: 5000,
+    depth: 5000,
+  },
+  {
+    id: "costela-de-adao",
+    category: "Paisagismo",
+    name: "Costela-de-adão",
+    width: 10000,
+    depth: 12000,
+  },
   {
     id: "roupeiro",
     category: "Quarto",

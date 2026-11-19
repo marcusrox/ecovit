@@ -1,0 +1,12 @@
+{
+  "id": "planta-folhas-largas",
+  "name": "Planta de folhas largas",
+  "category": "Paisagismo",
+  "subject": "Compact small ornamental plant with broad entire pointed leaves, muted sage/olive canopy, strict orthographic top view.",
+  "widthCm": 50,
+  "depthCm": 50,
+  "revision": 1,
+  "reference": "User-supplied plant close-up, 2026-11-19; inspiration only.",
+  "method": "Built-in image_gen tool",
+  "generationPrompt": "Use case: product-mockup. Create ONE isolated production PNG furniture/landscaping asset for Ecovit architectural 2D floor plans. The supplied tiny image is STYLE AND SHAPE REFERENCE ONLY: a compact small houseplant with a few broad pointed leaves radiating in an irregular star. Subject: compact broad-leaf ornamental plant in a small discreet round pot, strict TRUE ORTHOGRAPHIC TOP VIEW, camera exactly overhead. Intended canopy footprint 50 cm width by 50 cm depth. About 7 to 10 large broad lanceolate or heart-shaped leaves with pointed tips, short stems clustered around a central crown. Leaves are entire, without holes, without monstera splits; make them broad and clearly readable. Muted sage and olive greens, subtle lighter midribs and a thin warm gray/dark green contour, refined simplified colored architectural plan illustration matching the reference. Small pot mostly hidden under foliage. Delicate internal shading, low botanical detail, no photorealistic shine. Natural slightly asymmetric rounded foliage silhouette. Entire plant unclipped, narrow transparent margins, genuinely transparent alpha background. ONLY one small plant. No floor, room, wall, grass patch, surrounding furniture, text, labels, watermark, logos, external shadow, front elevation, perspective or isometric view."
+}

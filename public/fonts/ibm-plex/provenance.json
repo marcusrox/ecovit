@@ -1,0 +1,30 @@
+{
+  "purpose": "Local typography for Áreas and Orçamento, Caderno técnico design. Latin subset; other characters use system fallbacks.",
+  "license": "SIL Open Font License 1.1; see OFL-Sans.txt and OFL-Mono.txt.",
+  "files": [
+    {
+      "family": "IBM Plex Sans",
+      "weight": "400–600",
+      "file": "sans-latin.woff2",
+      "source": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2",
+      "sha256": "e2291e842cf5af167122a22881a740c7f2dda7716f1e8cd76680264f4a859470",
+      "bytes": 45712
+    },
+    {
+      "family": "IBM Plex Mono",
+      "weight": 400,
+      "file": "mono-regular-latin.woff2",
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2",
+      "sha256": "7ced53420784c93cecccb7c27237594f0e41e5a7990581565f0aef8eda9e9d2f",
+      "bytes": 14648
+    },
+    {
+      "family": "IBM Plex Mono",
+      "weight": 500,
+      "file": "mono-medium-latin.woff2",
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2",
+      "sha256": "6e618344335cc436ffd25deba4f4cb5a60ca6c3a4832e67f236ca43922f74eea",
+      "bytes": 14904
+    }
+  ]
+}

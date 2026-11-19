@@ -569,6 +569,19 @@ test(
     const before = await snapshot(page);
     await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     const modal = report(page);
+    expect(
+      await page.evaluate(async () => {
+        const faces = await Promise.all([
+          document.fonts.load('400 13px "IBM Plex Sans"', "Áreas Orçamento"),
+          document.fonts.load('400 12px "IBM Plex Mono"', "1.234,56"),
+          document.fonts.load('500 22px "IBM Plex Mono"', "1.234,56"),
+        ]);
+        return faces.every(
+          (group) =>
+            group.length > 0 && group.every((face) => face.status === "loaded"),
+        );
+      }),
+    ).toBe(true);
     const filter = modal.getByLabel("Pavimento da consulta");
     await filter.selectOption("all");
     const courses = modal.getByRole("region", { name: "Peças por fiada" });
@@ -597,6 +610,9 @@ test(
     ).toHaveText("26");
     for (const width of [1366, 900]) {
       await page.setViewportSize({ width, height: 768 });
+      await modal.evaluate((element) => {
+        element.scrollTop = 0;
+      });
       expect(
         await modal.evaluate((element) => {
           const tables = [...element.querySelectorAll('[role="region"]')];

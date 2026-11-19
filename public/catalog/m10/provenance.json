@@ -305,6 +305,30 @@
       "reference": "User-supplied close-up, 2026-11-19; inspiration only.",
       "method": "Built-in image_gen tool",
       "source": "sources/pia-com-bancada-r1-generation.json"
+    },
+    {
+      "id": "planta-folhas-largas",
+      "name": "Planta de folhas largas",
+      "category": "Paisagismo",
+      "subject": "Compact small ornamental plant with broad entire pointed leaves, muted sage/olive canopy, strict orthographic top view.",
+      "widthCm": 50,
+      "depthCm": 50,
+      "revision": 1,
+      "reference": "User-supplied plant close-up, 2026-11-19; inspiration only.",
+      "method": "Built-in image_gen tool",
+      "source": "sources/planta-folhas-largas-r1-generation.json"
+    },
+    {
+      "id": "costela-de-adao",
+      "name": "Costela-de-adão",
+      "category": "Paisagismo",
+      "subject": "Larger Monstera deliciosa with long broad split leaves and a discreet round pot, muted greens, strict orthographic top view.",
+      "widthCm": 100,
+      "depthCm": 120,
+      "revision": 1,
+      "reference": "User-supplied plant close-up, 2026-11-19; inspiration only.",
+      "method": "Built-in image_gen tool",
+      "source": "sources/costela-de-adao-r1-generation.json"
     }
   ],
   "sofaPrompt": "Generate a single standalone production asset for the Ecovit architectural floor-plan furniture catalog. Reference image is a STYLE reference only; preserve its refined material finish, muted colors and thin warm gray outlines. Subject: one beige 3-seat sofa, strictly orthographic TOP VIEW camera 90 degrees directly overhead, backrest at top, arms left/right, seat cushions visible, NO front elevation or legs. Isolated object on genuinely transparent alpha background, no floor, no backdrop, no external shadow, no label, no text, no border, no extra objects. Whole silhouette tightly framed with narrow clear margins, horizontal width-to-depth aspect ratio 2.5:1, centered in canvas. Same soft beige upholstery, lightly shaded texture and crisp thin contours as the reference. This is a new individual asset, not an edit of the contact sheet. Output only the sofa.",

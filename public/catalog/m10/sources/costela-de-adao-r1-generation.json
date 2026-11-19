@@ -1,0 +1,12 @@
+{
+  "id": "costela-de-adao",
+  "name": "Costela-de-adão",
+  "category": "Paisagismo",
+  "subject": "Larger Monstera deliciosa with long broad split leaves and a discreet round pot, muted greens, strict orthographic top view.",
+  "widthCm": 100,
+  "depthCm": 120,
+  "revision": 1,
+  "reference": "User-supplied plant close-up, 2026-11-19; inspiration only.",
+  "method": "Built-in image_gen tool",
+  "generationPrompt": "Use case: product-mockup. Create ONE isolated production PNG landscaping furniture asset for Ecovit architectural 2D floor plans. The supplied small cropped room-plan image is a SHAPE AND STYLE REFERENCE ONLY: focus solely on the large potted Monstera deliciosa / costela-de-adão at center, not the room. Strict TRUE ORTHOGRAPHIC TOP VIEW, camera directly overhead. Subject: one larger tropical costela-de-adão with about 7 large long broad leaves on visible radiating stems, canopy footprint 100 cm wide by 120 cm deep, slightly taller than wide. Leaves should be noticeably long and broad, characteristic deeply split rounded lobes on both sides, a few simple oval fenestrations. Clear organic leaf silhouettes, each with 3 to 5 generous lobes per side, inspired by the reference's long dissected foliage; do not make a cluster of small round leaves or a generic palm. Leaves radiate asymmetrically in different directions with some elegant open gaps, centered on a discreet round muted taupe pot with a glimpse of dark soil. Muted medium sage and olive greens, fine dark warm-gray/green outlines, restrained pale central veins, subtle tonal shading. Refined simplified colored architectural floor-plan illustration matching the reference, low botanical detail readable when reduced; no photorealistic gloss. Full leaves and pot inside frame, no clipping, narrow transparent margins. Genuinely transparent alpha background, including gaps between leaves. ONLY the single plant, no room, wall, floor, grass, furniture, other plants, decorative stones, labels, text, logos, watermark, cast shadow, perspective, front elevation or isometric view."
+}

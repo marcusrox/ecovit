@@ -173,6 +173,12 @@
     "width": 1182,
     "height": 906
   },
+  "/catalog/m10/costela-de-adao-r1.png": {
+    "x": 23,
+    "y": 26,
+    "width": 1096,
+    "height": 1334
+  },
   "/catalog/m10/escada-l-16-r1.png": {
     "x": 17,
     "y": 17,
@@ -310,6 +316,12 @@
     "y": 145,
     "width": 674,
     "height": 1486
+  },
+  "/catalog/m10/planta-folhas-largas-r1.png": {
+    "x": 32,
+    "y": 30,
+    "width": 1188,
+    "height": 1182
   },
   "/catalog/m10/poltrona-r1.png": {
     "x": 53,

@@ -86,11 +86,17 @@ No popup Ferragens do pavimento, a escolha Simples/Reforçado usa seletor com no
 
 ## Áreas do projeto
 
-A consulta Áreas do projeto da T-030 reutiliza a apresentação documental do Orçamento: modal amplo com uma rolagem vertical, papel central, tipografia e separadores por seção, retorno flutuante superior direito e foco inicial no título. Cabeçalho usa o nome semântico central areas→LandPlot acompanhado de Áreas. Resumo em dois indicadores, tabelas sem scroll próprio, aviso descritivo único por pavimento afetado e indicador global; sem sobreposições de diagnóstico ou lista por parede. Filtro e Localizar têm nomes acessíveis; textos da consulta usam ambiente. Não alterar o orçamento ao reutilizar seus estilos.
+A consulta Áreas do projeto da T-030 reutiliza a apresentação documental do Orçamento: modal amplo com uma rolagem vertical, papel central, tipografia e separadores por seção, retorno flutuante superior direito e foco inicial no título. Cabeçalho usa o nome semântico central areas→LandPlot acompanhado de Áreas. Resumo em dois indicadores, tabelas sem scroll próprio, aviso descritivo único por pavimento afetado e indicador global; sem sobreposições de diagnóstico ou lista por parede. Filtro e Localizar têm nomes acessíveis; textos da consulta usam ambiente. Áreas e Orçamento compartilham a formatação documental descrita abaixo.
 
 ## Orçamento
 
 O acesso do cabeçalho passa a Orçamento, conservando o ícone central quantities e a apresentação iconText. Popup nativo amplo segue releasePage/releaseHeader do histórico: margens externas, fundo atenuado, cabeçalho e fechamento fixos enquanto o conteúdo rola. No Resumo do projeto, manter as colunas quantitativas, acrescentar preço unitário por tipo e custo como última coluna. Campos monetários têm nomes acessíveis por tipo, inputMode decimal, validação associada e bloqueio em somente leitura/processamento. Confirmar preço ao sair do campo ou por Enter; prévia válida dos custos acompanha a digitação, sem salvar até confirmar. Entrada inválida não confirma nem mostra custo antigo como válido. O popup informa o estado do salvamento; fechamento dá acesso à recuperação existente no editor. Detalhamento quantitativo continua consultável e o foco retorna ao botão Orçamento ao fechar.
+
+### Formatação documental — Áreas e Orçamento
+
+Aplicar a direção Caderno técnico aos dois documentos: folha clara sobre fundo verde acinzentado, filete verde escuro no cabeçalho, títulos de seção discretos e cabeçalhos de tabela com fundo verde suave. Usar IBM Plex Sans nos textos e IBM Plex Mono nos valores numéricos, com fontes WOFF2 distribuídas localmente em `public/fonts/ibm-plex`, acompanhadas de licença e procedência; nenhuma consulta a provedor de fontes durante o uso. Título do documento em 26 px/500, nome do projeto em 13 px/400, seções em 14 px/500, tabelas em 12 px e notas/cabeçalhos em 11 px, com entrelinha 1,4 e algarismos tabulares. Índices de seção usam 10 px por serem decorativos. Manter os nomes acessíveis, foco e hierarquia semântica existentes.
+
+Reduzir o preenchimento da folha a 26 px no desktop e progressivamente nas larguras menores; remover caixas e preenchimentos dos grupos internos. Linhas de tabela usam 6 px de espaço vertical, com separadores finos e sem faixas alternadas; campos de preço mantêm foco, erros e espaço para edição. Subtotais ficam sem caixa e o total dos materiais recebe faixa verde clara, sem fundo escuro. Indicadores de áreas mantêm separador vertical no desktop e empilham em telas menores. Preservar a rolagem vertical única do documento, os filtros, avisos, dados, edição e ações; a formatação não modifica cálculo, persistência nem histórico.
 
 ## Painéis de propriedades à direita
 

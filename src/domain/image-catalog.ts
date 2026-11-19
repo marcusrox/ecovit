@@ -63,6 +63,8 @@ const rows: [string, string, string, number, number, string?][] = [
   ["Varanda", "churrasqueira", "Churrasqueira", 140, 70],
   ["Paisagismo", "arvore", "Árvore ornamental", 300, 300],
   ["Paisagismo", "vaso-planta", "Vaso com planta", 45, 45],
+  ["Paisagismo", "planta-folhas-largas", "Planta de folhas largas", 50, 50],
+  ["Paisagismo", "costela-de-adao", "Costela-de-adão", 100, 120],
   ["Paisagismo", "canteiro", "Canteiro", 150, 40],
   ["Paisagismo", "cerca-viva", "Cerca viva", 150, 50],
   ["Arquitetura", "escada-reta-16", "Escada reta (16 degraus)", 100, 448],
