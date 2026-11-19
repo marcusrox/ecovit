@@ -89,6 +89,13 @@ export function Quantities({
       report.floors.find((f) => f.id === activeFloorId) ??
       report.floors[0])
     : undefined;
+  const consultedFloors = report.available
+    ? floorId === "all"
+      ? report.floors
+      : selectedFloor
+        ? [selectedFloor]
+        : []
+    : [];
   let estimate: ReturnType<typeof estimateLosses> | undefined;
   let lossError = "";
   if (report.available) {
@@ -229,8 +236,8 @@ export function Quantities({
             graute, lajes e mão de obra não incluídos.
           </p>
           {!report.available && <p role="alert">{report.reason}</p>}
-          <>
-            <h2>Resumo do projeto</h2>
+          <section className={styles.quantitySection}>
+            <h2 id="budget-summary-title">Resumo do projeto</h2>
             <p>
               {!report.available
                 ? "Quantitativos indisponíveis"
@@ -248,226 +255,256 @@ export function Quantities({
                 Ver diagnósticos
               </button>
             )}
-            <label className={styles.quantityLoss}>
-              Perdas de tijolos (%)
-              <input
-                aria-label="Perdas de tijolos (%)"
-                inputMode="decimal"
-                value={percent}
-                aria-invalid={!!lossError}
-                aria-describedby="loss-note"
-                onChange={(e) => setPercent(e.target.value)}
-              />
-            </label>
-            <p id="loss-note" className={styles.note}>
-              Opcional. Percentual da sessão, não salvo no projeto. Aplicado por
-              tipo de tijolo sobre o total do projeto, com arredondamento para
-              cima. Não afeta ferragens. Custos usam o total estimado, incluindo
-              perdas. Preços unitários ficam salvos no projeto; ao reabri-lo, as
-              perdas voltam a 0%. Saia do campo de preço ou pressione Enter para
-              salvar a edição.
-            </p>
-            <p role="status" aria-live="polite">
-              {priceSaving || saved === "saving"
-                ? "Salvando preços…"
-                : saved === "saved"
-                  ? "Salvo · preços no projeto"
-                  : `Não salvo. ${saveMessage} Feche o orçamento para acessar a recuperação do salvamento.`}
-            </p>
-            {lossError && (
-              <p role="alert" className={styles.errorText}>
-                {lossError}
+            <section aria-labelledby="budget-bricks-title">
+              <h3 id="budget-bricks-title">Tijolos do Projeto</h3>
+              <label className={styles.quantityLoss}>
+                Perdas de tijolos (%)
+                <input
+                  aria-label="Perdas de tijolos (%)"
+                  inputMode="decimal"
+                  value={percent}
+                  aria-invalid={!!lossError}
+                  aria-describedby="loss-note"
+                  onChange={(e) => setPercent(e.target.value)}
+                />
+              </label>
+              <p id="loss-note" className={styles.note}>
+                Opcional. Percentual da sessão, não salvo no projeto. Aplicado
+                por tipo de tijolo sobre o total do projeto, com arredondamento
+                para cima. Não afeta ferragens. Custos usam o total estimado,
+                incluindo perdas. Preços unitários ficam salvos no projeto; ao
+                reabri-lo, as perdas voltam a 0%. Saia do campo de preço ou
+                pressione Enter para salvar a edição.
               </p>
-            )}
-            <div
-              className={styles.quantityTable}
-              tabIndex={0}
-              role="region"
-              aria-label="Resumo do projeto"
-            >
-              <table>
-                <caption>
-                  {report.available && report.partial
-                    ? "Estimativa parcial do projeto"
-                    : "Peças do projeto"}
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Tipo</th>
-                    <th scope="col">Geométrica</th>
-                    <th scope="col">Acréscimo de perdas</th>
-                    <th scope="col">Total estimado</th>
-                    <th scope="col">Preço unitário (R$)</th>
-                    <th scope="col">Custo (R$)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...pieceKinds, "total" as const].map((kind) => (
-                    <tr key={kind}>
-                      <th scope="row">
-                        {kind === "total"
-                          ? "Total de peças"
-                          : pieceLabels[kind]}
-                      </th>
-                      <td>
-                        {report.available ? number(report.counts[kind]) : "—"}
-                      </td>
-                      <td>{estimate ? number(estimate.added[kind]) : "—"}</td>
-                      <td>
-                        {estimate ? number(estimate.estimated[kind]) : "—"}
-                      </td>
-                      <td>
-                        {kind === "total" ? (
-                          "—"
-                        ) : (
-                          <>
-                            <input
-                              className={styles.budgetPrice}
-                              aria-label={`Preço unitário de ${pieceLabels[kind]}`}
-                              aria-invalid={!!priceErrors[kind]}
-                              aria-describedby={
-                                priceErrors[kind]
-                                  ? `price-error-${kind}`
-                                  : undefined
-                              }
-                              inputMode="decimal"
-                              placeholder="Não informado"
-                              value={
-                                drafts[kind] ??
-                                priceText(doc.project.unitPrices?.[kind])
-                              }
-                              disabled={busy || readonly}
-                              onChange={(e) =>
-                                setDrafts((previous) => ({
-                                  ...previous,
-                                  [kind]: e.target.value,
-                                }))
-                              }
-                              onBlur={() => void confirmPrice(kind)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  e.currentTarget.blur();
-                                }
-                              }}
-                            />
-                            {priceErrors[kind] && (
-                              <span
-                                role="alert"
-                                id={`price-error-${kind}`}
-                                className={styles.budgetPriceError}
-                              >
-                                {priceErrors[kind]}
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </td>
-                      <td>
-                        {kind === "total"
-                          ? !estimate
-                            ? "—"
-                            : !invalidPrices && budget?.total !== undefined
-                              ? money(budget.total)
-                              : "Incompleto"
-                          : !priceErrors[kind] &&
-                              budget?.costs[kind] !== undefined
-                            ? money(budget.costs[kind]!)
-                            : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {budgetError && <p role="alert">{budgetError}</p>}
-            {estimate &&
-              (invalidPrices || budget?.total === undefined) &&
-              !budgetError && (
-                <p className={styles.note}>
-                  Orçamento incompleto: informe preços válidos para os tipos com
-                  peças. Preço não informado é diferente de zero.
+              <p role="status" aria-live="polite">
+                {priceSaving || saved === "saving"
+                  ? "Salvando preços…"
+                  : saved === "saved"
+                    ? "Salvo · preços no projeto"
+                    : `Não salvo. ${saveMessage} Feche o orçamento para acessar a recuperação do salvamento.`}
+              </p>
+              {lossError && (
+                <p role="alert" className={styles.errorText}>
+                  {lossError}
                 </p>
               )}
+              <div
+                className={styles.quantityTable}
+                tabIndex={0}
+                role="region"
+                aria-label="Resumo do projeto"
+              >
+                <table>
+                  <caption className={styles.visuallyHidden}>
+                    Tijolos do Projeto
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Tipo</th>
+                      <th scope="col">Geométrica</th>
+                      <th scope="col">Acréscimo de perdas</th>
+                      <th scope="col">Total estimado</th>
+                      <th scope="col">Preço unitário (R$)</th>
+                      <th scope="col">Custo (R$)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...pieceKinds, "total" as const].map((kind) => (
+                      <tr key={kind}>
+                        <th scope="row">
+                          {kind === "total"
+                            ? "Total de peças"
+                            : pieceLabels[kind]}
+                        </th>
+                        <td>
+                          {report.available ? number(report.counts[kind]) : "—"}
+                        </td>
+                        <td>{estimate ? number(estimate.added[kind]) : "—"}</td>
+                        <td>
+                          {estimate ? number(estimate.estimated[kind]) : "—"}
+                        </td>
+                        <td>
+                          {kind === "total" ? (
+                            "—"
+                          ) : (
+                            <>
+                              <input
+                                className={styles.budgetPrice}
+                                aria-label={`Preço unitário de ${pieceLabels[kind]}`}
+                                aria-invalid={!!priceErrors[kind]}
+                                aria-describedby={
+                                  priceErrors[kind]
+                                    ? `price-error-${kind}`
+                                    : undefined
+                                }
+                                inputMode="decimal"
+                                placeholder="Não informado"
+                                value={
+                                  drafts[kind] ??
+                                  priceText(doc.project.unitPrices?.[kind])
+                                }
+                                disabled={busy || readonly}
+                                onChange={(e) =>
+                                  setDrafts((previous) => ({
+                                    ...previous,
+                                    [kind]: e.target.value,
+                                  }))
+                                }
+                                onBlur={() => void confirmPrice(kind)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    e.currentTarget.blur();
+                                  }
+                                }}
+                              />
+                              {priceErrors[kind] && (
+                                <span
+                                  role="alert"
+                                  id={`price-error-${kind}`}
+                                  className={styles.budgetPriceError}
+                                >
+                                  {priceErrors[kind]}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </td>
+                        <td>
+                          {kind === "total"
+                            ? !estimate
+                              ? "—"
+                              : !invalidPrices && budget?.total !== undefined
+                                ? money(budget.total)
+                                : "Incompleto"
+                            : !priceErrors[kind] &&
+                                budget?.costs[kind] !== undefined
+                              ? money(budget.costs[kind]!)
+                              : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {budgetError && <p role="alert">{budgetError}</p>}
+              {estimate &&
+                (invalidPrices || budget?.total === undefined) &&
+                !budgetError && (
+                  <p className={styles.note}>
+                    Orçamento incompleto: informe preços válidos para os tipos
+                    com peças. Preço não informado é diferente de zero.
+                  </p>
+                )}
+            </section>
             <SteelBudgetSummary
               model={steel}
               brickTotal={!invalidPrices ? budget?.total : undefined}
               brickPartial={report.available && report.partial}
             />
-            {report.available && (
-              <>
-                <h2>Detalhamento por pavimento</h2>
-                <label className={styles.quantityLoss}>
-                  Pavimento da consulta
-                  <select
-                    aria-label="Pavimento da consulta"
-                    value={selectedFloor?.id ?? ""}
-                    onChange={(e) => setFloorId(e.target.value)}
-                  >
-                    {report.floors.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.name} · {display(f.level)} cm
-                        {f.partial ? " · Parcial" : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {selectedFloor && (
-                  <>
-                    <p>
-                      {selectedFloor.name} · {display(selectedFloor.level)} cm
-                      {selectedFloor.partial
-                        ? " · Parcial — há pendências"
-                        : ""}
-                      . Quantidades geométricas, sem perdas.
-                    </p>
+          </section>
+          {report.available && (
+            <section
+              className={styles.quantitySection}
+              aria-labelledby="budget-detail-title"
+            >
+              <h2 id="budget-detail-title">Detalhamento por pavimento</h2>
+              <label className={styles.quantityLoss}>
+                Pavimento da consulta
+                <select
+                  aria-label="Pavimento da consulta"
+                  value={floorId === "all" ? "all" : (selectedFloor?.id ?? "")}
+                  onChange={(e) => setFloorId(e.target.value)}
+                >
+                  <option value="all">Todos</option>
+                  {report.floors.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name} · {display(f.level)} cm
+                      {f.partial ? " · Parcial" : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {consultedFloors.length > 0 && (
+                <>
+                  <p>
+                    {floorId === "all"
+                      ? "Todos os pavimentos"
+                      : `${selectedFloor!.name} · ${display(selectedFloor!.level)} cm`}
+                    {consultedFloors.some((f) => f.partial)
+                      ? " · Parcial — há pendências"
+                      : ""}
+                    . Quantidades geométricas, sem perdas.
+                  </p>
+                  {consultedFloors.map((floor) => (
                     <SteelBudgetDetail
+                      key={floor.id}
                       model={steel}
-                      floorId={selectedFloor.id}
+                      floorId={floor.id}
                     />
-                    <div
-                      className={styles.quantityTable}
-                      tabIndex={0}
-                      role="region"
-                      aria-label="Peças por fiada"
-                    >
-                      <table>
-                        <caption>Fiadas locais</caption>
-                        <thead>
-                          <tr>
-                            <th scope="col">Fiada</th>
-                            {pieceKinds.map((kind) => (
-                              <th scope="col" key={kind}>
-                                {pieceLabels[kind]}
+                  ))}
+                  <div
+                    className={styles.quantityTable}
+                    tabIndex={0}
+                    role="region"
+                    aria-label="Peças por fiada"
+                  >
+                    <table>
+                      <caption>Fiadas locais</caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">Pavimento</th>
+                          <th scope="col">Fiada</th>
+                          {pieceKinds.map((kind) => (
+                            <th scope="col" key={kind}>
+                              {pieceLabels[kind]}
+                            </th>
+                          ))}
+                          <th scope="col">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {consultedFloors.flatMap((floor) =>
+                          floor.courses.map((c) => (
+                            <tr key={`${floor.id}:${c.number}`}>
+                              <th scope="row">
+                                {floor.name} · {display(floor.level)} cm
                               </th>
-                            ))}
-                            <th scope="col">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedFloor.courses.map((c) => (
-                            <tr key={c.number}>
-                              <th scope="row">{c.number}</th>
+                              <td>{c.number}</td>
                               <CountCells counts={c.counts} />
                             </tr>
-                          ))}
-                        </tbody>
-                        <tfoot>
-                          <tr>
-                            <th scope="row">Total do pavimento</th>
-                            <CountCells counts={selectedFloor.counts} />
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
-                    {!selectedFloor.courses.length && (
-                      <p>Este pavimento não tem fiadas. Quantidades zero.</p>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </>
+                          )),
+                        )}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th scope="row" colSpan={2}>
+                            {floorId === "all"
+                              ? "Total dos pavimentos"
+                              : "Total do pavimento"}
+                          </th>
+                          <CountCells
+                            counts={
+                              floorId === "all"
+                                ? report.counts
+                                : selectedFloor!.counts
+                            }
+                          />
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  {!consultedFloors.some((f) => f.courses.length) && (
+                    <p>
+                      {floorId === "all"
+                        ? "Estes pavimentos não têm fiadas. Quantidades zero."
+                        : "Este pavimento não tem fiadas. Quantidades zero."}
+                    </p>
+                  )}
+                </>
+              )}
+            </section>
+          )}
         </div>
       </dialog>
     </>

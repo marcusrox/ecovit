@@ -2110,11 +2110,51 @@ button.iconButton {
 }
 .quantityScreen {
   background: #fffefb;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.quantityScreen[open] {
+  display: block;
+}
+.quantityScreen .releaseHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fffefbf5;
 }
 .quantityContent {
-  min-height: 0;
-  overflow: auto;
-  padding: 0 24px 20px;
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: 28px 40px 48px;
+  line-height: 1.6;
+}
+.quantitySection + .quantitySection {
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 1px solid #dbe2d9;
+}
+.quantitySection > section {
+  margin-top: 28px;
+}
+.quantityScreen h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #315943;
+}
+.quantityScreen .note {
+  color: #647164;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .materialTotals {
   display: grid;
@@ -2239,7 +2279,10 @@ button.iconButton {
 }
 .quantityScreen h2 {
   margin: 24px 0 12px;
-  font-size: 18px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #204c3b;
+  letter-spacing: -0.3px;
 }
 .quantityScreen p {
   overflow-wrap: anywhere;
@@ -2274,24 +2317,22 @@ button.iconButton {
   max-width: min(100%, 500px);
 }
 .quantityTable {
-  overflow: auto;
-  max-height: 45vh;
-  border: 1px solid #dce1d5;
-  border-radius: 6px;
-  margin: 12px 0;
+  margin: 16px 0 24px;
 }
 .quantityTable table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 560px;
+  table-layout: fixed;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
 .quantityTable th,
 .quantityTable td {
-  padding: 10px 14px;
+  padding: 12px 10px;
   text-align: right;
-  border-bottom: 1px solid #dce1d5;
-  white-space: nowrap;
+  vertical-align: top;
+  border-bottom: 1px solid #e4e8df;
+  overflow-wrap: anywhere;
 }
 .quantityTable th:first-child {
   text-align: left;
@@ -2302,9 +2343,45 @@ button.iconButton {
   font-weight: 600;
 }
 .quantityTable thead th {
-  position: sticky;
-  top: 0;
-  background: #eef3e9;
+  background: #f0f4ed;
+  color: #52634f;
+  font-size: 12px;
+  font-weight: 600;
+}
+.quantityTable tbody tr:nth-child(even) {
+  background: #f8f9f5;
+}
+.quantityTable input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  background: #fffefb;
+}
+.quantityTable input:focus {
+  background: #fff;
+}
+.quantityScreen .materialTotals {
+  border: 0;
+  border-top: 1px solid #ccd9cd;
+  border-radius: 0;
+  padding: 20px;
+}
+.quantityScreen .materialTotals > div:last-child {
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid #ccd9cd;
+  font-size: 16px;
+  color: #204c3b;
+}
+@media (max-width: 1000px) {
+  .quantityContent {
+    padding: 20px 20px 36px;
+  }
+  .quantityTable th,
+  .quantityTable td {
+    padding: 10px 6px;
+    font-size: 12px;
+  }
 }
 .quantityTable tfoot {
   background: #eef3e9;

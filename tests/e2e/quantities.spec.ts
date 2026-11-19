@@ -141,13 +141,17 @@ test(
     );
     expect(await exported(page)).toEqual(document);
     await page.getByRole("button", { name: "Orçamento", exact: true }).click();
-    await expect(report(page).getByLabel("Perdas de tijolos (%)")).toHaveValue("2,50");
+    await expect(report(page).getByLabel("Perdas de tijolos (%)")).toHaveValue(
+      "2,50",
+    );
     await page.keyboard.press("Escape");
     await expect(report(page)).not.toBeVisible();
     await page.reload();
     await page.getByRole("button", { name: /Quantitativos M5/ }).click();
     await page.getByRole("button", { name: "Orçamento", exact: true }).click();
-    await expect(report(page).getByLabel("Perdas de tijolos (%)")).toHaveValue("0");
+    await expect(report(page).getByLabel("Perdas de tijolos (%)")).toHaveValue(
+      "0",
+    );
   },
 );
 
@@ -517,5 +521,93 @@ test(
       .getByRole("button", { name: "Voltar ao desenho" })
       .click();
     expect(await snapshot(page)).toBe(confirmed);
+  },
+);
+
+test(
+  "Orçamento documento: Todos reúne pavimentos sem rolagens internas",
+  { tag: "@interface" },
+  async ({ page }) => {
+    const d = fixture();
+    const first = d.model.floors.find(
+      (f) => f.id === d.model.walls[0].floorId,
+    )!;
+    const second = d.model.floors.find((f) => f.id !== first.id)!;
+    first.name = "Térreo";
+    second.name = "Superior";
+    d.model.walls.push(
+      makeWall({ x: 0, y: 0 }, { x: 10000, y: 0 }, 1250, second.id, 2100, 1)!,
+    );
+    await load(page, d);
+    const before = await snapshot(page);
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
+    const modal = report(page);
+    const filter = modal.getByLabel("Pavimento da consulta");
+    await filter.selectOption("all");
+    const courses = modal.getByRole("region", { name: "Peças por fiada" });
+    await expect(
+      courses.getByRole("columnheader", { name: "Pavimento", exact: true }),
+    ).toBeVisible();
+    await expect(courses.locator("tbody tr")).toHaveCount(6);
+    await expect(
+      courses.locator("tbody tr th").filter({ hasText: "Térreo" }),
+    ).toHaveCount(3);
+    await expect(
+      courses.locator("tbody tr th").filter({ hasText: "Superior" }),
+    ).toHaveCount(3);
+    await expect(courses.locator("tfoot td")).toHaveText([
+      "22",
+      "4",
+      "0",
+      "0",
+      "26",
+    ]);
+    await expect(
+      modal.getByRole("region", { name: "Ferragens do pavimento consultado" }),
+    ).toHaveCount(4);
+    await expect(
+      summary(page).locator("tbody tr").last().locator("td").first(),
+    ).toHaveText("26");
+    for (const width of [1366, 900]) {
+      await page.setViewportSize({ width, height: 768 });
+      expect(
+        await modal.evaluate((element) => {
+          const tables = [...element.querySelectorAll('[role="region"]')];
+          return (
+            element.scrollWidth <= element.clientWidth &&
+            tables.every(
+              (table) =>
+                table.scrollHeight <= table.clientHeight &&
+                table.scrollWidth <= table.clientWidth &&
+                getComputedStyle(table).overflowY === "visible",
+            )
+          );
+        }),
+      ).toBe(true);
+      await page.screenshot({
+        path: `.tools/budget-document-${width}.png`,
+        fullPage: true,
+      });
+    }
+    await filter.selectOption(second.id);
+    await expect(courses.locator("tbody tr")).toHaveCount(3);
+    await expect(courses.locator("tfoot td")).toHaveText([
+      "11",
+      "2",
+      "0",
+      "0",
+      "13",
+    ]);
+    await expect(
+      modal.getByRole("region", { name: "Ferragens do pavimento consultado" }),
+    ).toHaveCount(1);
+    await expect(
+      summary(page).locator("tbody tr").last().locator("td").first(),
+    ).toHaveText("26");
+    expect(await snapshot(page)).toBe(before);
+    await page.keyboard.press("Escape");
+    await expect(
+      page.getByRole("button", { name: "Orçamento", exact: true }),
+    ).toBeFocused();
   },
 );

@@ -257,7 +257,7 @@ Comprimento nominal é a extensão retilínea entre as faces inicial/final do tr
 
 Continuidade gráfica nos encontros: parear as barras na quina do L e prolongar o ramal do T até as barras da faixa contínua, somente dentro da ocupação conectada das canaletas existentes. Respeitar rotações/reflexões; não atravessar lacuna ou contato só por vértice. São ajustes do traço na representação em planta da Fiada, sem alterar os trechos retos persistidos, seus comprimentos ou definir dobras/ancoragens físicas.
 
-Resultado ausente/desatualizado não expõe armadura antiga como atual. A configuração não altera peças, faixas, grautes ou grampos; ausência legítima de canaleta não é erro de armadura. CT-16 e Orçamento continuam restritos às peças de tijolo. Detalhamento de fabricação, aço misto, estribos, ancoragens, peso e preço de aço ficam para evolução futura.
+Resultado ausente/desatualizado não expõe armadura antiga como atual. A configuração não altera peças, faixas, grautes ou grampos; ausência legítima de canaleta não é erro de armadura. CT-16 continua restrito à contagem de peças de tijolo. O Orçamento inclui estimativas de comprimentos, pesos nominais e custos das ferragens em projeção separada, conforme a seção Orçamento nominal das ferragens — T-028 deste caderno e o contrato de [Quantitativos](arquitetura/Quantitativos.md#ferragens-por-peso--t-028). Detalhamento de fabricação, aço misto, estribos e ancoragens ficam para evolução futura.
 
 ### CT-10 — Graute nominal automático e clique por furo
 

@@ -138,7 +138,7 @@ export function SteelBudgetSummary({
   }
   return (
     <section aria-label="Ferragens do projeto">
-      <h2>Ferragens do projeto</h2>
+      <h3>Ferragens do projeto</h3>
       {!report.available ? (
         <p>{report.reason}</p>
       ) : (
@@ -293,7 +293,7 @@ export function SteelBudgetDetail({
   return (
     <section aria-label="Ferragens do pavimento consultado">
       <h3>
-        Ferragens · {floor.name}
+        Ferragens · {floor.name} · {display(floor.level)} cm
         {floor.partial ? " · Parcial" : ""}
       </h3>
       <p className={styles.note}>
