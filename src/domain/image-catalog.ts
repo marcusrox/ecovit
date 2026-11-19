@@ -13,6 +13,7 @@ const rows: [string, string, string, number, number, string?][] = [
   ["Sala", "poltrona", "Poltrona", 90, 85],
   ["Sala", "mesa-centro", "Mesa de centro", 110, 60],
   ["Sala", "rack", "Rack", 160, 40],
+  ["Sala", "tv", "TV", 120, 10],
   ["Sala", "aparador", "Aparador", 140, 40],
   ["Sala", "cadeira", "Cadeira", 45, 50],
   ["Sala", "mesa-retangular", "Mesa retangular", 160, 90],
@@ -30,6 +31,7 @@ const rows: [string, string, string, number, number, string?][] = [
   ["Quarto", "cama-king", "Cama king", 193, 203],
   ["Quarto", "mesa-cabeceira", "Mesa de cabeceira", 45, 40],
   ["Quarto", "guarda-roupa", "Guarda-roupa", 180, 60],
+  ["Quarto", "roupeiro", "Roupeiro", 180, 60],
   ["Quarto", "escrivaninha", "Escrivaninha", 140, 70],
   ["Quarto", "cadeira-escritorio", "Cadeira de escritório", 65, 75],
   ["Quarto", "berco", "Berço", 135, 75],
@@ -40,6 +42,7 @@ const rows: [string, string, string, number, number, string?][] = [
   ["Cozinha", "cooktop", "Cooktop", 60, 50],
   ["Cozinha", "micro-ondas", "Micro-ondas", 50, 40],
   ["Banheiro", "lavatorio", "Lavatório", 55, 45],
+  ["Banheiro", "pia-com-bancada", "Pia com bancada", 80, 50],
   ["Banheiro", "vaso-sanitario", "Vaso sanitário", 38, 70],
   ["Banheiro", "chuveiro", "Chuveiro", 25, 35],
   ["Banheiro", "box", "Box", 90, 90],
@@ -112,7 +115,7 @@ export const imageCatalog: readonly CatalogItem[] = rows.map(
     width: width * 100,
     depth: depth * 100,
     asset: asset ?? id,
-    revision: id === "bloco-concreto-contencao" ? 2 : 1,
+    revision: id === "bloco-concreto-contencao" || id === "tv" ? 2 : 1,
   }),
 );
 export const imageCategories = [
@@ -120,7 +123,7 @@ export const imageCategories = [
 ];
 // Supported historical artwork stays resolvable without appearing twice in the picker.
 const historicalCatalog: readonly CatalogItem[] = imageCatalog
-  .filter((i) => i.id === "bloco-concreto-contencao")
+  .filter((i) => i.id === "bloco-concreto-contencao" || i.id === "tv")
   .map((i) => ({ ...i, revision: 1 }));
 export const catalogItem = (id: string, revision: number) =>
   imageCatalog.find((i) => i.id === id && i.revision === revision) ??

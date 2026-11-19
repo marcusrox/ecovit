@@ -66,10 +66,10 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-it("M10-A01 catálogo tem nove categorias e 59 opções com referências únicas e dimensões genéricas", () => {
+it("M10-A01 catálogo tem nove categorias e 62 opções com referências únicas e dimensões genéricas", () => {
   expect(imageCategories).toHaveLength(9);
-  expect(imageCatalog).toHaveLength(59);
-  expect(new Set(imageCatalog.map((i) => i.id)).size).toBe(59);
+  expect(imageCatalog).toHaveLength(62);
+  expect(new Set(imageCatalog.map((i) => i.id)).size).toBe(62);
   expect(imageCatalog.filter((i) => i.asset === "armario")).toHaveLength(2);
   expect(
     imageCatalog.every(
@@ -80,6 +80,77 @@ it("M10-A01 catálogo tem nove categorias e 59 opções com referências únicas
         i.revision > 0,
     ),
   ).toBe(true);
+});
+it.each([
+  {
+    id: "roupeiro",
+    category: "Quarto",
+    name: "Roupeiro",
+    width: 18000,
+    depth: 6000,
+  },
+  {
+    id: "pia-com-bancada",
+    category: "Banheiro",
+    name: "Pia com bancada",
+    width: 8000,
+    depth: 5000,
+  },
+])(
+  "$name integra a categoria e preserva dimensões editadas no arquivo",
+  ({ id, ...expected }) => {
+    const item = catalogItem(id, 1)!;
+    expect(item).toMatchObject({ ...expected, asset: id, revision: 1 });
+    const d = project();
+    const element = standardElement(item, d.model.floors[0].id);
+    expect(element).toMatchObject({
+      width: expected.width,
+      depth: expected.depth,
+    });
+    d.model.imageElements.push({
+      ...element,
+      width: expected.width * 1.2,
+      depth: expected.depth * 0.8,
+      angle: 90,
+    });
+    expect(parseFile(serializeFile(d).text).model.imageElements).toEqual(
+      d.model.imageElements,
+    );
+  },
+);
+it("TV integra a Sala com arte própria e dimensões editáveis, preservadas no arquivo", () => {
+  const item = imageCatalog.find((i) => i.id === "tv")!;
+  expect(item).toMatchObject({
+    category: "Sala",
+    name: "TV",
+    asset: "tv",
+    width: 12000,
+    depth: 1000,
+    revision: 2,
+  });
+  const d = project();
+  const element = standardElement(item, d.model.floors[0].id);
+  d.model.imageElements.push({
+    ...element,
+    width: 14000,
+    depth: 1200,
+    angle: 90,
+  });
+  expect(parseFile(serializeFile(d).text).model.imageElements).toEqual(
+    d.model.imageElements,
+  );
+});
+it("TV oferece r2 e conserva a arte r1 nos arquivos existentes", () => {
+  const d = project();
+  for (const revision of [1, 2]) {
+    const item = catalogItem("tv", revision)!;
+    expect(item).toMatchObject({ width: 12000, depth: 1000, revision });
+    d.model.imageElements.push(standardElement(item, d.model.floors[0].id));
+  }
+  expect(catalogItem("tv", 3)).toBeUndefined();
+  expect(parseFile(serializeFile(d).text).model.imageElements).toEqual(
+    d.model.imageElements,
+  );
 });
 it("bloco de contenção insere r2 e conserva r1 em arquivos existentes", () => {
   const d = project();

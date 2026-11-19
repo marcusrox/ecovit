@@ -41,7 +41,6 @@ import {
   elementCorners,
   elementSideHandle,
   resizeElementSide,
-  elementRatio,
   elementUrl,
   hitImageElement,
   setImageElement,
@@ -55,7 +54,7 @@ import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
 
 type Camera = { x: number; y: number; scale: number };
-function ObjectBitmap({
+export function ObjectBitmap({
   element,
   assets,
   camera,
@@ -98,11 +97,10 @@ function ObjectBitmap({
     if (bitmap || failed) onReady?.(element.id);
   }, [bitmap, failed, element.id, onReady]);
   if (!bitmap) return null;
-  const sourceRatio = elementRatio(element, assets);
-  const fit = Math.min(sourceRatio / bitmap.crop.width, 1 / bitmap.crop.height);
-  const width =
-    ((bitmap.crop.width * fit * element.width) / sourceRatio) * camera.scale;
-  const height = bitmap.crop.height * fit * element.depth * camera.scale;
+  // The cropped catalog art fills the same rectangle used by selection/hit testing.
+  // Custom uploads keep their original margins because their crop is the full image.
+  const width = element.width * camera.scale;
+  const height = element.depth * camera.scale;
   const ratio = Konva.pixelRatio || window.devicePixelRatio || 1;
   const level = furnitureBitmapLevel(bitmap, width * ratio, height * ratio);
   return (

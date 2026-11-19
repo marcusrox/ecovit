@@ -293,6 +293,12 @@
     "width": 1228,
     "height": 832
   },
+  "/catalog/m10/pia-com-bancada-r1.png": {
+    "x": 66,
+    "y": 75,
+    "width": 1455,
+    "height": 847
+  },
   "/catalog/m10/pia-r1.png": {
     "x": 114,
     "y": 105,
@@ -323,6 +329,12 @@
     "width": 396,
     "height": 1572
   },
+  "/catalog/m10/roupeiro-r1.png": {
+    "x": 80,
+    "y": 116,
+    "width": 2013,
+    "height": 490
+  },
   "/catalog/m10/sofa-em-l-r1.png": {
     "x": 58,
     "y": 94,
@@ -340,6 +352,18 @@
     "y": 217,
     "width": 1158,
     "height": 794
+  },
+  "/catalog/m10/tv-r1.png": {
+    "x": 71,
+    "y": 317,
+    "width": 2030,
+    "height": 85
+  },
+  "/catalog/m10/tv-r2.png": {
+    "x": 96,
+    "y": 302,
+    "width": 1979,
+    "height": 117
   },
   "/catalog/m10/vaso-planta-r1.png": {
     "x": 140,

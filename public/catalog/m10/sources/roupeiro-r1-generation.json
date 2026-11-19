@@ -1,0 +1,12 @@
+{
+  "id": "roupeiro",
+  "name": "Roupeiro",
+  "category": "Quarto",
+  "subject": "Architectural overhead cutaway wardrobe, light oak interior, clothing rail and fine angled hanger strokes.",
+  "widthCm": 180,
+  "depthCm": 60,
+  "revision": 1,
+  "reference": "User-supplied close-up, 2026-11-19; inspiration only.",
+  "method": "Built-in image_gen tool",
+  "generationPrompt": "Use case: product-mockup. Create ONE standalone raster furniture asset for an architectural 2D floor-plan catalog (Ecovit). The supplied small image is a STYLE AND SHAPE REFERENCE ONLY: a horizontal rectangular wardrobe shown in a schematic overhead cutaway, with a central horizontal clothing rail and a row of fine angled hanger/clothing strokes. Subject: Roupeiro, wardrobe in strict TRUE ORTHOGRAPHIC TOP VIEW, camera exactly overhead. Footprint 180 cm wide by 60 cm deep, 3:1 horizontal silhouette. Narrow rectangular warm-gray perimeter, pale beige/light oak interior, a horizontal rail through the middle and many neatly spaced thin oblique hanger/garment strokes similar to reference, several understated partitions. No solid opaque cabinet top hiding the rail: architectural plan cutaway representation. Clean simplified architectural illustration, fine crisp warm-gray outlines, muted beige tones, subtle material shading contained within object. Complete unclipped silhouette, small transparent margins, actual transparent alpha outside the rectangular furniture. Only this one wardrobe, no room, floor, wall, people, labels, dimensions, text, logos, surrounding objects, cast shadows, perspective, isometric view or front elevation. Preserve an elegant simple diagram-like appearance readable at small sizes."
+}

@@ -1,0 +1,13 @@
+{
+  "id": "tv",
+  "name": "TV",
+  "category": "Sala",
+  "subject": "Simplified architectural top-view television, ivory fill and warm-gray contour, with a stepped rear housing; user-selected option 3.",
+  "widthCm": 120,
+  "depthCm": 10,
+  "revision": 2,
+  "reference": "User-supplied TV close-up, 2026-11-19; inspiration only.",
+  "method": "Built-in image_gen tool",
+  "generationPrompt": "Use case: product-mockup. Create ONE new isolated transparent PNG furniture asset for a 2D architectural floor plan, a flat television in STRICT ORTHOGRAPHIC TOP VIEW, exactly overhead. The attached very narrow low-resolution image is a shape/style REFERENCE ONLY: it depicts a light slim TV profile with warm gray outlines, a very thin long front panel and a small shallower raised rear housing centered along its length. It is not a frontal view of the screen. Follow that recognizable plan silhouette. Arrange the TV VERTICALLY, full long edge running top to bottom, like the reference. Intended total footprint length 120 cm by depth 10 cm, approximately 12:1 long-to-short aspect. TV front panel is on the LEFT, rear housing on the RIGHT. Long main panel is very narrow; a centered rear housing occupies roughly the middle two thirds of its length and gives a stepped silhouette. Very light ivory/champagne surfaces and crisp thin warm gray contour, subdued architectural illustration. Transparent alpha background everywhere outside the TV. Keep full object unclipped, centered with narrow margins. ONLY the TV, no wall, cabinet, floor, mounting bracket detached from body, cable, legs, stand, scenery, logo, text or cast shadow. No perspective, no front elevation, no broad dark screen surface, no rounded pill shape. OPTION 3: Simplified architectural plan symbol in a raster PNG. Flat pale warm-gray/ivory fills, clean single dark warm-gray outline, no gradients, no texture. The front panel should be an extremely narrow long outlined rectangle; a compact centered rear housing takes one half of its length. Show one fine seam along front edge. Strongest clarity at small sizes. Professional understated drawing matching the low-resolution reference's structure, without photo detail.",
+  "preparation": "Lossless 90-degree counterclockwise rotation to align the long side with catalog width; original alpha preserved."
+}

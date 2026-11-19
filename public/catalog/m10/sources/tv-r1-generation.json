@@ -1,0 +1,12 @@
+{
+  "id": "tv",
+  "name": "TV",
+  "category": "Sala",
+  "subject": "Slim graphite television, strict orthographic top view, inspired by the TV along the left wall in the user-supplied room plan.",
+  "widthCm": 120,
+  "depthCm": 10,
+  "revision": 1,
+  "reference": "User-supplied room plan, 2026-11-19; inspiration only, no room reproduced.",
+  "method": "Built-in image_gen tool",
+  "generationPrompt": "Use case: product-mockup. Asset type: ONE isolated furniture catalog PNG for Ecovit architectural 2D floor plans. Input image: reference ONLY, an example room plan; the TV is the very narrow dark object along the left wall, do not reproduce the room. Generate a standalone flat modern television seen in STRICT TRUE ORTHOGRAPHIC TOP VIEW, camera exactly 90 degrees overhead, like that TV symbol. The television should be a horizontal slender long rectangular graphite/charcoal body, footprint width 120 cm and depth 10 cm (12:1 silhouette). From overhead only the thin upper edge/body is visible, subtle warm gray perimeter outline and restrained internal edge detail, dark neutral material, no visible large screen face. Refined colored architectural plan illustration, crisp edges, soft muted shading within object only, matching the reference. Center the complete horizontal silhouette. Genuinely transparent alpha background with narrow empty margins. TV only, no cabinet, console, stand feet, wall, room, people, floor, text, brand, logo, labels, cast shadow, frame or surrounding objects. No perspective, no isometric, no front elevation. Keep its entire silhouette unclipped."
+}

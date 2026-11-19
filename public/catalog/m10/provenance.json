@@ -256,6 +256,55 @@
       "widthCm": 150,
       "depthCm": 50,
       "revision": 1
+    },
+    {
+      "id": "tv",
+      "name": "TV",
+      "category": "Sala",
+      "subject": "Slim graphite television, strict orthographic top view, inspired by the TV along the left wall in the user-supplied room plan.",
+      "widthCm": 120,
+      "depthCm": 10,
+      "revision": 1,
+      "reference": "User-supplied room plan, 2026-11-19; inspiration only, no room reproduced.",
+      "method": "Built-in image_gen tool",
+      "source": "sources/tv-r1-generation.json"
+    },
+    {
+      "id": "tv",
+      "name": "TV",
+      "category": "Sala",
+      "subject": "Simplified architectural top-view television, ivory fill and warm-gray contour, with a stepped rear housing; user-selected option 3.",
+      "widthCm": 120,
+      "depthCm": 10,
+      "revision": 2,
+      "reference": "User-supplied TV close-up, 2026-11-19; inspiration only.",
+      "method": "Built-in image_gen tool",
+      "preparation": "Lossless 90-degree counterclockwise rotation to align the long side with catalog width; original alpha preserved.",
+      "source": "sources/tv-r2-generation.json"
+    },
+    {
+      "id": "roupeiro",
+      "name": "Roupeiro",
+      "category": "Quarto",
+      "subject": "Architectural overhead cutaway wardrobe, light oak interior, clothing rail and fine angled hanger strokes.",
+      "widthCm": 180,
+      "depthCm": 60,
+      "revision": 1,
+      "reference": "User-supplied close-up, 2026-11-19; inspiration only.",
+      "method": "Built-in image_gen tool",
+      "source": "sources/roupeiro-r1-generation.json"
+    },
+    {
+      "id": "pia-com-bancada",
+      "name": "Pia com bancada",
+      "category": "Banheiro",
+      "subject": "Light rectangular bathroom countertop, centered oval inset basin and compact chrome faucet, orthographic top view.",
+      "widthCm": 80,
+      "depthCm": 50,
+      "revision": 1,
+      "reference": "User-supplied close-up, 2026-11-19; inspiration only.",
+      "method": "Built-in image_gen tool",
+      "source": "sources/pia-com-bancada-r1-generation.json"
     }
   ],
   "sofaPrompt": "Generate a single standalone production asset for the Ecovit architectural floor-plan furniture catalog. Reference image is a STYLE reference only; preserve its refined material finish, muted colors and thin warm gray outlines. Subject: one beige 3-seat sofa, strictly orthographic TOP VIEW camera 90 degrees directly overhead, backrest at top, arms left/right, seat cushions visible, NO front elevation or legs. Isolated object on genuinely transparent alpha background, no floor, no backdrop, no external shadow, no label, no text, no border, no extra objects. Whole silhouette tightly framed with narrow clear margins, horizontal width-to-depth aspect ratio 2.5:1, centered in canvas. Same soft beige upholstery, lightly shaded texture and crisp thin contours as the reference. This is a new individual asset, not an edit of the contact sheet. Output only the sofa.",

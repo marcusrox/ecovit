@@ -1,0 +1,12 @@
+{
+  "id": "pia-com-bancada",
+  "name": "Pia com bancada",
+  "category": "Banheiro",
+  "subject": "Light rectangular bathroom countertop, centered oval inset basin and compact chrome faucet, orthographic top view.",
+  "widthCm": 80,
+  "depthCm": 50,
+  "revision": 1,
+  "reference": "User-supplied close-up, 2026-11-19; inspiration only.",
+  "method": "Built-in image_gen tool",
+  "generationPrompt": "Use case: product-mockup. Create ONE standalone raster bathroom furniture asset for Ecovit architectural 2D floor plans. Supplied small image is a STYLE AND SHAPE REFERENCE ONLY: a light rectangular bathroom countertop with one centered oval washbasin and a compact faucet centered close to its lower edge. Subject: Pia com bancada. STRICT TRUE ORTHOGRAPHIC TOP VIEW, camera exactly overhead. Whole footprint 80 cm width by 50 cm depth, horizontal rectangle ratio 1.6:1. Ivory/light warm-gray rectangular stone countertop with crisp thin warm-gray perimeter, one oval inset white ceramic basin centered with a delicate double oval rim, shallow interior shading and a small round drain. Simple compact chrome single-lever faucet at bottom center between the basin and countertop edge, viewed strictly from above, spout pointing into basin. Reference-inspired refined architectural illustration, simple readable contours, subdued ivory and neutral gray finish, clean subtle material detail. Keep complete countertop, basin and faucet inside silhouette, small margins. Genuine transparent alpha background outside rectangular countertop. ONLY one countertop with basin and faucet; no legs, cabinet front, pedestal, mirror, wall, room, floor, towels, accessories, pipes, text, labels, logos, cast shadows, perspective, isometric projection or front elevation."
+}
