@@ -196,3 +196,7 @@ Verificação direcionada: 14 testes de steel-budget aprovados (1,71 s), incluin
 ### Aceite manual
 
 Em 2026-11-18, o solicitante aprovou explicitamente a T-028, incluindo o orçamento de ferragens por peso, os preços em R$/kg salvos no projeto, os parâmetros por pavimento e os ajustes de identificação das pendências dos grampos no Orçamento e no canvas. Aceite manual confirmado, separado dos resultados técnicos registrados acima.
+
+### Conferência de CI após o aceite
+
+O CI do commit de aceite identificou uma lista de compatibilidade desatualizada na fixture histórica tests/legacy/database.ts, ainda limitada ao formato 24. Atualizada para incluir 25 e 26, já aceitos pelo leitor vigente. Nenhuma asserção foi removida ou enfraquecida e o aplicativo não foi alterado. Os cinco testes de cópia de projeto passaram no recorte local (1,83 s); evidência em .tools/t028/ci-copy-test.log.
