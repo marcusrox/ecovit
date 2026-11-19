@@ -8,7 +8,9 @@
 
 **Data de execução** — 2026-11-18
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
+
+**Data do aceite manual** — 2026-11-18
 
 ## Alteração e limites
 
@@ -161,13 +163,13 @@ Na implementação, atualizar os trechos responsáveis no PRD, Caderno Técnico 
 
 ## Resultado
 
-Task criada em 2026-11-18 com as definições expressamente aprovadas pelo solicitante e as fontes primárias pesquisadas para massas lineares. Conferência documental de ID disponível, modelo, dados existentes e coerência dos exemplos. Implementação, execução dos critérios e aceite manual pendentes. Nenhuma alteração de código ou execução de testes nesta etapa. A validação futura deve selecionar os contratos de agregação, precisão monetária, persistência e interface efetivamente afetados, conforme a [política proporcional](../arquitetura/Qualidade-e-Desempenho.md#validação-proporcional-à-alteração), sem impor suíte completa ou matriz ampla por rotina.
+Task criada em 2026-11-18 com as definições expressamente aprovadas pelo solicitante e as fontes primárias pesquisadas para massas lineares. Conferência documental de ID disponível, modelo, dados existentes e coerência dos exemplos. Na criação, implementação, execução dos critérios e aceite manual estavam pendentes. Nenhuma alteração de código ou execução de testes nesta etapa. A validação futura deve selecionar os contratos de agregação, precisão monetária, persistência e interface efetivamente afetados, conforme a [política proporcional](../arquitetura/Qualidade-e-Desempenho.md#validação-proporcional-à-alteração), sem impor suíte completa ou matriz ampla por rotina.
 
 Revisão documental na mesma data: preservadas as regras aprovadas de aço/massas, trechos úteis, sobreposição, percentual horizontal e ausência de arranques. Esclarecidos mapeamento de legados, edição prévia de preços/parâmetros, pendências sem objeto de grampo, totais globais versus filtro local, separação das perdas de tijolos, precisão/apresentação monetária, estados de parcialidade e armazenamento sem recálculo indevido. Nenhuma implementação ou execução de testes nesta revisão.
 
 ### Implementação e verificação — 2026-11-18
 
-Implementada após autorização explícita. Critérios A01–A07 conferidos tecnicamente; aceite manual permanece pendente. O Orçamento agora consolida as cinco entradas CA-50/CA-60, preserva legados sem cadastro, calcula comprimentos/pesos/custos e mostra subtotais e total dos materiais. Preços por kg confirmados em Enter/blur são salvos no projeto. O detalhamento por aplicação/pavimento conserva o resumo global e distingue grampos pendentes, inclusive diagnósticos sem peça gerada.
+Implementada após autorização explícita. Critérios A01–A07 conferidos tecnicamente; o aceite manual ainda aguardava confirmação nesta etapa. O Orçamento agora consolida as cinco entradas CA-50/CA-60, preserva legados sem cadastro, calcula comprimentos/pesos/custos e mostra subtotais e total dos materiais. Preços por kg confirmados em Enter/blur são salvos no projeto. O detalhamento por aplicação/pavimento conserva o resumo global e distingue grampos pendentes, inclusive diagnósticos sem peça gerada.
 
 Útil de 150 cm, sobreposição de 20 cm e acréscimo horizontal de 10% integram o rascunho e a aplicação conjunta de Ferragens do pavimento, independentes por andar, com histórico e recuperação. Campos e preços podem ser configurados sem uso do material. Parâmetros exclusivamente orçamentários ficam fora da assinatura construtiva: confirmação e desfazer/refazer não invalidam nem recalculam a composição. Mudança construtiva conjunta conserva o fluxo anterior. Não há arranques entre andares, plano de corte ou alteração de nominal-v13.
 
@@ -190,3 +192,7 @@ A pedido do solicitante, eliminada a duplicação entre clamp-pending e Clamp.pe
 Na Fiada, pendentes agora são visíveis em vermelho tracejado com ! no meio da ligação, acima das barras horizontais. Hover individual informa motivo, fiada, bitola, dimensões e células, além da exclusão do orçamento. Tooltip HTML sem captura de ponteiro, com escopo de pavimento/fiada/resultado; ligações válidas conservam laranja e identificação. Legenda/consulta textual atualizadas na inspeção. Sem novo formato ou dado persistido.
 
 Verificação direcionada: 14 testes de steel-budget aprovados (1,71 s), incluindo duas ligações distintas com o mesmo motivo/fiada e aviso sem peça, sem duplicação nem alteração dos totais elegíveis. Dois cenários distintos do Chrome aprovados: novo fluxo de aviso/marker/hover, edição do furo sob a ponta do grampo, desfazer, troca de fiada e retorno à Planta; e regressão existente de grampos válidos, formulário, histórico, transporte e visualização. A primeira tentativa do novo cenário clicou o meio da ligação, fora do alvo dos furos; o teste foi corrigido para clicar o centro do furo sob a ponta, preservando a asserção de remoção de um eixo e o comportamento existente. O recorte novo passou em 10,9 s. Tipos e lint aprovados (somente o aviso preexistente em Rooms.tsx); captura .tools/t028/grampo-pendente.png inspecionada. Logs em .tools/t028/pending-*. Sem suíte ampla, novo aceite manual, commit ou push.
+
+### Aceite manual
+
+Em 2026-11-18, o solicitante aprovou explicitamente a T-028, incluindo o orçamento de ferragens por peso, os preços em R$/kg salvos no projeto, os parâmetros por pavimento e os ajustes de identificação das pendências dos grampos no Orçamento e no canvas. Aceite manual confirmado, separado dos resultados técnicos registrados acima.
