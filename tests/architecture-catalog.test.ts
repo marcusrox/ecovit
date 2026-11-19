@@ -60,6 +60,6 @@ it("Arquitetura distribui onze artes PNG válidas com fontes vetoriais, sem subs
     expect(svg).not.toMatch(/<image|<text|<script/);
   }
   expect(imageCatalog.filter((i) => i.category !== "Arquitetura")).toHaveLength(
-    48,
+    53,
   );
 });
