@@ -59,7 +59,7 @@ export function RoomProperties({ doc }: { doc: LocalProject }) {
         inspect({ roomNameRequest: null });
       }
     }
-  }, [label, roomNameRequest, busy, readonly, collapsed, inspect]);
+  }, [label, roomNameRequest, busy, readonly, collapsed, inspect, setCollapsed]);
   useEffect(() => {
     setName(label?.name ?? "");
   }, [label?.name]);
