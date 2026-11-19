@@ -558,6 +558,18 @@ Descontar ocupação de paredes isoladas. Um recinto interno fechado, inclusive 
 
 Área em m² é a área líquida em unidades internas quadradas dividida por 100.000.000; arredondar somente a apresentação. Exemplo independente: retângulo interno ou de linhas com 30.000 × 40.000 unidades mede 12 m². Um retângulo interno de 10.000 × 10.000 unidades excluído desse contorno deixa 11 m² na região externa e 1 m² na interna. Uma parede isolada de 10.000 × 1.000 unidades desconta 0,10 m². Nome, identidade e comportamento de revisão pertencem aos contratos do editor, não à regra construtiva.
 
+### Área construída — T-030
+
+Convenção geométrica aprovada em D01–D05 da T-030: reconhecer espaços livres fechados pelas faixas reais das paredes e linhas sem espessura; incluir as paredes delimitadoras até suas faces externas e preencher todo o interior dos contornos, inclusive pátios e vazios. Unir no mesmo pavimento sem duplicar sobreposições; somar pavimentos distintos mesmo no mesmo XY. Contornos somente por linhas entram igualmente. Não depender de etiquetas, nomes ou composição de peças. Vãos conservam a continuidade das paredes, como na medição útil; os demais objetos não fecham essa área.
+
+Medir trechos delimitadores, não paredes inteiras por identidade: continuações para fora não ampliam o contorno reconhecido. Divisórias e elementos internos não descontam nem multiplicam a construída. Uma parede sólida isolada não representa espaço livre fechado. Contato de linha com a faixa real da parede, inclusive face interna ou extremidade, participa do fechamento sem editar ou exigir prolongamento da linha; lacunas reais não fecham.
+
+Sem paredes/linhas, área zero; com desenho sem espaço fechado, não determinada; com fechamento e trechos externos não abrangidos, somar a parte reconhecida e indicar parcialidade. Aplicar também ao projeto: vazio + aberto é não determinado; fechado de 80 m² + aberto é 80 m² parcial; dois vazios são zero. Não atribuir área estimada aos trechos abertos. Indicar pendência por pavimento e no resumo, sem diagnóstico por elemento.
+
+Exemplos: perímetro externo 10 × 8 m mede 80 m², incluindo paredes e pátio interno de 6 m². Continuação externa de uma parede conserva os 80 m² e gera parcialidade. Retângulo de linhas 3 × 2 m mede 6 m², com ou sem ambiente identificado. Regiões separadas de 80 e 6 m² somam 86 m²; duas de 80 m² em pavimentos diferentes somam 160 m². Área útil permanece a medição líquida anterior, com revisão persistente independente da construída.
+
+Usar os valores do cálculo antes de arredondar: duas áreas de 1,234 m² aparecem como 1,23 m² cada e somam 2,47 m². Uma região fechada menor que 0,005 m² permanece determinada mesmo exibida como 0,00 m², sem área mínima ou tolerância adicional.
+
 ## CT-17 — Grampos nominais dos encontros
 
 A T-025 acrescenta grampos esquemáticos após os grautes finais de CT-10, usando a topologia ativa por fiada de CT-05/12/14. Uma peça independente liga C a cada braço previsto: no T simples, somente o primeiro furo da haste; no Reforçado, dois braços no L, três no T, quatro na cruz. L/cruz simples não geram grampos. Rotações/reflexões preservam essas ligações. Identidade: pavimento, fiada e par não orientado de origens de células; origens coincidentes se unificam, peças que só compartilham C continuam independentes. Não há peça metálica única com três/quatro braços nem solda implícita.

@@ -33,6 +33,7 @@ import {
 } from "../src/persistence/files";
 import { useStore } from "../src/state/store";
 import { saveProject } from "../src/persistence/remote";
+import { projectAreas } from "../src/domain/project-areas";
 import { dehydrate, hydrate } from "../src/persistence/remote-document";
 import { removeElement } from "../src/domain/openings";
 
@@ -448,7 +449,8 @@ describe("T-018 operação única e histórico", () => {
     vi.mocked(saveProject).mockClear();
   });
   it("salva perda de fechamento junto da geometria, desfaz/refaz revisão e não recompõe tijolos", async () => {
-    const d = label(enclosed());
+    // Match the canonical property order produced when the application opens a project.
+    const d = validateProject(label(enclosed()), false);
     d.generated = generate(d);
     d.generationState = { status: "current", diagnostics: [] };
     useStore.setState({
@@ -461,6 +463,8 @@ describe("T-018 operação única e histórico", () => {
     });
     const output = d.generated;
     const calculation = vi.spyOn(engine, "generate");
+    expect(projectAreas(d).useful.area).toBe(12);
+    expect(projectAreas(d).constructed.area).toBe(12);
     await useStore
       .getState()
       .commit(removeElement(d, d.model.roomBoundaries[0].id), "room");
@@ -471,10 +475,15 @@ describe("T-018 operação única e histórico", () => {
     expect(useStore.getState().doc?.generated).toEqual(output);
     expect(calculation).not.toHaveBeenCalled();
     expect(useStore.getState().history.past).toHaveLength(1);
+    expect(projectAreas(useStore.getState().doc!).useful.area).toBeNull();
+    expect(projectAreas(useStore.getState().doc!).constructed.area).toBeNull();
     await useStore.getState().undo();
     expect(useStore.getState().doc?.model.roomLabels[0].review).toBe(false);
+    expect(projectAreas(useStore.getState().doc!).constructed.area).toBe(12);
     await useStore.getState().undo(true);
     expect(useStore.getState().doc?.model.roomLabels[0].review).toBe(true);
+    expect(projectAreas(useStore.getState().doc!).constructed.area).toBeNull();
+    expect(calculation).not.toHaveBeenCalled();
     const saved = useStore.getState().doc!;
     expect(
       parseFile(serializeFile(saved).text).model.roomLabels[0].review,

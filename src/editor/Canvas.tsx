@@ -392,11 +392,24 @@ export function Canvas({
   }, [side]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (focus)
-      setCamera((c) => ({
-        ...c,
-        x: size.width / 2 - focus.x * c.scale,
-        y: size.height / 2 - focus.y * c.scale,
-      }));
+      setCamera((c) => {
+        const scale =
+          focus.width !== undefined && focus.height !== undefined
+            ? Math.max(
+                MIN_CAMERA_SCALE,
+                Math.min(
+                  0.06,
+                  (size.width - 160) / Math.max(1, focus.width),
+                  (size.height - 160) / Math.max(1, focus.height),
+                ),
+              )
+            : c.scale;
+        return {
+          scale,
+          x: size.width / 2 - focus.x * scale,
+          y: size.height / 2 - focus.y * scale,
+        };
+      });
   }, [focus, size.width, size.height, setCamera]);
   useEffect(() => {
     cancel();

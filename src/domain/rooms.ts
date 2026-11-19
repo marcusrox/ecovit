@@ -169,13 +169,14 @@ export type RoomGeometry = {
   at: (p: Point) => RoomRegion | undefined;
 };
 
-export function roomGeometry(
-  doc: Pick<Project, "model" | "project">,
-  floorId: string,
-): RoomGeometry {
+function deriveRooms(doc: Pick<Project, "model" | "project">, floorId: string) {
   const boxes = doc.model.walls
     .filter((w) => w.floorId === floorId)
-    .map((w) => ({ ...bounds(w, doc.project.base.width), id: w.id }));
+    .map((w) => ({
+      ...bounds(w, doc.project.base.width),
+      id: w.id,
+      horizontal: w.a.y === w.b.y,
+    }));
   const segments: Segment[] = [];
   for (const b of boxes) {
     const corners = [
@@ -203,6 +204,64 @@ export function roomGeometry(
     if (a.x !== b.x || a.y !== b.y)
       segments.push({ a: rp(a), b: rp(b), source: `l:${line.id}` });
   }
+  const cycles = planarCycles(segments, boxes);
+  const positive = cycles.filter((c) => c.area.n > 0n);
+  const holes = new Map<Cycle, Cycle[]>();
+  for (const c of cycles.filter((c) => c.area.n < 0n)) {
+    const owner = positive
+      .filter((p) => location(c.sample, p.ring) === 1)
+      .sort((a, b) => cmp(a.area, b.area))[0];
+    if (owner) holes.set(owner, [...(holes.get(owner) ?? []), c]);
+  }
+  const tokens = (c: Cycle) =>
+    new Set(
+      c.edges
+        .filter((e) => e.cycle !== e.twin.cycle)
+        .flatMap((e) => [...e.sources]),
+    );
+  const regions = positive.map((c) => {
+    const inner = holes.get(c) ?? [],
+      outerTokens = tokens(c);
+    const partitions = inner.filter((h) =>
+      positive.some((p) => location(p.sample, h.ring) === 1),
+    );
+    const signature =
+      [...outerTokens].sort().join("|") +
+      "#" +
+      partitions
+        .map((h) => [...tokens(h)].sort().join("|"))
+        .sort()
+        .join("#");
+    const containsR = (p: P) =>
+      location(p, c.ring) === 1 &&
+      inner.every((h) => location(p, h.ring) === -1);
+    return {
+      contour: c.ring.map(point),
+      holes: inner.map((h) => h.ring.map(point)),
+      area:
+        number(inner.reduce((a, h) => add(a, h.area), c.area)) / 200_000_000,
+      signature,
+      outerTokens,
+      sample: point(c.sample),
+      probe: c.sample,
+      containsExact: containsR,
+      contains: (p: Point) =>
+        Number.isFinite(p.x) &&
+        Number.isFinite(p.y) &&
+        containsR({ x: coordinate(p.x), y: coordinate(p.y) }),
+    };
+  });
+  return {
+    regions,
+    at: (p: Point) => regions.find((r) => r.contains(p)),
+    boxes,
+    segments,
+    positive,
+  };
+}
+
+/** Shared exact arrangement; callers decide which filled faces constitute their measurement. */
+function planarCycles(segments: Segment[], boxes: Box[] = []): Cycle[] {
   const cuts = segments.map(
     (s) =>
       new Map([
@@ -214,18 +273,20 @@ export function roomGeometry(
     for (let j = i + 1; j < segments.length; j++) {
       const a = segments[i],
         b = segments[j];
-      // Integer input bounding boxes avoid expensive rational predicates for disjoint pairs.
-      if (
-        Math.max(number(a.a.x), number(a.b.x)) <
-          Math.min(number(b.a.x), number(b.b.x)) ||
-        Math.max(number(b.a.x), number(b.b.x)) <
-          Math.min(number(a.a.x), number(a.b.x)) ||
-        Math.max(number(a.a.y), number(a.b.y)) <
-          Math.min(number(b.a.y), number(b.b.y)) ||
-        Math.max(number(b.a.y), number(b.b.y)) <
-          Math.min(number(a.a.y), number(a.b.y))
-      )
-        continue;
+      // The constructed-area union also supplies rational vertices. Keep this
+      // fast rejection exact, just like the intersection predicate itself.
+      const disjoint = (axis: "x" | "y") => {
+        const [a0, a1] =
+          cmp(a.a[axis], a.b[axis]) < 0
+            ? [a.a[axis], a.b[axis]]
+            : [a.b[axis], a.a[axis]];
+        const [b0, b1] =
+          cmp(b.a[axis], b.b[axis]) < 0
+            ? [b.a[axis], b.b[axis]]
+            : [b.b[axis], b.a[axis]];
+        return cmp(a1, b0) < 0 || cmp(b1, a0) < 0;
+      };
+      if (disjoint("x") || disjoint("y")) continue;
       for (const p of intersections(a, b)) {
         cuts[i].set(key(p), p);
         cuts[j].set(key(p), p);
@@ -326,54 +387,146 @@ export function roomGeometry(
     if (boxes.some((b) => boxContains(p, b))) continue;
     cycles.push({ ring: walk.map((e) => e.a), edges: walk, area, sample: p });
   }
-  const positive = cycles.filter((c) => c.area.n > 0n);
-  const holes = new Map<Cycle, Cycle[]>();
-  for (const c of cycles.filter((c) => c.area.n < 0n)) {
-    const owner = positive
-      .filter((p) => location(c.sample, p.ring) === 1)
-      .sort((a, b) => cmp(a.area, b.area))[0];
-    if (owner) holes.set(owner, [...(holes.get(owner) ?? []), c]);
-  }
-  const tokens = (c: Cycle) =>
-    new Set(
-      c.edges
-        .filter((e) => e.cycle !== e.twin.cycle)
-        .flatMap((e) => [...e.sources]),
-    );
-  const regions = positive.map((c) => {
-    const inner = holes.get(c) ?? [],
-      outerTokens = tokens(c);
-    // A solid island changes area but not room topology. An inner free room does.
-    const partitions = inner.filter((h) =>
-      positive.some((p) => location(p.sample, h.ring) === 1),
-    );
-    const signature =
-      [...outerTokens].sort().join("|") +
-      "#" +
-      partitions
-        .map((h) => [...tokens(h)].sort().join("|"))
-        .sort()
-        .join("#");
-    const containsR = (p: P) =>
-      location(p, c.ring) === 1 &&
-      inner.every((h) => location(p, h.ring) === -1);
+  return cycles;
+}
+
+export function roomGeometry(
+  doc: Pick<Project, "model" | "project">,
+  floorId: string,
+): RoomGeometry {
+  return deriveRooms(doc, floorId);
+}
+
+export type ConstructedArea = {
+  area: number | null;
+  closed: boolean;
+  pending: boolean;
+};
+
+/** Fill enclosed free faces, their bounding wall bands and corner joints.
+ * Longitudinal intervals come from actual face edges, never whole wall IDs:
+ * an exterior continuation therefore cannot inflate the enclosed footprint.
+ * The second arrangement unions the pieces and fills nested courtyards. */
+export function floorAreaGeometry(
+  doc: Pick<Project, "model" | "project">,
+  floorId: string,
+): { rooms: RoomGeometry; constructed: ConstructedArea } {
+  const rooms = deriveRooms(doc, floorId);
+  const { positive, boxes, segments } = rooms;
+  if (!positive.length)
     return {
-      contour: c.ring.map(point),
-      holes: inner.map((h) => h.ring.map(point)),
-      area:
-        number(inner.reduce((a, h) => add(a, h.area), c.area)) / 200_000_000,
-      signature,
-      outerTokens,
-      sample: point(c.sample),
-      probe: c.sample,
-      containsExact: containsR,
-      contains: (p: Point) =>
-        Number.isFinite(p.x) &&
-        Number.isFinite(p.y) &&
-        containsR({ x: coordinate(p.x), y: coordinate(p.y) }),
+      rooms,
+      constructed: {
+        area: segments.length ? null : 0,
+        closed: false,
+        pending: !!segments.length,
+      },
     };
+  const pieces: P[][] = positive.map((c) => c.ring);
+  type Strip = { box: (typeof boxes)[number]; lo: P; hi: P };
+  const strips: Strip[] = [];
+  const rectangle = (lo: P, hi: P) => [
+    lo,
+    { x: hi.x, y: lo.y },
+    hi,
+    { x: lo.x, y: hi.y },
+  ];
+  for (const c of positive)
+    for (const e of c.edges) {
+      if (e.cycle === e.twin.cycle) continue;
+      for (const box of boxes) {
+        if (![...e.sources].some((s) => s.startsWith(`w:${box.id}:`))) continue;
+        // End caps already are external faces; only long sides span thickness.
+        if (box.horizontal ? cmp(e.a.y, e.b.y) !== 0 : cmp(e.a.x, e.b.x) !== 0)
+          continue;
+        const lo = {
+          x: box.horizontal
+            ? cmp(e.a.x, e.b.x) < 0
+              ? e.a.x
+              : e.b.x
+            : q(BigInt(box.x)),
+          y: box.horizontal
+            ? q(BigInt(box.y))
+            : cmp(e.a.y, e.b.y) < 0
+              ? e.a.y
+              : e.b.y,
+        };
+        const hi = {
+          x: box.horizontal
+            ? cmp(e.a.x, e.b.x) > 0
+              ? e.a.x
+              : e.b.x
+            : q(BigInt(box.x + box.width)),
+          y: box.horizontal
+            ? q(BigInt(box.y + box.height))
+            : cmp(e.a.y, e.b.y) > 0
+              ? e.a.y
+              : e.b.y,
+        };
+        strips.push({ box, lo, hi });
+        pieces.push(rectangle(lo, hi));
+      }
+    }
+  for (let i = 0; i < strips.length; i++)
+    for (let j = i + 1; j < strips.length; j++) {
+      const a = strips[i],
+        b = strips[j];
+      if (a.box.horizontal === b.box.horizontal) continue;
+      const lo = rp({
+        x: Math.max(a.box.x, b.box.x),
+        y: Math.max(a.box.y, b.box.y),
+      });
+      const hi = rp({
+        x: Math.min(a.box.x + a.box.width, b.box.x + b.box.width),
+        y: Math.min(a.box.y + a.box.height, b.box.y + b.box.height),
+      });
+      if (cmp(lo.x, hi.x) >= 0 || cmp(lo.y, hi.y) >= 0) continue;
+      const touches = (s: Strip) =>
+        cmp(lo.x, s.hi.x) <= 0 &&
+        cmp(hi.x, s.lo.x) >= 0 &&
+        cmp(lo.y, s.hi.y) <= 0 &&
+        cmp(hi.y, s.lo.y) >= 0;
+      if (touches(a) && touches(b)) pieces.push(rectangle(lo, hi));
+    }
+  const pieceEdges = pieces.flatMap((ring, i) =>
+    ring.flatMap((a, j) => {
+      const b = ring[(j + 1) % ring.length];
+      return eq(a, b) ? [] : [{ a, b, source: `p:${i}` }];
+    }),
+  );
+  const exterior = planarCycles(pieceEdges).filter((c) => c.area.n < 0n);
+  const outer = exterior.filter(
+    (c) =>
+      !exterior.some(
+        (other) => other !== c && location(c.sample, other.ring) === 1,
+      ),
+  );
+  const covered = (p: P) => outer.some((c) => location(p, c.ring) >= 0);
+  const perimeter = outer.flatMap((c) => c.edges);
+  const pending = segments.some((s) => {
+    const points = new Map([
+      [key(s.a), s.a],
+      [key(s.b), s.b],
+    ]);
+    for (const edge of perimeter)
+      for (const p of intersections(s, { ...edge, source: "perimeter" }))
+        points.set(key(p), p);
+    const axis = cmp(s.a.x, s.b.x) ? "x" : "y";
+    const ordered = [...points.values()].sort((a, b) => cmp(a[axis], b[axis]));
+    return ordered.some(
+      (p, i) => i > 0 && !covered(times(plus(ordered[i - 1], p), half)),
+    );
   });
-  return { regions, at: (p) => regions.find((r) => r.contains(p)) };
+  return {
+    rooms,
+    constructed: {
+      area:
+        number(neg(outer.reduce((sum, c) => add(sum, c.area), zero))) /
+        200_000_000,
+      closed: true,
+      pending,
+    },
+  };
 }
 
 export const roomAreaText = (area: number) =>

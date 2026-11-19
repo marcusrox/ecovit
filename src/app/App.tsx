@@ -21,6 +21,7 @@ import {
   type FloorReference,
 } from "../domain/floor-reference";
 import { Quantities } from "./Quantities";
+import { Areas } from "./Areas";
 import { DuplicateProjectDialog } from "./DuplicateProject";
 import { DeleteProjectDialog } from "./DeleteProject";
 import { editFloor } from "../domain/floors";
@@ -209,7 +210,9 @@ function Properties({ doc }: { doc: Project }) {
   return (
     <aside className={styles.properties} aria-label="Propriedades">
       <div className={styles.panelTitle}>
-        <span>{wall ? "PROPRIEDADES DA PAREDE" : "PROPRIEDADES DO PAVIMENTO"}</span>
+        <span>
+          {wall ? "PROPRIEDADES DA PAREDE" : "PROPRIEDADES DO PAVIMENTO"}
+        </span>
         <button
           aria-label="Recolher propriedades"
           className={styles.iconButton}
@@ -1119,6 +1122,11 @@ function EditorApp() {
             </span>
             <div className={styles.headerActions}>
               <AccountButton />
+              <Areas
+                key={`areas-${doc.project.id}`}
+                doc={doc}
+                selectTool={() => changeTool("select")}
+              />
               <Quantities
                 key={doc.project.id}
                 doc={doc}

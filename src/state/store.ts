@@ -109,7 +109,7 @@ type Inspection = {
   floorReference: FloorReference;
   component: string | null;
   preview: Composition | null;
-  focus: { x: number; y: number } | null;
+  focus: { x: number; y: number; width?: number; height?: number } | null;
   pendingOpening: Opening | null;
   roomNameRequest: string | null;
   channelBand: string | null;

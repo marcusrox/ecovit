@@ -3038,3 +3038,69 @@ button.iconButton {
   margin: 0;
   accent-color: #205d48;
 }
+.areaTotals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+  margin: 24px 0;
+}
+.areaTotals > div + div {
+  border-left: 1px solid #dce3d8;
+  padding-left: 32px;
+}
+.areaValue {
+  font-size: 26px;
+  font-weight: 600;
+  color: #284b39;
+  font-variant-numeric: tabular-nums;
+}
+.areaPending {
+  display: block;
+  color: #78552e;
+  font-size: 12px;
+  font-weight: 400;
+  margin-top: 6px;
+}
+.areaFilter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 32px 0;
+}
+.areaFilter select {
+  width: auto;
+  max-width: 100%;
+}
+.areaTable small {
+  display: block;
+  margin-top: 6px;
+}
+.quantityScreen .areaTable th:first-child,
+.quantityScreen .areaTable td:first-child {
+  width: 27%;
+  text-align: left;
+}
+.areaTable td {
+  overflow-wrap: anywhere;
+}
+.quantityScreen .areaRooms th:nth-child(2),
+.quantityScreen .areaRooms td:nth-child(2) {
+  text-align: left;
+}
+@media (max-width: 700px) {
+  .areaTotals {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .areaTotals > div + div {
+    border-left: 0;
+    border-top: 1px solid #dce3d8;
+    padding: 20px 0 0;
+  }
+  .areaFilter {
+    flex-wrap: wrap;
+  }
+  .areaValue {
+    font-size: 22px;
+  }
+}

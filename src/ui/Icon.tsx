@@ -69,6 +69,7 @@ const icons = {
   plus: Plus,
   copy: Copy,
   quantities: ListOrdered,
+  areas: LandPlot,
   delete: Trash2,
   minus: Minus,
   download: Download,

@@ -405,6 +405,14 @@ Mudanças dimensionais atualizam a área quando a referência fixa continua inte
 
 Segmentos de fechamento são independentes e editáveis, criados por dois cliques, com atração geométrica suspensa por Alt; não acompanham paredes movidas. Cruzamentos/T conectam, coincidências contam uma vez e lacunas reais permanecem abertas. Histórico, salvamento, transporte e cópia/remoção de pavimento mantêm a intenção íntegra. Sem peças, quantitativos ou recálculo construtivo por edição exclusiva dessas entidades. Nomes literais dos controles e critérios na T-018, sem novos controles de associação ou diagnóstico automático de lacunas.
 
+#### Áreas do projeto — T-030
+
+Consultar os ambientes identificados, suas áreas úteis e a área construída em relatório acessível ao lado de Orçamento. Resumo com totais globais, tabela por pavimento e lista de ambientes com localização na planta. O filtro começa em Todos e altera somente as duas tabelas; identificar pavimentos por nome e cota.
+
+Área útil soma os ambientes válidos, sem exigir identificação de todos os recintos. Ambientes em revisão permanecem listados sem área anterior: com válidos, soma parcial; somente revisão, sem valor; sem registros, informar ausência de ambientes. Área construída é independente das identificações: união dos espaços fechados por pavimento, pelas faces externas das paredes e linhas de fechamento, incluindo todo o interior, pátios e vazios. Contornos somente por linhas também entram; varandas e garagens abertas precisam de fechamento. Não há exclusões ou classificação de linhas nesta entrega. Convenção geométrica e precisão em CT-18.
+
+Sem paredes/linhas, construída zero; desenho sem fechamento, não determinada; fechamento com trechos externos não abrangidos, valor conhecido parcial. Totais conservam essas pendências e somam pavimentos sobrepostos separadamente. Localizar fecha a consulta, ativa Planta no pavimento e seleciona o ambiente: enquadra a região válida ou centraliza o identificador em revisão. Consultar/filtrar preservam contexto, intenção, histórico e composição; resultados derivados, sem novo cadastro, persistência de totais, PDF ou preços por área.
+
 ## M12 — Contas e persistência remota
 
 O acesso é por conta e os projetos ficam no servidor. A situação da homologação está na [task de verificação em produção](tasks/T-001-Homologacao-Funcional-Producao.md).
