@@ -63,7 +63,13 @@ export function openingSymbolStrokes(
       [l, top + h],
       [l, top],
     ]);
-  const arrow = (u: number, v: number, endU: number, endV: number) => {
+  const arrow = (
+    u: number,
+    v: number,
+    endU: number,
+    endV: number,
+    both = false,
+  ) => {
     const angle = Math.atan2(endV - v, endU - u),
       size = Math.min(length * 0.055, Math.hypot(endU - u, endV - v) * 0.3);
     line([
@@ -81,6 +87,12 @@ export function openingSymbolStrokes(
         endV - size * Math.sin(angle + 0.45),
       ],
     ]);
+    if (both)
+      line([
+        [u + size * Math.cos(angle - 0.45), v + size * Math.sin(angle - 0.45)],
+        [u, v],
+        [u + size * Math.cos(angle + 0.45), v + size * Math.sin(angle + 0.45)],
+      ]);
   };
   const arc = (center: number, radius: number, right = false) =>
     line(
@@ -149,20 +161,14 @@ export function openingSymbolStrokes(
       }
       break;
     case "double-sliding":
-      // Door leaves sit outside the wall face; windows retain their double frame inside it.
-      rect(-half, -t / 2 - thin * 2, half, thin);
-      rect(-length * 0.25, -t / 2 - thin * 4, half, thin);
+      // Stepped leaves meet at the center; a double-headed arrow indicates sliding.
+      rect(-half, -thin, half, thin);
+      rect(0, 0, half, thin);
       arrow(
-        length * 0.25,
-        -t / 2 - length * 0.18,
-        -length * 0.25,
-        -t / 2 - length * 0.18,
-      );
-      line(
-        [
-          [0, 0],
-          [half, 0],
-        ],
+        -length * 0.12,
+        -t / 2 - length * 0.1,
+        length * 0.12,
+        -t / 2 - length * 0.1,
         true,
       );
       break;

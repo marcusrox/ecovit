@@ -61,6 +61,7 @@ import {
 } from "../domain/floor-reference";
 import { FloorReferenceLayer } from "./FloorReference";
 import { drawOpeningSymbol } from "./opening-symbol";
+import { openingSymbolStrokes } from "../domain/opening-symbol";
 import { defaultAppearance } from "../domain/opening-appearance";
 import { usePreferences } from "../state/preferences";
 import { CompositionStatus } from "./CompositionStatus";
@@ -1614,6 +1615,25 @@ export function Canvas({
                     vertical = w.a.x === w.b.x;
                   let labelX = vertical ? x - 5 - ascent : x,
                     labelY = vertical ? y + height : y - 5;
+                  if (
+                    mode === "plan" &&
+                    o.appearance?.type === "double-sliding"
+                  ) {
+                    for (const stroke of openingSymbolStrokes(
+                      o,
+                      !vertical,
+                      x,
+                      y,
+                      width,
+                      height,
+                    )) {
+                      for (const point of stroke.points) {
+                        if (vertical)
+                          labelX = Math.min(labelX, point.x - 5 - ascent);
+                        else labelY = Math.min(labelY, point.y - 5);
+                      }
+                    }
+                  }
                   const labelBounds = () => ({
                     x: vertical ? labelX - descent : labelX,
                     y: vertical ? labelY - metrics.width : labelY - ascent,

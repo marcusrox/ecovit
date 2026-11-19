@@ -476,22 +476,19 @@ it("correr de duas folhas é independente da abertura central e visualmente dist
   const panels = door.filter((stroke) => stroke.points.length === 5);
   expect(panels).toHaveLength(2);
   expect(panels[0].points[0].x).toBe(0);
-  expect(panels[1].points[0].x).toBe(25);
+  expect(panels[0].points[0].y).toBeCloseTo(2.8, 9);
+  expect(panels[1].points[0]).toEqual({ x: 50, y: 5 });
   for (const panel of panels) {
     expect(panel.points[1].x - panel.points[0].x).toBe(50);
-    expect(panel.points.every((p) => p.y < 0)).toBe(true);
+    expect(panel.points.every((p) => p.y >= 0 && p.y <= 10)).toBe(true);
   }
-  expect(door.at(-1)).toEqual({
-    dashed: true,
-    points: [
-      { x: 50, y: 5 },
-      { x: 100, y: 5 },
-    ],
-  });
+  expect(door.every((stroke) => !stroke.dashed)).toBe(true);
   expect(door[4].points).toEqual([
-    { x: 75, y: -18 },
-    { x: 25, y: -18 },
+    { x: 38, y: -10 },
+    { x: 62, y: -10 },
   ]);
+  expect(door[5].points[1]).toEqual({ x: 62, y: -10 });
+  expect(door[6].points[1]).toEqual({ x: 38, y: -10 });
   expect(window.some((stroke) => stroke.dashed)).toBe(false);
   expect(door).not.toEqual(window);
   for (const orientation of [1, 2, 3] as const) {
