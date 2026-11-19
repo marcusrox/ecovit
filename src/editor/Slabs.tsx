@@ -4,6 +4,9 @@ import {
   cm,
   display,
   snapPoint,
+  slabTypes,
+  slabHeights,
+  type SlabConstruction,
   hitWalls,
   type Point,
   type Slab,
@@ -13,6 +16,7 @@ import {
 import { openingBox, openingLabel } from "../domain/openings";
 import {
   putSlab,
+  slabThickness,
   removeSlabElement,
   ringEdges,
   ringLocation,
@@ -25,6 +29,13 @@ import {
 import { useStore } from "../state/store";
 import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
+
+const slabTypeLabels: Record<SlabConstruction["type"], string> = {
+  "lattice-clay": "Treliçada com lajotas",
+  "lattice-eps": "Treliçada com EPS",
+  "hollow-core": "Laje alveolar",
+  solid: "Laje de concreto maciço",
+};
 
 const startDraft = (slab?: Slab, openingId?: string) => ({
   tool: slab ? ("select" as const) : ("slab" as const),
@@ -58,6 +69,16 @@ export function deleteSlabSelection() {
   });
   return true;
 }
+const constructionDraft = (slab?: Slab) => ({
+  type: slab?.construction?.type ?? "",
+  height: slab?.construction ? String(slab.construction.height) : "",
+  toppingEnabled: slab?.construction?.topping !== undefined,
+  topping:
+    slab?.construction?.topping !== undefined
+      ? display(slab.construction.topping)
+      : "",
+});
+
 export function SlabProperties({
   doc,
   setTool,
@@ -71,12 +92,31 @@ export function SlabProperties({
     editing = useStore((s) => s.slabEditing);
   const slab = doc.model.slabs[0],
     opening = slab?.openings.find((o) => o.id === selected);
-  const [text, setText] = useState(slab ? display(slab.thickness) : "");
+  const [draft, setDraft] = useState(() => constructionDraft(slab));
+  const [error, setError] = useState("");
   const collapsed = useStore((s) => s.propertiesCollapsed);
   const setCollapsed = useStore((s) => s.setPropertiesCollapsed);
-  useEffect(() => setText(slab ? display(slab.thickness) : ""), [slab]);
+  useEffect(() => {
+    setDraft(constructionDraft(slab));
+    setError("");
+  }, [slab, editing, selected]);
   if (!slab) return null;
   const disabled = busy || readonly || editing;
+  function draftConstruction(): SlabConstruction {
+    const construction: SlabConstruction = {
+      type: draft.type as SlabConstruction["type"],
+      height: Number(draft.height) as SlabConstruction["height"],
+      ...(draft.toppingEnabled ? { topping: cm(draft.topping) } : {}),
+    };
+    slabThickness(construction);
+    return construction;
+  }
+  let previewThickness: number | undefined;
+  try {
+    previewThickness = slabThickness(draftConstruction());
+  } catch {
+    // Unconfirmed or invalid fields never replace the current slab.
+  }
   const draw = (id?: string) => {
     setTool("select");
     useStore
@@ -96,7 +136,7 @@ export function SlabProperties({
   return (
     <aside className={styles.properties} aria-label="Propriedades da laje">
       <div className={styles.panelTitle}>
-        <span>{opening ? "ABERTURA DE LAJE" : "LAJE SELECIONADA"}</span>
+        <span>{opening ? "ABERTURA DE LAJE" : "PROPRIEDADES DA LAJE"}</span>
         <button
           aria-label="Recolher propriedades"
           className={styles.iconButton}
@@ -112,6 +152,12 @@ export function SlabProperties({
         {doc.model.floors[0].name}
       </h2>
       <div className={styles.propertyInfo}>
+        {!opening && (
+          <p className={styles.note}>
+            A laje é sempre criada na parte inferior do pavimento, com a face
+            superior alinhada à cota do pavimento.
+          </p>
+        )}
         <dl className={styles.propertyFacts}>
           <dt>Face superior</dt>
           <dd>{display(doc.model.floors[0].level)} cm</dd>
@@ -119,37 +165,126 @@ export function SlabProperties({
           <dd>{display(doc.model.floors[0].level - slab.thickness)} cm</dd>
         </dl>
       </div>
-      <section className={styles.propertyGroup} aria-label="Dimensões da laje">
-        <h3>Dimensões</h3>
+      <section
+        className={styles.propertyGroup}
+        aria-label="Dimensões da laje"
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.stopPropagation();
+            setDraft(constructionDraft(slab));
+            setError("");
+          }
+        }}
+      >
+        <h3>Tipo e espessura</h3>
+        {!slab.construction && (
+          <p className={styles.note}>
+            Tipo e estrutura ainda não definidos. Espessura atual:{" "}
+            {display(slab.thickness)} cm.
+          </p>
+        )}
         <label className={styles.field}>
-          Espessura da laje (cm)
-          <input
-            aria-label="Espessura da laje (cm)"
+          Tipo de laje
+          <select
+            aria-label="Tipo de laje"
             disabled={disabled}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") setText(display(slab.thickness));
+            value={draft.type}
+            onChange={(e) => {
+              setDraft({ ...draft, type: e.target.value });
+              setError("");
+            }}
+          >
+            <option value="">Selecione o tipo</option>
+            {slabTypes.map((type) => (
+              <option key={type} value={type}>
+                {slabTypeLabels[type]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={styles.field}>
+          Altura da estrutura (H)
+          <select
+            aria-label="Altura da estrutura (H)"
+            disabled={disabled}
+            value={draft.height}
+            onChange={(e) => {
+              setDraft({ ...draft, height: e.target.value });
+              setError("");
+            }}
+          >
+            <option value="">Selecione a altura</option>
+            {slabHeights.map((height) => (
+              <option key={height} value={height}>
+                H {display(height)} cm
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={styles.slabTopping}>
+          <input
+            type="checkbox"
+            checked={draft.toppingEnabled}
+            disabled={disabled}
+            onChange={(e) => {
+              setDraft({ ...draft, toppingEnabled: e.target.checked });
+              setError("");
             }}
           />
+          Adicionar capa de concreto
         </label>
+        {draft.toppingEnabled && (
+          <label className={styles.field}>
+            Espessura da capa (cm)
+            <input
+              aria-label="Espessura da capa (cm)"
+              inputMode="decimal"
+              disabled={disabled}
+              value={draft.topping}
+              aria-describedby="slab-topping-note"
+              onChange={(e) => {
+                setDraft({ ...draft, topping: e.target.value });
+                setError("");
+              }}
+            />
+          </label>
+        )}
+        <p id="slab-topping-note" className={styles.note}>
+          A espessura usual da capa de concreto é em torno de 5 cm.
+        </p>
+        <p className={styles.note} aria-live="polite">
+          Espessura total:{" "}
+          {previewThickness !== undefined
+            ? `${display(previewThickness)} cm`
+            : "preencha uma configuração válida"}
+          .
+        </p>
+        {error && (
+          <p role="alert" className={styles.errorText}>
+            {error}
+          </p>
+        )}
         <div className={styles.slabActions}>
           <button
             className={styles.iconButton}
-            aria-label="Aplicar espessura"
-            title="Aplicar espessura"
-            data-tooltip="Aplicar espessura"
+            aria-label="Aplicar configuração da laje"
+            title="Aplicar configuração da laje"
+            data-tooltip="Aplicar configuração da laje"
             disabled={disabled}
             onClick={() => {
               try {
-                void useStore
-                  .getState()
-                  .commit(
-                    putSlab(doc, { ...slab, thickness: cm(text) }),
-                    "slab",
-                  );
+                const construction = draftConstruction();
+                void useStore.getState().commit(
+                  putSlab(doc, {
+                    ...slab,
+                    construction,
+                    thickness: slabThickness(construction),
+                  }),
+                  "slab",
+                );
+                setError("");
               } catch (e) {
-                useStore.getState().notify((e as Error).message);
+                setError((e as Error).message);
               }
             }}
           >
@@ -157,11 +292,14 @@ export function SlabProperties({
           </button>
           <button
             className={styles.iconButton}
-            aria-label="Cancelar espessura"
-            title="Cancelar espessura"
-            data-tooltip="Cancelar espessura"
+            aria-label="Cancelar configuração da laje"
+            title="Cancelar configuração da laje"
+            data-tooltip="Cancelar configuração da laje"
             disabled={disabled}
-            onClick={() => setText(display(slab.thickness))}
+            onClick={() => {
+              setDraft(constructionDraft(slab));
+              setError("");
+            }}
           >
             <Icon name="close" />
           </button>
@@ -798,6 +936,12 @@ export function useSlabCanvas(
               <strong>
                 {draft.openingId ? "Contorno da abertura" : "Contorno da laje"}
               </strong>
+              {!draft.openingId && (
+                <span className={styles.note}>
+                  A laje é sempre criada na parte inferior do pavimento, com a
+                  face superior alinhada à cota do pavimento.
+                </span>
+              )}
               <span>
                 {draft.closed
                   ? "Confira a prévia antes de confirmar."

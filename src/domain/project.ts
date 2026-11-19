@@ -76,10 +76,23 @@ export type Terrain = {
   compass?: TerrainCompass;
 };
 export type SlabOpening = { id: string; contour: Point[] };
+export const slabTypes = [
+  "lattice-clay",
+  "lattice-eps",
+  "hollow-core",
+  "solid",
+] as const;
+export const slabHeights = [800, 1200, 1600, 2000, 2500, 3000] as const;
+export type SlabConstruction = {
+  type: (typeof slabTypes)[number];
+  height: (typeof slabHeights)[number];
+  topping?: number;
+};
 export type Slab = {
   id: string;
   floorId: string;
   thickness: number;
+  construction?: SlabConstruction;
   contour: Point[];
   openings: SlabOpening[];
 };
@@ -93,7 +106,14 @@ export type Wall = {
   height: number;
 };
 export type OpeningAppearance = {
-  type: "swing" | "double-swing" | "sliding" | "center-sliding" | "tilt";
+  type:
+    | "swing"
+    | "double-swing"
+    | "sliding"
+    | "double-sliding"
+    | "center-sliding"
+    | "quad-sliding"
+    | "tilt";
   orientation: 0 | 1 | 2 | 3;
 };
 export type Opening = {
@@ -149,7 +169,7 @@ export type Tool =
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 26;
+  schemaVersion: 30;
   project: {
     id: string;
     name: string;
@@ -161,6 +181,7 @@ export type Project = {
     channelLevels: ChannelLevel[];
     groutSettings: GroutSettings;
     steelPrices?: SteelPrices;
+    brickLossPercent?: number;
     unitPrices?: Partial<
       Record<"whole" | "half" | "channel" | "half-channel", number>
     >;
@@ -252,7 +273,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 26,
+    schemaVersion: 30,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),

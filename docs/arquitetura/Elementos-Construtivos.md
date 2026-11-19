@@ -46,6 +46,11 @@ type Slab = {
   id: string;
   floorId: string;
   thickness: number;
+  construction?: {
+    type: "lattice-clay" | "lattice-eps" | "hollow-core" | "solid";
+    height: 800 | 1200 | 1600 | 2000 | 2500 | 3000;
+    topping?: number;
+  };
   contour: Point[];
   openings: SlabOpening[];
 };
@@ -56,7 +61,13 @@ type Slab = {
 
 `floorId` referencia um pavimento existente e aparece no máximo uma vez em `model.slabs`; assim há de zero a quatro lajes no projeto. Ordenar o array pela ordem dos pavimentos. IDs de laje e aberturas são UUIDs únicos no conjunto de entidades de intenção, inclusive paredes, vãos e ajustes. A propriedade da abertura é sua inclusão em `Slab.openings`: não duplicar `floorId`, `slabId`, cota ou espessura na abertura, nem misturá-la a `model.openings` (vãos de parede). Nenhuma referência entre laje e parede é criada.
 
-`thickness` é inteiro positivo representável, sem exigência modular vertical; `top = floor.level`, `bottom = floor.level − thickness`. Validar também o limite inferior derivado. Sem campos `kind`, `level`, `top`, `bottom` ou classificação piso/cobertura persistidos na laje. Não introduzir padrão de espessura no projeto: criação requer entrada explícita conforme RF-13.
+`thickness` é inteiro positivo representável, sem exigência modular vertical; `top = floor.level`, `bottom = floor.level − thickness`. Validar também o limite inferior derivado. Sem campos `level`, `top`, `bottom` ou classificação piso/cobertura persistidos na laje. Não introduzir padrão de espessura no projeto: criação requer entrada explícita conforme RF-13.
+
+### Tipo, estrutura e capa — T-029
+
+construction é opcional e completo quando presente. type identifica treliçada com lajotas, treliçada com EPS, alveolar ou concreto maciço; height é a altura da estrutura em 0,1 mm, limitada às seis opções acima. topping opcional é espessura positiva representável da capa, também em 0,1 mm; ausência significa sem capa. thickness deve ser exatamente height + (topping ?? 0). Validar parâmetros, soma e face inferior; recusar tipo/altura desconhecidos, configuração parcial e divergência do total. Tipo não muda contorno, aberturas, alvenaria ou comportamento resistente.
+
+Lajes sem construction preservam thickness livre e não recebem tipo, altura ou capa inferidos. O fluxo inicial continua exigindo somente espessura explícita; a configuração posterior nas propriedades exige escolha de tipo e H e admite capa opcional. A orientação de aproximadamente 5 cm para a capa não preenche o campo nem estabelece dimensionamento. A espessura total é consultável e calculada, sem entrada direta nas propriedades. Duplicação de pavimento copia construction por valor, mantendo independência.
 
 ## Validação de lajes
 
@@ -90,7 +101,7 @@ Desfazer/refazer de alterações de laje usa a intenção de até 50 operações
 
 ## Vãos e aparência de esquadrias
 
-Opening mantém id, wallId, kind (door/window/opening), offset, width, base e height; aparência opcional { type, orientation }. type admite swing, double-swing, sliding, center-sliding e tilt; center-sliding somente em portas, e vão livre não admite aparência. orientation é inteiro 0..3 em swing/sliding e 0..1 nos demais. Ausência conserva o símbolo genérico legado, sem inferir funcionamento físico; quantidade de folhas é derivada de kind/type. Não persistir símbolos ou folhas redundantes.
+Opening mantém id, wallId, kind (door/window/opening), offset, width, base e height; aparência opcional { type, orientation }. type admite swing, double-swing, sliding, double-sliding, center-sliding, quad-sliding e tilt; double-sliding, center-sliding e quad-sliding somente em portas, e vão livre não admite aparência. orientation é inteiro 0..3 em swing/sliding/double-sliding e 0..1 nos demais. Ausência conserva o símbolo genérico legado, sem inferir funcionamento físico; quantidade de folhas é derivada de kind/type. double-sliding é uma opção independente de porta de correr de duas folhas iguais (uma fixa e uma móvel), com dois sentidos e duas faces; a janela correspondente continua usando sliding. center-sliding conserva a opção existente de abertura central, com duas folhas móveis, sem alteração de símbolo ou dados. quad-sliding representa quatro folhas iguais, duas fixas laterais e duas móveis com abertura central; ambas as opções têm duas orientações de face. Não persistir símbolos ou folhas redundantes.
 
 Offset é longitudinal desde a menor coordenada da parede; base e altura são relativas à cota do proprietário. Redimensionamento de parede preserva a posição mundial do vão e recalcula offset; translação preserva a relação e união remapeia dependentes. Geometria indireta incompatível preserva intenção para diagnóstico, sem apagar o vão. O campo appearance não altera o vão bruto nem os insumos da composição.
 

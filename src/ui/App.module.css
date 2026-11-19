@@ -2109,36 +2109,117 @@ button.iconButton {
   gap: 8px;
 }
 .quantityScreen {
-  background: #fffefb;
+  background: #edf0e9;
   overflow-y: auto;
   scrollbar-gutter: stable;
 }
 .quantityScreen[open] {
   display: block;
 }
-.quantityScreen .releaseHeader {
+.quantityActions {
   position: sticky;
-  top: 0;
-  z-index: 1;
-  background: #fffefbf5;
+  top: 16px;
+  height: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 0 20px;
+  pointer-events: none;
+}
+.quantityActions button {
+  pointer-events: auto;
+  background: #fffefb;
+  border-color: #ccd8c7;
+  box-shadow: 0 4px 14px #263d3314;
 }
 .quantityContent {
-  width: min(100%, 1180px);
-  margin: 0 auto;
-  padding: 28px 40px 48px;
-  line-height: 1.6;
+  width: min(calc(100% - 64px), 1180px);
+  margin: 32px auto 48px;
+  padding: 48px 52px 56px;
+  background: #fffefb;
+  border: 1px solid #dce2d7;
+  box-shadow: 0 8px 32px #263d3309;
+  font-size: 14px;
+  line-height: 1.65;
 }
+.quantityMasthead {
+  padding-bottom: 28px;
+  margin-bottom: 36px;
+  border-top: 4px solid #285941;
+  border-bottom: 1px solid #cdd8ca;
+}
+.quantityScreen .quantityMasthead .quantityEyebrow {
+  width: fit-content;
+  margin: 24px 0 10px;
+  color: #526b57;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  outline-color: #8da783;
+  outline-offset: 4px;
+}
+.quantityScreen .quantityMasthead h2 {
+  margin: 0 0 20px;
+  color: #203e30;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.6px;
+  overflow-wrap: anywhere;
+}
+.quantityMetadata {
+  margin: 0 0 14px;
+  color: #405746;
+  font-size: 12px;
+}
+.quantityMasthead > .note {
+  margin: 0;
+  padding-left: 14px;
+  border-left: 2px solid #d5dfcc;
+}
+.quantitySectionIndex {
+  flex: none;
+  color: #829779;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+.quantityGroup {
+  padding: 24px;
+  border: 1px solid #e0e6da;
+  border-top: 2px solid #b6c9ac;
+}
+.quantityGroup + .quantityGroup {
+  margin-top: 28px;
+}
+.quantityFloorDetail {
+  padding: 24px 0;
+  border-bottom: 1px solid #dce4d6;
+}
+.quantityScreen .quantityFloorDetail h3 {
+  font-size: 15px;
+}
+.quantityFloorDetail + .quantityFloorDetail {
+  margin-top: 0;
+}
+.quantityGroup > p[role="status"] {
+  color: #526b57;
+  font-size: 11px;
+}
+
 .quantitySection + .quantitySection {
-  margin-top: 40px;
-  padding-top: 28px;
-  border-top: 1px solid #dbe2d9;
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 2px solid #b6c9ac;
 }
 .quantitySection > section {
   margin-top: 28px;
 }
 .quantityScreen h3 {
-  margin: 0 0 12px;
-  font-size: 16px;
+  margin: 0 0 18px;
+  font-size: 17px;
   font-weight: 600;
   color: #315943;
 }
@@ -2274,12 +2355,15 @@ button.iconButton {
   margin-top: 6px;
 }
 .quantityScreen h1 {
-  margin: 0 0 8px;
-  font-size: 24px;
+  margin: 0;
+  font-size: 18px;
 }
 .quantityScreen h2 {
-  margin: 24px 0 12px;
-  font-size: 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 0 0 14px;
+  font-size: 21px;
   font-weight: 600;
   color: #204c3b;
   letter-spacing: -0.3px;
@@ -2328,23 +2412,29 @@ button.iconButton {
 }
 .quantityTable th,
 .quantityTable td {
-  padding: 12px 10px;
+  padding: 14px 10px;
   text-align: right;
   vertical-align: top;
   border-bottom: 1px solid #e4e8df;
   overflow-wrap: anywhere;
 }
 .quantityTable th:first-child {
+  width: 20%;
   text-align: left;
 }
 .quantityTable caption {
   text-align: left;
-  padding: 10px 14px;
+  padding: 14px 0;
+  color: #526b57;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.04em;
 }
 .quantityTable thead th {
-  background: #f0f4ed;
-  color: #52634f;
+  background: #edf2e8;
+  border-top: 1px solid #d6e0cf;
+  border-bottom: 1px solid #c8d5c0;
+  color: #4c6145;
   font-size: 12px;
   font-weight: 600;
 }
@@ -2355,32 +2445,72 @@ button.iconButton {
   width: 100%;
   min-width: 0;
   padding: 8px;
+  border-color: #d8e1d2;
+  border-radius: 4px;
   background: #fffefb;
+  font-variant-numeric: tabular-nums;
 }
 .quantityTable input:focus {
   background: #fff;
 }
-.quantityScreen .materialTotals {
-  border: 0;
-  border-top: 1px solid #ccd9cd;
-  border-radius: 0;
-  padding: 20px;
+.quantityGroup[aria-labelledby="budget-bricks-title"] tbody tr:last-child {
+  background: #edf2e8;
+  font-weight: 600;
+  border-top: 1px solid #c8d5c0;
 }
+.quantityScreen .materialTotals {
+  gap: 14px;
+  margin: 28px 0 16px;
+  padding: 24px;
+  border: 1px solid #d5dfce;
+  border-radius: 0;
+  background: #f6f8f1;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.quantityScreen .materialTotals dd {
+  font-size: 15px;
+}
+
 .quantityScreen .materialTotals > div:last-child {
-  padding-top: 12px;
-  margin-top: 4px;
-  border-top: 1px solid #ccd9cd;
-  font-size: 16px;
-  color: #204c3b;
+  align-items: center;
+  margin: 6px -24px -24px;
+  padding: 20px 24px;
+  background: #28503c;
+  color: #fffefb;
+  font-size: 14px;
+}
+.quantityScreen .materialTotals > div:last-child dd {
+  font-size: 21px;
+  font-weight: 600;
 }
 @media (max-width: 1000px) {
   .quantityContent {
-    padding: 20px 20px 36px;
+    width: calc(100% - 32px);
+    margin: 20px auto 32px;
+    padding: 28px 24px 36px;
+  }
+  .quantityGroup {
+    padding: 18px 14px;
+  }
+  .quantityScreen .quantityMasthead h2 {
+    font-size: 25px;
+  }
+  .quantityScreen .materialTotals {
+    padding: 18px;
+  }
+  .quantityScreen .materialTotals > div:last-child {
+    margin: 6px -18px -18px;
+    padding: 18px;
   }
   .quantityTable th,
   .quantityTable td {
     padding: 10px 6px;
     font-size: 12px;
+  }
+  .quantityTable input {
+    padding: 8px 4px;
+    font-size: 11px;
   }
 }
 .quantityTable tfoot {
@@ -2895,4 +3025,16 @@ button.iconButton {
   display: grid;
   gap: 5px;
   overflow-wrap: anywhere;
+}
+
+.slabTopping {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+.slabTopping input {
+  flex: none;
+  margin: 0;
+  accent-color: #205d48;
 }

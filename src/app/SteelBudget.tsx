@@ -137,7 +137,7 @@ export function SteelBudgetSummary({
     else total = Number(sum);
   }
   return (
-    <section aria-label="Ferragens do projeto">
+    <section className={styles.quantityGroup} aria-label="Ferragens do projeto">
       <h3>Ferragens do projeto</h3>
       {!report.available ? (
         <p>{report.reason}</p>
@@ -291,7 +291,10 @@ export function SteelBudgetDetail({
     : undefined;
   if (!floor) return null;
   return (
-    <section aria-label="Ferragens do pavimento consultado">
+    <section
+      className={styles.quantityFloorDetail}
+      aria-label="Ferragens do pavimento consultado"
+    >
       <h3>
         Ferragens · {floor.name} · {display(floor.level)} cm
         {floor.partial ? " · Parcial" : ""}

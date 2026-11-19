@@ -148,6 +148,24 @@ export function openingSymbolStrokes(
         );
       }
       break;
+    case "double-sliding":
+      // Door leaves sit outside the wall face; windows retain their double frame inside it.
+      rect(-half, -t / 2 - thin * 2, half, thin);
+      rect(-length * 0.25, -t / 2 - thin * 4, half, thin);
+      arrow(
+        length * 0.25,
+        -t / 2 - length * 0.18,
+        -length * 0.25,
+        -t / 2 - length * 0.18,
+      );
+      line(
+        [
+          [0, 0],
+          [half, 0],
+        ],
+        true,
+      );
+      break;
     case "center-sliding":
       rect(-length * 0.95, -t / 2 - thin * 2, half, thin);
       rect(length * 0.45, -t / 2 - thin * 2, half, thin);
@@ -171,6 +189,18 @@ export function openingSymbolStrokes(
         true,
       );
       break;
+    case "quad-sliding": {
+      const quarter = length / 4;
+      // Outer panels stay at the jambs; the inner pair slides outward on the other track.
+      rect(-half, -t * 0.25, quarter, thin);
+      rect(quarter, -t * 0.25, quarter, thin);
+      rect(-length * 0.375, t * 0.2, quarter, thin);
+      rect(length * 0.125, t * 0.2, quarter, thin);
+      const arrowV = -t / 2 - length * 0.12;
+      arrow(-length * 0.05, arrowV, -quarter, arrowV);
+      arrow(length * 0.05, arrowV, quarter, arrowV);
+      break;
+    }
     case "tilt": {
       const depth = length * (o.kind === "door" ? 0.6 : 0.3);
       rect(-half, -thin / 2, length, thin);

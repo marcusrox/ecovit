@@ -84,7 +84,7 @@ const summary = (page: Page) =>
   report(page).getByRole("region", { name: "Resumo do projeto" });
 
 test(
-  "M5 A01/03/05/06/10: consulta, perdas exatas, filtro e contexto sem escrita/histórico",
+  "M5 A01/03/05/06/10: consulta sem escrita, perdas persistidas e contexto preservado",
   { tag: "@fluxo" },
   async ({ page }) => {
     const d = await load(page);
@@ -101,6 +101,7 @@ test(
         name: /^Total de peças 13 0 13(?:\s|$)/,
       }),
     ).toBeVisible();
+    expect(await snapshot(page)).toBe(before);
     await report(page).getByLabel("Perdas de tijolos (%)").fill("10");
     await expect(
       summary(page).getByRole("row", { name: /^Inteiro 11 2 13(?:\s|$)/ }),
@@ -110,6 +111,7 @@ test(
         name: /^Total de peças 13 3 16(?:\s|$)/,
       }),
     ).toBeVisible();
+    await report(page).getByLabel("Perdas de tijolos (%)").press("Enter");
     await report(page)
       .getByLabel("Pavimento da consulta")
       .selectOption(d.model.floors[0].id);
@@ -118,18 +120,30 @@ test(
         "Este pavimento não tem fiadas. Quantidades zero.",
       ),
     ).toBeVisible();
+    await expect(report(page).getByRole("status")).toContainText("Salvo");
+    const afterTen = await snapshot(page);
+    expect(JSON.parse(afterTen).doc.project.brickLossPercent).toBe(1000);
     await report(page).getByLabel("Perdas de tijolos (%)").fill("-1");
     await expect(report(page).getByRole("alert")).toContainText("não negativo");
     await expect(
       summary(page).getByRole("row", { name: /^Inteiro 11 — —(?:\s|$)/ }),
     ).toBeVisible();
+    expect(await snapshot(page)).toBe(afterTen);
     await report(page).getByLabel("Perdas de tijolos (%)").fill("2,50");
     await report(page)
-      .getByRole("heading", { name: "Orçamento", exact: true })
+      .getByRole("heading", { name: "Orçamento preliminar", exact: true })
       .focus();
+    await expect(report(page).getByRole("status")).toContainText("Salvo");
+    const confirmed = await snapshot(page);
+    expect(JSON.parse(confirmed).doc.project.brickLossPercent).toBe(250);
+    expect(JSON.parse(confirmed).history.past).toHaveLength(
+      JSON.parse(before).history.past.length + 2,
+    );
+    expect(JSON.parse(confirmed).doc.generated).toEqual(document.generated);
+    expect(JSON.parse(confirmed).doc.model).toEqual(document.model);
     await page.keyboard.press("Control+z");
     await page.keyboard.press("Delete");
-    expect(await snapshot(page)).toBe(before);
+    expect(await snapshot(page)).toBe(confirmed);
     await report(page)
       .getByRole("button", { name: "Voltar ao desenho" })
       .click();
@@ -139,7 +153,12 @@ test(
     expect(await page.getByTestId("drawing").getAttribute("data-camera")).toBe(
       camera,
     );
-    expect(await exported(page)).toEqual(document);
+    const persisted = await exported(page);
+    expect(persisted.project).toEqual({
+      ...document.project,
+      brickLossPercent: 250,
+    });
+    expect(persisted.model).toEqual(document.model);
     await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await expect(report(page).getByLabel("Perdas de tijolos (%)")).toHaveValue(
       "2,50",
@@ -150,7 +169,7 @@ test(
     await page.getByRole("button", { name: /Quantitativos M5/ }).click();
     await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await expect(report(page).getByLabel("Perdas de tijolos (%)")).toHaveValue(
-      "0",
+      "2,50",
     );
   },
 );
@@ -343,7 +362,7 @@ test(
         .click();
       await expect(
         report(page).getByRole("heading", {
-          name: "Orçamento",
+          name: "Orçamento preliminar",
           exact: true,
         }),
       ).toBeFocused();
@@ -520,7 +539,15 @@ test(
     await report(page)
       .getByRole("button", { name: "Voltar ao desenho" })
       .click();
-    expect(await snapshot(page)).toBe(confirmed);
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    const afterLoss = JSON.parse(await snapshot(page)),
+      previous = JSON.parse(confirmed);
+    expect(afterLoss.doc.project.brickLossPercent).toBe(1000);
+    expect(afterLoss.doc.model).toEqual(previous.doc.model);
+    expect(afterLoss.doc.generated).toEqual(previous.doc.generated);
+    expect(afterLoss.history.past).toHaveLength(
+      previous.history.past.length + 1,
+    );
   },
 );
 
@@ -589,6 +616,20 @@ test(
         fullPage: true,
       });
     }
+    await modal.getByLabel("Totais dos materiais").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: ".tools/budget-report-totals-900.png" });
+    const floatingReturn = modal.getByRole("button", {
+      name: "Voltar ao desenho",
+    });
+    const closeBefore = await floatingReturn.boundingBox();
+    await courses.scrollIntoViewIfNeeded();
+    const closeAfter = await floatingReturn.boundingBox();
+    expect(closeBefore).not.toBeNull();
+    expect(closeAfter).not.toBeNull();
+    expect(Math.abs(closeAfter!.y - closeBefore!.y)).toBeLessThanOrEqual(1);
+    expect(closeAfter!.x + closeAfter!.width).toBeLessThan(900);
+    await expect(floatingReturn).toBeVisible();
+    await page.screenshot({ path: ".tools/budget-report-courses-900.png" });
     await filter.selectOption(second.id);
     await expect(courses.locator("tbody tr")).toHaveCount(3);
     await expect(courses.locator("tfoot td")).toHaveText([
@@ -609,5 +650,96 @@ test(
     await expect(
       page.getByRole("button", { name: "Orçamento", exact: true }),
     ).toBeFocused();
+  },
+);
+
+test(
+  "Perdas persistidas: falha, recuperação, zero, arquivo e bloqueios",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    const d = createProject(
+      "Perdas persistidas",
+      { length: 3000, width: 1500, height: 700 },
+      2100,
+    );
+    d.project.channelLevels = [];
+    d.project.groutSettings = defaultGroutSettings(false);
+    d.model.walls = [
+      makeWall(
+        { x: 0, y: 0 },
+        { x: 12000, y: 0 },
+        1500,
+        d.model.floors[0].id,
+        2100,
+        1,
+      )!,
+    ];
+    await load(page, d);
+    const baseline = JSON.parse(await snapshot(page)),
+      disk = await remoteSnapshot(page);
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
+    await expect(
+      report(page).getByRole("heading", {
+        name: "Orçamento preliminar",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      report(page).getByText("Tijolo base: 30 × 15 × 7 cm", { exact: true }),
+    ).toBeVisible();
+    const loss = report(page).getByLabel("Perdas de tijolos (%)", {
+      exact: true,
+    });
+    await rejectSaves(page);
+    await loss.fill("12,50");
+    await loss.press("Enter");
+    await expect(report(page).getByRole("status")).toContainText("Não salvo");
+    await expect(loss).toBeDisabled();
+    const memory = JSON.parse(await snapshot(page));
+    expect(memory.doc.project.brickLossPercent).toBe(1250);
+    expect(memory.doc.generated).toEqual(baseline.doc.generated);
+    expect(memory.doc.generationState).toEqual(baseline.doc.generationState);
+    expect(await remoteSnapshot(page)).toBe(disk);
+    await report(page)
+      .getByRole("button", { name: "Voltar ao desenho" })
+      .click();
+    await page.evaluate(() =>
+      (window as unknown as { restorePut: () => void }).restorePut(),
+    );
+    await page
+      .getByRole("button", { name: "Tentar novamente", exact: true })
+      .click();
+    await expect(page.getByRole("status")).toHaveText("Salvo");
+    const file = await exported(page);
+    expect(file.project.brickLossPercent).toBe(1250);
+    await page.getByRole("button", { name: "Projetos", exact: true }).click();
+    await load(page, file);
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
+    await expect(loss).toHaveValue("12,50");
+    await loss.fill("0");
+    await loss.press("Tab");
+    await expect(report(page).getByRole("status")).toContainText("Salvo");
+    const zero = await snapshot(page);
+    expect(JSON.parse(zero).doc.project.brickLossPercent).toBe(0);
+    await loss.fill("0");
+    await loss.press("Enter");
+    expect(await snapshot(page)).toBe(zero);
+    await loss.fill("x");
+    await loss.press("Enter");
+    await expect(loss).toHaveAttribute("aria-invalid", "true");
+    expect(await snapshot(page)).toBe(zero);
+    await loss.fill("0");
+    await loss.press("Enter");
+    await report(page)
+      .getByRole("button", { name: "Voltar ao desenho" })
+      .click();
+    await page.evaluate(async () => {
+      const path = "/src/state/store.ts";
+      (await import(/* @vite-ignore */ path)).useStore.setState({
+        readonly: true,
+      });
+    });
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
+    await expect(loss).toBeDisabled();
   },
 );

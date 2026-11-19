@@ -1,4 +1,33 @@
-import { LIMIT, type Point, type Slab, type EditableProject } from "./project";
+import {
+  LIMIT,
+  slabTypes,
+  slabHeights,
+  type SlabConstruction,
+  type Point,
+  type Slab,
+  type EditableProject,
+} from "./project";
+
+export function slabThickness(construction: SlabConstruction): number {
+  if (
+    !construction ||
+    !slabTypes.includes(construction.type) ||
+    !slabHeights.includes(construction.height)
+  )
+    throw new Error("Selecione o tipo de laje e a altura da estrutura (H).");
+  const topping = construction.topping;
+  if (
+    topping !== undefined &&
+    (!Number.isSafeInteger(topping) || topping <= 0 || topping > LIMIT)
+  )
+    throw new Error(
+      "Informe uma espessura positiva e representável para a capa de concreto.",
+    );
+  const total = construction.height + (topping ?? 0);
+  if (!Number.isSafeInteger(total) || total > LIMIT)
+    throw new Error("A espessura total excede o limite do editor.");
+  return total;
+}
 
 const equal = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
 const between = (n: number, a: number, b: number) =>
@@ -80,6 +109,13 @@ function touching(a: Point[], b: Point[]) {
   );
 }
 export function validateSlab(slab: Slab, module: number, level: number) {
+  if (
+    slab.construction !== undefined &&
+    slab.thickness !== slabThickness(slab.construction)
+  )
+    throw new Error(
+      "A espessura da laje deve ser igual à estrutura mais a capa de concreto.",
+    );
   if (
     !Number.isSafeInteger(slab.thickness) ||
     slab.thickness <= 0 ||

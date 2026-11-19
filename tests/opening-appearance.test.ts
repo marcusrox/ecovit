@@ -18,6 +18,8 @@ import {
 import {
   defaultAppearance,
   nextOrientation,
+  appearanceOptions,
+  validAppearance,
 } from "../src/domain/opening-appearance";
 import { openingSymbolStrokes } from "../src/domain/opening-symbol";
 import { floorPlanBounds } from "../src/domain/floor-reference";
@@ -77,18 +79,29 @@ it("EX-95/97 ciclos completos e padrões de criação", () => {
   for (const type of [
     "swing",
     "sliding",
+    "double-sliding",
     "double-swing",
     "center-sliding",
+    "quad-sliding",
     "tilt",
   ] as const) {
     let a: OpeningAppearance = { type, orientation: 0 };
     const values = [];
-    for (let i = 0; i < (type === "swing" || type === "sliding" ? 4 : 2); i++) {
+    for (
+      let i = 0;
+      i <
+      (type === "swing" || type === "sliding" || type === "double-sliding"
+        ? 4
+        : 2);
+      i++
+    ) {
       values.push(a.orientation);
       a = nextOrientation(a);
     }
     expect(values).toEqual(
-      type === "swing" || type === "sliding" ? [0, 1, 2, 3] : [0, 1],
+      type === "swing" || type === "sliding" || type === "double-sliding"
+        ? [0, 1, 2, 3]
+        : [0, 1],
     );
     expect(a).toEqual({ type, orientation: 0 });
   }
@@ -150,10 +163,12 @@ it("EX-97/98 giro duplo e basculantes têm dimensões gráficas explícitas", ()
     "swing",
     "double-swing",
     "sliding",
+    "double-sliding",
     "center-sliding",
+    "quad-sliding",
     "tilt",
   ].map((type) => JSON.stringify(shape(type as OpeningAppearance["type"])));
-  expect(new Set(signatures).size).toBe(5);
+  expect(new Set(signatures).size).toBe(7);
 });
 
 it("EX-99 transporte/cópias e envelopes anteriores preservam genéricos sem tocar origem", () => {
@@ -170,7 +185,7 @@ it("EX-99 transporte/cópias e envelopes anteriores preservam genéricos sem toc
     if (version === 9) delete old.model.measurements;
     const original = JSON.stringify(old);
     const restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(26);
+    expect(restored.schemaVersion).toBe(30);
     expect(restored.model.openings[0].appearance).toBeUndefined();
     expect(JSON.stringify(old)).toBe(original);
     old.model.openings[0].appearance = { type: "swing", orientation: 0 };
@@ -292,4 +307,285 @@ it("M9 dimensão ainda recalcula e snapshot adulterado continua recusado", async
   const tampered = structuredClone(useStore.getState().doc!);
   tampered.generated!.floors[0].courses[0].pieces.pop();
   expect(() => validateProject(tampered)).toThrow(/inconsistente/);
+});
+
+it("portas de correr de duas e quatro folhas: catálogo, folhas iguais e movimentos centrais", () => {
+  const options = appearanceOptions("door");
+  expect(options.filter((o) => o.type === "center-sliding")).toEqual([
+    { type: "center-sliding", label: "Correr · abertura central" },
+  ]);
+  expect(options.filter((o) => o.type === "quad-sliding")).toEqual([
+    { type: "quad-sliding", label: "Correr · quatro folhas" },
+  ]);
+  expect(
+    appearanceOptions("window").some((o) => o.type === "quad-sliding"),
+  ).toBe(false);
+  expect(
+    validAppearance({
+      kind: "window",
+      appearance: { type: "quad-sliding", orientation: 0 },
+    }),
+  ).toBe(false);
+  const door = {
+    kind: "door",
+    appearance: { type: "quad-sliding", orientation: 0 },
+  } as const;
+  const strokes = openingSymbolStrokes(door, true, 0, 0, 100, 10);
+  const panels = strokes.filter((s) => s.points.length === 5);
+  expect(panels).toHaveLength(4);
+  expect(panels.map((p) => p.points[0])).toEqual([
+    { x: 0, y: 2.5 },
+    { x: 75, y: 2.5 },
+    { x: 12.5, y: 7 },
+    { x: 62.5, y: 7 },
+  ]);
+  for (const panel of panels)
+    expect(panel.points[1].x - panel.points[0].x).toBe(25);
+  expect(strokes.at(-4)!.points).toEqual([
+    { x: 45, y: -12 },
+    { x: 25, y: -12 },
+  ]);
+  expect(strokes.at(-2)!.points).toEqual([
+    { x: 55, y: -12 },
+    { x: 75, y: -12 },
+  ]);
+  const mirrored = openingSymbolStrokes(
+    { ...door, appearance: { type: "quad-sliding", orientation: 1 } },
+    true,
+    0,
+    0,
+    100,
+    10,
+  );
+  const vertical = openingSymbolStrokes(door, false, 0, 0, 10, 100);
+  strokes.forEach((stroke, i) =>
+    stroke.points.forEach((p, j) => {
+      expect(mirrored[i].points[j].x).toBeCloseTo(p.x, 9);
+      expect(mirrored[i].points[j].y).toBeCloseTo(10 - p.y, 9);
+      expect(vertical[i].points[j].x).toBeCloseTo(10 - p.y, 9);
+      expect(vertical[i].points[j].y).toBeCloseTo(p.x, 9);
+    }),
+  );
+});
+
+it("quatro folhas: arquivo, cópias, legado e combinações inválidas", () => {
+  const d = fixture();
+  d.model.openings[0].appearance = { type: "quad-sliding", orientation: 1 };
+  expect(parseFile(serializeFile(d).text).model.openings).toEqual(
+    d.model.openings,
+  );
+  expect(importedCopy(d).model.openings).toEqual(d.model.openings);
+  const copied = duplicateFloor(d, d.model.floors[0].id, 28000, "Superior");
+  expect(copied.model.openings[1].appearance).toEqual(
+    d.model.openings[0].appearance,
+  );
+  expect(copied.model.openings[1].appearance).not.toBe(
+    d.model.openings[0].appearance,
+  );
+  expect(() => validateProject({ ...d, schemaVersion: 28 })).toThrow(
+    "formato anterior",
+  );
+  for (const change of [
+    { kind: "window", appearance: { type: "quad-sliding", orientation: 0 } },
+    { kind: "opening", appearance: { type: "quad-sliding", orientation: 0 } },
+    { appearance: { type: "quad-sliding", orientation: 2 } },
+  ]) {
+    const invalid = structuredClone(d);
+    Object.assign(invalid.model.openings[0], change);
+    expect(() => validateProject(invalid)).toThrow();
+  }
+  const old = structuredClone(d) as unknown as {
+    schemaVersion: number;
+    model: { openings: Opening[] };
+  };
+  old.schemaVersion = 28;
+  old.model.openings[0].appearance = { type: "center-sliding", orientation: 1 };
+  const original = JSON.stringify(old);
+  expect(validateProject(old).model.openings[0].appearance).toEqual({
+    type: "center-sliding",
+    orientation: 1,
+  });
+  expect(JSON.stringify(old)).toBe(original);
+});
+
+it("novas opções de correr preservam composição e dimensões no histórico", async () => {
+  const d = fixture();
+  d.generated = engine.generate(d);
+  d.generationState = {
+    status: "current",
+    diagnostics: d.generated.diagnostics,
+  };
+  await useStore.getState().open(d, true);
+  const spy = vi.spyOn(engine, "generate");
+  for (const type of ["center-sliding", "quad-sliding"] as const) {
+    const current = useStore.getState().doc!;
+    await useStore.getState().commit({
+      ...current,
+      model: {
+        ...current.model,
+        openings: current.model.openings.map((o) => ({
+          ...o,
+          appearance: { type, orientation: 0 },
+        })),
+      },
+    });
+    expect(useStore.getState().doc!.generated).toEqual(d.generated);
+    expect(useStore.getState().doc!.model.openings[0].width).toBe(10000);
+  }
+  await useStore.getState().undo();
+  expect(useStore.getState().doc!.model.openings[0].appearance?.type).toBe(
+    "center-sliding",
+  );
+  await useStore.getState().undo(true);
+  expect(useStore.getState().doc!.model.openings[0].appearance?.type).toBe(
+    "quad-sliding",
+  );
+  expect(spy).not.toHaveBeenCalled();
+});
+
+it("correr de duas folhas é independente da abertura central e visualmente distinta da janela", () => {
+  const options = appearanceOptions("door");
+  expect(options.filter((o) => o.type === "double-sliding")).toEqual([
+    { type: "double-sliding", label: "Correr · duas folhas" },
+  ]);
+  expect(options.filter((o) => o.type === "center-sliding")).toEqual([
+    { type: "center-sliding", label: "Correr · abertura central" },
+  ]);
+  expect(
+    validAppearance({
+      kind: "window",
+      appearance: { type: "double-sliding", orientation: 0 },
+    }),
+  ).toBe(false);
+  const shape = (
+    type: OpeningAppearance["type"],
+    kind: Opening["kind"] = "door",
+    orientation: OpeningAppearance["orientation"] = 0,
+    horizontal = true,
+  ) =>
+    openingSymbolStrokes(
+      { kind, appearance: { type, orientation } },
+      horizontal,
+      0,
+      0,
+      horizontal ? 100 : 10,
+      horizontal ? 10 : 100,
+    );
+  const door = shape("double-sliding"),
+    window = shape("sliding", "window");
+  const panels = door.filter((stroke) => stroke.points.length === 5);
+  expect(panels).toHaveLength(2);
+  expect(panels[0].points[0].x).toBe(0);
+  expect(panels[1].points[0].x).toBe(25);
+  for (const panel of panels) {
+    expect(panel.points[1].x - panel.points[0].x).toBe(50);
+    expect(panel.points.every((p) => p.y < 0)).toBe(true);
+  }
+  expect(door.at(-1)).toEqual({
+    dashed: true,
+    points: [
+      { x: 50, y: 5 },
+      { x: 100, y: 5 },
+    ],
+  });
+  expect(door[4].points).toEqual([
+    { x: 75, y: -18 },
+    { x: 25, y: -18 },
+  ]);
+  expect(window.some((stroke) => stroke.dashed)).toBe(false);
+  expect(door).not.toEqual(window);
+  for (const orientation of [1, 2, 3] as const) {
+    const transformed = shape("double-sliding", "door", orientation);
+    door.forEach((stroke, i) =>
+      stroke.points.forEach((p, j) => {
+        expect(transformed[i].points[j].x).toBeCloseTo(
+          orientation % 2 ? 100 - p.x : p.x,
+          9,
+        );
+        expect(transformed[i].points[j].y).toBeCloseTo(
+          orientation >= 2 ? 10 - p.y : p.y,
+          9,
+        );
+      }),
+    );
+  }
+  const vertical = shape("double-sliding", "door", 0, false);
+  door.forEach((stroke, i) =>
+    stroke.points.forEach((p, j) => {
+      expect(vertical[i].points[j].x).toBeCloseTo(10 - p.y, 9);
+      expect(vertical[i].points[j].y).toBeCloseTo(p.x, 9);
+    }),
+  );
+  // Pin the existing central-opening symbol; adding a separate type must not reinterpret it.
+  const central = shape("center-sliding");
+  expect(
+    central
+      .filter((stroke) => stroke.points.length === 5)
+      .map((stroke) => [stroke.points[0].x, stroke.points[1].x]),
+  ).toEqual([
+    [-45, 5],
+    [95, 145],
+  ]);
+  expect(central[4].points).toEqual([
+    { x: 40, y: -20 },
+    { x: -15, y: -20 },
+  ]);
+});
+
+it("duas folhas: transporte, cópias e histórico não afetam a abertura central nem a composição", async () => {
+  const d = fixture();
+  d.model.openings[0].appearance = { type: "center-sliding", orientation: 1 };
+  const legacy = { ...d, schemaVersion: 29 };
+  expect(validateProject(legacy).model.openings[0].appearance).toEqual(
+    d.model.openings[0].appearance,
+  );
+  d.generated = engine.generate(d);
+  d.generationState = {
+    status: "current",
+    diagnostics: d.generated.diagnostics,
+  };
+  await useStore.getState().open(d, true);
+  const before = useStore.getState().doc!;
+  const spy = vi.spyOn(engine, "generate");
+  const next = putOpening(before, {
+    ...before.model.openings[0],
+    appearance: { type: "double-sliding", orientation: 3 },
+  });
+  await useStore.getState().commit(next);
+  const saved = useStore.getState().doc!;
+  expect(saved.generated).toEqual(d.generated);
+  expect(spy).not.toHaveBeenCalled();
+  expect(saved.model.openings[0].width).toBe(d.model.openings[0].width);
+  expect(parseFile(serializeFile(saved).text).model.openings).toEqual(
+    saved.model.openings,
+  );
+  expect(importedCopy(saved).model.openings).toEqual(saved.model.openings);
+  const copy = duplicateFloor(
+    saved,
+    saved.model.floors[0].id,
+    28000,
+    "Superior",
+  );
+  expect(copy.model.openings[1].appearance).toEqual({
+    type: "double-sliding",
+    orientation: 3,
+  });
+  expect(copy.model.openings[1].appearance).not.toBe(
+    saved.model.openings[0].appearance,
+  );
+  expect(() => validateProject({ ...saved, schemaVersion: 29 })).toThrow(
+    "formato anterior",
+  );
+  const validationCalls = spy.mock.calls.length;
+  await useStore.getState().undo();
+  expect(useStore.getState().doc!.model.openings[0].appearance).toEqual({
+    type: "center-sliding",
+    orientation: 1,
+  });
+  await useStore.getState().undo(true);
+  expect(useStore.getState().doc!.model.openings[0].appearance).toEqual({
+    type: "double-sliding",
+    orientation: 3,
+  });
+  expect(spy).toHaveBeenCalledTimes(validationCalls);
 });

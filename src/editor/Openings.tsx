@@ -243,7 +243,7 @@ function OpeningForm({
   return (
     <aside className={styles.properties} aria-label="Propriedades do vão">
       <div className={styles.panelTitle}>
-        <span>{pending ? "CONFIRMAR NOVO VÃO" : "VÃO SELECIONADO"}</span>
+        <span>{pending ? "CONFIRMAR NOVO VÃO" : "PROPRIEDADES DO VÃO"}</span>
         <button
           aria-label="Recolher propriedades"
           className={styles.iconButton}

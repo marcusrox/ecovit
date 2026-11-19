@@ -99,7 +99,7 @@ async function exported(page: Page) {
 }
 
 test(
-  "M9 nove variantes, ciclos no canvas horizontal/vertical, teclado e dimensões pendentes",
+  "M9 onze variantes, ciclos no canvas horizontal/vertical, teclado e dimensões pendentes",
   { tag: "@fluxo" },
   async ({ page }) => {
     test.setTimeout(90000);
@@ -114,7 +114,15 @@ test(
       ).toBeDisabled();
       const types =
         opening.kind === "door"
-          ? ["swing", "double-swing", "sliding", "center-sliding", "tilt"]
+          ? [
+              "swing",
+              "double-swing",
+              "sliding",
+              "double-sliding",
+              "center-sliding",
+              "quad-sliding",
+              "tilt",
+            ]
           : ["swing", "double-swing", "sliding", "tilt"];
       for (const type of types) {
         await page.getByLabel("Tipo da esquadria").selectOption(type);
@@ -123,7 +131,10 @@ test(
           .getByRole("button", { name: "Enquadrar", exact: true })
           .click();
         const first = await canvases(page);
-        const count = type === "swing" || type === "sliding" ? 4 : 2;
+        const count =
+          type === "swing" || type === "sliding" || type === "double-sliding"
+            ? 4
+            : 2;
         const button = page.getByRole("button", {
           name: "Alternar orientação",
           exact: true,
@@ -195,7 +206,7 @@ test(
     await settled(page);
     expect((await doc(page)).model.openings).toEqual(selected.model.openings);
     const copy = await exported(page);
-    expect(copy.schemaVersion).toBe(26);
+    expect(copy.schemaVersion).toBe(30);
     expect(copy.model.openings).toEqual(selected.model.openings);
     expect(copy.generated).toEqual(before.generated);
     const second = await context.newPage();
@@ -336,5 +347,203 @@ test(
         path: `.tools/m9-vertical-${info.project.name}-${width}.png`,
       });
     }
+  },
+);
+
+test(
+  "Portas de correr de duas e quatro folhas: símbolos, orientação e reabertura",
+  { tag: "@interface" },
+  async ({ page }) => {
+    const before = await load(page);
+    const doors = before.model.openings.filter((o) => o.kind === "door");
+    for (const door of doors) {
+      await choose(page, door.id);
+      await page
+        .getByLabel("Tipo da esquadria")
+        .selectOption({ label: "Correr · abertura central" });
+      await settled(page);
+      expect(
+        (await doc(page)).model.openings.find((o) => o.id === door.id)!
+          .appearance,
+      ).toEqual({ type: "center-sliding", orientation: 0 });
+      const twoLeaves = await canvases(page);
+      await page
+        .getByLabel("Tipo da esquadria")
+        .selectOption({ label: "Correr · quatro folhas" });
+      await settled(page);
+      await page
+        .getByRole("button", { name: "Enquadrar", exact: true })
+        .click();
+      const fourLeaves = await canvases(page);
+      expect(fourLeaves).not.toEqual(twoLeaves);
+      await expect(page.getByLabel("Orientação da esquadria")).toContainText(
+        "duas fixas e duas móveis",
+      );
+      await page.getByRole("button", { name: "Alternar orientação" }).click();
+      await settled(page);
+      await expect(page.getByLabel("Orientação da esquadria")).toContainText(
+        "2/2",
+      );
+      expect(await canvases(page)).not.toEqual(fourLeaves);
+      await page.getByRole("button", { name: "Alternar orientação" }).click();
+      await settled(page);
+      expect(await canvases(page)).toEqual(fourLeaves);
+    }
+    const configured = await doc(page);
+    expect(configured.generated).toEqual(before.generated);
+    expect(configured.generationState).toEqual(before.generationState);
+    for (let i = 0; i < configured.model.openings.length; i++) {
+      const { appearance: savedAppearance, ...actual } =
+        configured.model.openings[i];
+      const { appearance: oldAppearance, ...original } =
+        before.model.openings[i];
+      void savedAppearance;
+      void oldAppearance;
+      expect(actual).toEqual(original);
+    }
+    await page.screenshot({ path: ".tools/sliding-doors-desktop.png" });
+    const id = doors[1].id;
+    await page.getByRole("button", { name: "Desfazer", exact: true }).click();
+    await choose(page, id);
+    await settled(page);
+    expect(
+      (await doc(page)).model.openings.find((o) => o.id === id)!.appearance
+        ?.orientation,
+    ).toBe(1);
+    await page.getByRole("button", { name: "Refazer", exact: true }).click();
+    await choose(page, id);
+    await settled(page);
+    expect((await doc(page)).model.openings).toEqual(configured.model.openings);
+    const file = await exported(page);
+    expect(file.model.openings).toEqual(configured.model.openings);
+    await page.reload();
+    await page
+      .getByRole("button", { name: /M9 Esquadrias/ })
+      .first()
+      .click();
+    await choose(page, id);
+    await settled(page);
+    await expect(page.getByLabel("Tipo da esquadria")).toHaveValue(
+      "quad-sliding",
+    );
+    await choose(
+      page,
+      before.model.openings.find((o) => o.kind === "window")!.id,
+    );
+    await expect(
+      page
+        .getByLabel("Tipo da esquadria")
+        .getByRole("option", { name: "Correr · quatro folhas" }),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Projetos", exact: true }).click();
+    await load(page, file);
+    await choose(page, id);
+    await settled(page);
+    await expect(page.getByLabel("Tipo da esquadria")).toHaveValue(
+      "quad-sliding",
+    );
+  },
+);
+
+test(
+  "Correr duas folhas separada: janela distinta, orientação e abertura central preservada",
+  { tag: "@interface" },
+  async ({ page }) => {
+    const d = fixture();
+    for (const o of d.model.openings)
+      o.appearance = {
+        type: o.kind === "door" ? "center-sliding" : "sliding",
+        orientation: 0,
+      };
+    const original = await load(page, d);
+    const doors = original.model.openings.filter((o) => o.kind === "door");
+    for (const door of doors) {
+      await choose(page, door.id);
+      const select = page.getByLabel("Tipo da esquadria");
+      await expect(select).toHaveValue("center-sliding");
+      await expect(
+        select.getByRole("option", {
+          name: "Correr · abertura central",
+          exact: true,
+        }),
+      ).toHaveCount(1);
+      await expect(
+        select.getByRole("option", {
+          name: "Correr · duas folhas",
+          exact: true,
+        }),
+      ).toHaveCount(1);
+      await page
+        .getByRole("button", { name: "Enquadrar", exact: true })
+        .click();
+      const central = await canvases(page);
+      await select.selectOption({ label: "Correr · duas folhas" });
+      await settled(page);
+      await expect(page.getByLabel("Orientação da esquadria")).toContainText(
+        "Uma fixa e uma móvel",
+      );
+      const first = await canvases(page);
+      expect(first).not.toEqual(central);
+      for (let i = 1; i <= 4; i++) {
+        await page.getByRole("button", { name: "Alternar orientação" }).click();
+        await settled(page);
+        await expect(page.getByLabel("Orientação da esquadria")).toContainText(
+          `${(i % 4) + 1}/4`,
+        );
+      }
+      expect(await canvases(page)).toEqual(first);
+      await select.selectOption("center-sliding");
+      await settled(page);
+      expect(await canvases(page)).toEqual(central);
+      await select.selectOption("double-sliding");
+      await settled(page);
+    }
+    const saved = await doc(page);
+    expect(saved.generated).toEqual(original.generated);
+    expect(saved.generationState).toEqual(original.generationState);
+    for (const door of doors) {
+      const changed = saved.model.openings.find((o) => o.id === door.id)!;
+      expect({ ...changed, appearance: door.appearance }).toEqual(door);
+    }
+    await page.screenshot({ path: ".tools/double-sliding-doors.png" });
+    const id = doors[1].id;
+    await page.getByRole("button", { name: "Desfazer", exact: true }).click();
+    await choose(page, id);
+    await settled(page);
+    await expect(page.getByLabel("Tipo da esquadria")).toHaveValue(
+      "center-sliding",
+    );
+    await page.getByRole("button", { name: "Refazer", exact: true }).click();
+    await choose(page, id);
+    await settled(page);
+    await expect(page.getByLabel("Tipo da esquadria")).toHaveValue(
+      "double-sliding",
+    );
+    const file = await exported(page);
+    await page.reload();
+    await page
+      .getByRole("button", { name: /M9 Esquadrias/ })
+      .first()
+      .click();
+    await choose(page, id);
+    await settled(page);
+    await expect(page.getByLabel("Tipo da esquadria")).toHaveValue(
+      "double-sliding",
+    );
+    const window = original.model.openings.find((o) => o.kind === "window")!;
+    await choose(page, window.id);
+    await expect(page.getByLabel("Tipo da esquadria")).toHaveValue("sliding");
+    await expect(
+      page
+        .getByLabel("Tipo da esquadria")
+        .locator('option[value="double-sliding"]'),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Projetos", exact: true }).click();
+    await load(page, file);
+    await choose(page, id);
+    await settled(page);
+    await expect(page.getByLabel("Tipo da esquadria")).toHaveValue(
+      "double-sliding",
+    );
   },
 );

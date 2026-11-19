@@ -187,7 +187,7 @@ test(
     const restored = parseFile(
       await readFile((await (await exported).path())!, "utf8"),
     );
-    expect(restored.schemaVersion).toBe(26);
+    expect(restored.schemaVersion).toBe(30);
     expect(restored.project.steelPrices).toEqual({
       "ca50-8": 1200,
       "ca50-10": 1000,

@@ -122,7 +122,7 @@ it("A04 leitor normaliza 21 sem preço e recusa preços inválidos ou disfarçad
   const old = { ...doc, schemaVersion: 21 },
     source = JSON.stringify(old);
   const restored = validateProject(old);
-  expect(restored.schemaVersion).toBe(26);
+  expect(restored.schemaVersion).toBe(30);
   expect(restored.project.unitPrices).toBeUndefined();
   expect(JSON.stringify(old)).toBe(source);
   expect(() =>
@@ -142,4 +142,54 @@ it("A04 leitor normaliza 21 sem preço e recusa preços inválidos ou disfarçad
         project: { ...doc.project, unitPrices: prices },
       }),
     ).toThrow("estrutura");
+});
+
+it("perdas persistidas: arquivo, cópias e legado preservam o percentual sem inferir valores", () => {
+  const doc = createProject("Perdas", {
+    length: 2500,
+    width: 1250,
+    height: 700,
+  });
+  const legacy = { ...doc, schemaVersion: 27 };
+  const restored = validateProject(legacy);
+  expect(restored.schemaVersion).toBe(30);
+  expect(restored.project.brickLossPercent).toBeUndefined();
+  expect(legacy.schemaVersion).toBe(27);
+  for (const value of [0, 250, Number.MAX_SAFE_INTEGER]) {
+    const configured = {
+      ...doc,
+      project: { ...doc.project, brickLossPercent: value },
+    };
+    expect(
+      parseFile(serializeFile(configured).text).project.brickLossPercent,
+    ).toBe(value);
+    expect(importedCopy(configured).project.brickLossPercent).toBe(value);
+    const copied = duplicateFloor(
+      configured,
+      doc.model.floors[0].id,
+      28000,
+      "Superior",
+    );
+    expect(copied.project.brickLossPercent).toBe(value);
+  }
+  expect(() =>
+    validateProject({
+      ...legacy,
+      project: { ...doc.project, brickLossPercent: 0 },
+    }),
+  ).toThrow("formato anterior");
+  for (const value of [
+    -1,
+    0.1,
+    null,
+    "10",
+    Infinity,
+    Number.MAX_SAFE_INTEGER + 1,
+  ])
+    expect(() =>
+      validateProject({
+        ...doc,
+        project: { ...doc.project, brickLossPercent: value },
+      }),
+    ).toThrow();
 });

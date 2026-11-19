@@ -106,6 +106,15 @@ export function parseLossPercent(text: string): number {
     throw new Error("Percentual fora da representação numérica segura.");
   return Number(p);
 }
+export function lossPercentText(p: number): string {
+  if (!Number.isSafeInteger(p) || p < 0)
+    throw new Error("Percentual inválido.");
+  const value = BigInt(p);
+  const fraction = value % 100n;
+  return fraction === 0n
+    ? String(value / 100n)
+    : `${value / 100n},${String(fraction).padStart(2, "0")}`;
+}
 export function estimateLosses(counts: Counts, p: number) {
   if (!Number.isSafeInteger(p) || p < 0)
     throw new Error("Percentual inválido.");

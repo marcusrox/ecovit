@@ -209,7 +209,7 @@ function Properties({ doc }: { doc: Project }) {
   return (
     <aside className={styles.properties} aria-label="Propriedades">
       <div className={styles.panelTitle}>
-        <span>{wall ? "PAREDE SELECIONADA" : "PROPRIEDADES DO PAVIMENTO"}</span>
+        <span>{wall ? "PROPRIEDADES DA PAREDE" : "PROPRIEDADES DO PAVIMENTO"}</span>
         <button
           aria-label="Recolher propriedades"
           className={styles.iconButton}

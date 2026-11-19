@@ -3,6 +3,7 @@ import {
   quantities,
   estimateLosses,
   parseLossPercent,
+  lossPercentText,
   pieceKinds,
   pieceLabels,
   type Counts,
@@ -54,7 +55,9 @@ export function Quantities({
   >({});
   const activeFloorId = useStore((s) => s.activeFloorId);
   const [open, setOpen] = useState(false);
-  const [percent, setPercent] = useState("0");
+  const [lossDraft, setLossDraft] = useState<string>();
+  const percent =
+    lossDraft ?? lossPercentText(doc.project.brickLossPercent ?? 0);
   const [floorId, setFloorId] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -171,6 +174,39 @@ export function Quantities({
       return next;
     });
   };
+  const confirmLoss = async () => {
+    const state = useStore.getState(),
+      latest = state.doc;
+    if (
+      !latest ||
+      latest.project.id !== doc.project.id ||
+      state.busy ||
+      state.readonly ||
+      lossDraft === undefined
+    )
+      return;
+    let value: number;
+    try {
+      value = parseLossPercent(lossDraft);
+    } catch {
+      return;
+    }
+    if (value !== (latest.project.brickLossPercent ?? 0)) {
+      setPriceSaving(true);
+      try {
+        await state.commit(
+          {
+            ...latest,
+            project: { ...latest.project, brickLossPercent: value },
+          },
+          "budget",
+        );
+      } finally {
+        setPriceSaving(false);
+      }
+    }
+    setLossDraft(undefined);
+  };
   const invalidPrices = Object.keys(priceErrors).length > 0;
   const steel = useSteelBudget(
     doc,
@@ -206,45 +242,55 @@ export function Quantities({
       <dialog
         ref={dialog}
         className={`${styles.releasePage} ${styles.quantityScreen}`}
-        aria-labelledby="quantities-title"
+        aria-label="Orçamento"
         onCancel={(e) => {
           e.preventDefault();
           setOpen(false);
         }}
       >
-        <div className={styles.releaseHeader}>
-          <div>
-            <h1 ref={heading} tabIndex={-1} id="quantities-title">
-              Orçamento
-            </h1>
-            <p>{doc.project.name}</p>
-          </div>
+        <div className={styles.quantityActions}>
           <button className={styles.iconText} onClick={() => setOpen(false)}>
             <Icon name="left" /> Voltar ao desenho
           </button>
         </div>
         <div className={styles.quantityContent}>
-          <p>
-            Base nominal: {display(doc.project.base.length)} ×{" "}
-            {display(doc.project.base.width)} ×{" "}
-            {display(doc.project.base.height)} cm. Quantidades em unidades.
-          </p>
-          <p className={styles.note}>
-            Quantidade geométrica nominal. Consumo de peças-base para preparação
-            não determinado: meios e canaletas não são automaticamente cortes de
-            inteiros. Ferragens são estimativas nominais; concreto, volume de
-            graute, lajes e mão de obra não incluídos.
-          </p>
+          <header className={styles.quantityMasthead}>
+            <h1
+              ref={heading}
+              tabIndex={-1}
+              id="quantities-title"
+              className={styles.quantityEyebrow}
+            >
+              Orçamento preliminar
+            </h1>
+            <h2>{doc.project.name}</h2>
+            <p className={styles.quantityMetadata}>
+              Tijolo base: {display(doc.project.base.length)} ×{" "}
+              {display(doc.project.base.width)} ×{" "}
+              {display(doc.project.base.height)} cm
+            </p>
+            <p className={styles.note}>
+              Quantitativos e estimativa de custos de tijolos e ferragens do
+              projeto, com base nos preços informados e nas perdas de tijolos
+              definidas. Inclui resumo dos materiais e detalhamento por
+              pavimento e fiada.
+            </p>
+          </header>
           {!report.available && <p role="alert">{report.reason}</p>}
           <section className={styles.quantitySection}>
-            <h2 id="budget-summary-title">Resumo do projeto</h2>
-            <p>
-              {!report.available
-                ? "Quantitativos indisponíveis"
-                : report.partial
-                  ? "Parcial — há pendências"
-                  : "Composição atualizada"}
-            </p>
+            <h2 id="budget-summary-title">
+              <span className={styles.quantitySectionIndex} aria-hidden="true">
+                01
+              </span>
+              Resumo do projeto
+            </h2>
+            {(!report.available || report.partial) && (
+              <p>
+                {!report.available
+                  ? "Quantitativos indisponíveis"
+                  : "Parcial — há pendências"}
+              </p>
+            )}
             {report.available && report.partial && (
               <button
                 onClick={() => {
@@ -255,7 +301,10 @@ export function Quantities({
                 Ver diagnósticos
               </button>
             )}
-            <section aria-labelledby="budget-bricks-title">
+            <section
+              className={styles.quantityGroup}
+              aria-labelledby="budget-bricks-title"
+            >
               <h3 id="budget-bricks-title">Tijolos do Projeto</h3>
               <label className={styles.quantityLoss}>
                 Perdas de tijolos (%)
@@ -265,22 +314,29 @@ export function Quantities({
                   value={percent}
                   aria-invalid={!!lossError}
                   aria-describedby="loss-note"
-                  onChange={(e) => setPercent(e.target.value)}
+                  disabled={busy || readonly}
+                  onChange={(e) => setLossDraft(e.target.value)}
+                  onBlur={() => void confirmLoss()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      e.currentTarget.blur();
+                    }
+                  }}
                 />
               </label>
               <p id="loss-note" className={styles.note}>
-                Opcional. Percentual da sessão, não salvo no projeto. Aplicado
-                por tipo de tijolo sobre o total do projeto, com arredondamento
-                para cima. Não afeta ferragens. Custos usam o total estimado,
-                incluindo perdas. Preços unitários ficam salvos no projeto; ao
-                reabri-lo, as perdas voltam a 0%. Saia do campo de preço ou
-                pressione Enter para salvar a edição.
+                Opcional. Aplicado por tipo de tijolo sobre o total do projeto,
+                com arredondamento para cima. Não afeta ferragens. Custos usam o
+                total estimado, incluindo perdas. Perdas e preços ficam salvos
+                no projeto. Saia do campo ou pressione Enter para salvar a
+                edição.
               </p>
               <p role="status" aria-live="polite">
                 {priceSaving || saved === "saving"
-                  ? "Salvando preços…"
+                  ? "Salvando orçamento…"
                   : saved === "saved"
-                    ? "Salvo · preços no projeto"
+                    ? "Salvo · orçamento no projeto"
                     : `Não salvo. ${saveMessage} Feche o orçamento para acessar a recuperação do salvamento.`}
               </p>
               {lossError && (
@@ -408,7 +464,15 @@ export function Quantities({
               className={styles.quantitySection}
               aria-labelledby="budget-detail-title"
             >
-              <h2 id="budget-detail-title">Detalhamento por pavimento</h2>
+              <h2 id="budget-detail-title">
+                <span
+                  className={styles.quantitySectionIndex}
+                  aria-hidden="true"
+                >
+                  02
+                </span>
+                Detalhamento por pavimento
+              </h2>
               <label className={styles.quantityLoss}>
                 Pavimento da consulta
                 <select

@@ -10,6 +10,7 @@ import { addFloor, duplicateFloor, removeFloor } from "../src/domain/floors";
 import {
   quantities,
   parseLossPercent,
+  lossPercentText,
   estimateLosses,
 } from "../src/domain/quantities";
 import { parseFile, serializeFile } from "../src/persistence/files";
@@ -283,4 +284,19 @@ it("revisão M5: perdas por quatro tipos, sem arredondar só o total nem perder 
   expect(() =>
     estimateLosses(vector(Math.floor(q / 2), Math.floor(q / 2)), 1),
   ).toThrow("segura");
+});
+
+it("perdas persistidas: formato decimal conserva centésimos inclusive no limite seguro", () => {
+  for (const [p, text] of [
+    [0, "0"],
+    [1000, "10"],
+    [250, "2,50"],
+    [1, "0,01"],
+    [Number.MAX_SAFE_INTEGER, "90071992547409,91"],
+  ] as const) {
+    expect(lossPercentText(p)).toBe(text);
+    expect(parseLossPercent(lossPercentText(p))).toBe(p);
+  }
+  for (const invalid of [-1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])
+    expect(() => lossPercentText(invalid)).toThrow();
 });

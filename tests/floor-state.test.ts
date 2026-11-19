@@ -619,3 +619,95 @@ it("A09 seletor não troca pavimento durante operação ocupada", async () => {
   expect(useStore.getState().activeFloorId).toBe(id);
   useStore.setState({ busy: false });
 });
+
+it("T-029 aplica configuração atômica, desfaz para legado e recupera salvamento sem perder parâmetros", async () => {
+  const d = await opened();
+  const slab = {
+    id: crypto.randomUUID(),
+    floorId: d.model.floors[0].id,
+    thickness: 1401,
+    contour: [
+      { x: 0, y: 0 },
+      { x: 10000, y: 0 },
+      { x: 10000, y: 10000 },
+      { x: 0, y: 10000 },
+    ],
+    openings: [],
+  };
+  await useStore.getState().commit(putSlab(d, slab), "slab");
+  const legacy = useStore.getState().doc!;
+  const configured = putSlab(legacy, {
+    ...slab,
+    thickness: 1700,
+    construction: { type: "solid", height: 1200, topping: 500 },
+  });
+  save.mockClear();
+  const historyLength = useStore.getState().history.past.length;
+  await useStore.getState().commit(configured, "slab");
+  expect(save).toHaveBeenCalledTimes(1);
+  expect(useStore.getState().history.past).toHaveLength(historyLength + 1);
+  expect(useStore.getState().doc!.model.slabs[0]).toEqual(
+    configured.model.slabs[0],
+  );
+  await useStore.getState().undo();
+  expect(useStore.getState().doc!.model.slabs[0]).toEqual(slab);
+  await useStore.getState().undo(true);
+  expect(useStore.getState().doc!.model.slabs[0]).toEqual(
+    configured.model.slabs[0],
+  );
+  save.mockRejectedValueOnce(new Error("quota"));
+  const changed = putSlab(useStore.getState().doc!, {
+    ...configured.model.slabs[0],
+    thickness: 1200,
+    construction: { type: "solid", height: 1200 },
+  });
+  await useStore.getState().commit(changed, "slab");
+  expect(useStore.getState().saved).toBe("error");
+  expect(useStore.getState().doc!.model.slabs[0]).toEqual(
+    changed.model.slabs[0],
+  );
+  await useStore.getState().retry();
+  expect(useStore.getState().saved).toBe("saved");
+  const current = useStore.getState().doc;
+  useStore.setState({ readonly: true });
+  await useStore.getState().commit(configured, "slab");
+  expect(useStore.getState().doc).toBe(current);
+  useStore.setState({ readonly: false, busy: true });
+  await useStore.getState().commit(configured, "slab");
+  expect(useStore.getState().doc).toBe(current);
+  useStore.setState({ busy: false });
+});
+
+it("perdas persistidas: histórico e falha de salvamento não recalculam alvenaria", async () => {
+  const original = await opened();
+  const spy = vi.spyOn(engine, "generate");
+  const before = useStore.getState().history.past.length;
+  await useStore
+    .getState()
+    .commit(
+      { ...original, project: { ...original.project, brickLossPercent: 250 } },
+      "budget",
+    );
+  expect(useStore.getState().history.past).toHaveLength(before + 1);
+  expect(useStore.getState().doc!.project.brickLossPercent).toBe(250);
+  expect(useStore.getState().doc!.generated).toEqual(original.generated);
+  await useStore.getState().undo();
+  expect(useStore.getState().doc!.project.brickLossPercent).toBeUndefined();
+  await useStore.getState().undo(true);
+  expect(useStore.getState().doc!.project.brickLossPercent).toBe(250);
+  save.mockRejectedValueOnce(new Error("quota"));
+  const latest = useStore.getState().doc!;
+  await useStore
+    .getState()
+    .commit(
+      { ...latest, project: { ...latest.project, brickLossPercent: 0 } },
+      "budget",
+    );
+  expect(useStore.getState().saved).toBe("error");
+  expect(useStore.getState().readonly).toBe(true);
+  expect(useStore.getState().doc!.project.brickLossPercent).toBe(0);
+  expect(useStore.getState().doc!.generated).toEqual(original.generated);
+  await useStore.getState().retry();
+  expect(useStore.getState().saved).toBe("saved");
+  expect(spy).not.toHaveBeenCalled();
+});

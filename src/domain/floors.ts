@@ -209,6 +209,7 @@ export function duplicateFloor(
             ...s,
             id: crypto.randomUUID(),
             floorId: target.id,
+            ...(s.construction ? { construction: { ...s.construction } } : {}),
             contour: s.contour.map((p) => ({ ...p })),
             openings: s.openings.map((o) => ({
               ...o,

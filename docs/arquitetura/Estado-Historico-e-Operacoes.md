@@ -114,3 +114,15 @@ Fechar/Cancelar/Escape com rascunho diferente do último aplicado exige confirma
 steelBudget no pavimento e steelPrices no projeto são intenção orçamentária persistida, com snapshots no histórico e o mesmo fluxo de salvamento/recuperação. Excluir esses campos da assinatura de insumos construtivos. Alteração exclusiva mantém resultado atual ou desatualizado como estava, sem motor; alteração conjunta com parâmetros construtivos continua uma operação e executa somente o recálculo pertinente. Ausência/padrões equivalentes não causam operação. Desfazer/refazer restaura parâmetros/preços, inclusive ausência, sem recomposição quando a mudança for somente orçamentária.
 
 Ferragens do pavimento carrega três novos campos no rascunho: útil e sobreposição no graute, percentual na armadura das cintas; validar todos antes do único editFloor/commit floor. Erro impede candidato parcial; descartar rascunho não escreve. Parâmetros podem ser definidos antes de existir material. Preços do resumo por material usam commit budget em Enter/blur; durante esse salvamento a consulta conserva resultado vigente. Falha retém candidato, bloqueia edição e permite fechar para recuperação existente. Consulta, filtro, preços em prévia inválida e totais derivados não criam operações.
+
+## Configuração da laje selecionada — T-029
+
+Tipo, altura da estrutura e capa opcional são rascunhos das propriedades até Aplicar; confirmar exige configuração completa e espessura total coerente, validada por putSlab. Um único commit slab confirma todos os campos e o total, registra histórico e segue salvamento/recuperação e recálculo de lajes existentes. Valores equivalentes não geram operação. Cancelar/Escape no formulário e mudanças de contexto descartam campos não confirmados; recolher o painel conserva o rascunho. Somente leitura, busy e edição de contorno/abertura bloqueiam os controles. Falha conserva o candidato em memória pelo fluxo existente, sem anunciar salvamento.
+
+Desfazer/refazer recupera o conjunto inteiro e pode restaurar uma laje com somente thickness, sem construction. Duplicar pavimento e copiar projeto preservam parâmetros sem vínculo; editar tipo/espessura não altera contorno, aberturas ou alvenaria. O fluxo de criação por contorno não passa a exigir os novos campos.
+
+## Percentual de perdas de tijolos persistido
+
+project.brickLossPercent guarda o percentual confirmado em centésimos de ponto percentual; ausência equivale a zero. Edição no Orçamento é rascunho até Enter/perda de foco. Confirmação válida e diferente do valor atual usa uma operação budget com histórico e salvamento, excluída dos insumos construtivos; não invalidar nem recalcular composição. Zero equivalente à ausência não cria operação só por consultar/confirmar o padrão.
+
+Desfazer/refazer restaura o percentual, inclusive ausência. Abrir/reabrir e cópias carregam o valor do projeto. Falha conserva o candidato em memória e aplica bloqueios/recuperação existentes; somente leitura e busy impedem edição. Não persistir texto inválido, filtros ou totais calculados.

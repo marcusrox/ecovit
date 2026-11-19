@@ -14,8 +14,16 @@ export const appearanceOptions = (kind: Opening["kind"]) =>
         ...(kind === "door"
           ? [
               {
+                type: "double-sliding",
+                label: "Correr · duas folhas",
+              } as const,
+              {
                 type: "center-sliding",
                 label: "Correr · abertura central",
+              } as const,
+              {
+                type: "quad-sliding",
+                label: "Correr · quatro folhas",
               } as const,
             ]
           : []),
@@ -26,7 +34,9 @@ export const appearanceOptions = (kind: Opening["kind"]) =>
       ] satisfies { type: OpeningAppearance["type"]; label: string }[]);
 
 export function orientationCount(type: OpeningAppearance["type"]) {
-  return type === "swing" || type === "sliding" ? 4 : 2;
+  return type === "swing" || type === "sliding" || type === "double-sliding"
+    ? 4
+    : 2;
 }
 
 export function defaultAppearance(
@@ -80,7 +90,11 @@ export function orientationDescription(
   if (a.type === "swing")
     return `Dobradiça ${horizontal ? (start ? "à esquerda" : "à direita") : start ? "em cima" : "embaixo"} · abre ${face}`;
   if (a.type === "sliding") return `Desliza para ${end} · folha ${face}`;
+  if (a.type === "double-sliding")
+    return `Uma fixa e uma móvel · desliza para ${end} · folhas ${face}`;
   if (a.type === "tilt") return `Projeção ${face} · movimento vertical`;
+  if (a.type === "quad-sliding")
+    return `Abertura central · duas fixas e duas móveis · folhas ${face}`;
   return a.type === "double-swing"
     ? `Folhas abrem ${face}`
     : `Abertura central · folhas ${face}`;

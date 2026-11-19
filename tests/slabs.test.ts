@@ -7,6 +7,7 @@ import {
   type Slab,
 } from "../src/domain/project";
 import {
+  slabThickness,
   validateRing,
   validateSlab,
   ringLocation,
@@ -410,7 +411,7 @@ describe("CT-13 / EX-65–74", () => {
     expect(copy.openings[0].id).not.toBe(slab.openings[0].id);
     const changed = editFloor(copied, copy.floorId, { level: -2100 });
     expect(changed.model.slabs.find((s) => s.id === copy.id)).toEqual(copy);
-    expect(validateProject(changed).schemaVersion).toBe(26);
+    expect(validateProject(changed).schemaVersion).toBe(30);
     expect(removeFloor(copied, copy.floorId).model.slabs).toEqual([slab]);
     const local = floorView(copied, copy.floorId);
     expect(local.model.slabs).toEqual([copy]);
@@ -495,5 +496,134 @@ describe("CT-13 / EX-65–74", () => {
         { ...slab, id: crypto.randomUUID() },
       ),
     ).toThrow("já tem");
+  });
+});
+
+describe("T-029 configuração nominal da laje", () => {
+  it("calcula estrutura e capa sem alterar contorno, aberturas ou alvenaria", () => {
+    const { doc, slab } = fixture();
+    const before = structuredClone(slab);
+    const construction = { type: "lattice-clay", height: 1200 } as const;
+    expect(slabThickness(construction)).toBe(1200);
+    expect(slabThickness({ ...construction, topping: 500 })).toBe(1700);
+    expect(slabThickness({ ...construction, topping: 201 })).toBe(1401);
+    const configured = putSlab(doc, {
+      ...slab,
+      construction: { ...construction, topping: 500 },
+      thickness: 1700,
+    });
+    expect(configured.model.slabs[0].contour).toEqual(before.contour);
+    expect(configured.model.slabs[0].openings).toEqual(before.openings);
+    expect(configured.model.walls).toEqual(doc.model.walls);
+    expect(generate(configured)).toEqual(generate(doc));
+    expect(slab).toEqual(before);
+  });
+
+  it("recusa configurações incompletas, contraditórias e fora dos limites", () => {
+    const { doc, slab } = fixture();
+    for (const construction of [
+      {},
+      { type: "unknown", height: 1200 },
+      { type: "solid", height: 1401 },
+      { type: "solid", height: 1200, topping: 0 },
+      { type: "solid", height: 1200, topping: -1 },
+      { type: "solid", height: 1200, topping: 0.5 },
+      { type: "solid", height: 1200, topping: LIMIT },
+      { type: "solid", height: 1200, extra: true },
+    ]) {
+      expect(() =>
+        validateProject({
+          ...doc,
+          model: { ...doc.model, slabs: [{ ...slab, construction }] },
+        }),
+      ).toThrow();
+    }
+    const configured: Slab = {
+      ...slab,
+      thickness: 1700,
+      construction: { type: "solid", height: 1200, topping: 500 },
+    };
+    expect(() => putSlab(doc, { ...configured, thickness: 1200 })).toThrow(
+      "estrutura mais a capa",
+    );
+    expect(() => validateSlab(configured, 1250, -LIMIT + 100)).toThrow(
+      "face inferior",
+    );
+    expect(() =>
+      validateProject({
+        ...doc,
+        model: {
+          ...doc.model,
+          slabs: [
+            {
+              ...configured,
+              construction: { ...configured.construction!, topping: null },
+            },
+          ],
+        },
+      }),
+    ).toThrow();
+  });
+
+  it("normaliza legado 26 preservando espessura livre sem inferir configuração", () => {
+    const { doc, slab } = fixture();
+    const legacy = {
+      ...doc,
+      schemaVersion: 26,
+      model: { ...doc.model, slabs: [{ ...slab, thickness: 1401 }] },
+    };
+    const loaded = validateProject(legacy);
+    expect(loaded.schemaVersion).toBe(30);
+    expect(loaded.model.slabs[0].thickness).toBe(1401);
+    expect(loaded.model.slabs[0]).not.toHaveProperty("construction");
+    expect(legacy.schemaVersion).toBe(26);
+    expect(() =>
+      validateProject({
+        ...legacy,
+        model: {
+          ...legacy.model,
+          slabs: [
+            {
+              ...slab,
+              thickness: 1200,
+              construction: { type: "solid", height: 1200 },
+            },
+          ],
+        },
+      }),
+    ).toThrow("formato anterior");
+    expect(() => validateProject({ ...doc, schemaVersion: 31 })).toThrow(
+      "incompatível",
+    );
+  });
+
+  it("transporta configurações e copia pavimentos/projeto sem vínculo", () => {
+    const { doc, slab } = fixture();
+    const configured = putSlab(doc, {
+      ...slab,
+      construction: { type: "lattice-eps", height: 1200, topping: 500 },
+      thickness: 1700,
+    });
+    const decoded = parseFile(serializeFile(configured).text);
+    expect(decoded.model.slabs).toEqual(configured.model.slabs);
+    expect(() => validateProject({ ...decoded, schemaVersion: 8 })).toThrow(
+      "incompatível",
+    );
+    const copied = importedCopy(decoded);
+    expect(copied.model.slabs).toEqual(decoded.model.slabs);
+    expect(copied.model.slabs[0].construction).not.toBe(
+      decoded.model.slabs[0].construction,
+    );
+    const duplicated = duplicateFloor(
+      configured,
+      slab.floorId,
+      28000,
+      "Superior",
+    );
+    const copy = duplicated.model.slabs.find((s) => s.id !== slab.id)!;
+    expect(copy.construction).toEqual(configured.model.slabs[0].construction);
+    expect(copy.construction).not.toBe(configured.model.slabs[0].construction);
+    copy.construction!.topping = 600;
+    expect(configured.model.slabs[0].construction!.topping).toBe(500);
   });
 });

@@ -174,7 +174,7 @@ test(
     await opening(page);
     const before = await exported(page),
       slab = before.model.slabs[0];
-    expect(before.schemaVersion).toBe(26);
+    expect(before.schemaVersion).toBe(30);
     expect(slab.openings).toHaveLength(1);
     await page
       .getByLabel("Selecionar elemento", { exact: true })
@@ -186,9 +186,23 @@ test(
       x: 5000,
       y: 3750,
     });
-    await page.getByLabel("Espessura da laje (cm)").fill("14,01");
     await page
-      .getByRole("button", { name: "Aplicar espessura", exact: true })
+      .getByLabel("Tipo de laje", { exact: true })
+      .selectOption("lattice-clay");
+    await page
+      .getByLabel("Altura da estrutura (H)", { exact: true })
+      .selectOption("1200");
+    await page
+      .getByLabel("Adicionar capa de concreto", { exact: true })
+      .check();
+    await page
+      .getByLabel("Espessura da capa (cm)", { exact: true })
+      .fill("2,01");
+    await page
+      .getByRole("button", {
+        name: "Aplicar configuração da laje",
+        exact: true,
+      })
       .click();
     await expect(
       page
@@ -386,8 +400,8 @@ test(
       ).toBeVisible();
       const panel = page.getByLabel("Propriedades da laje");
       for (const name of [
-        "Aplicar espessura",
-        "Cancelar espessura",
+        "Aplicar configuração da laje",
+        "Cancelar configuração da laje",
         "Adicionar abertura",
         "Redesenhar contorno",
         "Excluir laje",
@@ -426,7 +440,7 @@ test(
         name: "Adicionar abertura",
         exact: true,
       });
-      await page.getByLabel("Espessura da laje (cm)").focus();
+      await page.getByLabel("Tipo de laje", { exact: true }).focus();
       await add.hover();
       expect(
         await add.evaluate((el) => getComputedStyle(el, "::after").display),
@@ -537,10 +551,20 @@ test(
     await page
       .getByLabel("Selecionar elemento", { exact: true })
       .selectOption(slab.id);
-    await page.getByLabel("Espessura da laje (cm)").fill("123");
-    await page.getByLabel("Espessura da laje (cm)").press("Delete");
     await page
-      .getByRole("button", { name: "Cancelar espessura", exact: true })
+      .getByLabel("Adicionar capa de concreto", { exact: true })
+      .check();
+    await page
+      .getByLabel("Espessura da capa (cm)", { exact: true })
+      .fill("123");
+    await page
+      .getByLabel("Espessura da capa (cm)", { exact: true })
+      .press("Delete");
+    await page
+      .getByRole("button", {
+        name: "Cancelar configuração da laje",
+        exact: true,
+      })
       .click();
     expect((await exported(page)).model).toEqual(initial.model);
     await page
@@ -939,5 +963,239 @@ test(
     await expect(choices).toHaveCount(0);
     await expect(page.getByLabel("Propriedades do vão")).toBeVisible();
     expect((await exported(page)).model).toEqual(d.model);
+  },
+);
+
+test(
+  "T-029 configuração conjunta, legado, capa e histórico nas propriedades",
+  { tag: "@interface" },
+  async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 768 });
+    const d = project();
+    const slab = {
+      id: crypto.randomUUID(),
+      floorId: d.model.floors[0].id,
+      thickness: 1401,
+      contour: [
+        { x: 0, y: 0 },
+        { x: 10000, y: 0 },
+        { x: 10000, y: 10000 },
+        { x: 0, y: 10000 },
+      ],
+      openings: [],
+    };
+    await load(page, putSlab(d, slab));
+    await page
+      .getByLabel("Selecionar elemento", { exact: true })
+      .selectOption(slab.id);
+    const panel = page.getByLabel("Propriedades da laje", { exact: true });
+    const type = panel.getByLabel("Tipo de laje", { exact: true });
+    const height = panel.getByLabel("Altura da estrutura (H)", { exact: true });
+    const capa = panel.getByLabel("Adicionar capa de concreto", {
+      exact: true,
+    });
+    const apply = panel.getByRole("button", {
+      name: "Aplicar configuração da laje",
+      exact: true,
+    });
+    await expect(type).toHaveValue("");
+    await expect(height).toHaveValue("");
+    await expect(panel).toContainText("Espessura atual: 14,01 cm");
+    await expect(type.locator("option")).toHaveText([
+      "Selecione o tipo",
+      "Treliçada com lajotas",
+      "Treliçada com EPS",
+      "Laje alveolar",
+      "Laje de concreto maciço",
+    ]);
+    await expect(height.locator("option")).toHaveText([
+      "Selecione a altura",
+      "H 8 cm",
+      "H 12 cm",
+      "H 16 cm",
+      "H 20 cm",
+      "H 25 cm",
+      "H 30 cm",
+    ]);
+    const initial = (await exported(page)).model;
+    await type.selectOption("lattice-eps");
+    await expect(height).toHaveValue("");
+    await apply.click();
+    await expect(panel.getByRole("alert")).toContainText("Selecione");
+    expect((await exported(page)).model).toEqual(initial);
+    await height.selectOption("1200");
+    await expect(panel).toContainText("Espessura total: 12 cm");
+    await capa.check();
+    const topping = panel.getByLabel("Espessura da capa (cm)", { exact: true });
+    await expect(topping).toHaveValue("");
+    await expect(panel).toContainText("em torno de 5 cm");
+    await topping.fill("-1");
+    await apply.click();
+    await expect(panel.getByRole("alert")).toContainText("positiva");
+    expect((await exported(page)).model).toEqual(initial);
+    await topping.fill("1000000");
+    await apply.click();
+    await expect(panel.getByRole("alert")).toContainText("limite");
+    expect((await exported(page)).model).toEqual(initial);
+    await topping.fill("5");
+    await expect(panel).toContainText("Espessura total: 17 cm");
+    await expect(
+      panel
+        .locator("dt")
+        .filter({ hasText: /^Face inferior$/ })
+        .locator("+ dd"),
+    ).toHaveText("-14,01 cm");
+    await page.screenshot({ path: ".tools/t029-properties-900.png" });
+    expect(await panel.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
+      true,
+    );
+    await apply.click();
+    const saved = await exported(page);
+    expect(saved.model.slabs[0]).toEqual({
+      ...slab,
+      thickness: 1700,
+      construction: { type: "lattice-eps", height: 1200, topping: 500 },
+    });
+    await expect(
+      panel
+        .locator("dt")
+        .filter({ hasText: /^Face inferior$/ })
+        .locator("+ dd"),
+    ).toHaveText("-17 cm");
+    await page.getByRole("button", { name: "Desfazer", exact: true }).click();
+    await page
+      .getByLabel("Selecionar elemento", { exact: true })
+      .selectOption(slab.id);
+    await expect(type).toHaveValue("");
+    expect((await exported(page)).model).toEqual(initial);
+    await page.getByRole("button", { name: "Refazer", exact: true }).click();
+    await page
+      .getByLabel("Selecionar elemento", { exact: true })
+      .selectOption(slab.id);
+    expect((await exported(page)).model).toEqual(saved.model);
+    await capa.uncheck();
+    await expect(panel).toContainText("Espessura total: 12 cm");
+    await apply.click();
+    const noTopping = await exported(page);
+    expect(noTopping.model.slabs[0].construction).toEqual({
+      type: "lattice-eps",
+      height: 1200,
+    });
+    expect(noTopping.model.slabs[0].thickness).toBe(1200);
+    await type.selectOption("solid");
+    await height.selectOption("3000");
+    await panel
+      .getByRole("button", {
+        name: "Cancelar configuração da laje",
+        exact: true,
+      })
+      .click();
+    await expect(type).toHaveValue("lattice-eps");
+    await expect(height).toHaveValue("1200");
+    expect((await exported(page)).model).toEqual(noTopping.model);
+    await page.reload();
+    await page
+      .getByRole("button", { name: /Lajes M4.2/ })
+      .first()
+      .click();
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    await page
+      .getByLabel("Selecionar elemento", { exact: true })
+      .selectOption(slab.id);
+    await expect(type).toHaveValue("lattice-eps");
+    await expect(height).toHaveValue("1200");
+    await expect(capa).not.toBeChecked();
+    expect((await exported(page)).model).toEqual(noTopping.model);
+  },
+);
+
+test(
+  "T-029 transporte, descarte de rascunho e bloqueios da configuração",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    const d = project();
+    const slab = {
+      id: crypto.randomUUID(),
+      floorId: d.model.floors[0].id,
+      thickness: 1700,
+      construction: {
+        type: "hollow-core",
+        height: 1200,
+        topping: 500,
+      } as const,
+      contour: [
+        { x: 0, y: 0 },
+        { x: 10000, y: 0 },
+        { x: 10000, y: 10000 },
+        { x: 0, y: 10000 },
+      ],
+      openings: [
+        {
+          id: crypto.randomUUID(),
+          contour: [
+            { x: 2500, y: 2500 },
+            { x: 5000, y: 2500 },
+            { x: 5000, y: 5000 },
+            { x: 2500, y: 5000 },
+          ],
+        },
+      ],
+    };
+    await load(page, putSlab(d, slab));
+    await page
+      .getByLabel("Selecionar elemento", { exact: true })
+      .selectOption(slab.id);
+    const panel = page.getByLabel("Propriedades da laje", { exact: true });
+    const type = panel.getByLabel("Tipo de laje", { exact: true });
+    await expect(type).toHaveValue("hollow-core");
+    const baseline = await exported(page);
+    await type.selectOption("solid");
+    await page
+      .getByLabel("Selecionar elemento", { exact: true })
+      .selectOption(slab.openings[0].id);
+    await page
+      .getByLabel("Selecionar elemento", { exact: true })
+      .selectOption(slab.id);
+    await expect(type).toHaveValue("hollow-core");
+    for (const flags of [
+      { readonly: true, busy: false },
+      { readonly: false, busy: true },
+    ]) {
+      await page.evaluate(async (state) => {
+        const path = "/src/state/store.ts";
+        const { useStore } = await import(/* @vite-ignore */ path);
+        useStore.setState(state);
+      }, flags);
+      await expect(type).toBeDisabled();
+      await expect(
+        panel.getByRole("button", { name: "Aplicar configuração da laje" }),
+      ).toBeDisabled();
+      await expect(
+        panel.getByLabel("Adicionar capa de concreto"),
+      ).toBeDisabled();
+    }
+    await page.evaluate(async () => {
+      const path = "/src/state/store.ts";
+      const { useStore } = await import(/* @vite-ignore */ path);
+      useStore.setState({ readonly: false, busy: false });
+    });
+    expect((await exported(page)).model).toEqual(baseline.model);
+    await page
+      .getByRole("button", { name: "Adicionar abertura", exact: true })
+      .click();
+    await expect(type).toBeDisabled();
+    await page
+      .getByLabel("Desenho de laje")
+      .getByRole("button", { name: "Cancelar contorno", exact: true })
+      .click();
+    await expect(type).toBeEnabled();
+    await page.getByRole("button", { name: "Projetos", exact: true }).click();
+    await load(page, baseline);
+    await page
+      .getByLabel("Selecionar elemento", { exact: true })
+      .selectOption(slab.id);
+    await expect(type).toHaveValue("hollow-core");
+    expect((await exported(page)).model.slabs).toEqual(baseline.model.slabs);
+    await page.screenshot({ path: ".tools/t029-properties-desktop.png" });
   },
 );

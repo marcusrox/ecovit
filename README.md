@@ -159,7 +159,7 @@ O térreo começa na cota 0 cm, com altura de novas paredes em 280 cm. No seleto
 
 Pontas livres e contornos abertos são permitidos. Retas conectadas, L, U e ciclos sem ramificações após o tratamento dos encontros usam paginação contínua: inteiros pareiam células consecutivas, cantos seguem a paridade do percurso e meios ficam nas extremidades quando necessários. Não há obrigação de orientar todos os cantos igualmente nem mínimo de quatro módulos para a ponte de um U. Reservas incompatíveis entre encontros próximos, sobreposições e transições de altura sem padrão continuam diagnosticadas; cruz → reta conforme altura é suportada.
 
-O arquivo vigente usa envelope versão 26 e composição `nominal-v13`, com leitura de envelopes 9–26. O download usa JSON compacto; se o resultado calculado ultrapassar o limite de 50 MiB do arquivo, a cópia conserva todos os desenhos, medidas, imagens, configurações e ajustes e reconstrói o resultado ao abrir, com aviso. A composição nesta aba permanece intacta. Snapshots atuais são conferidos por recomputação antes de importar; adulteração é recusada. Abertura remota recompõe o resultado apenas em memória, sem gravação adicional. Outra aba pode editar, e a revisão do servidor impede sobrescrita silenciosa. Configurações são comuns, mas paredes, vãos, medidas e ajustes são independentes por pavimento. Lajes e aberturas são independentes das paredes.
+O arquivo vigente usa envelope versão 30 e composição `nominal-v13`, com leitura de envelopes 9–30. O download usa JSON compacto; se o resultado calculado ultrapassar o limite de 50 MiB do arquivo, a cópia conserva todos os desenhos, medidas, imagens, configurações e ajustes e reconstrói o resultado ao abrir, com aviso. A composição nesta aba permanece intacta. Snapshots atuais são conferidos por recomputação antes de importar; adulteração é recusada. Abertura remota recompõe o resultado apenas em memória, sem gravação adicional. Outra aba pode editar, e a revisão do servidor impede sobrescrita silenciosa. Configurações são comuns, mas paredes, vãos, medidas e ajustes são independentes por pavimento. Lajes e aberturas são independentes das paredes.
 
 ## Tipos de portas e janelas
 
@@ -211,7 +211,7 @@ Em Planta, abra **Mobiliários**, escolha um item do catálogo ou carregue uma i
 
 ## Quantitativos e cópias de projeto
 
-No projeto aberto, use **Quantitativos** para consultar peças por tipo, pavimento e fiada e informar perdas opcionais. O percentual vale para a sessão e não é salvo no arquivo. Voltar ao desenho conserva seu contexto confirmado.
+No projeto aberto, use **Orçamento** para consultar peças por tipo, pavimento e fiada e informar perdas opcionais. O percentual é salvo no projeto ao sair do campo ou pressionar Enter e é preservado no arquivo. Voltar ao desenho conserva seu contexto confirmado.
 
 Na lista inicial, **Duplicar** cria outro projeto a partir do último estado salvo, com nome próprio e edições independentes.
 

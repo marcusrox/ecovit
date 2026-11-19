@@ -138,9 +138,9 @@ Fontes: PostgreSQL 18 — [JSON](https://www.postgresql.org/docs/18/datatype-jso
 
 ## Formato e leitores vigentes
 
-Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=26; leitura aceita somente envelopes 9–26. O envelope não versiona as regras construtivas: a composição vigente é nominal-v13. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; arquivos incompatíveis não substituem o trabalho aberto; registros IndexedDB anteriores não são consultados nem apagados.
+Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=30; leitura aceita somente envelopes 9–30. O envelope não versiona as regras construtivas: a composição vigente é nominal-v13. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; arquivos incompatíveis não substituem o trabalho aberto; registros IndexedDB anteriores não são consultados nem apagados.
 
-| Envelope lido | Normalização em memória para 24 |
+| Envelope lido | Normalização em memória para 30 |
 |---|---|
 | 9 | Acrescentar measurements, referenceImages, imageElements e customImageAssets vazios |
 | 10 | Acrescentar referenceImages, imageElements e customImageAssets vazios |
@@ -158,6 +158,10 @@ Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schem
 | 24 | Validar também model.floors[].channelReinforcement opcional |
 | 25 | Validar model.floors[].groutDiameter opcional: 80/100/125 em unidades de 0,1 mm |
 | 26 | Acrescentar steelBudget opcional por pavimento e steelPrices opcionais por material no projeto |
+| 27 | Preservar construction opcional completo na laje e conferir sua soma com thickness |
+| 28 | Preservar project.brickLossPercent opcional em centésimos de ponto percentual |
+| 29 | Acrescentar quad-sliding à aparência de portas, com orientação 0/1 |
+| 30 | Acrescentar double-sliding à aparência de portas, com orientação 0–3 |
 
 Envelopes 9–16 recebem model.terrain=null em memória; recusar esse campo nesses formatos, inclusive null. O formato 17 persiste a intenção global do terreno e sua revisão de material, sem bytes de textura ou rasterização da área. O catálogo de aparências inclui soft (Verde suave) na revisão 1, já suportado no contrato 17 e preservado em 18. Leitores anteriores que não conheçam soft podem recusar essa aparência; não substituí-la silenciosamente. Os cinco materiais anteriores permanecem válidos. Revisão/material desconhecidos e anéis inválidos são recusados. O formato 17 conserva composição nominal-v10; aplicativos anteriores podem recusá-lo.
 
@@ -378,3 +382,27 @@ Grampos passam a sugerir 6,3 mm (opções 5/6,3/8); cintas sugerem 10 mm (opçõ
 model.floors[].steelBudget opcional segue o objeto completo/estrito de Elementos construtivos. project.steelPrices opcional contém somente as chaves ca60-5, ca50-6.3, ca50-8, ca50-10 e ca50-12.5; cada valor opcional é centavo por kg inteiro não negativo seguro. Ausência difere de zero. Recusar campos novos em envelopes até 25 e chaves extras/valores inválidos. Normalizar 9–25 para 26 em memória, sem mutar fonte ou inventar preço; parâmetros ausentes usam padrões em consulta sem gravação.
 
 Cópias, transporte e operações preservam intenção; parâmetros do pavimento são copiados por valor. Não persistir totais, massa calculada, custos ou filtros. Campos exclusivamente orçamentários não invalidam nominal-v13; snapshots atuais continuam sujeitos à mesma recomposição de integridade. Representação remota continua versão 1, sem migração SQL. Leitores até 25 recusam envelopes 26.
+
+## Configuração nominal da laje — formato 27
+
+model.slabs[].construction opcional segue o objeto completo e estrito de Elementos construtivos. O leitor compartilhado valida tipo, seis alturas H, capa positiva opcional, igualdade de thickness com a soma e limite da face inferior. Recusar campos extras, configuração parcial, total contraditório e construction em envelopes até 26, mesmo null. Normalizar envelopes 9–26 para 27 em memória, preservando integralmente espessuras livres e ausência de construction; não classificar ou decompor lajes antigas.
+
+Exportação, reabertura, representação remota, importação, cópia de projeto e duplicação de pavimento preservam a configuração confirmada. Cópias não compartilham mutações dos parâmetros. Rascunhos, erros e prévia do formulário não são persistidos. Formato remoto continua versão 1, sem migração SQL ou alteração de nominal-v13. Leitores até 26 recusam envelopes 27; snapshots atuais mantêm a conferência de integridade vigente.
+
+## Perdas de tijolos persistidas — formato 28
+
+project.brickLossPercent opcional é inteiro seguro não negativo em centésimos de ponto percentual: 250 representa 2,50%. Ausência equivale a 0%, sem gravação automática de padrão. Recusar valores inválidos e o campo em envelopes 9–27, inclusive zero ou null. Normalizar 9–27 para 28 sem alterar a fonte nem inventar percentual. Preservar as configurações de laje do formato 27.
+
+Arquivo, representação remota e cópia de projeto preservam o percentual confirmado, independentemente do filtro de pavimento. Não persistir rascunho textual, estimativas, totais ou filtros. O campo é exclusivamente orçamentário e não muda nominal-v13; leitores até 27 recusam envelopes 28. Representação remota permanece versão 1, sem migração SQL.
+
+## Portas de correr de duas e quatro folhas — formato 29
+
+appearance.type admite quad-sliding somente para kind=door, com orientation 0/1. Leitor compartilhado recusa esse tipo em janelas/vãos livres, orientações inválidas e envelopes 9–28. Normalizar 9–28 para 29 sem alterar a fonte, dimensões ou aparência existente. center-sliding mantém a opção de abertura central, seus dados e orientações, sem migração ou segunda opção equivalente.
+
+Arquivo, reabertura, histórico, cópias e representação remota preservam a tipologia/orientação. Leitores até 28 recusam envelopes 29. Sem alteração de nominal-v13, migração SQL ou versão da representação remota; a aparência continua excluída dos insumos construtivos.
+
+## Porta de correr de duas folhas independente — formato 30
+
+appearance.type=double-sliding identifica somente uma porta, com uma folha fixa e uma móvel e orientation 0/1/2/3. O tipo não substitui sliding (porta de uma folha/janela de duas) nem center-sliding (abertura central existente). Não converter automaticamente nenhuma aparência. Recusar double-sliding em janelas/vãos livres ou envelopes 9–29, assim como orientações inválidas.
+
+Normalizar envelopes 9–29 para 30 em memória, sem alterar fonte, dimensões ou tipos anteriores. Histórico, reabertura, arquivo, importação e cópias preservam o novo tipo e a orientação. Leitores até 29 recusam envelopes 30; aparência continua excluída da composição. Sem mudança de nominal-v13, migração SQL ou versão remota.

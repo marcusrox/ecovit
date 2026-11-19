@@ -19,6 +19,7 @@ import {
   bounds,
   validateBase,
   withoutResult,
+  slabTypes,
   type Project,
 } from "../domain/project";
 import { MAX_GROUT_ADJUSTMENTS } from "../domain/grout";
@@ -196,7 +197,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(26),
+    schemaVersion: z.literal(30),
     project: z
       .object({
         id,
@@ -207,6 +208,7 @@ const schema = z
           .strict(),
         origin: point,
         initialWallHeight: positive.optional(),
+        brickLossPercent: cents.optional(),
         steelPrices: z
           .object({
             "ca60-5": cents.optional(),
@@ -383,7 +385,9 @@ const schema = z
                       "swing",
                       "double-swing",
                       "sliding",
+                      "double-sliding",
                       "center-sliding",
+                      "quad-sliding",
                       "tilt",
                     ]),
                     orientation: z.union([
@@ -498,6 +502,21 @@ const schema = z
                 id,
                 floorId: id,
                 thickness: positive,
+                construction: z
+                  .object({
+                    type: z.enum(slabTypes),
+                    height: z.union([
+                      z.literal(800),
+                      z.literal(1200),
+                      z.literal(1600),
+                      z.literal(2000),
+                      z.literal(2500),
+                      z.literal(3000),
+                    ]),
+                    topping: positive.optional(),
+                  })
+                  .strict()
+                  .optional(),
                 contour: z.array(point).min(4),
                 openings: z.array(
                   z.object({ id, contour: z.array(point).min(4) }).strict(),
@@ -574,6 +593,91 @@ export function validateProject(
   value: unknown,
   checkGenerated = true,
 ): Project {
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion >= 9 &&
+    value.schemaVersion <= 29 &&
+    "model" in value &&
+    value.model &&
+    typeof value.model === "object" &&
+    "openings" in value.model &&
+    Array.isArray(value.model.openings) &&
+    value.model.openings.some(
+      (opening: unknown) =>
+        opening &&
+        typeof opening === "object" &&
+        "appearance" in opening &&
+        opening.appearance &&
+        typeof opening.appearance === "object" &&
+        "type" in opening.appearance &&
+        opening.appearance.type === "double-sliding",
+    )
+  )
+    throw new Error(
+      "Arquivo inválido: porta de correr de duas folhas em formato anterior.",
+    );
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion >= 9 &&
+    value.schemaVersion <= 28 &&
+    "model" in value &&
+    value.model &&
+    typeof value.model === "object" &&
+    "openings" in value.model &&
+    Array.isArray(value.model.openings) &&
+    value.model.openings.some(
+      (opening: unknown) =>
+        opening &&
+        typeof opening === "object" &&
+        "appearance" in opening &&
+        opening.appearance &&
+        typeof opening.appearance === "object" &&
+        "type" in opening.appearance &&
+        opening.appearance.type === "quad-sliding",
+    )
+  )
+    throw new Error(
+      "Arquivo inválido: porta de correr de quatro folhas em formato anterior.",
+    );
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion >= 9 &&
+    value.schemaVersion <= 27 &&
+    "project" in value &&
+    value.project &&
+    typeof value.project === "object" &&
+    "brickLossPercent" in value.project
+  )
+    throw new Error("Arquivo inválido: perdas de tijolos em formato anterior.");
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion >= 9 &&
+    value.schemaVersion <= 26 &&
+    "model" in value &&
+    value.model &&
+    typeof value.model === "object" &&
+    "slabs" in value.model &&
+    Array.isArray(value.model.slabs) &&
+    value.model.slabs.some(
+      (slab: unknown) =>
+        slab && typeof slab === "object" && "construction" in slab,
+    )
+  )
+    throw new Error(
+      "Arquivo inválido: configuração da laje em formato anterior.",
+    );
   if (
     value &&
     typeof value === "object" &&
@@ -889,13 +993,24 @@ export function validateProject(
     !("schemaVersion" in value) ||
     (value.schemaVersion !== 24 &&
       value.schemaVersion !== 25 &&
-      value.schemaVersion !== 26)
+      value.schemaVersion !== 26 &&
+      value.schemaVersion !== 27 &&
+      value.schemaVersion !== 28 &&
+      value.schemaVersion !== 29 &&
+      value.schemaVersion !== 30)
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 26; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 30; demais formatos não são convertidos.",
     );
-  if (value.schemaVersion === 24 || value.schemaVersion === 25)
-    value = { ...value, schemaVersion: 26 };
+  if (
+    value.schemaVersion === 24 ||
+    value.schemaVersion === 25 ||
+    value.schemaVersion === 26 ||
+    value.schemaVersion === 27 ||
+    value.schemaVersion === 28 ||
+    value.schemaVersion === 29
+  )
+    value = { ...value, schemaVersion: 30 };
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");
@@ -1108,6 +1223,15 @@ export function importedCopy(doc: Project): Project {
   const now = new Date().toISOString();
   return {
     ...doc,
+    model: {
+      ...doc.model,
+      slabs: doc.model.slabs.map((slab) => ({
+        ...slab,
+        ...(slab.construction
+          ? { construction: { ...slab.construction } }
+          : {}),
+      })),
+    },
     project: {
       ...doc.project,
       id: crypto.randomUUID(),

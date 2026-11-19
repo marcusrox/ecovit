@@ -39,13 +39,11 @@ async function open(page: Page) {
       1,
     )!,
   ];
-  await page
-    .getByTestId("import-file")
-    .setInputFiles({
-      name: "orcamento.ecovit",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(doc)),
-    });
+  await page.getByTestId("import-file").setInputFiles({
+    name: "orcamento.ecovit",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(doc)),
+  });
   await expect(page.getByRole("status")).toContainText("Salvo");
   await page.getByRole("button", { name: "Orçamento", exact: true }).click();
 }
@@ -87,6 +85,8 @@ test(
     expect(priced.history.past.length).toBe(before.history.past.length + 2);
     await dialog.getByLabel("Perdas de tijolos (%)").fill("10");
     await expect(total).toHaveText("R$ 36,10");
+    await dialog.getByLabel("Perdas de tijolos (%)").press("Enter");
+    await expect(dialog.getByRole("status")).toContainText("Salvo");
     await whole.fill("-1");
     await whole.press("Tab");
     await expect(whole).toHaveAttribute("aria-invalid", "true");
@@ -111,13 +111,13 @@ test(
     ).toBeFocused();
     await page.keyboard.press("Control+z");
     await expect
-      .poll(async () => (await state(page)).doc.project.unitPrices?.half)
+      .poll(async () => (await state(page)).doc.project.brickLossPercent)
       .toBeUndefined();
     await expect(page.getByRole("status")).toContainText("Salvo");
     await page.keyboard.press("Control+y");
     await expect
-      .poll(async () => (await state(page)).doc.project.unitPrices?.half)
-      .toBe(120);
+      .poll(async () => (await state(page)).doc.project.brickLossPercent)
+      .toBe(1000);
     await expect(page.getByRole("status")).toContainText("Salvo");
     await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     await expect(dialog.getByLabel("Perdas de tijolos (%)")).toHaveValue("10");
@@ -137,10 +137,10 @@ test(
       .click();
     await expect(page.getByRole("status")).toContainText("Salvo");
     await page.getByRole("button", { name: "Orçamento", exact: true }).click();
-    await expect(dialog.getByLabel("Perdas de tijolos (%)")).toHaveValue("0");
+    await expect(dialog.getByLabel("Perdas de tijolos (%)")).toHaveValue("10");
     await expect(whole).toHaveValue("2,50");
     await expect(half).toHaveValue("1,20");
-    await expect(total).toHaveText("R$ 29,90");
+    await expect(total).toHaveText("R$ 36,10");
     await whole.fill("");
     await whole.press("Tab");
     await expect(dialog.getByRole("status")).toContainText("Salvo");
