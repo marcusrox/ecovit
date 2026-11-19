@@ -14,12 +14,8 @@ concurrency:
 
 jobs:
   ci:
-    name: Validar Ecovit (Node ${{ matrix.node-version }})
+    name: Validar Ecovit (Node 24.22.1)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version: ["24.22.1", "24.x"]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -28,7 +24,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: "24.22.1"
           cache: npm
 
       - name: Instalar dependências
