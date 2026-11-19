@@ -9,10 +9,14 @@ try {
   );
 }
 const children = [
-  spawn(process.execPath, ["--import", "tsx", "server/main.ts"], {
-    stdio: "inherit",
-    env: { ...process.env, NODE_ENV: "development" },
-  }),
+  spawn(
+    process.execPath,
+    ["--watch", "--watch-preserve-output", "--import", "tsx", "server/main.ts"],
+    {
+      stdio: "inherit",
+      env: { ...process.env, NODE_ENV: "development" },
+    },
+  ),
   spawn(
     process.execPath,
     [

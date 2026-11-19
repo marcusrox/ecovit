@@ -117,7 +117,7 @@ export const imageCatalog: readonly CatalogItem[] = rows.map(
     width: width * 100,
     depth: depth * 100,
     asset: asset ?? id,
-    revision: id === "bloco-concreto-contencao" || id === "tv" ? 2 : 1,
+    revision: id === "tv" ? 3 : id === "bloco-concreto-contencao" ? 2 : 1,
   }),
 );
 export const imageCategories = [
@@ -126,7 +126,9 @@ export const imageCategories = [
 // Supported historical artwork stays resolvable without appearing twice in the picker.
 const historicalCatalog: readonly CatalogItem[] = imageCatalog
   .filter((i) => i.id === "bloco-concreto-contencao" || i.id === "tv")
-  .map((i) => ({ ...i, revision: 1 }));
+  .flatMap((i) =>
+    (i.id === "tv" ? [1, 2] : [1]).map((revision) => ({ ...i, revision })),
+  );
 export const catalogItem = (id: string, revision: number) =>
   imageCatalog.find((i) => i.id === id && i.revision === revision) ??
   historicalCatalog.find((i) => i.id === id && i.revision === revision);

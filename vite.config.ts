@@ -1,12 +1,10 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { readReleaseInfo } from "./scripts/release-info";
-export default defineConfig({
-  // Test browsers use 5174 and must not contend with the user's Vite cache.
+export default defineConfig(({ mode }) => ({
+  // Vitest uses test mode; browser tests override cacheDir in test-main.ts.
   cacheDir:
-    process.argv.includes("5174") || !!process.env.API_PROXY
-      ? "node_modules/.vite-ecovit-tests"
-      : "node_modules/.vite",
+    mode === "test" ? "node_modules/.vite-ecovit-tests" : "node_modules/.vite",
   plugins: [react()],
   define: { __ECOVIT_RELEASE__: JSON.stringify(readReleaseInfo()) },
   server: {
@@ -20,4 +18,4 @@ export default defineConfig({
     },
   },
   test: { include: ["tests/**/*.test.ts"] },
-});
+}));

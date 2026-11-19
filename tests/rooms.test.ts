@@ -16,6 +16,7 @@ import {
   addRoomLabel,
   attractRoomPoint,
   reconcileRooms,
+  revalidateRoomLabel,
   roomAreaText,
   roomGeometry,
 } from "../src/domain/rooms";
@@ -442,11 +443,122 @@ describe("T-018 referências e intenção", () => {
   });
 });
 
+describe("Reavaliação explícita de etiqueta em revisão", () => {
+  it("preserva identidade, nome, posição, referência e contador ao recuperar a área atual", () => {
+    const original = label(enclosed());
+    original.model.roomLabels[0].name = "Sala de estar";
+    original.model.roomLabels[0].position = p(50000, 10000);
+    const open = reconcileRooms(original, {
+      ...original,
+      model: {
+        ...original.model,
+        roomBoundaries: original.model.roomBoundaries.slice(1),
+      },
+    });
+    const closed = reconcileRooms(open, {
+      ...open,
+      model: { ...open.model, roomBoundaries: rect(open, 0, 0, 30000, 50000) },
+    });
+    expect(closed.model.roomLabels[0].review).toBe(true);
+    const before = structuredClone(closed);
+    const restored = revalidateRoomLabel(
+      closed,
+      original.model.roomLabels[0].id,
+    );
+    expect(closed).toEqual(before);
+    expect(restored.model.roomLabels[0]).toEqual({
+      ...original.model.roomLabels[0],
+      review: false,
+    });
+    expect(restored.model.floors).toEqual(original.model.floors);
+    expect(projectAreas(restored).useful.area).toBe(15);
+    expect(parseFile(serializeFile(restored).text).model.roomLabels).toEqual(
+      restored.model.roomLabels,
+    );
+    expect(revalidateRoomLabel(restored, original.model.roomLabels[0].id)).toBe(
+      restored,
+    );
+  });
+  it("mantém revisão sem fechamento, com referência fora ou coberta por parede, sem mover a referência até o texto", () => {
+    for (const reference of [p(10000, 10000), p(50000, 10000), p(0, 10000)]) {
+      const d = label(enclosed());
+      d.model.roomLabels[0].review = true;
+      d.model.roomLabels[0].reference = reference;
+      if (reference.x === 10000) d.model.roomBoundaries = [];
+      if (reference.x === 0)
+        d.model.walls = [
+          {
+            id: crypto.randomUUID(),
+            floorId: d.model.floors[0].id,
+            a: p(0, 0),
+            b: p(0, 40000),
+            side: 1,
+            height: 7000,
+          },
+        ];
+      expect(revalidateRoomLabel(d, d.model.roomLabels[0].id)).toBe(d);
+    }
+  });
+  it("não ocupa região com outra etiqueta válida; etiquetas em revisão não reservam região", () => {
+    let d = label(enclosed());
+    const id = d.model.roomLabels[0].id;
+    d.model.roomLabels[0].review = true;
+    d = label(d, p(20000, 20000));
+    expect(revalidateRoomLabel(d, id)).toBe(d);
+    d.model.roomLabels[1].review = true;
+    expect(
+      revalidateRoomLabel(d, id).model.roomLabels.map((l) => l.review),
+    ).toEqual([false, true]);
+    expect(revalidateRoomLabel(d, crypto.randomUUID())).toBe(d);
+  });
+});
+
 describe("T-018 operação única e histórico", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     useStore.setState({ busy: false });
     useStore.getState().close();
     vi.mocked(saveProject).mockClear();
+  });
+  it("recuperação salva uma operação desfazível sem recompor tijolos e respeita bloqueios", async () => {
+    const d = validateProject(label(enclosed()), false);
+    d.model.roomLabels[0].review = true;
+    d.generated = generate(d);
+    d.generationState = { status: "current", diagnostics: [] };
+    useStore.setState({
+      doc: d,
+      activeFloorId: d.model.floors[0].id,
+      readonly: false,
+      busy: false,
+      saved: "saved",
+      history: { past: [], future: [] },
+    });
+    const output = d.generated;
+    const calculation = vi.spyOn(engine, "generate");
+    const next = revalidateRoomLabel(d, d.model.roomLabels[0].id);
+    for (const block of [
+      { busy: true, readonly: false },
+      { busy: false, readonly: true },
+    ]) {
+      useStore.setState(block);
+      await useStore.getState().commit(next, "room");
+      expect(useStore.getState().doc).toEqual(d);
+      expect(saveProject).not.toHaveBeenCalled();
+    }
+    useStore.setState({ busy: false, readonly: false });
+    await useStore.getState().commit(next, "room");
+    expect(saveProject).toHaveBeenCalledTimes(1);
+    expect(useStore.getState().history.past).toHaveLength(1);
+    expect(useStore.getState().doc?.model.roomLabels[0]).toEqual({
+      ...d.model.roomLabels[0],
+      review: false,
+    });
+    expect(useStore.getState().doc?.generated).toEqual(output);
+    await useStore.getState().undo();
+    expect(useStore.getState().doc?.model.roomLabels[0].review).toBe(true);
+    await useStore.getState().undo(true);
+    expect(useStore.getState().doc?.model.roomLabels[0].review).toBe(false);
+    expect(calculation).not.toHaveBeenCalled();
   });
   it("salva perda de fechamento junto da geometria, desfaz/refaz revisão e não recompõe tijolos", async () => {
     // Match the canonical property order produced when the application opens a project.

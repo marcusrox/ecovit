@@ -140,7 +140,7 @@ it("TV integra a Sala com arte própria e dimensões editáveis, preservadas no 
     asset: "tv",
     width: 12000,
     depth: 1000,
-    revision: 2,
+    revision: 3,
   });
   const d = project();
   const element = standardElement(item, d.model.floors[0].id);
@@ -154,14 +154,14 @@ it("TV integra a Sala com arte própria e dimensões editáveis, preservadas no 
     d.model.imageElements,
   );
 });
-it("TV oferece r2 e conserva a arte r1 nos arquivos existentes", () => {
+it("TV oferece r3 e conserva as artes r1/r2 nos arquivos existentes", () => {
   const d = project();
-  for (const revision of [1, 2]) {
+  for (const revision of [1, 2, 3]) {
     const item = catalogItem("tv", revision)!;
     expect(item).toMatchObject({ width: 12000, depth: 1000, revision });
     d.model.imageElements.push(standardElement(item, d.model.floors[0].id));
   }
-  expect(catalogItem("tv", 3)).toBeUndefined();
+  expect(catalogItem("tv", 4)).toBeUndefined();
   expect(parseFile(serializeFile(d).text).model.imageElements).toEqual(
     d.model.imageElements,
   );

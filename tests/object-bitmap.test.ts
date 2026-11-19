@@ -45,6 +45,7 @@ afterEach(() => vi.clearAllMocks());
 const catalog = [
   ...imageCatalog,
   { ...imageCatalog.find((i) => i.id === "tv")!, revision: 1 },
+  { ...imageCatalog.find((i) => i.id === "tv")!, revision: 2 },
   {
     ...imageCatalog.find((i) => i.id === "bloco-concreto-contencao")!,
     revision: 1,

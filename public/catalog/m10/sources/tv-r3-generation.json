@@ -1,0 +1,12 @@
+{
+  "id": "tv",
+  "name": "TV",
+  "category": "Sala",
+  "subject": "Simplified overhead television with a continuous black front/screen band and light ivory rear housing.",
+  "widthCm": 120,
+  "depthCm": 10,
+  "revision": 3,
+  "reference": "TV revision 2 as edit target and user-supplied black-screen reference, 2026-11-19.",
+  "method": "Built-in image_gen tool, image edit",
+  "generationPrompt": "Edit target image 1 is the existing Ecovit TV catalog art: a HORIZONTAL long narrow ivory front panel at the BOTTOM, with a centered shorter ivory rear housing protruding ABOVE it. Supporting reference image 2 is the user's desired black-screen appearance shown rotated vertically in a room. Make ONLY this color change to edit target image 1: fill the ENTIRE long narrow front/screen panel with solid near-pure BLACK, all the way from end to end, as in reference image 2. Remove the pale inner stripe from that long panel so that the black band has a clear strong continuous silhouette. Keep the SHORTER centered rear housing LIGHT warm ivory/taupe and its thin warm gray outline. Preserve target image 1's horizontal orientation, exact silhouette and dimensions, positions, step profile, centering, narrow depth, rear housing shape and colors. This is STRICT ORTHOGRAPHIC TOP VIEW of a TV, not a front elevation. Transparent alpha background, preserve all transparency, no room or floor or grid from the reference, no added elements, no external shadows, no text, no logos. Only recolor the long front/screen panel black; keep everything else unchanged."
+}

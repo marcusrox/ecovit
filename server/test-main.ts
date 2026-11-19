@@ -47,6 +47,7 @@ stage("Iniciando API isolada na porta 3002");
 await api.listen({ host: "127.0.0.1", port: 3002 });
 let clientReady = false;
 const vite = await createServer({
+  cacheDir: "node_modules/.vite-ecovit-tests",
   plugins: [
     {
       name: "test-client-readiness",

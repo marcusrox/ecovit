@@ -1,5 +1,10 @@
 import { test, expect, blockEditing, type Page } from "./auth";
-import { createProject, type Project } from "../../src/domain/project";
+import {
+  createProject,
+  makeWall,
+  type Project,
+} from "../../src/domain/project";
+import { roomGeometry, roomAreaText } from "../../src/domain/rooms";
 import { readFile } from "node:fs/promises";
 import { parseFile } from "../../src/persistence/files";
 
@@ -219,7 +224,9 @@ test(
     await expect(
       page.getByText("Revisar ambiente", { exact: true }),
     ).toBeVisible();
-    await expect(page.getByText(/Exclua esta etiqueta/)).toBeVisible();
+    await expect(
+      page.getByText(/Clique na etiqueta para reavaliar/),
+    ).toBeVisible();
     await page.screenshot({ path: ".tools/t018-revisao.png" });
     await page
       .getByRole("button", { name: "Excluir etiqueta", exact: true })
@@ -227,6 +234,155 @@ test(
     await page.getByRole("button", { name: "Etiqueta", exact: true }).click();
     await click(page, 10000, 10000);
     await expect(page.getByLabel("Nome do ambiente")).toHaveValue("Ambiente 2");
+  },
+);
+
+test(
+  "reavalia etiqueta por clique, preserva nome e referência, sem recuperar no arraste",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    await open(page);
+    await page.getByRole("button", { name: "Etiqueta", exact: true }).click();
+    await click(page, 10000, 10000);
+    const name = page.getByLabel("Nome do ambiente");
+    await name.fill("Sala de estar");
+    await name.press("Enter");
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    const original = (await state(page)).model.roomLabels[0];
+    const boundary = (await state(page)).model.roomBoundaries[1];
+    await page.getByLabel("Selecionar elemento").selectOption(boundary.id);
+    await page
+      .getByRole("button", { name: "Excluir linha", exact: true })
+      .click();
+    await expect
+      .poll(async () => (await state(page)).model.roomLabels[0].review)
+      .toBe(true);
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    const pending = await state(page);
+    await click(page, 10000, 10000);
+    expect(await state(page)).toEqual(pending);
+    await page.getByRole("button", { name: "Fechamento", exact: true }).click();
+    await draw(page, [30000, 0], [30000, 40000], 4);
+    expect((await state(page)).model.roomLabels[0].review).toBe(true);
+    const start = await point(page, 10000, 10000),
+      end = await point(page, 50000, 10000);
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(end.x, end.y, { steps: 5 });
+    await page.mouse.up();
+    await expect
+      .poll(async () => (await state(page)).model.roomLabels[0].position.x)
+      .toBe(50000);
+    expect((await state(page)).model.roomLabels[0].review).toBe(true);
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    await click(page, 50000, 10000);
+    await expect
+      .poll(async () => (await state(page)).model.roomLabels[0].review)
+      .toBe(false);
+    await expect(name).toHaveValue("Sala de estar");
+    await expect(page.getByText("12,00 m²", { exact: true })).toBeVisible();
+    expect((await state(page)).model.roomLabels[0]).toEqual({
+      ...original,
+      position: { x: 50000, y: 10000 },
+    });
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    await page.getByRole("button", { name: /Desfazer/ }).click();
+    await expect
+      .poll(async () => (await state(page)).model.roomLabels[0].review)
+      .toBe(true);
+    await page.getByRole("button", { name: /Refazer/ }).click();
+    await expect
+      .poll(async () => (await state(page)).model.roomLabels[0].review)
+      .toBe(false);
+  },
+);
+
+test(
+  "recupera etiqueta após mover uma parede e devolvê-la ao fechamento original",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    const d = createProject(
+      "Recuperação com paredes",
+      { length: 2500, width: 1250, height: 700 },
+      2100,
+    );
+    d.project.channelLevels = [];
+    d.project.groutSettings = {
+      ...d.project.groutSettings,
+      junctions: false,
+      openings: false,
+      ends: false,
+      intervals: false,
+    };
+    const corners = [
+      { x: 0, y: 0 },
+      { x: 40000, y: 0 },
+      { x: 40000, y: 40000 },
+      { x: 0, y: 40000 },
+    ];
+    d.model.walls = corners.map((a, i) =>
+      makeWall(a, corners[(i + 1) % 4], 1250, d.model.floors[0].id, 2100, 1)!,
+    );
+    const area = roomGeometry(d, d.model.floors[0].id).at({
+      x: 15000,
+      y: 15000,
+    })!.area;
+    await page.getByTestId("import-file").setInputFiles({
+      name: "paredes.ecovit",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(d)),
+    });
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    await page.getByRole("button", { name: "Etiqueta", exact: true }).click();
+    await click(page, 15000, 15000);
+    await expect(page.getByLabel("Nome do ambiente")).toHaveValue("Ambiente 1");
+    await page.getByLabel("Nome do ambiente").fill("Sala de estar");
+    await page.getByLabel("Nome do ambiente").press("Enter");
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    const original = (await state(page)).model.roomLabels[0];
+    await page
+      .getByRole("button", { name: "Selecionar", exact: false })
+      .first()
+      .click();
+    const drag = async (from: [number, number], to: [number, number]) => {
+      const a = await point(page, ...from),
+        b = await point(page, ...to);
+      await page.mouse.move(a.x, a.y);
+      await page.mouse.down();
+      await page.mouse.move(b.x, b.y, { steps: 8 });
+      await page.mouse.up();
+      await expect(page.getByRole("status")).toContainText("Salvo");
+    };
+    await drag([40625, 20000], [50625, 20000]);
+    await expect
+      .poll(
+        async () =>
+          (await state(page)).model.walls.find(
+            (w) => w.id === d.model.walls[1].id,
+          )!.a.x,
+      )
+      .toBe(50000);
+    await expect
+      .poll(async () => (await state(page)).model.roomLabels[0].review)
+      .toBe(true);
+    await drag([50625, 20000], [40625, 20000]);
+    expect(
+      [...(await state(page)).model.walls].sort((a, b) =>
+        a.id.localeCompare(b.id),
+      ),
+    ).toEqual([...d.model.walls].sort((a, b) => a.id.localeCompare(b.id)));
+    expect((await state(page)).model.roomLabels[0].review).toBe(true);
+    await click(page, 15000, 15000);
+    await expect
+      .poll(async () => (await state(page)).model.roomLabels[0].review)
+      .toBe(false);
+    await expect(page.getByLabel("Nome do ambiente")).toHaveValue(
+      "Sala de estar",
+    );
+    await expect(
+      page.getByText(roomAreaText(area), { exact: true }),
+    ).toBeVisible();
+    expect((await state(page)).model.roomLabels[0]).toEqual(original);
   },
 );
 

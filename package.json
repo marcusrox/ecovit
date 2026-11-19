@@ -15,7 +15,7 @@
     "test:e2e:full": "playwright test --project=chrome --project=edge",
     "build": "npm run typecheck && vite build && node scripts/build-server.mjs",
     "format": "prettier --write src tests *.json *.ts *.js",
-    "api:dev": "node --env-file=.env --import tsx server/main.ts",
+    "api:dev": "node --env-file=.env --watch --watch-preserve-output --import tsx server/main.ts",
     "api:start": "node app.js",
     "db:setup:local": "node --import tsx server/setup-local-cli.ts",
     "db:migrate": "node --import tsx server/cli.ts migrate",

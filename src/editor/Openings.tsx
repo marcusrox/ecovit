@@ -255,10 +255,7 @@ function OpeningForm({
         </button>
       </div>
       <h2>{openingLabel[o.kind]}</h2>
-      <p className={styles.muted}>
-        Parede {doc.model.walls.indexOf(w) + 1} · distância desde a menor
-        coordenada.
-      </p>
+
       {o.kind !== "opening" && (
         <section
           className={styles.propertyGroup}

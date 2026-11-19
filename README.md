@@ -30,6 +30,10 @@ Complete o `.env` privado com `APP_ORIGIN=http://127.0.0.1:5173`, `API_PORT=3001
 .\Start-Ecovit.ps1 -Task dev
 ```
 
+No desenvolvimento, o Vite atualiza a interface automaticamente e a API usa o modo `--watch` do Node: alterações no ponto de entrada ou nos módulos importados reiniciam somente a API, preservando a saída do terminal e mantendo o frontend em execução. `api:dev` usa o mesmo monitoramento. Alterações no `.env` ou no script de inicialização exigem reiniciar o comando. Após atualizar um processo iniciado antes dessa configuração, encerre-o e execute o comando novamente uma vez para ativar o monitoramento.
+
+O Vite do desenvolvimento usa `node_modules/.vite`; os testes usam `node_modules/.vite-ecovit-tests`. O servidor de navegador da porta 5174 define seu cache explicitamente, e o Vitest o seleciona pelo modo `test`. `API_PROXY` configura apenas o destino da API, sem escolher o cache.
+
 Para migrações administrativas posteriores ou implantação em servidor, consulte [Configuração e banco](docs/arquitetura/Persistencia-e-Compatibilidade.md#configuração-e-banco). O setup local aplica a migração com a identidade `ecovit_owner` por uma sessão administrativa com `SET ROLE`. Para atualizações posteriores e CD, configure `DATABASE_MIGRATION_URL` no mesmo `.env` privado com a conexão proprietária; a API continua usando `DATABASE_URL`. O setup não grava nem troca automaticamente a senha proprietária existente.
 
 O comando dev inicia frontend em **http://127.0.0.1:5173/** e API em loopback, com configuração .env. Mantenha o terminal aberto; Ctrl+C encerra a instância iniciada nesse terminal. Não iniciar outra instância se essa porta já estiver em uso. Chrome e Edge desktop são os navegadores previstos. Entre com seu e-mail e o código recebido. A API não é opcional: abrir só o frontend não permite entrar ou salvar. Consulte /api/health pelo mesmo endereço para verificar a API; configuração incompleta é informada no terminal.

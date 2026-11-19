@@ -91,6 +91,8 @@ Implementação: src/state/store.ts, src/domain/project.ts e src/domain/floors.t
 
 Antes de validar e registrar o candidato confirmado, reconciliar as etiquetas contra a alteração geométrica (RF-21). Geometria e `roomLabels[].review` pertencem à mesma intenção e à mesma operação de histórico/salvamento; não gravar uma segunda operação após calcular a área. A área e as faces são derivadas, mas revisão obrigatória é persistente e não é removida ao reabrir ou refechar por edição. Desfazer/refazer restaura o snapshot, sem executar a reconciliação como se fosse uma nova edição. Excluir etiquetas/linhas é desfazível.
 
+A recuperação explícita por clique elegível na etiqueta em revisão confirma somente a remoção de `review` em uma operação `room`, desfazível e salva pelo fluxo normal. Preservar os resultados construtivos, inclusive seu estado atual/desatualizado, sem chamar o motor de tijolos. Tentativa sem região elegível e clique em etiqueta já válida não geram operação; seleção continua transitória. Falha de salvamento e bloqueios seguem os contratos comuns.
+
 Excluir etiquetas, linhas e contador de nomes da assinatura de insumos construtivos; mudar apenas nome, posição ou fechamento conserva resultado/diagnósticos da composição. Alterações em paredes mantêm seu fluxo construtivo e reconciliam as etiquetas afetadas no mesmo candidato. Falha remota usa o fluxo único de recuperação existente.
 
 ## Configuração de grampos

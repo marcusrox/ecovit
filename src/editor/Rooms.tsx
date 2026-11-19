@@ -17,6 +17,7 @@ import {
 } from "../domain/project";
 import {
   addRoomLabel,
+  revalidateRoomLabel,
   attractRoomPoint,
   roomAreaText,
   roomGeometry,
@@ -59,7 +60,15 @@ export function RoomProperties({ doc }: { doc: LocalProject }) {
         inspect({ roomNameRequest: null });
       }
     }
-  }, [label, roomNameRequest, busy, readonly, collapsed, inspect, setCollapsed]);
+  }, [
+    label,
+    roomNameRequest,
+    busy,
+    readonly,
+    collapsed,
+    inspect,
+    setCollapsed,
+  ]);
   useEffect(() => {
     setName(label?.name ?? "");
   }, [label?.name]);
@@ -163,7 +172,7 @@ export function RoomProperties({ doc }: { doc: LocalProject }) {
           </section>
           <p className={styles.note}>
             {label.review
-              ? "A referência foi perdida. Exclua esta etiqueta e crie outra no ambiente desejado."
+              ? "Clique na etiqueta para reavaliar o fechamento na referência original. O nome será preservado se o ambiente estiver fechado e sem outra etiqueta válida."
               : "Arraste a etiqueta para mover o texto, inclusive para fora do ambiente. A referência permanece no local do clique inicial."}
           </p>
         </>
@@ -172,7 +181,7 @@ export function RoomProperties({ doc }: { doc: LocalProject }) {
         <p className={styles.note}>
           Arraste o corpo para mover ou uma ponta para ajustar. Alt suspende a
           atração. A linha não acompanha paredes movidas; se o contorno abrir, a
-          etiqueta precisará ser recriada.
+          etiqueta entrará em revisão e poderá ser reavaliada com um clique.
         </p>
       )}
       <button
@@ -537,6 +546,9 @@ export function useRoomCanvas(
                 b: { x: g.original.b.x + delta.x, y: g.original.b.y + delta.y },
               },
         );
+    } else if (enabled && g.kind === "label" && g.original.review) {
+      const next = revalidateRoomLabel(doc, g.original.id);
+      if (next !== doc) void useStore.getState().commit(next, "room");
     }
     cancel();
     return true;

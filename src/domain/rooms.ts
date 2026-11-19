@@ -584,6 +584,36 @@ export function addRoomLabel<T extends EditableProject>(
   };
 }
 
+/** Explicit recovery keeps the original reference and never claims another valid label's region. */
+export function revalidateRoomLabel<T extends EditableProject>(
+  doc: T,
+  id: string,
+): T {
+  const label = doc.model.roomLabels.find((l) => l.id === id);
+  if (!label?.review) return doc;
+  const geometry = roomGeometry(doc, label.floorId);
+  const region = geometry.at(label.reference);
+  if (
+    !region ||
+    doc.model.roomLabels.some(
+      (l) =>
+        l.floorId === label.floorId &&
+        !l.review &&
+        geometry.at(l.reference) === region,
+    )
+  )
+    return doc;
+  return {
+    ...doc,
+    model: {
+      ...doc.model,
+      roomLabels: doc.model.roomLabels.map((l) =>
+        l.id === id ? { ...l, review: false } : l,
+      ),
+    },
+  };
+}
+
 /** Run before the single save/history operation, never during undo/redo. */
 export function reconcileRooms(previous: Project, next: Project): Project {
   let labels = next.model.roomLabels;

@@ -329,6 +329,18 @@
       "reference": "User-supplied plant close-up, 2026-11-19; inspiration only.",
       "method": "Built-in image_gen tool",
       "source": "sources/costela-de-adao-r1-generation.json"
+    },
+    {
+      "id": "tv",
+      "name": "TV",
+      "category": "Sala",
+      "subject": "Simplified overhead television with a continuous black front/screen band and light ivory rear housing.",
+      "widthCm": 120,
+      "depthCm": 10,
+      "revision": 3,
+      "reference": "TV revision 2 as edit target and user-supplied black-screen reference, 2026-11-19.",
+      "method": "Built-in image_gen tool, image edit",
+      "source": "sources/tv-r3-generation.json"
     }
   ],
   "sofaPrompt": "Generate a single standalone production asset for the Ecovit architectural floor-plan furniture catalog. Reference image is a STYLE reference only; preserve its refined material finish, muted colors and thin warm gray outlines. Subject: one beige 3-seat sofa, strictly orthographic TOP VIEW camera 90 degrees directly overhead, backrest at top, arms left/right, seat cushions visible, NO front elevation or legs. Isolated object on genuinely transparent alpha background, no floor, no backdrop, no external shadow, no label, no text, no border, no extra objects. Whole silhouette tightly framed with narrow clear margins, horizontal width-to-depth aspect ratio 2.5:1, centered in canvas. Same soft beige upholstery, lightly shaded texture and crisp thin contours as the reference. This is a new individual asset, not an edit of the contact sheet. Output only the sofa.",
