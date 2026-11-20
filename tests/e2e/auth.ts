@@ -93,6 +93,10 @@ export const publicTest = base.extend({
       .join(".");
     // The isolated loopback test proxy supplies an independent visitor address.
     await context.setExtraHTTPHeaders({ "X-Forwarded-For": `10.${ip}` });
+    // External avatars are deterministic in tests; individual scenarios can override this route.
+    await context.route("https://gravatar.com/avatar/**", (route) =>
+      route.abort(),
+    );
     await provide(context);
   },
 });

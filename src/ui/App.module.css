@@ -1273,7 +1273,7 @@ button.iconButton {
 .groutOptions input {
   width: auto;
 }
-.editorApp .settingsModal {
+.modal.settingsModal {
   width: min(1040px, calc(100vw - 48px));
   max-height: calc(100dvh - 48px);
   padding: 0;
@@ -1281,6 +1281,9 @@ button.iconButton {
   display: flex;
   flex-direction: column;
   border: 1px solid #dbe3db;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 12px;
+  color: #263d33;
 }
 .settingsHeader {
   display: flex;
@@ -1299,7 +1302,7 @@ button.iconButton {
   color: #6c7c70;
   font-size: 12px;
 }
-.editorApp .settingsClose {
+.settingsModal .settingsClose {
   font-size: 24px;
   line-height: 1;
   border: 0;
@@ -1479,10 +1482,10 @@ button.iconButton {
   color: #788773;
   font-size: 11px;
 }
-.editorApp .settingsFooter button {
+.settingsModal .settingsFooter button {
   padding: 10px 16px;
 }
-.editorApp .settingsFooter .primary {
+.settingsModal .settingsFooter .primary {
   width: auto;
   margin: 0;
 }
@@ -3109,6 +3112,19 @@ button.iconButton {
 .accountForm h1 {
   font-size: 24px;
 }
+.accountForm input.accessCode {
+  background: #edf3eb;
+  border: 1px solid #d4e2d4;
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #245d49;
+  font-family: "IBM Plex Mono", Consolas, monospace;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 5px;
+  text-align: center;
+}
 .accountForm p,
 .accountDialog p {
   line-height: 1.5;
@@ -3124,6 +3140,99 @@ button.iconButton {
   width: min(740px, calc(100vw - 36px));
   max-height: 90vh;
   overflow: auto;
+}
+.modal.settingsModal.accountPanel {
+  width: min(680px, calc(100vw - 48px));
+  max-height: calc(100dvh - 48px);
+  overflow: hidden;
+}
+.accountSections {
+  display: grid;
+  gap: 16px;
+}
+.accountAvatar {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #edf3eb;
+  color: #486853;
+}
+.accountAvatarLarge {
+  width: 88px;
+  height: 88px;
+}
+.headerActions .accountButton {
+  flex: none;
+  gap: 8px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+.accountButton:hover:not(:disabled),
+.accountButton:focus-visible {
+  background: #edf3eb;
+}
+.accountButton .accountAvatar {
+  width: 36px;
+  height: 36px;
+}
+.accountAvatar > svg {
+  width: 65%;
+  height: 65%;
+}
+.accountAvatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+}
+.accountAvatar img.accountAvatarLoaded {
+  opacity: 1;
+}
+.accountIdentity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.accountIdentity > div {
+  min-width: 0;
+}
+.accountAvatarLink {
+  display: inline-block;
+  margin-top: 8px;
+  color: #245d49;
+  font-size: 12px;
+}
+.accountPanel .settingsHeader,
+.accountPanel .settingsFooter {
+  flex-shrink: 0;
+}
+.accountPanel .settingsHeader > div {
+  min-width: 0;
+}
+.accountPanel .settingsFooter {
+  justify-content: flex-end;
+}
+.accountPanel .settingsCard > p {
+  margin: 0;
+}
+.accountPanel .settingsCard > button {
+  align-self: flex-start;
+}
+.accountPanel .trashCard {
+  background: #fff;
+}
+.accountPanel::backdrop {
+  background: #173a2b40;
+  backdrop-filter: blur(3px);
 }
 .trashList {
   display: grid;

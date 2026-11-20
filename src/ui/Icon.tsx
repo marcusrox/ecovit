@@ -39,6 +39,7 @@ import {
   Undo2,
   Upload,
   X,
+  UserRound,
 } from "lucide-react";
 import styles from "./App.module.css";
 
@@ -85,6 +86,7 @@ const icons = {
   warning: TriangleAlert,
   saving: LoaderCircle,
   readonly: LockKeyhole,
+  account: UserRound,
   home: House,
 } as const;
 const sizes = { compact: 16, control: 18, card: 24, feature: 32 } as const;

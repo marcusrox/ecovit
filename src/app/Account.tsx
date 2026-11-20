@@ -29,6 +29,7 @@ import { download } from "../persistence/files";
 import { useStore } from "../state/store";
 import { Icon } from "../ui/Icon";
 import { Brand } from "../ui/Brand";
+import { AccountAvatar } from "../ui/AccountAvatar";
 import { VersionFooter } from "./ReleaseHistory";
 import styles from "../ui/App.module.css";
 
@@ -41,11 +42,12 @@ export function AccountButton() {
   if (!context) return null;
   return (
     <button
-      className={styles.iconText}
+      className={`${styles.iconText} ${styles.accountButton}`}
+      aria-label="Conta"
       title={context.account.email}
       onClick={context.open}
     >
-      <Icon name="readonly" /> Conta
+      <AccountAvatar email={context.account.email} />
     </button>
   );
 }
@@ -142,6 +144,7 @@ function Login({
             <label className={styles.field}>
               Código de acesso
               <input
+                className={styles.accessCode}
                 autoFocus
                 autoComplete="one-time-code"
                 inputMode="numeric"
@@ -236,9 +239,15 @@ function AccountPanel({
   }
   useEffect(() => {
     const element = dialog.current;
+    const trigger = document.activeElement;
     element?.showModal();
+    element?.querySelector<HTMLHeadingElement>("h2")?.focus();
     void refresh().catch((failure) => setError(failure.message));
-    return () => element?.close();
+    return () => {
+      element?.close();
+      if (trigger instanceof HTMLElement && trigger.isConnected)
+        trigger.focus();
+    };
   }, []);
   async function act(action: () => Promise<void>) {
     setError("");
@@ -269,278 +278,339 @@ function AccountPanel({
   return (
     <dialog
       ref={dialog}
-      className={`${styles.modal} ${styles.accountDialog}`}
+      className={`${styles.modal} ${styles.settingsModal} ${styles.accountDialog} ${styles.accountPanel}`}
       aria-labelledby="account-title"
+      onKeyDown={(event) => event.stopPropagation()}
       onCancel={(event) => {
         event.preventDefault();
         if (!working) close();
       }}
     >
-      <h2 id="account-title">Sua conta</h2>
-      <p>{account.email}</p>
-      {listingState === "ready" ? (
-        <p>
-          {usage.projects} de {usage.projectLimit} projetos ·{" "}
-          {(usage.bytes / 1048576).toFixed(1)} de{" "}
-          {(usage.imageLimit / 1048576).toFixed(0)} MiB de imagens
-        </p>
-      ) : (
-        <p aria-live="polite">
-          {listingState === "loading"
-            ? "Consultando os dados da conta…"
-            : "Dados da conta indisponíveis. Tente atualizar."}
-        </p>
-      )}
-      <button
-        disabled={working || listingState === "loading"}
-        onClick={() => void act(refresh)}
-      >
-        Atualizar dados da conta
-      </button>
-      <h3>Lixeira</h3>
-      <p>
-        Retenção de 30 dias. Projetos e imagens continuam contando nas cotas até
-        a eliminação.
-      </p>
-      <div className={styles.trashList}>
-        {projects
-          .filter((project) => project.state === "trashed")
-          .map((project) => (
-            <section key={project.id} className={styles.trashCard}>
-              <strong>{project.name}</strong>
-              <span>
-                Até{" "}
-                {project.purgeAfter
-                  ? new Date(project.purgeAfter).toLocaleDateString("pt-BR")
-                  : "—"}
-              </span>
-              <div className={styles.accountActions}>
-                <button
-                  disabled={working || listingState !== "ready"}
-                  onClick={() =>
-                    void act(async () => {
-                      await projectAction(project.id, "restore");
-                      await refresh();
-                      window.dispatchEvent(
-                        new Event("ecovit:projects-changed"),
-                      );
-                    })
-                  }
-                >
-                  Restaurar
-                </button>
-                <button
-                  disabled={working || listingState !== "ready"}
-                  onClick={() =>
-                    void act(async () => {
-                      download(await loadStoredProject(project.id));
-                    })
-                  }
-                >
-                  Baixar .ecovit
-                </button>
-                <button
-                  disabled={working || listingState !== "ready"}
-                  onClick={() =>
-                    void act(async () => {
-                      if (
-                        window.confirm(
-                          `Excluir definitivamente ${project.name}? Não será possível restaurar.`,
-                        )
-                      ) {
-                        await projectAction(project.id, "purge");
-                        await refresh();
-                      }
-                    })
-                  }
-                >
-                  Excluir definitivamente
-                </button>
-              </div>
-            </section>
-          ))}
-      </div>
-      {listingState === "ready" &&
-        !projects.some((project) => project.state === "trashed") && (
-          <p>Lixeira vazia.</p>
-        )}
-      <hr />
-      <h3>Excluir minha conta</h3>
-      <p>
-        A exclusão encerra todas as sessões imediatamente e elimina projetos,
-        imagens e lixeira em até 24 horas, sem recuperação. Baixe os projetos
-        que quiser manter antes de confirmar.
-      </p>
-      {!challenge && (
+      <header className={styles.settingsHeader}>
+        <div className={styles.accountIdentity}>
+          <AccountAvatar email={account.email} large />
+          <div>
+            <span className={styles.eyebrow}>ECOVIT</span>
+            <h2 id="account-title" tabIndex={-1}>
+              Sua conta
+            </h2>
+            <p>{account.email}</p>
+            <a
+              className={styles.accountAvatarLink}
+              href="https://gravatar.com/profile/avatars"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Alterar foto no Gravatar
+            </a>
+          </div>
+        </div>
         <button
+          type="button"
           disabled={working}
-          onClick={() =>
-            void act(async () => {
-              if (useStore.getState().busy)
-                throw new Error("Aguarde a operação atual.");
-              const result = await loginCode(account.email, "delete");
-              setChallenge(result.id);
-            })
-          }
+          onClick={close}
+          aria-label="Fechar conta"
+          title="Fechar conta"
+          data-tooltip="Fechar conta"
+          className={`${styles.settingsClose} ${styles.iconButton}`}
         >
-          Solicitar código para excluir conta
+          <Icon name="close" />
         </button>
-      )}
-      {challenge && !proof && (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            void act(async () => {
-              const result = await verifyCode(challenge, code);
-              if (result.deletion) setProof(result.deletion);
-            });
-          }}
-        >
-          <label className={styles.field}>
-            Código de exclusão
-            <input
-              autoComplete="one-time-code"
-              inputMode="numeric"
-              pattern="[0-9]{6}"
-              required
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-            />
-          </label>
-          <button disabled={working}>Verificar código de exclusão</button>
+      </header>
+      <div className={styles.settingsForm}>
+        <div className={styles.settingsBody}>
+          <div className={styles.accountSections}>
+            <section
+              className={styles.settingsCard}
+              aria-labelledby="account-usage-title"
+            >
+              <div className={styles.settingsCardHeading}>
+                <h3 id="account-usage-title">Uso da conta</h3>
+              </div>
+              {listingState === "ready" ? (
+                <p>
+                  {usage.projects} de {usage.projectLimit} projetos ·{" "}
+                  {(usage.bytes / 1048576).toFixed(1)} de{" "}
+                  {(usage.imageLimit / 1048576).toFixed(0)} MiB de imagens
+                </p>
+              ) : (
+                <p aria-live="polite">
+                  {listingState === "loading"
+                    ? "Consultando os dados da conta…"
+                    : "Dados da conta indisponíveis. Tente atualizar."}
+                </p>
+              )}
+              <button
+                disabled={working || listingState === "loading"}
+                onClick={() => void act(refresh)}
+              >
+                Atualizar dados da conta
+              </button>
+            </section>
+            <section
+              className={styles.settingsCard}
+              aria-labelledby="account-trash-title"
+            >
+              <div className={styles.settingsCardHeading}>
+                <h3 id="account-trash-title">Lixeira</h3>
+              </div>
+              <p className={styles.settingsCaption}>
+                Retenção de 30 dias. Projetos e imagens continuam contando nas
+                cotas até a eliminação.
+              </p>
+              <div className={styles.trashList}>
+                {projects
+                  .filter((project) => project.state === "trashed")
+                  .map((project) => (
+                    <section key={project.id} className={styles.trashCard}>
+                      <strong>{project.name}</strong>
+                      <span>
+                        Até{" "}
+                        {project.purgeAfter
+                          ? new Date(project.purgeAfter).toLocaleDateString(
+                              "pt-BR",
+                            )
+                          : "—"}
+                      </span>
+                      <div className={styles.accountActions}>
+                        <button
+                          disabled={working || listingState !== "ready"}
+                          onClick={() =>
+                            void act(async () => {
+                              await projectAction(project.id, "restore");
+                              await refresh();
+                              window.dispatchEvent(
+                                new Event("ecovit:projects-changed"),
+                              );
+                            })
+                          }
+                        >
+                          Restaurar
+                        </button>
+                        <button
+                          disabled={working || listingState !== "ready"}
+                          onClick={() =>
+                            void act(async () => {
+                              download(await loadStoredProject(project.id));
+                            })
+                          }
+                        >
+                          Baixar .ecovit
+                        </button>
+                        <button
+                          disabled={working || listingState !== "ready"}
+                          onClick={() =>
+                            void act(async () => {
+                              if (
+                                window.confirm(
+                                  `Excluir definitivamente ${project.name}? Não será possível restaurar.`,
+                                )
+                              ) {
+                                await projectAction(project.id, "purge");
+                                await refresh();
+                              }
+                            })
+                          }
+                        >
+                          Excluir definitivamente
+                        </button>
+                      </div>
+                    </section>
+                  ))}
+              </div>
+              {listingState === "ready" &&
+                !projects.some((project) => project.state === "trashed") && (
+                  <p>Lixeira vazia.</p>
+                )}
+            </section>
+            <section
+              className={styles.settingsCard}
+              aria-labelledby="account-deletion-title"
+            >
+              <div className={styles.settingsCardHeading}>
+                <h3 id="account-deletion-title">Excluir minha conta</h3>
+              </div>
+              <p className={styles.settingsCaption}>
+                A exclusão encerra todas as sessões imediatamente e elimina
+                projetos, imagens e lixeira em até 24 horas, sem recuperação.
+                Baixe os projetos que quiser manter antes de confirmar.
+              </p>
+              {!challenge && (
+                <button
+                  disabled={working}
+                  onClick={() =>
+                    void act(async () => {
+                      if (useStore.getState().busy)
+                        throw new Error("Aguarde a operação atual.");
+                      const result = await loginCode(account.email, "delete");
+                      setChallenge(result.id);
+                    })
+                  }
+                >
+                  Solicitar código para excluir conta
+                </button>
+              )}
+              {challenge && !proof && (
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void act(async () => {
+                      const result = await verifyCode(challenge, code);
+                      if (result.deletion) setProof(result.deletion);
+                    });
+                  }}
+                >
+                  <label className={styles.field}>
+                    Código de exclusão
+                    <input
+                      autoComplete="one-time-code"
+                      inputMode="numeric"
+                      pattern="[0-9]{6}"
+                      required
+                      value={code}
+                      onChange={(event) => setCode(event.target.value)}
+                    />
+                  </label>
+                  <button disabled={working}>
+                    Verificar código de exclusão
+                  </button>
+                  <button
+                    type="button"
+                    disabled={working}
+                    onClick={() =>
+                      void act(async () => {
+                        const result = await loginCode(account.email, "delete");
+                        setChallenge(result.id);
+                        setCode("");
+                      })
+                    }
+                  >
+                    Solicitar outro código de exclusão
+                  </button>
+                </form>
+              )}
+              {proof && (
+                <button
+                  disabled={working}
+                  onClick={() =>
+                    void act(async () => {
+                      if (deletionPending) {
+                        const receipt = await api<{ accepted: boolean }>(
+                          "/account/deletion-receipt",
+                          {
+                            method: "POST",
+                            body: { receipt: proof.receipt },
+                            reauth: false,
+                          },
+                        );
+                        if (typeof receipt.accepted !== "boolean")
+                          throw new RemoteError(
+                            503,
+                            "invalid_response",
+                            "O recibo está incompleto. Confira novamente antes de concluir a exclusão.",
+                          );
+                        if (!receipt.accepted) {
+                          setDeletionPending(false);
+                          throw new Error(
+                            "Exclusão não confirmada. Você pode confirmar novamente com o mesmo comprovante enquanto estiver válido.",
+                          );
+                        }
+                      } else {
+                        if (
+                          !window.confirm(
+                            "Confirmar a exclusão permanente da conta e de TODOS os projetos, inclusive lixeira?",
+                          )
+                        )
+                          return;
+                        if (!resolveEditor()) return;
+                        setDeletionPending(true);
+                        try {
+                          const result = await api<{ accepted: boolean }>(
+                            "/account/delete",
+                            { method: "POST", body: proof, reauth: false },
+                          );
+                          if (result.accepted !== true)
+                            throw new RemoteError(
+                              503,
+                              "invalid_response",
+                              "Exclusão sem confirmação. Use Conferir exclusão solicitada.",
+                            );
+                        } catch (failure) {
+                          if (
+                            failure instanceof RemoteError &&
+                            failure.code === "deletion_proof"
+                          ) {
+                            setProof(null);
+                            setChallenge("");
+                            setCode("");
+                            setDeletionPending(false);
+                          }
+                          throw failure;
+                        }
+                      }
+                      setSession({
+                        account: null,
+                        csrf: "",
+                        serverTime: new Date().toISOString(),
+                      });
+                      resetRemote();
+                      exited();
+                    })
+                  }
+                >
+                  {deletionPending
+                    ? "Conferir exclusão solicitada"
+                    : "Confirmar exclusão de toda a conta"}
+                </button>
+              )}
+            </section>
+          </div>
+          {error && (
+            <p role="alert" className={styles.errorText}>
+              {error}
+            </p>
+          )}
+        </div>
+        <footer className={styles.settingsFooter}>
+          <button disabled={working} onClick={close}>
+            Fechar
+          </button>
           <button
-            type="button"
-            disabled={working}
+            disabled={working || deletionPending}
             onClick={() =>
               void act(async () => {
-                const result = await loginCode(account.email, "delete");
-                setChallenge(result.id);
-                setCode("");
-              })
-            }
-          >
-            Solicitar outro código de exclusão
-          </button>
-        </form>
-      )}
-      {proof && (
-        <button
-          disabled={working}
-          onClick={() =>
-            void act(async () => {
-              if (deletionPending) {
-                const receipt = await api<{ accepted: boolean }>(
-                  "/account/deletion-receipt",
-                  {
-                    method: "POST",
-                    body: { receipt: proof.receipt },
-                    reauth: false,
-                  },
-                );
-                if (typeof receipt.accepted !== "boolean")
-                  throw new RemoteError(
-                    503,
-                    "invalid_response",
-                    "O recibo está incompleto. Confira novamente antes de concluir a exclusão.",
-                  );
-                if (!receipt.accepted) {
-                  setDeletionPending(false);
-                  throw new Error(
-                    "Exclusão não confirmada. Você pode confirmar novamente com o mesmo comprovante enquanto estiver válido.",
-                  );
-                }
-              } else {
-                if (
-                  !window.confirm(
-                    "Confirmar a exclusão permanente da conta e de TODOS os projetos, inclusive lixeira?",
-                  )
-                )
-                  return;
                 if (!resolveEditor()) return;
-                setDeletionPending(true);
                 try {
-                  const result = await api<{ accepted: boolean }>(
-                    "/account/delete",
-                    { method: "POST", body: proof, reauth: false },
-                  );
-                  if (result.accepted !== true)
+                  const result = await api<{ ok: boolean }>("/logout", {
+                    method: "POST",
+                    reauth: false,
+                  });
+                  if (result.ok !== true)
                     throw new RemoteError(
                       503,
                       "invalid_response",
-                      "Exclusão sem confirmação. Use Conferir exclusão solicitada.",
+                      "Saída sem confirmação. Tente sair novamente.",
                     );
                 } catch (failure) {
                   if (
-                    failure instanceof RemoteError &&
-                    failure.code === "deletion_proof"
-                  ) {
-                    setProof(null);
-                    setChallenge("");
-                    setCode("");
-                    setDeletionPending(false);
-                  }
-                  throw failure;
+                    !(failure instanceof RemoteError) ||
+                    ![401, 403].includes(failure.status) ||
+                    (await bootstrap()).account
+                  )
+                    throw failure;
                 }
-              }
-              setSession({
-                account: null,
-                csrf: "",
-                serverTime: new Date().toISOString(),
-              });
-              resetRemote();
-              exited();
-            })
-          }
-        >
-          {deletionPending
-            ? "Conferir exclusão solicitada"
-            : "Confirmar exclusão de toda a conta"}
-        </button>
-      )}
-      {error && (
-        <p role="alert" className={styles.errorText}>
-          {error}
-        </p>
-      )}
-      <div className={styles.accountActions}>
-        <button disabled={working} onClick={close}>
-          Fechar
-        </button>
-        <button
-          disabled={working || deletionPending}
-          onClick={() =>
-            void act(async () => {
-              if (!resolveEditor()) return;
-              try {
-                const result = await api<{ ok: boolean }>("/logout", {
-                  method: "POST",
-                  reauth: false,
+                setSession({
+                  account: null,
+                  csrf: "",
+                  serverTime: new Date().toISOString(),
                 });
-                if (result.ok !== true)
-                  throw new RemoteError(
-                    503,
-                    "invalid_response",
-                    "Saída sem confirmação. Tente sair novamente.",
-                  );
-              } catch (failure) {
-                if (
-                  !(failure instanceof RemoteError) ||
-                  ![401, 403].includes(failure.status) ||
-                  (await bootstrap()).account
-                )
-                  throw failure;
-              }
-              setSession({
-                account: null,
-                csrf: "",
-                serverTime: new Date().toISOString(),
-              });
-              exited();
-            })
-          }
-        >
-          Sair da conta
-        </button>
+                exited();
+              })
+            }
+          >
+            Sair da conta
+          </button>
+        </footer>
       </div>
     </dialog>
   );

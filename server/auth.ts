@@ -5,6 +5,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { Pool, PoolClient } from "pg";
 import { z } from "zod";
 import { emailSchema, type Config } from "./config";
+import { codeEmail } from "./code-email";
 import { transaction } from "./db";
 import {
   ApiError,
@@ -236,11 +237,7 @@ export function authRoutes(app: FastifyInstance, db: Pool, config: Config) {
             body: JSON.stringify({
               from: config.mailFrom,
               to: [input.email],
-              subject:
-                input.purpose === "delete"
-                  ? "Ecovit — confirmar exclusão da conta"
-                  : "Seu código de acesso ao Ecovit",
-              text: `Seu código é ${code}. Válido por 10 minutos. ${input.purpose === "delete" ? "Este código confirma a exclusão da sua conta e dos projetos." : "Não compartilhe este código."}`,
+              ...codeEmail(code, input.purpose),
             }),
           });
           const retry = response.headers.get("Retry-After");

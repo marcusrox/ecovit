@@ -308,7 +308,7 @@ root /caminho/ecovit/dist;
 client_max_body_size 64m;
 add_header X-Content-Type-Options nosniff always;
 add_header Referrer-Policy no-referrer always;
-add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'" always;
+add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://gravatar.com https://www.gravatar.com; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'" always;
 location /api/ {
     proxy_pass http://127.0.0.1:3001;
     proxy_set_header Host $host;

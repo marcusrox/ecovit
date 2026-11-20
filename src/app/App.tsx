@@ -745,7 +745,6 @@ function EditorApp() {
   }, [refreshProjects]);
   const homeHeader = (
     <div className={styles.headerActions}>
-      <AccountButton />
       <span className={styles.localBadge}>Projetos privados na conta</span>
       <button
         disabled={busy || importing || listingState !== "ready"}
@@ -754,6 +753,7 @@ function EditorApp() {
       >
         <Icon name="upload" /> Carregar .ecovit
       </button>
+      <AccountButton />
     </div>
   );
   const homeProgress = openingProjectId
@@ -1120,7 +1120,6 @@ function EditorApp() {
             </span>
             <FloorControls />
             <div className={styles.headerActions}>
-              <AccountButton />
               <Areas
                 key={`areas-${doc.project.id}`}
                 doc={doc}
@@ -1162,6 +1161,7 @@ function EditorApp() {
               >
                 <Icon name="download" />
               </button>
+              <AccountButton />
             </div>
           </>
         ) : (

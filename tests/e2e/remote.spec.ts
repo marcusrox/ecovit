@@ -320,6 +320,104 @@ test(
 );
 
 test(
+  "Sua conta segue o padrão dos popups na lista e no editor",
+  { tag: "@interface" },
+  async ({ page }) => {
+    const trigger = page.getByRole("button", { name: "Conta", exact: true });
+    const dialog = page.getByRole("dialog", { name: "Sua conta", exact: true });
+    await trigger.click();
+    await expect(
+      dialog.getByRole("heading", { name: "Sua conta", exact: true }),
+    ).toBeFocused();
+    await expect(
+      dialog.getByRole("button", {
+        name: "Atualizar dados da conta",
+        exact: true,
+      }),
+    ).toBeEnabled();
+    for (const [width, height] of [
+      [1280, 720],
+      [900, 480],
+    ]) {
+      await page.setViewportSize({ width, height });
+      const header = dialog.locator("header");
+      const footer = dialog.locator("footer");
+      const initialHeader = await header.boundingBox();
+      const initialFooter = await footer.boundingBox();
+      await dialog
+        .getByRole("button", {
+          name: "Solicitar código para excluir conta",
+          exact: true,
+        })
+        .scrollIntoViewIfNeeded();
+      expect(await header.boundingBox()).toEqual(initialHeader);
+      expect(await footer.boundingBox()).toEqual(initialFooter);
+      await expect(
+        dialog.getByRole("button", { name: "Fechar conta", exact: true }),
+      ).toBeInViewport();
+      await expect(
+        dialog.getByRole("button", { name: "Fechar", exact: true }),
+      ).toBeInViewport();
+      await expect(
+        dialog.getByRole("button", { name: "Sair da conta", exact: true }),
+      ).toBeInViewport();
+      expect(
+        await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth),
+      ).toBe(true);
+      await dialog.screenshot({
+        path: `.tools/account-pattern-${width}-${height}.png`,
+      });
+    }
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(trigger).toBeFocused();
+    await trigger.click();
+    await dialog
+      .getByRole("button", { name: "Fechar conta", exact: true })
+      .click();
+    await expect(trigger).toBeFocused();
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await create(page, "Conta no editor");
+    const camera = await page
+      .getByTestId("drawing")
+      .getAttribute("data-camera");
+    await trigger.click();
+    await expect(
+      dialog.getByRole("heading", { name: "Sua conta", exact: true }),
+    ).toBeFocused();
+    let resume!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      resume = resolve;
+    });
+    await page.route("**/api/projects", async (route) => {
+      if (route.request().method() === "GET") await pending;
+      await route.continue();
+    });
+    await dialog
+      .getByRole("button", { name: "Atualizar dados da conta", exact: true })
+      .click();
+    await expect(
+      dialog.getByRole("button", { name: "Fechar conta", exact: true }),
+    ).toBeDisabled();
+    await expect(
+      dialog.getByRole("button", { name: "Fechar", exact: true }),
+    ).toBeDisabled();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeVisible();
+    resume();
+    await expect(
+      dialog.getByRole("button", { name: "Fechar", exact: true }),
+    ).toBeEnabled();
+    await page.unroute("**/api/projects");
+    await dialog.getByRole("button", { name: "Fechar", exact: true }).click();
+    await expect(trigger).toBeFocused();
+    expect(await page.getByTestId("drawing").getAttribute("data-camera")).toBe(
+      camera,
+    );
+  },
+);
+
+test(
   "M12 lixeira restaura projeto; conta e login cabem nas três resoluções",
   { tag: "@fluxo" },
   async ({ page }, info) => {
@@ -331,7 +429,9 @@ test(
       .click();
     await page.getByRole("button", { name: "Conta", exact: true }).click();
     await expect(
-      page.getByText("Restaurar meu projeto", { exact: true }),
+      page
+        .getByRole("dialog", { name: "Sua conta", exact: true })
+        .getByText("Restaurar meu projeto", { exact: true }),
     ).toBeVisible();
     for (const [width, height] of [
       [1366, 768],
