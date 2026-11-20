@@ -145,7 +145,7 @@ test(
         );
         expect(await undo.boundingBox()).toEqual(undoPosition);
         expect(await redo.boundingBox()).toEqual(redoPosition);
-        const separator = await bar.getByRole("separator").boundingBox();
+        const separator = await bar.getByRole("separator").last().boundingBox();
         expect(separator!.x).toBeGreaterThan(
           redoPosition!.x + redoPosition!.width,
         );

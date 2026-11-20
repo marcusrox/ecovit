@@ -14,6 +14,9 @@ import { GroutPanel } from "./Grout";
 import { ClampsPanel } from "./Clamps";
 import { ChannelReinforcementPanel } from "./ChannelReinforcement";
 
+const courseReferenceHint =
+  "Compare a fiada atual com a anterior ou a próxima, exibida apenas como referência visual.";
+
 export function FiadaToolbar({
   busy,
   onEnterCourse,
@@ -96,15 +99,23 @@ export function FiadaToolbar({
             <Icon name="right" />
           </button>
           {active && (
-            <span>
-              {display(active.bottom)}–{display(active.top)} cm em relação ao
-              piso
-            </span>
+            <>
+              <span>
+                {display(active.bottom)}–{display(active.top)} cm em relação ao
+                piso
+              </span>
+              <span
+                className={styles.divider}
+                role="separator"
+                aria-orientation="vertical"
+              />
+            </>
           )}
-          <label>
-            Referência{" "}
+          <label title={courseReferenceHint}>
+            Fiada de referência{" "}
             <select
               aria-label="Fiada de referência"
+              title={courseReferenceHint}
               disabled={s.busy}
               value={s.ghost}
               onChange={(e) =>

@@ -74,6 +74,8 @@ Adaptar a barra pela largura de seu contêiner: apresentação completa com íco
 
 Selecionar e Parede aparecem somente em Planta. Em Fiada, a inspeção por clique é o comportamento padrão, sem botão de seleção; Graute alterna entre edição e inspeção, com estado indicado por aria-pressed. A entrada no modo segue [Editor e interação](Editor-e-Interacao.md#fiada). Preservar Desfazer/Refazer, separador e Planta/Fiada à direita.
 
+O seletor de referência de fiada usa rótulo visível completo, igual ao nome acessível, e dica no rótulo e no controle explicando a comparação da fiada atual com a anterior ou a próxima, exibida somente como referência visual. Um separador vertical distingue a faixa de altura em relação ao piso do seletor de referência. Preservar opções, bloqueios e comportamento da sobreposição.
+
 Na cobertura de iconografia, conferir centralização, legibilidade e estados das superfícies afetadas. Centro da caixa SVG tem tolerância de 1 px e o texto deve caber no botão. O recorte de execução segue a política central de qualidade; editar um rótulo não exige percorrer o catálogo ou todas as superfícies. ESLint bloqueia imports/reexports estáticos (incluindo subpaths) e import()/require() literais de lucide-react fora do componente central. A regra foi verificada com casos permitidos e proibidos; não substitui revisão semântica/visual nem é uma barreira contra código deliberadamente ofuscado.
 
 React oferece suporte a TypeScript; Konva tem integração declarativa com React e eventos para formas. A escolha é uma decisão de adequação ao produto, não uma garantia de desempenho sem medição. Referências: [React e TypeScript](https://react.dev/learn/typescript), [react-konva](https://konvajs.org/docs/react/index.html).
