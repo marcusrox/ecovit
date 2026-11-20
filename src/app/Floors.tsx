@@ -52,6 +52,7 @@ export function FloorControls({
         <>
           <select
             aria-label="Pavimento"
+            title={`${floor.name} · ${display(floor.level)} cm`}
             value={floor.id}
             disabled={s.busy}
             onChange={(e) => s.switchFloor(e.target.value)}

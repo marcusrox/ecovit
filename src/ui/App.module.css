@@ -86,7 +86,8 @@ button.iconButton {
   height: 32px;
   padding: 6px;
 }
-.iconButton[data-tooltip]::after {
+.iconButton[data-tooltip]::after,
+.toolButton[data-tooltip]::after {
   content: attr(data-tooltip);
   position: absolute;
   bottom: calc(100% + 7px);
@@ -104,7 +105,8 @@ button.iconButton {
   display: none;
   z-index: 12;
 }
-.iconButton[data-tooltip]:is(:hover, :focus-visible)::after {
+.iconButton[data-tooltip]:is(:hover, :focus-visible)::after,
+.toolButton[data-tooltip]:is(:hover, :focus-visible)::after {
   display: block;
 }
 .modal .iconButton[data-tooltip]::after {
@@ -1583,9 +1585,33 @@ button.iconButton {
 }
 .editorApp .saveStatus {
   font-size: 11px;
+  width: 150px;
+  flex: 0 0 150px;
+  justify-content: flex-start;
 }
 .editorApp .headerActions {
   gap: 6px;
+  flex: none;
+}
+.editorApp .header .floorControls {
+  flex: 0 1 180px;
+  min-width: 130px;
+  gap: 6px;
+  flex-wrap: nowrap;
+  padding: 0;
+  border: 0;
+}
+.editorApp .header .floorControls select {
+  flex: 1;
+  width: 140px;
+  min-width: 0;
+  max-width: 160px;
+  padding: 5px 6px;
+  font-size: 12px;
+  text-overflow: ellipsis;
+}
+.editorApp .header .floorControls button {
+  flex: none;
 }
 .editorApp button {
   padding: 5px 9px;
@@ -1596,8 +1622,12 @@ button.iconButton {
   margin: 0 2px;
 }
 .editorControls {
+  position: relative;
+  z-index: 3;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  container-type: inline-size;
+  container-name: editor-tools;
   align-items: center;
   gap: 4px 12px;
   padding: 5px 12px;
@@ -1606,6 +1636,7 @@ button.iconButton {
   flex-shrink: 0;
 }
 .editorApp .toolbar {
+  flex: 1;
   min-width: 0;
   max-width: 100%;
   height: auto;
@@ -1615,14 +1646,38 @@ button.iconButton {
   background: transparent;
 }
 .editorApp .tools {
+  width: 100%;
   gap: 3px;
-  row-gap: 4px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   min-width: 0;
 }
+.editorApp .tools > button {
+  flex: none;
+}
+.toolButton {
+  position: relative;
+  white-space: nowrap;
+}
+.toolButton[data-tooltip]::after,
+.editorControls .iconButton[data-tooltip]::after {
+  top: calc(100% + 7px);
+  bottom: auto;
+}
+.tools > .toolButton:first-child[data-tooltip]::after {
+  left: 0;
+  transform: none;
+}
+.editorApp .tools .undoButton {
+  margin-left: auto;
+}
+.editorApp .tools > select + .undoButton {
+  margin-left: 0;
+}
 .editorApp .tools > select {
+  margin-left: auto;
+  flex: 0 1 180px;
   max-width: 220px;
-  min-width: 0;
+  min-width: 100px;
 }
 @media (max-width: 1366px) {
   .editorApp .tools > select {
@@ -1630,6 +1685,8 @@ button.iconButton {
   }
 }
 .editorApp .fiadaToolbar {
+  flex: none;
+  flex-wrap: nowrap;
   padding: 0;
   gap: 6px;
   border: 0;
@@ -1651,6 +1708,33 @@ button.iconButton {
 .editorApp .fiadaToolbar select {
   padding: 4px;
   max-width: 92px;
+}
+@container editor-tools (max-width: 1280px) {
+  .editorApp .tools .toolButton {
+    width: 32px;
+    height: 32px;
+    padding: 5px;
+    gap: 0;
+  }
+  .toolButtonLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+@media (max-width: 1100px) {
+  .editorApp .header {
+    height: auto;
+    min-height: 48px;
+    flex-wrap: wrap;
+    padding: 6px 12px;
+    gap: 6px 10px;
+  }
 }
 .editorApp .properties {
   width: 224px;

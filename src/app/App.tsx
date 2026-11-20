@@ -1120,6 +1120,7 @@ function EditorApp() {
                         ? "Não salvo"
                         : "Salvo"}
             </span>
+            <FloorControls />
             <div className={styles.headerActions}>
               <AccountButton />
               <Areas
@@ -1224,12 +1225,18 @@ function EditorApp() {
         )}
       {doc ? (
         <>
-          <div className={styles.editorControls}>
-            <FloorControls />
+          <div
+            className={styles.editorControls}
+            role="group"
+            aria-label="Ferramentas do editor"
+          >
             <div className={styles.toolbar}>
               <div className={styles.tools}>
                 <button
-                  className={`${styles.iconText} ${tool === "select" && !groutMode ? styles.active : ""}`}
+                  className={`${styles.iconText} ${styles.toolButton} ${tool === "select" && !groutMode ? styles.active : ""}`}
+                  aria-label="Selecionar"
+                  title="Selecionar"
+                  data-tooltip="Selecionar"
                   aria-pressed={tool === "select" && !groutMode}
                   disabled={busy || readonly}
                   onClick={() => {
@@ -1239,10 +1246,14 @@ function EditorApp() {
                       .inspect({ groutMode: false, groutCell: null });
                   }}
                 >
-                  <Icon name="select" /> Selecionar
+                  <Icon name="select" />
+                  <span className={styles.toolButtonLabel}>Selecionar</span>
                 </button>
                 <button
-                  className={`${styles.iconText} ${tool === "wall" ? styles.active : ""}`}
+                  className={`${styles.iconText} ${styles.toolButton} ${tool === "wall" ? styles.active : ""}`}
+                  aria-label="Parede"
+                  title="Parede"
+                  data-tooltip="Parede"
                   aria-pressed={tool === "wall"}
                   disabled={busy || readonly}
                   onClick={() => {
@@ -1252,11 +1263,15 @@ function EditorApp() {
                     changeTool("wall");
                   }}
                 >
-                  <Icon name="wall" /> Parede
+                  <Icon name="wall" />
+                  <span className={styles.toolButtonLabel}>Parede</span>
                 </button>
                 {mode === "plan" && (
                   <button
-                    className={`${styles.iconText} ${tool === "terrain" ? styles.active : ""}`}
+                    className={`${styles.iconText} ${styles.toolButton} ${tool === "terrain" ? styles.active : ""}`}
+                    aria-label="Terreno"
+                    title="Terreno"
+                    data-tooltip="Terreno"
                     aria-pressed={
                       tool === "terrain" ||
                       (!!doc.model.terrain && selected === doc.model.terrain.id)
@@ -1268,14 +1283,15 @@ function EditorApp() {
                     }}
                   >
                     <Icon name="terrain" />
-                    Terreno
+                    <span className={styles.toolButtonLabel}>Terreno</span>
                   </button>
                 )}
                 <span className={styles.divider} />
                 {mode === "plan" && (
                   <button
                     aria-pressed={tool === "slab"}
-                    className={`${styles.iconText} ${tool === "slab" ? styles.active : ""}`}
+                    className={`${styles.iconText} ${styles.toolButton} ${tool === "slab" ? styles.active : ""}`}
+                    aria-label="Laje"
                     disabled={
                       busy || readonly || !!editingDoc?.model.slabs.length
                     }
@@ -1284,9 +1300,15 @@ function EditorApp() {
                         ? "Este pavimento já tem uma laje"
                         : "Desenhar laje"
                     }
+                    data-tooltip={
+                      editingDoc?.model.slabs.length
+                        ? "Este pavimento já tem uma laje"
+                        : "Desenhar laje"
+                    }
                     onClick={() => changeTool("slab")}
                   >
-                    <Icon name="slab" /> Laje
+                    <Icon name="slab" />
+                    <span className={styles.toolButtonLabel}>Laje</span>
                   </button>
                 )}
                 {mode === "plan" &&
@@ -1294,7 +1316,10 @@ function EditorApp() {
                     <button
                       key={kind}
                       aria-pressed={tool === kind}
-                      className={`${styles.iconText} ${tool === kind ? styles.active : ""}`}
+                      className={`${styles.iconText} ${styles.toolButton} ${tool === kind ? styles.active : ""}`}
+                      aria-label={openingLabel[kind]}
+                      title={openingLabel[kind]}
+                      data-tooltip={openingLabel[kind]}
                       disabled={busy || readonly}
                       onClick={() => {
                         useStore.getState().inspect({ pendingOpening: null });
@@ -1302,17 +1327,23 @@ function EditorApp() {
                       }}
                     >
                       <Icon name={kind} />
-                      {openingLabel[kind]}
+                      <span className={styles.toolButtonLabel}>
+                        {openingLabel[kind]}
+                      </span>
                     </button>
                   ))}
                 {mode === "plan" && (
                   <button
-                    className={`${styles.iconText} ${tool === "measure" ? styles.active : ""}`}
+                    className={`${styles.iconText} ${styles.toolButton} ${tool === "measure" ? styles.active : ""}`}
+                    aria-label="Medida"
+                    title="Medida"
+                    data-tooltip="Medida"
                     aria-pressed={tool === "measure"}
                     disabled={busy || readonly}
                     onClick={() => changeTool("measure")}
                   >
-                    <Icon name="measure" /> Medida
+                    <Icon name="measure" />
+                    <span className={styles.toolButtonLabel}>Medida</span>
                   </button>
                 )}
                 {mode === "plan" &&
@@ -1332,7 +1363,8 @@ function EditorApp() {
                   ).map((item) => (
                     <button
                       key={item.tool}
-                      className={`${styles.iconText} ${tool === item.tool ? styles.active : ""}`}
+                      className={`${styles.iconText} ${styles.toolButton} ${tool === item.tool ? styles.active : ""}`}
+                      aria-label={item.text}
                       aria-pressed={tool === item.tool}
                       title={item.tip}
                       data-tooltip={item.tip}
@@ -1340,12 +1372,17 @@ function EditorApp() {
                       onClick={() => changeTool(item.tool)}
                     >
                       <Icon name={item.tool} />
-                      {item.text}
+                      <span className={styles.toolButtonLabel}>
+                        {item.text}
+                      </span>
                     </button>
                   ))}
                 {mode === "plan" && (
                   <button
-                    className={styles.iconText}
+                    className={`${styles.iconText} ${styles.toolButton}`}
+                    aria-label="Mobiliários"
+                    title="Mobiliários"
+                    data-tooltip="Mobiliários"
                     disabled={busy || readonly}
                     onClick={() => {
                       changeTool("select");
@@ -1358,7 +1395,7 @@ function EditorApp() {
                     }}
                   >
                     <Icon name="furniture" />
-                    Mobiliários
+                    <span className={styles.toolButtonLabel}>Mobiliários</span>
                   </button>
                 )}
                 {mode === "plan" &&
@@ -1492,7 +1529,7 @@ function EditorApp() {
                   )}
                 <button
                   aria-label="Desfazer"
-                  className={styles.iconButton}
+                  className={`${styles.iconButton} ${styles.undoButton}`}
                   data-tooltip="Desfazer (Ctrl+Z)"
                   title="Desfazer (Ctrl+Z)"
                   disabled={
