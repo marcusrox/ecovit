@@ -7,10 +7,19 @@ export function labelFontSize(
   cameraScale: number,
   category: "drawing" | "room" = "drawing",
 ) {
-  const minimum = category === "room" ? 10 : 9;
+  const minimum = category === "room" ? 7 : 6;
   const maximum = category === "room" ? 20 : 18;
+  const ratio = cameraScale / LABEL_REFERENCE_SCALE;
   return Math.min(
     maximum,
-    Math.max(minimum, base * Math.sqrt(cameraScale / LABEL_REFERENCE_SCALE)),
+    Math.max(minimum, base * ratio ** (ratio < 1 ? 0.6 : 0.5)),
+  );
+}
+
+// Compact label layout below 61%; retain screen spacing at larger scales.
+export function labelSpacing(base: number, cameraScale: number) {
+  return (
+    base *
+    Math.min(1, Math.max(6 / 11, (cameraScale / LABEL_REFERENCE_SCALE) ** 0.6))
   );
 }

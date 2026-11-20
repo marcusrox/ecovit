@@ -9,6 +9,30 @@ import {
 
 afterEach(() => vi.unstubAllGlobals());
 
+it("aplica os dois grupos em conjunto e preserva falha parcial para nova tentativa", () => {
+  const storage = new Map<string, string>();
+  const labels = { ...readPreferences(), wall: false, terrain: false };
+  vi.stubGlobal("localStorage", {
+    setItem: (key: string, value: string) => {
+      if (key === preferencesKey) throw new Error("quota");
+      storage.set(key, value);
+    },
+  });
+  usePreferences.getState().apply({ labels, highQualityImages: false });
+  expect(usePreferences.getState().labels).toEqual(labels);
+  expect(usePreferences.getState().highQualityImages).toBe(false);
+  expect(usePreferences.getState().error).toContain("não foram todas salvas");
+  expect(storage.get(renderingPreferencesKey)).toBe("false");
+  vi.stubGlobal("localStorage", {
+    setItem: (key: string, value: string) => storage.set(key, value),
+    getItem: (key: string) => storage.get(key) ?? null,
+  });
+  usePreferences.getState().apply({ labels, highQualityImages: true });
+  expect(usePreferences.getState().error).toBe("");
+  expect(readPreferences()).toEqual(labels);
+  expect(readHighQualityImages()).toBe(true);
+});
+
 it("M10 qualidade alta tem padrão seguro, persiste separadamente e mantém a sessão após falha", () => {
   const storage = new Map<string, string>();
   vi.stubGlobal("localStorage", {

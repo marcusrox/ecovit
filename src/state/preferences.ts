@@ -57,9 +57,28 @@ export const usePreferences = create<{
   setHighQualityImages: (high: boolean) => void;
   error: string;
   setLabel: (type: LabelType, visible: boolean) => void;
+  apply: (preferences: {
+    labels: LabelPreferences;
+    highQualityImages: boolean;
+  }) => void;
 }>((set, get) => ({
   labels: readPreferences(),
   highQualityImages: readHighQualityImages(),
+  apply(preferences) {
+    let error = "";
+    for (const [key, value] of [
+      [preferencesKey, preferences.labels],
+      [renderingPreferencesKey, preferences.highQualityImages],
+    ] as const) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch {
+        error =
+          "As preferências foram aplicadas nesta sessão, mas não foram todas salvas para a próxima abertura.";
+      }
+    }
+    set({ ...preferences, error });
+  },
   setHighQualityImages(high) {
     let error = "";
     try {

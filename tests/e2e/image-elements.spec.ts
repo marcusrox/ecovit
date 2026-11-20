@@ -1224,7 +1224,9 @@ test(
     });
     await expect(checkbox).toBeChecked();
     await checkbox.uncheck();
-    await page.getByRole("button", { name: "Fechar", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Aplicar preferências", exact: true })
+      .click();
     await expect
       .poll(async () =>
         (await draws()).some((d) => d.canvasSource && d.quality === "low"),
@@ -1260,7 +1262,9 @@ test(
         await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth),
       ).toBe(true);
     }
-    await page.keyboard.press("Escape");
+    await page
+      .getByRole("button", { name: "Aplicar preferências", exact: true })
+      .click();
     for (let i = 0; i < 5; i++)
       await page
         .getByRole("button", { name: "Reduzir zoom", exact: true })

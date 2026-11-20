@@ -269,7 +269,9 @@ test(
     await page
       .getByRole("checkbox", { name: "Medidas", exact: true })
       .uncheck();
-    await page.keyboard.press("Escape");
+    await page
+      .getByRole("button", { name: "Aplicar preferências", exact: true })
+      .click();
     await expect
       .poll(async () => (await texts(page)).includes("500 cm"))
       .toBe(false);

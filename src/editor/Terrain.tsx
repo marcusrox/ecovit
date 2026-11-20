@@ -1,4 +1,4 @@
-import { labelFontSize } from "./label-font";
+import { labelFontSize, labelSpacing } from "./label-font";
 import {
   useCallback,
   useEffect,
@@ -479,14 +479,22 @@ export function useTerrainCanvas(
               };
               const text = (value: string, p: Point, offset = 0) => {
                 const q = screen(p);
+                const spacing = (value: number) =>
+                  labelSpacing(value, camera.scale);
+                offset = spacing(offset);
                 ctx.font = `600 ${labelFontSize(12, camera.scale)}px Arial`;
                 const w = ctx.measureText(value).width;
                 ctx.fillStyle = "rgba(255,255,255,.92)";
-                ctx.fillRect(q.x - w / 2 - 6, q.y - 10 + offset, w + 12, 22);
+                ctx.fillRect(
+                  q.x - w / 2 - spacing(6),
+                  q.y - spacing(10) + offset,
+                  w + spacing(12),
+                  spacing(22),
+                );
                 ctx.fillStyle = "#254d38";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-                ctx.fillText(value, q.x, q.y + offset + 1);
+                ctx.fillText(value, q.x, q.y + offset + spacing(1));
               };
               if (terrain) {
                 const label = terrainLabelPoint(terrain.contour);

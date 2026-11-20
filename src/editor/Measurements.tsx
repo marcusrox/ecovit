@@ -1,4 +1,4 @@
-import { labelFontSize } from "./label-font";
+import { labelFontSize, labelSpacing } from "./label-font";
 import {
   useCallback,
   useEffect,
@@ -478,7 +478,7 @@ export function useMeasurementCanvas(
                 ctx.fillStyle = "#234b40";
                 const text = measurementText(m),
                   width = ctx.measureText(text).width;
-                ctx.fillText(text, -width / 2, -6);
+                ctx.fillText(text, -width / 2, -labelSpacing(6, camera.scale));
               }
               ctx.restore();
             }

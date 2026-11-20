@@ -1,4 +1,4 @@
-import { labelFontSize } from "./label-font";
+import { labelFontSize, labelSpacing } from "./label-font";
 import {
   useCallback,
   useEffect,
@@ -298,6 +298,7 @@ export function useRoomCanvas(
   };
   const enabled = mode === "plan" && !busy && !readonly && !imageDraft;
   const font = `${labelFontSize(13, camera.scale, "room")}px sans-serif`;
+  const lineHeight = labelSpacing(18, camera.scale);
   const layout = (l: RoomLabel) => {
     const region = l.review ? undefined : geometry.at(l.reference);
     const lines =
@@ -306,8 +307,9 @@ export function useRoomCanvas(
         : [...textLines(l.name, canvas), roomAreaText(region.area)];
     canvas.font = font;
     const width =
-        Math.max(...lines.map((t) => canvas.measureText(t).width)) + 12,
-      height = lines.length * 18 + 8;
+        Math.max(...lines.map((t) => canvas.measureText(t).width)) +
+        labelSpacing(12, camera.scale),
+      height = lines.length * lineHeight + labelSpacing(8, camera.scale);
     return { lines, width, height };
   };
   const commitLine = (line: RoomBoundary) => {
@@ -680,7 +682,9 @@ export function useRoomCanvas(
                   native.fillText(
                     text,
                     p.x,
-                    p.y - (box.lines.length - 1) * 9 + i * 18,
+                    p.y -
+                      ((box.lines.length - 1) * lineHeight) / 2 +
+                      i * lineHeight,
                   ),
                 );
               }

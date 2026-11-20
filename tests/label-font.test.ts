@@ -1,23 +1,27 @@
 import { expect, it } from "vitest";
-import { labelFontSize, LABEL_REFERENCE_SCALE } from "../src/editor/label-font";
+import {
+  labelFontSize,
+  labelSpacing,
+  LABEL_REFERENCE_SCALE,
+} from "../src/editor/label-font";
 import { MIN_CAMERA_SCALE } from "../src/editor/useProjectCamera";
 
 it("T-019 dimensiona etiquetas nos zooms de referência e limita os extremos", () => {
-  expect(labelFontSize(13, 0.012 * 0.25, "room")).toBe(10);
+  expect(labelFontSize(13, 0.012 * 0.25, "room")).toBeCloseTo(7.613, 2);
   expect(labelFontSize(13, LABEL_REFERENCE_SCALE, "room")).toBe(13);
   expect(labelFontSize(13, 0.012, "room")).toBeCloseTo(16.6448, 3);
   expect(labelFontSize(13, 0.012 * 1.5, "room")).toBe(20);
-  expect(labelFontSize(13, MIN_CAMERA_SCALE, "room")).toBe(10);
+  expect(labelFontSize(13, MIN_CAMERA_SCALE, "room")).toBe(7);
   expect(labelFontSize(13, 0.12, "room")).toBe(20);
 });
 
 it("T-019 conserva bases por tipo e aplica limites dos demais rótulos", () => {
   for (const base of [11, 12, 13]) {
     expect(labelFontSize(base, LABEL_REFERENCE_SCALE)).toBe(base);
-    expect(labelFontSize(base, MIN_CAMERA_SCALE)).toBe(9);
+    expect(labelFontSize(base, MIN_CAMERA_SCALE)).toBe(6);
     expect(labelFontSize(base, 0.12)).toBe(18);
   }
-  expect(labelFontSize(11, 0.012 * 0.25)).toBe(9);
+  expect(labelFontSize(11, 0.012 * 0.25)).toBeCloseTo(6.442, 2);
   expect(labelFontSize(11, 0.012 * 1.5)).toBeCloseTo(17.2492, 3);
 });
 
@@ -37,9 +41,25 @@ it("T-019 usa escala contínua, cresce parcialmente e permanece finito no interv
     const size = labelFontSize(13, scale, "room");
     expect(Number.isFinite(size)).toBe(true);
     expect(size).toBeGreaterThanOrEqual(last);
-    expect(size).toBeGreaterThanOrEqual(10);
+    expect(size).toBeGreaterThanOrEqual(7);
     expect(size).toBeLessThanOrEqual(20);
     last = size;
+  }
+});
+
+it("compacta espaçamentos e entrelinhas no zoom pequeno sem alterar escalas maiores", () => {
+  expect(labelSpacing(18, 0.012 * 0.25)).toBeCloseTo(10.542, 2);
+  expect(labelSpacing(5, 0.012 * 0.25)).toBeCloseTo(2.928, 2);
+  expect(labelSpacing(14, MIN_CAMERA_SCALE)).toBeCloseTo((14 * 6) / 11);
+  for (const scale of [LABEL_REFERENCE_SCALE, 0.012, 0.12]) {
+    expect(labelSpacing(18, scale)).toBe(18);
+  }
+  expect(labelSpacing(18, LABEL_REFERENCE_SCALE * 0.999999)).toBeCloseTo(18, 4);
+  for (const zoom of [1, 10, 25, 40, 61]) {
+    const scale = (0.012 * zoom) / 100;
+    expect(labelSpacing(18, scale)).toBeGreaterThan(
+      labelFontSize(13, scale, "room"),
+    );
   }
 });
 

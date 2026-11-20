@@ -1102,7 +1102,9 @@ test(
     });
     await expect(checkbox).toBeChecked();
     await checkbox.uncheck();
-    await page.keyboard.press("Escape");
+    await page
+      .getByRole("button", { name: "Aplicar preferências", exact: true })
+      .click();
     await expect.poll(() => texts(page)).not.toContain(label);
     expect(await snapshot(page)).toBe(before);
     await page.getByRole("button", { name: "Terreno", exact: true }).click();
@@ -1133,7 +1135,9 @@ test(
     await preferences(page).click();
     await expect(checkbox).not.toBeChecked();
     await checkbox.check();
-    await page.keyboard.press("Escape");
+    await page
+      .getByRole("button", { name: "Aplicar preferências", exact: true })
+      .click();
     await expect.poll(() => texts(page)).toContain(label);
     for (const [width, height] of [
       [1366, 768],
@@ -1151,7 +1155,7 @@ test(
       await preferences(page).click();
       await expect(checkbox).toBeInViewport();
       await expect(
-        page.getByRole("button", { name: "Fechar", exact: true }),
+        page.getByRole("button", { name: "Cancelar", exact: true }),
       ).toBeInViewport();
       await page.screenshot({
         path: `.tools/terrain-label-preferences-${info.project.name}-${width}.png`,
@@ -1174,7 +1178,9 @@ test(
     await other
       .getByRole("checkbox", { name: "Terreno", exact: true })
       .uncheck();
-    await other.keyboard.press("Escape");
+    await other
+      .getByRole("button", { name: "Aplicar preferências", exact: true })
+      .click();
     await expect.poll(() => texts(other)).not.toContain(label);
     expect(await snapshot(other)).toBe(readonlyBefore);
     expect(await storedSnapshot()).toBe(stored);

@@ -2,7 +2,7 @@ import { test, expect, type Page } from "./auth";
 import { createProject, type Project } from "../../src/domain/project";
 import { addRoomLabel } from "../../src/domain/rooms";
 
-type DrawnText = { text: string; font: number };
+type DrawnText = { text: string; font: number; y: number };
 async function state(page: Page): Promise<Project> {
   return page.evaluate(async () => {
     const path = "/src/state/store.ts";
@@ -116,7 +116,7 @@ function fixture() {
 }
 
 for (const [zoom, roomFont, smallFont, terrainFont, compassFont] of [
-  [25, 10, 9, 9, 9],
+  [25, 7.613, 6.442, 7.027, 6],
   [61, 13, 11, 12, 10.248],
   [150, 20, 17.2492, 18, 16.0698],
 ]) {
@@ -125,10 +125,7 @@ for (const [zoom, roomFont, smallFont, terrainFont, compassFont] of [
     { tag: "@interface" },
     async ({ page }) => {
       await page.evaluate(() => {
-        const contexts = new Map<
-          HTMLCanvasElement,
-          { text: string; font: number }[]
-        >();
+        const contexts = new Map<HTMLCanvasElement, DrawnText[]>();
         const clear = CanvasRenderingContext2D.prototype.clearRect,
           fill = CanvasRenderingContext2D.prototype.fillText;
         CanvasRenderingContext2D.prototype.clearRect = function (...args) {
@@ -140,6 +137,9 @@ for (const [zoom, roomFont, smallFont, terrainFont, compassFont] of [
           entries.push({
             text: args[0],
             font: Number(this.font.match(/([\d.]+)px/)?.[1]),
+            y:
+              this.getTransform().transformPoint({ x: args[1], y: args[2] }).y /
+              (this.canvas.height / this.canvas.getBoundingClientRect().height),
           });
           contexts.set(this.canvas, entries);
           return fill.apply(this, args);
@@ -197,6 +197,10 @@ for (const [zoom, roomFont, smallFont, terrainFont, compassFont] of [
         (await texts(page)).find((e) => e.text.startsWith(prefix))?.font;
       await expect.poll(() => fontOf("Sala de estar")).toBeCloseTo(roomFont, 2);
       await expect.poll(() => fontOf("12,00 m²")).toBeCloseTo(roomFont, 2);
+      const roomTexts = await texts(page);
+      const name = roomTexts.find((e) => e.text === "Sala de estar")!;
+      const area = roomTexts.find((e) => e.text === "12,00 m²")!;
+      expect(area.y - name.y).toBeCloseTo(zoom === 25 ? 10.542 : 18, 1);
       for (const prefix of [
         "C: ",
         "Porta ·",

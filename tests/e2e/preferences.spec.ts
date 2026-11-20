@@ -103,6 +103,127 @@ const trigger = (page: Page) =>
   page.getByRole("button", { name: "Preferências do Ecovit", exact: true });
 
 test(
+  "Preferências seguem o padrão das configurações com aplicação e descarte",
+  { tag: "@interface" },
+  async ({ page }) => {
+    await open(page);
+    const before = await snapshot(page);
+    const savedPreferences = () =>
+      page.evaluate(() => ({
+        labels: localStorage.getItem("ecovit:preferences:v1"),
+        images: localStorage.getItem("ecovit:rendering:v1"),
+      }));
+    const original = await savedPreferences();
+    await page
+      .getByRole("button", { name: "Configurações", exact: true })
+      .click();
+    const settings = page.getByRole("dialog");
+    const settingsWidth = (await settings.boundingBox())!.width;
+    const titleFont = await settings
+      .locator("h2")
+      .evaluate((el) => getComputedStyle(el).fontSize);
+    await settings
+      .getByRole("button", { name: "Cancelar", exact: true })
+      .click();
+    const dialog = page.getByRole("dialog", {
+      name: "Preferências do Ecovit",
+      exact: true,
+    });
+    for (const action of ["Cancelar", "Escape", "Fechar preferências"]) {
+      await trigger(page).click();
+      await expect(
+        dialog.getByRole("checkbox", { name: "Portas", exact: true }),
+      ).toBeFocused();
+      await expect(
+        dialog.getByRole("checkbox", { name: "Paredes", exact: true }),
+      ).toBeChecked();
+      await dialog
+        .getByRole("checkbox", { name: "Paredes", exact: true })
+        .uncheck();
+      await dialog
+        .getByRole("checkbox", {
+          name: "Suavização em qualidade alta",
+          exact: true,
+        })
+        .uncheck();
+      expect(await savedPreferences()).toEqual(original);
+      await expect.poll(() => texts(page)).toContain("C: 200 cm · H: 280 cm");
+      if (action === "Escape") await page.keyboard.press("Escape");
+      else
+        await dialog.getByRole("button", { name: action, exact: true }).click();
+      await expect(dialog).toBeHidden();
+      await expect(trigger(page)).toBeFocused();
+    }
+    await trigger(page).click();
+    await expect(
+      dialog.getByRole("checkbox", {
+        name: "Suavização em qualidade alta",
+        exact: true,
+      }),
+    ).toBeChecked();
+    expect(
+      await dialog
+        .locator("h2")
+        .evaluate((el) => getComputedStyle(el).fontSize),
+    ).toBe(titleFont);
+    expect((await dialog.boundingBox())!.width).toBeLessThan(settingsWidth);
+    for (const [width, height] of [
+      [1280, 720],
+      [900, 480],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await expect(
+        dialog.getByRole("button", {
+          name: "Aplicar preferências",
+          exact: true,
+        }),
+      ).toBeInViewport();
+      await expect(
+        dialog.getByRole("button", {
+          name: "Fechar preferências",
+          exact: true,
+        }),
+      ).toBeInViewport();
+      expect(
+        await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth),
+      ).toBe(true);
+      await dialog.screenshot({
+        path: `.tools/preferences-pattern-${width}-${height}.png`,
+      });
+    }
+    await dialog
+      .getByRole("checkbox", { name: "Paredes", exact: true })
+      .uncheck();
+    await dialog
+      .getByRole("checkbox", {
+        name: "Suavização em qualidade alta",
+        exact: true,
+      })
+      .uncheck();
+    await dialog
+      .getByRole("button", { name: "Aplicar preferências", exact: true })
+      .click();
+    await expect(dialog).toBeHidden();
+    await expect(trigger(page)).toBeFocused();
+    await expect
+      .poll(async () => (await texts(page)).some((t) => t.startsWith("C:")))
+      .toBe(false);
+    const saved = await savedPreferences();
+    expect(JSON.parse(saved.labels!).wall).toBe(false);
+    expect(saved.images).toBe("false");
+    expect(await snapshot(page)).toBe(before);
+  },
+);
+
+async function applyAndReopen(page: Page) {
+  await page
+    .getByRole("button", { name: "Aplicar preferências", exact: true })
+    .click();
+  await expect(trigger(page)).toBeFocused();
+  await trigger(page).click();
+}
+
+test(
   "M6 preferências independentes, medidas de paredes, persistência e integridade",
   { tag: "@fluxo" },
   async ({ page }) => {
@@ -119,6 +240,7 @@ test(
     await dialog
       .getByRole("checkbox", { name: "Paredes", exact: true })
       .uncheck();
+    await applyAndReopen(page);
     await expect
       .poll(async () => (await texts(page)).some((t) => t.startsWith("C:")))
       .toBe(false);
@@ -130,6 +252,7 @@ test(
     await dialog
       .getByRole("checkbox", { name: "Portas", exact: true })
       .uncheck();
+    await applyAndReopen(page);
     await expect
       .poll(async () =>
         (await texts(page)).some((t) => t.startsWith("Janela ·")),
@@ -141,6 +264,7 @@ test(
     await dialog
       .getByRole("checkbox", { name: "Janelas", exact: true })
       .uncheck();
+    await applyAndReopen(page);
     await expect
       .poll(async () =>
         (await texts(page)).some((t) => t.startsWith("Janela ·")),
@@ -150,6 +274,7 @@ test(
       .poll(async () => (await texts(page)).some((t) => t.startsWith("Vão ·")))
       .toBe(true);
     await dialog.getByRole("checkbox", { name: "Vãos", exact: true }).uncheck();
+    await applyAndReopen(page);
     await expect
       .poll(async () => (await texts(page)).some((t) => t.startsWith("Vão ·")))
       .toBe(false);
@@ -174,7 +299,8 @@ test(
       page.getByRole("checkbox", { name: "Paredes", exact: true }),
     ).not.toBeChecked();
     await page.getByRole("checkbox", { name: "Paredes", exact: true }).check();
-    await page.getByRole("button", { name: "Fechar", exact: true }).click();
+    await applyAndReopen(page);
+    await page.getByRole("button", { name: "Cancelar", exact: true }).click();
     await expect.poll(() => texts(page)).toContain("C: 200 cm · H: 280 cm");
   },
 );
@@ -220,7 +346,12 @@ test(
     await page
       .getByRole("checkbox", { name: "Paredes", exact: true })
       .uncheck();
-    await expect(page.getByRole("alert")).toContainText("não foi salva");
+    await page
+      .getByRole("button", { name: "Aplicar preferências", exact: true })
+      .click();
+    await expect(page.getByRole("alert")).toContainText(
+      "não foram todas salvas",
+    );
     await page.keyboard.press("Escape");
     expect(await snapshot(page)).toBe(before);
     await page.evaluate(async () => {
@@ -291,7 +422,7 @@ test(
         page.getByRole("checkbox", { name: "Portas", exact: true }),
       ).toBeFocused();
       await expect(
-        page.getByRole("button", { name: "Fechar", exact: true }),
+        page.getByRole("button", { name: "Cancelar", exact: true }),
       ).toBeInViewport();
       await page.screenshot({
         path: `.tools/m6-preferences-${info.project.name}-${width}.png`,
@@ -349,6 +480,7 @@ test(
     await page
       .getByRole("checkbox", { name: "Paredes", exact: true })
       .uncheck();
+    await applyAndReopen(page);
     await page.keyboard.press("Escape");
     await expect
       .poll(async () =>
@@ -362,6 +494,7 @@ test(
     );
     await trigger(page).click();
     await page.getByRole("checkbox", { name: "Paredes", exact: true }).check();
+    await applyAndReopen(page);
     await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Desfazer", exact: true }).click();
     await expect.poll(() => texts(page)).toContain("C: 200 cm · H: 280 cm");
@@ -378,6 +511,7 @@ test(
       .toBe(true);
     await trigger(page).click();
     await page.getByRole("checkbox", { name: "Portas", exact: true }).uncheck();
+    await applyAndReopen(page);
     await page.keyboard.press("Escape");
     await expect
       .poll(async () =>

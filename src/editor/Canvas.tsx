@@ -1,4 +1,4 @@
-import { labelFontSize } from "./label-font";
+import { labelFontSize, labelSpacing } from "./label-font";
 import { displayDiagnostics } from "./diagnostics";
 import { useRoomCanvas } from "./Rooms";
 import { useTerrainCanvas } from "./Terrain";
@@ -1259,13 +1259,13 @@ export function Canvas({
                         (preview?.id === active.id ? preview : active)[end].x *
                           camera.scale +
                         camera.x +
-                        9
+                        labelSpacing(9, camera.scale)
                       }
                       y={
                         (preview?.id === active.id ? preview : active)[end].y *
                           camera.scale +
                         camera.y -
-                        18
+                        labelSpacing(18, camera.scale)
                       }
                       fontSize={labelFontSize(11, camera.scale)}
                       fill="#205d48"
@@ -1288,7 +1288,7 @@ export function Canvas({
                 y={
                   Math.min(preview.a.y, preview.b.y) * camera.scale +
                   camera.y -
-                  26
+                  labelSpacing(26, camera.scale)
                 }
                 text={`${display(length(preview))} cm · face externa${wallEdit?.participants.length ? " · continuidade" : ""}${wallEdit?.message ? ` · ${wallEdit.message}` : ""}`}
                 fontSize={labelFontSize(13, camera.scale)}
@@ -1530,6 +1530,9 @@ export function Canvas({
                   width: number;
                   height: number;
                 }[] = [];
+                const gap = labelSpacing(5, camera.scale);
+                const clearance = labelSpacing(3, camera.scale);
+                const step = labelSpacing(14, camera.scale);
                 if (mode === "plan" && labelVisibility.wall) {
                   for (const wall of rendered) {
                     const vertical = wall.a.x === wall.b.x;
@@ -1542,7 +1545,7 @@ export function Canvas({
                     const descent = metrics.actualBoundingBoxDescent;
                     const box = bounds(wall, module);
                     let x = vertical
-                      ? box.x * camera.scale + camera.x - 5 - ascent
+                      ? box.x * camera.scale + camera.x - gap - ascent
                       : ((wall.a.x + wall.b.x) / 2) * camera.scale +
                         camera.x -
                         metrics.width / 2;
@@ -1550,7 +1553,7 @@ export function Canvas({
                       ? ((wall.a.y + wall.b.y) / 2) * camera.scale +
                         camera.y +
                         metrics.width / 2
-                      : box.y * camera.scale + camera.y - 5;
+                      : box.y * camera.scale + camera.y - gap;
                     const rect = () => ({
                       x: vertical ? x - descent : x,
                       y: vertical ? y - metrics.width : y - ascent,
@@ -1561,14 +1564,14 @@ export function Canvas({
                     while (
                       labels.some(
                         (l) =>
-                          r.x < l.x + l.width + 3 &&
-                          r.x + r.width + 3 > l.x &&
-                          r.y < l.y + l.height + 3 &&
-                          r.y + r.height + 3 > l.y,
+                          r.x < l.x + l.width + clearance &&
+                          r.x + r.width + clearance > l.x &&
+                          r.y < l.y + l.height + clearance &&
+                          r.y + r.height + clearance > l.y,
                       )
                     ) {
-                      if (vertical) x -= 14;
-                      else y -= 14;
+                      if (vertical) x -= step;
+                      else y -= step;
                       r = rect();
                     }
                     labels.push(r);
@@ -1626,8 +1629,8 @@ export function Canvas({
                     ascent = metrics.actualBoundingBoxAscent,
                     descent = metrics.actualBoundingBoxDescent,
                     vertical = w.a.x === w.b.x;
-                  let labelX = vertical ? x - 5 - ascent : x,
-                    labelY = vertical ? y + height : y - 5;
+                  let labelX = vertical ? x - gap - ascent : x,
+                    labelY = vertical ? y + height : y - gap;
                   if (
                     mode === "plan" &&
                     o.appearance?.type === "double-sliding"
@@ -1642,8 +1645,8 @@ export function Canvas({
                     )) {
                       for (const point of stroke.points) {
                         if (vertical)
-                          labelX = Math.min(labelX, point.x - 5 - ascent);
-                        else labelY = Math.min(labelY, point.y - 5);
+                          labelX = Math.min(labelX, point.x - gap - ascent);
+                        else labelY = Math.min(labelY, point.y - gap);
                       }
                     }
                   }
@@ -1658,14 +1661,14 @@ export function Canvas({
                     (vertical ? bounds.x >= 0 : bounds.y >= 0) &&
                     labels.some(
                       (l) =>
-                        bounds.x < l.x + l.width + 3 &&
-                        bounds.x + bounds.width + 3 > l.x &&
-                        bounds.y < l.y + l.height + 3 &&
-                        bounds.y + bounds.height + 3 > l.y,
+                        bounds.x < l.x + l.width + clearance &&
+                        bounds.x + bounds.width + clearance > l.x &&
+                        bounds.y < l.y + l.height + clearance &&
+                        bounds.y + bounds.height + clearance > l.y,
                     )
                   ) {
-                    if (vertical) labelX -= 14;
-                    else labelY -= 14;
+                    if (vertical) labelX -= step;
+                    else labelY -= step;
                     bounds = labelBounds();
                   }
                   if (
