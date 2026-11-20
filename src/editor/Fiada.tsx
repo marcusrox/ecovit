@@ -14,7 +14,13 @@ import { GroutPanel } from "./Grout";
 import { ClampsPanel } from "./Clamps";
 import { ChannelReinforcementPanel } from "./ChannelReinforcement";
 
-export function FiadaToolbar() {
+export function FiadaToolbar({
+  busy,
+  onEnterCourse,
+}: {
+  busy: boolean;
+  onEnterCourse: () => void;
+}) {
   const displayComposition = useCourseDisplayComposition();
   const s = useStore(),
     doc = useEditingProject()!,
@@ -138,6 +144,33 @@ export function FiadaToolbar() {
         <span>Este pavimento não tem paredes</span>
       )}
       <button
+        aria-label="Desfazer"
+        className={styles.iconButton}
+        data-tooltip="Desfazer (Ctrl+Z)"
+        title="Desfazer (Ctrl+Z)"
+        disabled={
+          busy || s.readonly || (!s.history.past.length && !s.slabEditing)
+        }
+        onClick={() => void useStore.getState().undo()}
+      >
+        <Icon name="undo" />
+      </button>
+      <button
+        aria-label="Refazer"
+        className={styles.iconButton}
+        data-tooltip="Refazer (Ctrl+Y)"
+        title="Refazer (Ctrl+Y)"
+        disabled={busy || s.readonly || !s.history.future.length}
+        onClick={() => void useStore.getState().undo(true)}
+      >
+        <Icon name="redo" />
+      </button>
+      <span
+        className={styles.divider}
+        role="separator"
+        aria-orientation="vertical"
+      />
+      <button
         disabled={s.busy}
         aria-pressed={s.mode === "plan"}
         onClick={() =>
@@ -155,8 +188,14 @@ export function FiadaToolbar() {
         disabled={s.busy}
         aria-pressed={s.mode === "course"}
         onClick={() => {
+          onEnterCourse();
           s.choose(null);
-          s.inspect({ mode: "course" });
+          s.inspect({
+            mode: "course",
+            preview: null,
+            groutMode: false,
+            groutCell: null,
+          });
         }}
       >
         Fiada

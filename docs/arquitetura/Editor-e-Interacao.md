@@ -18,6 +18,8 @@ Paredes podem ser criadas, excluídas e redimensionadas por qualquer extremidade
 
 ### Fiada
 
+Entrar pelo botão Fiada ativa a inspeção por clique independentemente da ferramenta anterior de Planta: voltar à ferramenta de seleção, limpar seleção/prévia e desligar Graute e seu furo ativo. Graute funciona como liga/desliga; desligá-lo retorna à inspeção por clique sem exigir botão Selecionar. Preservar bloqueios existentes, câmera, fiada ativa e referência. Essas transições são de sessão, sem alterar documento, histórico ou salvamento.
+
 Renderizar apenas a fiada ativa e, opcionalmente, uma fiada adjacente como referência sem interação. Cada peça tem contorno e símbolos de furos/canais. Graute e tipos de peça usam representação distinta, sem inventar peças fora do catálogo.
 
 Manter os contornos sem preenchimento das paredes ativas no pavimento e na altura da fiada, inclusive em conjuntos com composição suspensa. O tracejado neutro serve de referência geométrica, distinguindo-se das peças calculadas; vãos continuam visíveis na altura correspondente. Esses contornos não participam da seleção por células, da composição ou dos quantitativos.

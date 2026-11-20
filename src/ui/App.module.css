@@ -1640,9 +1640,8 @@ button.iconButton {
   min-width: 0;
   max-width: 100%;
   height: auto;
-  padding: 0 12px 0 0;
+  padding: 0;
   border: 0;
-  border-right: 1px solid #dbe2d9;
   background: transparent;
 }
 .editorApp .tools {
@@ -1666,12 +1665,6 @@ button.iconButton {
 .tools > .toolButton:first-child[data-tooltip]::after {
   left: 0;
   transform: none;
-}
-.editorApp .tools .undoButton {
-  margin-left: auto;
-}
-.editorApp .tools > select + .undoButton {
-  margin-left: 0;
 }
 .editorApp .tools > select {
   margin-left: auto;

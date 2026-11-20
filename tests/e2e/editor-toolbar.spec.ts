@@ -128,15 +128,71 @@ test(
         name: "Fiada",
         exact: true,
       });
+      const undo = bar.getByRole("button", { name: "Desfazer", exact: true });
+      const redo = bar.getByRole("button", { name: "Refazer", exact: true });
+      const undoPosition = await undo.boundingBox();
+      const redoPosition = await redo.boundingBox();
       const planPosition = await planButton.boundingBox();
       const coursePosition = await courseButton.boundingBox();
       for (const mode of ["Planta", "Fiada"]) {
+        if (mode === "Fiada") await wall.click();
         await bar.getByRole("button", { name: mode, exact: true }).click();
+        await expect(bar.getByRole("button").nth(-4)).toHaveAccessibleName(
+          "Desfazer",
+        );
+        await expect(bar.getByRole("button").nth(-3)).toHaveAccessibleName(
+          "Refazer",
+        );
+        expect(await undo.boundingBox()).toEqual(undoPosition);
+        expect(await redo.boundingBox()).toEqual(redoPosition);
+        const separator = await bar.getByRole("separator").boundingBox();
+        expect(separator!.x).toBeGreaterThan(
+          redoPosition!.x + redoPosition!.width,
+        );
+        expect(separator!.x + separator!.width).toBeLessThan(planPosition!.x);
         await expect(bar.getByRole("button").nth(-2)).toHaveText("Planta");
         await expect(bar.getByRole("button").last()).toHaveText("Fiada");
         expect(await planButton.boundingBox()).toEqual(planPosition);
         expect(await courseButton.boundingBox()).toEqual(coursePosition);
         if (mode === "Fiada") {
+          await expect(
+            bar.getByRole("button", { name: "Selecionar", exact: true }),
+          ).toHaveCount(0);
+          await expect(wall).toHaveCount(0);
+          const grout = bar.getByRole("button", {
+            name: "Graute",
+            exact: true,
+          });
+          await expect(grout).toHaveAttribute("aria-pressed", "false");
+          if (width === 1366) {
+            await grout.click();
+            await expect(grout).toHaveAttribute("aria-pressed", "true");
+            await grout.click();
+            await expect(grout).toHaveAttribute("aria-pressed", "false");
+            await page
+              .getByRole("button", { name: "Enquadrar", exact: true })
+              .click();
+            const drawing = page.getByTestId("drawing");
+            const bounds = (await drawing.boundingBox())!;
+            const camera = JSON.parse(
+              (await drawing.getAttribute("data-camera"))!,
+            );
+            await page.mouse.click(
+              bounds.x + camera.x + 5000 * camera.scale,
+              bounds.y + camera.y + 625 * camera.scale,
+            );
+            await expect
+              .poll(() =>
+                page.evaluate(async () => {
+                  const path = "/src/state/store.ts";
+                  return (await import(path)).useStore.getState().select;
+                }),
+              )
+              .toBe(d.model.walls[0].id);
+            await grout.click();
+            await courseButton.click();
+            await expect(grout).toHaveAttribute("aria-pressed", "false");
+          }
           await bar
             .getByRole("button", { name: "Graute", exact: true })
             .focus();
@@ -165,6 +221,9 @@ test(
         });
       }
       await bar.getByRole("button", { name: "Planta", exact: true }).click();
+      await expect(
+        bar.getByRole("button", { name: "Selecionar", exact: true }),
+      ).toHaveAttribute("aria-pressed", "true");
     }
     await floor.selectOption(second.id);
     await expect(page.getByRole("contentinfo")).toContainText("Superior");

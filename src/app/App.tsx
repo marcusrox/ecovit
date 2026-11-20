@@ -496,15 +496,13 @@ function EditorApp() {
   const groutMode = useStore((s) => s.groutMode);
   const selected = useStore((s) => s.select),
     pendingOpening = useStore((s) => s.pendingOpening);
-  const slabEditing = useStore((s) => s.slabEditing);
   const editingDoc = useEditingProject();
   const doc = useStore((s) => s.doc),
     storeBusy = useStore((s) => s.busy),
     storeOpeningProjectId = useStore((s) => s.openingProjectId),
     readonly = useStore((s) => s.readonly),
     saved = useStore((s) => s.saved),
-    message = useStore((s) => s.message),
-    history = useStore((s) => s.history);
+    message = useStore((s) => s.message);
   const [readyProjectId, setReadyProjectId] = useState<string | null>(null);
   const preparingCanvas = !!doc && readyProjectId !== doc.project.id;
   const openingProjectId =
@@ -1232,40 +1230,44 @@ function EditorApp() {
           >
             <div className={styles.toolbar}>
               <div className={styles.tools}>
-                <button
-                  className={`${styles.iconText} ${styles.toolButton} ${tool === "select" && !groutMode ? styles.active : ""}`}
-                  aria-label="Selecionar"
-                  title="Selecionar"
-                  data-tooltip="Selecionar"
-                  aria-pressed={tool === "select" && !groutMode}
-                  disabled={busy || readonly}
-                  onClick={() => {
-                    changeTool("select");
-                    useStore
-                      .getState()
-                      .inspect({ groutMode: false, groutCell: null });
-                  }}
-                >
-                  <Icon name="select" />
-                  <span className={styles.toolButtonLabel}>Selecionar</span>
-                </button>
-                <button
-                  className={`${styles.iconText} ${styles.toolButton} ${tool === "wall" ? styles.active : ""}`}
-                  aria-label="Parede"
-                  title="Parede"
-                  data-tooltip="Parede"
-                  aria-pressed={tool === "wall"}
-                  disabled={busy || readonly}
-                  onClick={() => {
-                    useStore
-                      .getState()
-                      .inspect({ mode: "plan", preview: null });
-                    changeTool("wall");
-                  }}
-                >
-                  <Icon name="wall" />
-                  <span className={styles.toolButtonLabel}>Parede</span>
-                </button>
+                {mode === "plan" && (
+                  <>
+                    <button
+                      className={`${styles.iconText} ${styles.toolButton} ${tool === "select" && !groutMode ? styles.active : ""}`}
+                      aria-label="Selecionar"
+                      title="Selecionar"
+                      data-tooltip="Selecionar"
+                      aria-pressed={tool === "select" && !groutMode}
+                      disabled={busy || readonly}
+                      onClick={() => {
+                        changeTool("select");
+                        useStore
+                          .getState()
+                          .inspect({ groutMode: false, groutCell: null });
+                      }}
+                    >
+                      <Icon name="select" />
+                      <span className={styles.toolButtonLabel}>Selecionar</span>
+                    </button>
+                    <button
+                      className={`${styles.iconText} ${styles.toolButton} ${tool === "wall" ? styles.active : ""}`}
+                      aria-label="Parede"
+                      title="Parede"
+                      data-tooltip="Parede"
+                      aria-pressed={tool === "wall"}
+                      disabled={busy || readonly}
+                      onClick={() => {
+                        useStore
+                          .getState()
+                          .inspect({ mode: "plan", preview: null });
+                        changeTool("wall");
+                      }}
+                    >
+                      <Icon name="wall" />
+                      <span className={styles.toolButtonLabel}>Parede</span>
+                    </button>
+                  </>
+                )}
                 {mode === "plan" && (
                   <button
                     className={`${styles.iconText} ${styles.toolButton} ${tool === "terrain" ? styles.active : ""}`}
@@ -1286,7 +1288,7 @@ function EditorApp() {
                     <span className={styles.toolButtonLabel}>Terreno</span>
                   </button>
                 )}
-                <span className={styles.divider} />
+                {mode === "plan" && <span className={styles.divider} />}
                 {mode === "plan" && (
                   <button
                     aria-pressed={tool === "slab"}
@@ -1527,31 +1529,12 @@ function EditorApp() {
                       )}
                     </select>
                   )}
-                <button
-                  aria-label="Desfazer"
-                  className={`${styles.iconButton} ${styles.undoButton}`}
-                  data-tooltip="Desfazer (Ctrl+Z)"
-                  title="Desfazer (Ctrl+Z)"
-                  disabled={
-                    busy || readonly || (!history.past.length && !slabEditing)
-                  }
-                  onClick={() => void useStore.getState().undo()}
-                >
-                  <Icon name="undo" />
-                </button>
-                <button
-                  aria-label="Refazer"
-                  className={styles.iconButton}
-                  data-tooltip="Refazer (Ctrl+Y)"
-                  title="Refazer (Ctrl+Y)"
-                  disabled={busy || readonly || !history.future.length}
-                  onClick={() => void useStore.getState().undo(true)}
-                >
-                  <Icon name="redo" />
-                </button>
               </div>
             </div>
-            <FiadaToolbar />
+            <FiadaToolbar
+              busy={busy}
+              onEnterCourse={() => changeTool("select")}
+            />
           </div>
           <main className={styles.workspace}>
             <Canvas
