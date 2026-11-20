@@ -120,8 +120,31 @@ test(
       expect(
         await wall.evaluate((el) => getComputedStyle(el, "::after").display),
       ).toBe("block");
+      const planButton = bar.getByRole("button", {
+        name: "Planta",
+        exact: true,
+      });
+      const courseButton = bar.getByRole("button", {
+        name: "Fiada",
+        exact: true,
+      });
+      const planPosition = await planButton.boundingBox();
+      const coursePosition = await courseButton.boundingBox();
       for (const mode of ["Planta", "Fiada"]) {
         await bar.getByRole("button", { name: mode, exact: true }).click();
+        await expect(bar.getByRole("button").nth(-2)).toHaveText("Planta");
+        await expect(bar.getByRole("button").last()).toHaveText("Fiada");
+        expect(await planButton.boundingBox()).toEqual(planPosition);
+        expect(await courseButton.boundingBox()).toEqual(coursePosition);
+        if (mode === "Fiada") {
+          await bar
+            .getByRole("button", { name: "Graute", exact: true })
+            .focus();
+          await page.keyboard.press("Tab");
+          await expect(planButton).toBeFocused();
+          await page.keyboard.press("Tab");
+          await expect(courseButton).toBeFocused();
+        }
         const layout = await bar.evaluate((el) => {
           const bounds = el.getBoundingClientRect();
           const controls = [...el.querySelectorAll("button,select,input")]

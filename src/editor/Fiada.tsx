@@ -46,30 +46,6 @@ export function FiadaToolbar() {
   }, [s, doc]);
   return (
     <div className={styles.fiadaToolbar}>
-      <button
-        disabled={s.busy}
-        aria-pressed={s.mode === "plan"}
-        onClick={() =>
-          s.inspect({
-            mode: "plan",
-            preview: null,
-            groutMode: false,
-            groutCell: null,
-          })
-        }
-      >
-        Planta
-      </button>
-      <button
-        disabled={s.busy}
-        aria-pressed={s.mode === "course"}
-        onClick={() => {
-          s.choose(null);
-          s.inspect({ mode: "course" });
-        }}
-      >
-        Fiada
-      </button>
       {s.mode === "course" && total > 0 && (
         <>
           <button
@@ -161,6 +137,30 @@ export function FiadaToolbar() {
       {s.mode === "course" && !doc.model.walls.length && (
         <span>Este pavimento não tem paredes</span>
       )}
+      <button
+        disabled={s.busy}
+        aria-pressed={s.mode === "plan"}
+        onClick={() =>
+          s.inspect({
+            mode: "plan",
+            preview: null,
+            groutMode: false,
+            groutCell: null,
+          })
+        }
+      >
+        Planta
+      </button>
+      <button
+        disabled={s.busy}
+        aria-pressed={s.mode === "course"}
+        onClick={() => {
+          s.choose(null);
+          s.inspect({ mode: "course" });
+        }}
+      >
+        Fiada
+      </button>
     </div>
   );
 }
