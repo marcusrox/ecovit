@@ -40,11 +40,13 @@ import {
   Upload,
   X,
   UserRound,
+  RefreshCw,
 } from "lucide-react";
 import styles from "./App.module.css";
 
 // Semantic names remain stable across screens; only this module imports Lucide.
 const icons = {
+  refresh: RefreshCw,
   terrain: LandPlot,
   furniture: Armchair,
   flipHorizontal: TrianglesCenterlineDashedVertical,

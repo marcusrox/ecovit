@@ -743,6 +743,17 @@ function EditorApp() {
     window.addEventListener("ecovit:projects-changed", update);
     return () => window.removeEventListener("ecovit:projects-changed", update);
   }, [refreshProjects]);
+  const homeImporting =
+    importing ||
+    (!!openingProjectId &&
+      !projects.some((project) => project.id === openingProjectId));
+  const homeProgress = homeImporting
+    ? "Importando arquivo…"
+    : openingProjectId
+      ? "Abrindo projeto…"
+      : listingState === "loading"
+        ? "Atualizando lista…"
+        : "";
   const homeHeader = (
     <div className={styles.headerActions}>
       <span className={styles.localBadge}>Projetos privados na conta</span>
@@ -750,68 +761,91 @@ function EditorApp() {
         disabled={busy || importing || listingState !== "ready"}
         onClick={() => input.current?.click()}
         className={styles.iconText}
+        aria-label="Carregar .ecovit"
+        aria-busy={homeImporting}
       >
-        <Icon name="upload" /> Carregar .ecovit
+        <span
+          className={homeImporting ? styles.inlineSpinner : undefined}
+          aria-hidden="true"
+        >
+          <Icon name={homeImporting ? "saving" : "upload"} />
+        </span>
+        <span className={styles.buttonProgressText}>
+          <span
+            className={homeImporting ? styles.buttonProgressHidden : undefined}
+          >
+            Carregar .ecovit
+          </span>
+          <span
+            className={!homeImporting ? styles.buttonProgressHidden : undefined}
+          >
+            Importando…
+          </span>
+        </span>
       </button>
       <AccountButton />
     </div>
   );
-  const homeProgress = openingProjectId
-    ? "Abrindo projeto…"
-    : importing
-      ? "Importando arquivo…"
-      : listingState === "loading"
-        ? "Atualizando lista…"
-        : "";
   const homeNotice =
     message || (listingState === "error" ? listingFailure : "");
+  const homeWarning = !homeProgress ? homeNotice : "";
   const home = (
     <main className={styles.home}>
-      <div className={styles.homeIntro}>
+      <div
+        className={`${styles.homeIntro} ${!projects.length ? styles.homeIntroEmpty : ""}`}
+      >
         <div>
           <span className={styles.eyebrow}>DO PRIMEIRO TRAÇO AO PROJETO</span>
           <h1>
             Ideias que se <em>encaixam.</em>
           </h1>
         </div>
-        <p>
-          Desenhe sua planta com tijolos ecológicos.
-          <br />
-          Uma malha precisa, um espaço para criar.
-        </p>
-      </div>
-      <div className={styles.listHeading}>
-        <h2 id="projects-title">Seu espaço de projetos</h2>
-        <span>
-          {listingState === "loading"
-            ? ""
-            : listingState === "error"
-              ? "Lista indisponível"
-              : `${projects.length} ${projects.length === 1 ? "projeto salvo" : "projetos salvos"}`}
-        </span>
         <button
+          className={`${styles.iconText} ${styles.refreshProjects}`}
           disabled={busy || importing || listingState === "loading"}
           onClick={() => void refreshProjects()}
+          aria-label="Atualizar lista"
+          aria-busy={listingState === "loading"}
         >
-          Atualizar lista
+          <span
+            className={
+              listingState === "loading" ? styles.inlineSpinner : undefined
+            }
+            aria-hidden="true"
+          >
+            <Icon name={listingState === "loading" ? "saving" : "refresh"} />
+          </span>
+          <span className={styles.buttonProgressText}>
+            <span
+              className={
+                listingState === "loading"
+                  ? styles.buttonProgressHidden
+                  : undefined
+              }
+            >
+              Atualizar lista
+            </span>
+            <span
+              className={
+                listingState !== "loading"
+                  ? styles.buttonProgressHidden
+                  : undefined
+              }
+            >
+              Atualizando lista…
+            </span>
+          </span>
         </button>
       </div>
       <div
-        className={styles.homeStatus}
+        className={`${styles.homeStatus} ${homeWarning ? styles.homeStatusActive : ""}`}
         role="region"
         aria-label="Status dos projetos"
       >
-        <div role="status" aria-atomic="true">
-          {homeProgress && (
-            <div className={styles.homeStatusMessage}>
-              <span className={styles.openingSpinner}>
-                <Icon name="saving" />
-              </span>
-              <span>{homeProgress}</span>
-            </div>
-          )}
+        <div role="status" aria-atomic="true" className={styles.visuallyHidden}>
+          {homeProgress}
         </div>
-        {!homeProgress && homeNotice ? (
+        {homeWarning ? (
           <div
             className={`${styles.homeStatusMessage} ${styles.homeStatusWarning}`}
             role="alert"
@@ -851,10 +885,7 @@ function EditorApp() {
             Criar planta <Icon name="next" />
           </b>
         </button>
-        <section
-          className={styles.projectList}
-          aria-labelledby="projects-title"
-        >
+        <section className={styles.projectList} aria-label="Projetos salvos">
           {!projects.length ? (
             <div className={styles.empty}>
               <span aria-hidden="true">
@@ -898,6 +929,7 @@ function EditorApp() {
                     disabled={busy || importing || listingState !== "ready"}
                     key={p.id}
                     className={`${styles.projectCard} ${openingProjectId === p.id ? styles.projectOpeningCard : ""}`}
+                    aria-busy={openingProjectId === p.id}
                     aria-expanded={
                       !p.compatible ? incompatibleProject === p.id : undefined
                     }
@@ -995,15 +1027,24 @@ function EditorApp() {
           )}
         </section>
       </div>
-      <p className={styles.localNote}>
-        <span aria-hidden="true">
-          <Icon name="download" />
+      <div className={styles.localNoteRow}>
+        <p className={styles.localNote}>
+          <span aria-hidden="true">
+            <Icon name="download" />
+          </span>
+          <span>
+            Seus desenhos ficam privados na sua conta. Baixe o arquivo .ecovit
+            para manter uma cópia sob seu controle.
+          </span>
+        </p>
+        <span className={styles.projectCount}>
+          {listingState === "loading"
+            ? ""
+            : listingState === "error"
+              ? "Lista indisponível"
+              : `${projects.length} ${projects.length === 1 ? "projeto salvo" : "projetos salvos"}`}
         </span>
-        <span>
-          Seus desenhos ficam privados na sua conta. Baixe o arquivo .ecovit
-          para manter uma cópia sob seu controle.
-        </span>
-      </p>
+      </div>
     </main>
   );
   const editor = (
@@ -1135,10 +1176,16 @@ function EditorApp() {
                 onClick={() => input.current?.click()}
                 className={`${styles.iconButton} ${styles.fileAction}`}
                 aria-label="Carregar arquivo"
+                aria-busy={importing}
                 title="Carregar arquivo .ecovit"
                 data-tooltip="Carregar arquivo .ecovit"
               >
-                <Icon name="upload" />
+                <span
+                  className={importing ? styles.inlineSpinner : undefined}
+                  aria-hidden="true"
+                >
+                  <Icon name={importing ? "saving" : "upload"} />
+                </span>
               </button>
               <button
                 className={`${styles.iconButton} ${styles.fileAction}`}

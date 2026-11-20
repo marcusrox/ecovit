@@ -20,6 +20,10 @@ Indicador do editor diferencia persistência de cálculo. Mensagens de falha/res
 
 Reusar Icon e controles existentes; eventuais símbolos novos entram no mapa central com nome semântico, sem imports diretos ou catálogo paralelo. Preservar foco/teclado/nomes acessíveis, anúncios de status e ausência de rolagem horizontal. Conferências seguem a política central de qualidade; a especificação não constitui evidência de execução.
 
+## Tela de projetos
+
+Priorizar abertura e criação: introdução compacta com assinatura da marca quando há projetos, mantendo a apresentação maior para a lista vazia. Atualizar lista fica à direita da assinatura e usa Icon/refresh→RefreshCw. A criação conserva o cartão verde grande à esquerda da lista, com Icon/plus, descrição e chamada de criação. Não exibir título adicional acima da lista; manter seu nome acessível. A contagem de projetos aparece à direita da orientação de privacidade e cópia do arquivo, abaixo da grade. Aproximar cartões da introdução, com nome destacado, metadados secundários e realce verde suave no hover. O status continua montado somente para anúncios acessíveis de progresso, sem ocupar espaço visual. Abertura indica progresso no cartão; atualização e importação usam seus próprios botões, com ícone animado e texto, conservando suas dimensões e respeitando movimento reduzido. A faixa abaixo da apresentação fica restrita a erros. Preservar fluxos, bloqueios, recuperação, ações dos projetos e ordem de navegação. Em larguras menores, os grupos podem quebrar linha e o cartão de criação passa para cima da lista, sem sobrepor os controles.
+
 ## Tela de entrada
 
 A tela pública usa a marca compartilhada com o restante do aplicativo e uma imagem editorial WebP servida com o frontend. Em desktop, o painel ilustrado fica ao lado do formulário. Em larguras de até 680 px, o painel passa a uma faixa compacta acima da entrada. A legenda da imagem é texto da interface sobre um degradê escuro. O formulário mantém rótulos, estados e foco da autenticação. O aviso de migração usa o ícone de informação do catálogo central. O rodapé com a versão segue o fluxo da página.

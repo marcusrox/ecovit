@@ -36,9 +36,9 @@ async function pauseRead(page: Page, fail = false) {
       )
         return originalFetch(input, options);
       state.reads++;
-      const status = [...document.querySelectorAll('[role="status"]')].find(
-        (el) => el.textContent === "Abrindo projeto…",
-      );
+      const status = [
+        ...document.querySelectorAll('[aria-busy="true"] small'),
+      ].find((el) => el.textContent === "Abrindo projeto…");
       state.feedbackBeforeRead =
         !!status && status.getBoundingClientRect().height > 0;
       state.cursorBeforeRead = getComputedStyle(

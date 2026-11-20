@@ -17,14 +17,14 @@ async function release(page: Page, name: string) {
 }
 
 test(
-  "faixa reserva espaço na atualização, mantém erro e permite recuperar lista",
+  "status mantém as ações no lugar, apresenta erro e permite recuperar lista",
   { tag: "@interface" },
   async ({ page }, info) => {
     await expect(
       page.getByRole("button", { name: /Novo projeto/ }),
     ).toBeEnabled();
     const initialTop = (await page
-      .getByRole("button", { name: /Novo projeto/ })
+      .getByRole("button", { name: "Atualizar lista", exact: true })
       .boundingBox())!.y;
     let finish!: () => void;
     const gate = new Promise<void>((resolve) => {
@@ -46,23 +46,26 @@ test(
       );
       expect(
         (await page
-          .getByRole("button", { name: /Novo projeto/ })
+          .getByRole("button", { name: "Atualizar lista", exact: true })
           .boundingBox())!.y,
       ).toBe(initialTop);
       for (const [width, height] of sizes) {
         await page.setViewportSize({ width, height });
-        await expect(band(page)).toBeVisible();
+        await expect(
+          page
+            .getByRole("button", { name: "Atualizar lista", exact: true })
+            .getByText("Atualizando lista…", { exact: true }),
+        ).toBeVisible();
         expect(
           await page.evaluate(
             () => document.documentElement.scrollWidth <= innerWidth,
           ),
         ).toBe(true);
-        const heading = await page
-          .getByRole("heading", { name: "Seu espaço de projetos" })
-          .boundingBox();
-        expect((await band(page).boundingBox())!.y).toBeGreaterThan(
-          heading!.y + heading!.height,
-        );
+        expect(
+          await band(page).evaluate(
+            (element) => element.getBoundingClientRect().height,
+          ),
+        ).toBe(0);
         await page.screenshot({
           path: `.tools/m12/home-status-list-${info.project.name}-${width}.png`,
         });
@@ -87,7 +90,7 @@ test(
 );
 
 test(
-  "importação sem cartão mantém faixa até preparar o desenho e respeita movimento reduzido",
+  "importação sem cartão mantém progresso no botão até preparar o desenho e respeita movimento reduzido",
   { tag: "@interface" },
   async ({ page }, info) => {
     await expect(
@@ -143,23 +146,37 @@ test(
       ).toBeDisabled();
       await page.emulateMedia({ reducedMotion: "reduce" });
       await expect(
-        band(page).locator("[role=status] > div > span").first(),
+        page
+          .getByRole("button", { name: "Carregar .ecovit", exact: true })
+          .locator("svg")
+          .locator(".."),
       ).toHaveCSS("animation-name", "none");
       await release(page, "resumeRead");
       await expect(band(page).getByRole("status")).toHaveText(
-        "Abrindo projeto…",
+        "Importando arquivo…",
       );
       await expect(page.getByTestId("drawing")).toBeHidden();
       await expect(page.getByRole("status")).toHaveCount(1);
       for (const [width, height] of sizes) {
         await page.setViewportSize({ width, height });
-        await expect(band(page)).toBeVisible();
+        await expect(
+          page
+            .getByRole("button", { name: "Carregar .ecovit", exact: true })
+            .getByText("Importando…", { exact: true }),
+        ).toBeVisible();
+        expect(
+          await band(page).evaluate(
+            (element) => element.getBoundingClientRect().height,
+          ),
+        ).toBe(0);
         expect(
           await page.evaluate(
             () => document.documentElement.scrollWidth <= innerWidth,
           ),
         ).toBe(true);
-        const icon = band(page).locator("svg");
+        const icon = page
+          .getByRole("button", { name: "Carregar .ecovit", exact: true })
+          .locator("svg");
         const i = (await icon.boundingBox())!;
         const c = (await icon.locator("..").boundingBox())!;
         expect(
