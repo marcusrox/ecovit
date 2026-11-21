@@ -514,7 +514,7 @@ describe.skipIf(!connection)("local database setup", () => {
     const spy = vi.spyOn(migrations, "loadMigrations").mockResolvedValue([
       ...sequence,
       {
-        version: 2,
+        version: sequence.length + 1,
         sql: "ALTER TABLE ecovit_accounts ADD COLUMN setup_probe text",
       },
     ]);
@@ -531,7 +531,10 @@ describe.skipIf(!connection)("local database setup", () => {
               "SELECT version FROM ecovit_migrations ORDER BY version",
             )
           ).rows,
-        ).toEqual([{ version: 1 }, { version: 2 }]);
+        ).toEqual([
+          ...sequence.map(({ version }) => ({ version })),
+          { version: sequence.length + 1 },
+        ]);
         await target.query("SELECT setup_probe FROM ecovit_accounts");
       } finally {
         await target.end();

@@ -71,6 +71,7 @@ export async function rate(
 export type Identity = {
   id: string;
   email: string;
+  is_admin: boolean;
   sessionHash: string;
   csrf: string;
 };
@@ -89,7 +90,7 @@ export async function identity(
     );
     const account = session.rowCount
       ? await db.query(
-          "SELECT id,email FROM ecovit_accounts WHERE id=$1 AND state='active' FOR UPDATE",
+          "SELECT id,email,is_admin FROM ecovit_accounts WHERE id=$1 AND state='active' FOR UPDATE",
           [session.rows[0].account_id],
         )
       : null;
@@ -112,7 +113,7 @@ export async function identity(
     return { ...account.rows[0], csrf: current.rows[0].csrf, sessionHash };
   }
   const result = await db.query(
-    "SELECT a.id,a.email,s.csrf FROM ecovit_accounts a JOIN ecovit_sessions s ON s.account_id=a.id WHERE s.hash=$1 AND a.state='active' AND s.created_at>clock_timestamp()-interval '30 days' AND s.last_seen>clock_timestamp()-interval '7 days'",
+    "SELECT a.id,a.email,a.is_admin,s.csrf FROM ecovit_accounts a JOIN ecovit_sessions s ON s.account_id=a.id WHERE s.hash=$1 AND a.state='active' AND s.created_at>clock_timestamp()-interval '30 days' AND s.last_seen>clock_timestamp()-interval '7 days'",
     [sessionHash],
   );
   if (!result.rowCount)
@@ -122,6 +123,12 @@ export async function identity(
       "Entre por código para continuar. Seu trabalho permanece nesta página.",
     );
   return { ...result.rows[0], sessionHash };
+}
+export function isAdmin(
+  account: Pick<Identity, "email" | "is_admin">,
+  config: Config,
+) {
+  return account.is_admin || account.email === config.adminEmail;
 }
 export function requireOrigin(request: FastifyRequest, config: Config) {
   if (request.headers.origin !== config.origin)

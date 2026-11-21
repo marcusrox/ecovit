@@ -14,6 +14,7 @@ import { validateProject } from "../src/persistence/document";
 import { MAX_CUSTOM_ASSETS } from "../src/domain/image-elements";
 import type { Config } from "./config";
 import { transaction } from "./db";
+import { recordActivity } from "./observation";
 import {
   ApiError,
   hash,
@@ -231,6 +232,7 @@ export function projectsRoutes(app: FastifyInstance, db: Pool, config: Config) {
           "Operação expirada. Confira a versão salva antes de continuar.",
         );
       const result = await action(client, user.id);
+      await recordActivity(client, user.id);
       if (Date.now() - issued > 86400000)
         throw new ApiError(
           409,
@@ -346,20 +348,23 @@ export function projectsRoutes(app: FastifyInstance, db: Pool, config: Config) {
     "/api/projects/:id",
     { onRequest: protectedRequest },
     async (request) => {
-      const user = await identity(db, request, config);
-      const row = await ownedProject(db, user.id, request.params.id);
-      if (
-        row.state === "purging" ||
-        (row.purge_after && row.purge_after.getTime() <= Date.now())
-      )
-        throw new ApiError(404, "project_missing", "Projeto indisponível.");
-      return {
-        remoteVersion: 1,
-        doc: row.document,
-        revision: row.revision,
-        state: row.state,
-        updatedAt: row.updated_at.toISOString(),
-      };
+      return transaction(db, async (client) => {
+        const user = await identity(client, request, config, true);
+        const row = await ownedProject(client, user.id, request.params.id);
+        if (
+          row.state === "purging" ||
+          (row.purge_after && row.purge_after.getTime() <= Date.now())
+        )
+          throw new ApiError(404, "project_missing", "Projeto indisponível.");
+        await recordActivity(client, user.id);
+        return {
+          remoteVersion: 1,
+          doc: row.document,
+          revision: row.revision,
+          state: row.state,
+          updatedAt: row.updated_at.toISOString(),
+        };
+      });
     },
   );
   app.get<{ Params: { id: string } }>(

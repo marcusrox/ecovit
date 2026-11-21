@@ -234,3 +234,11 @@ Dependências e suas versões estão registradas em `package-lock.json`. Os avis
 ## Etiquetas e fechamento de ambientes
 
 Em Planta, Etiqueta cria nome e área com um clique em região fechada. Renomeie nas propriedades e arraste o texto para qualquer local; a referência fica no clique inicial. Fechamento cria linhas com dois cliques, com atração suspensa por Alt; paredes combinadas com linhas ou somente linhas podem delimitar a região. Linhas não acompanham paredes movidas. Se a etiqueta indicar revisão após perda de referência, divisão ou união, exclua e crie outra. Desfazer restaura o estado anterior. As duas ferramentas não alteram peças ou quantitativos; dados acompanham o projeto e o arquivo 19.
+
+## Administração
+
+A variável privada `ADMIN_EMAIL=marcus.moreira@gmail.com` configura o administrador permanente. Reinicie a API após alterar essa variável. O acesso exige o login normal por código; não cria conta antecipadamente. O permanente não pode ser rebaixado pelo painel. Outros administradores são concedidos/retirados em Administração → Usuários, sem acesso aos desenhos de terceiros.
+
+Aplique a migração incremental pelo comando existente `npm run db:migrate` antes de iniciar o código novo. Em produção, siga os pré-requisitos de backup e migração do procedimento de implantação; esta alteração não publica nem executa migração no banco do aplicativo automaticamente.
+
+Para recuperação excepcional, confira o UUID de uma conta existente e ativa e execute no servidor `node --env-file=.env dist-server/cli.mjs admin-recover UUID "motivo sem dados pessoais" --confirm`. A operação registra auditoria e não cria sessão, altera e-mail ou transfere projetos. Desenvolvimento usa `node --env-file=.env --import tsx server/cli.ts` com os mesmos argumentos.

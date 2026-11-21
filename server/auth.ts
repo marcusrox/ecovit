@@ -7,6 +7,7 @@ import { z } from "zod";
 import { emailSchema, type Config } from "./config";
 import { codeEmail } from "./code-email";
 import { transaction } from "./db";
+import { auditPermanent } from "./admin";
 import {
   ApiError,
   cookie,
@@ -15,6 +16,7 @@ import {
   hash,
   hashSession,
   identity,
+  isAdmin,
   rate,
   requireCsrf,
   requireOrigin,
@@ -62,11 +64,13 @@ export function authRoutes(app: FastifyInstance, db: Pool, config: Config) {
       [randomUUID(), email],
     );
     const accounts = await client.query(
-      "SELECT id,email,state FROM ecovit_accounts WHERE email=$1 FOR UPDATE",
+      "SELECT id,email,state,is_admin FROM ecovit_accounts WHERE email=$1 FOR UPDATE",
       [email],
     );
     const account = accounts.rows[0];
     if (account.state !== "active") return null;
+    if (account.email === config.adminEmail)
+      await auditPermanent(client, account.id);
     const raw = token();
     const csrfToken = token();
     await client.query(
@@ -79,7 +83,11 @@ export function authRoutes(app: FastifyInstance, db: Pool, config: Config) {
     return {
       raw,
       csrf: csrfToken,
-      account: { id: account.id as string, email: account.email as string },
+      account: {
+        id: account.id as string,
+        email: account.email as string,
+        admin: isAdmin(account, config),
+      },
     };
   }
   function issueSession(
@@ -115,6 +123,11 @@ export function authRoutes(app: FastifyInstance, db: Pool, config: Config) {
     let account = null;
     try {
       account = await identity(db, request, config);
+      if (account.email === config.adminEmail)
+        await transaction(db, async (client) => {
+          const current = await identity(client, request, config, true);
+          await auditPermanent(client, current.id);
+        });
       await db.query(
         "UPDATE ecovit_sessions SET last_seen=clock_timestamp() WHERE hash=$1",
         [account.sessionHash],
@@ -124,7 +137,13 @@ export function authRoutes(app: FastifyInstance, db: Pool, config: Config) {
     }
     const devEmail = devLoginFor(request);
     return {
-      account: account ? { id: account.id, email: account.email } : null,
+      account: account
+        ? {
+            id: account.id,
+            email: account.email,
+            admin: isAdmin(account, config),
+          }
+        : null,
       csrf: account?.csrf ?? sign(config.secret, `csrf:${nonce}`),
       serverTime: new Date().toISOString(),
       ...(devEmail && devEmail !== account?.email ? { devLogin: true } : {}),
@@ -341,7 +360,10 @@ export function authRoutes(app: FastifyInstance, db: Pool, config: Config) {
         }
         const session = await createSession(client, request, challenge.email);
         if (!session)
-          return { error: "A exclusão da conta está em processamento." };
+          return {
+            error:
+              "Esta conta está bloqueada ou com exclusão em processamento.",
+          };
         await client.query("DELETE FROM ecovit_challenges WHERE id=$1", [
           input.id,
         ]);

@@ -1,4 +1,4 @@
-export type Account = { id: string; email: string };
+export type Account = { id: string; email: string; admin?: boolean };
 export type Session = {
   account: Account | null;
   csrf: string;

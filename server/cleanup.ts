@@ -90,6 +90,15 @@ export async function cleanup(db: Pool, config: Config) {
     await db.query(
       "DELETE FROM ecovit_rate_limits WHERE expires_at<=clock_timestamp()",
     );
+    await db.query(
+      "DELETE FROM ecovit_activity WHERE day<(clock_timestamp() AT TIME ZONE 'America/Sao_Paulo')::date-29",
+    );
+    await db.query(
+      "DELETE FROM ecovit_operation_events WHERE created_at<=clock_timestamp()-interval '30 days'",
+    );
+    await db.query(
+      "DELETE FROM ecovit_admin_audit WHERE created_at<=clock_timestamp()-interval '180 days'",
+    );
     // Owner-prefixed names let account deletion sweep even files left by a
     // crash before association, without waiting the active-owner grace period.
     for (const filename of await readdir(config.dataDir)) {
@@ -101,7 +110,7 @@ export async function cleanup(db: Pool, config: Config) {
         "SELECT state FROM ecovit_accounts WHERE id=$1",
         [owner],
       );
-      if (!account.rowCount || account.rows[0].state !== "active") {
+      if (!account.rowCount || account.rows[0].state === "deleting") {
         await rm(file, { force: true });
         continue;
       }

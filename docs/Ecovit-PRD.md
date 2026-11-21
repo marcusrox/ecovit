@@ -451,7 +451,17 @@ Remover projeto envia à lixeira privada, separada da lista ativa. Exibir prazo,
 
 Lixeira e exclusão ativa pertencem ao Ecovit. Política de backup do servidor fica integralmente com o administrador, fora da especificação do produto; não prometer recuperação, frequência, retenção ou eliminação de cópias externas pelo aplicativo.
 
-Não há painel de administração, lixeira de elementos individuais ou compartilhamento nesta entrega.
+Não há lixeira de elementos individuais ou compartilhamento nesta entrega. Administração segue RF-23.
+
+### RF-23 — Administração
+
+Contas administrativas acessam Visão geral, Usuários, Operação e Auditoria dentro do aplicativo. Consultam métricas de utilização, cotas e metadados de projetos, sem abrir documentos ou imagens de terceiros. O período de uso considera aberturas ou alterações de projetos confirmadas, com cobertura de coleta explícita.
+
+Administradores podem bloquear/desbloquear contas comuns, encerrar suas sessões e conceder ou retirar o privilégio de outras contas, com confirmação, motivo e auditoria. Não podem agir sobre a própria conta por esses comandos. O administrador permanente é definido na configuração privada do servidor e não pode ser rebaixado pelo painel. O login continua por código de e-mail, sem etapa adicional nesta versão.
+
+Retirar o privilégio ou bloquear encerra as sessões correspondentes e preserva projetos. Exclusão da própria conta continua permitida, inclusive para o último administrador; recadastrar e verificar o endereço permanentemente configurado volta a dar acesso administrativo, sem recuperar dados antigos. Recuperação excepcional de privilégio ocorre somente por procedimento restrito no servidor.
+
+Atividade diária e ocorrências técnicas têm retenção de 30 dias; última atividade acompanha a existência da conta; auditoria, até 180 dias. Excluir conta elimina sua atividade e as auditorias que a identifiquem em até 24 horas, com perda de rastreabilidade dessas intervenções. Detalhes de acesso e armazenamento estão nos contratos responsáveis. Critérios da entrega na [T-031](tasks/T-031-Area-Administrativa.md).
 
 ## 7. Modelo de domínio e diretrizes de implementação
 

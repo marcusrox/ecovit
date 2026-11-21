@@ -33,7 +33,7 @@ Uma decisão de programação não estabelece uma regra construtiva. Antes de mu
 
 ### Organização simples da aplicação
 
-Decisão de M12: uma aplicação em um repositório, com frontend existente e uma API Node dividida apenas em módulos de autenticação, projetos e uploads. Editor/motor continuam no navegador; domínio/validação pura é compartilhado. API e frontend têm builds próprios, mas são publicados na mesma origem pelo aaPanel. PostgreSQL 18.0, diretório privado de imagens e Resend são a infraestrutura utilizada, sem microserviços, Redis, barramento, WebSocket ou abstração para múltiplos bancos.
+Decisão de M12: uma aplicação em um repositório, com frontend existente e uma API Node dividida em módulos de autenticação, projetos e uploads. A T-031 acrescenta o módulo administrativo na mesma aplicação. Editor/motor continuam no navegador; domínio/validação pura é compartilhado. API e frontend têm builds próprios, mas são publicados na mesma origem pelo aaPanel. PostgreSQL 18.0, diretório privado de imagens e Resend são a infraestrutura utilizada, sem microserviços, Redis, barramento, WebSocket ou abstração para múltiplos bancos.
 
 Uma chamada normal de gravação por alteração, com revisão e identificador de repetição; não preparar cada operação em outra chamada. Upload separado somente quando houver bytes novos, com temporário e associação ao salvar. Um único tratamento de falha atende editar/undo/redo e demais gravações. Uma rotina agendada do mesmo pacote limpa temporários, lixeira e contas excluídas. Processo filho transitório atende somente validação pesada, sem outro serviço persistente ou fila. Biblioteca/módulo só é extraído quando concretamente necessário.
 
@@ -68,6 +68,7 @@ Uma aplicação no mesmo repositório: frontend estático e uma API Node modular
 - src/editor, src/domain, src/state e src/ui: responsabilidades descritas nos assuntos acima; sem alterar as regras do motor na M12.
 - src/persistence/document.ts: envelope/validação pura; files.ts: leitura/download pelo navegador; remote-document.ts: representação remota sem bytes; http.ts/remote.ts: sessão HTTP, revisões e repetição da operação.
 - server/auth.ts e security.ts: códigos, sessões, autorização e proteções comuns.
+- server/admin.ts: consultas administrativas, concessão/retirada de privilégios, intervenções e recuperação restrita; server/observation.ts: atividade diária e ocorrências técnicas, conforme T-031.
 - server/projects.ts: documentos, cotas, revisões, imagens e operações de projeto.
 - server/db.ts e schema.sql: conexão, transações e migração inicial versionada.
 - server/validation.ts e validate-worker.ts: processo filho transitório para importação e raster.

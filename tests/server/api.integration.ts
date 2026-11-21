@@ -16,6 +16,7 @@ import { database, migrate } from "../../server/db";
 import { readConfig } from "../../server/config";
 import { createApi } from "../../server/app";
 import { cleanup } from "../../server/cleanup";
+import { recoverAdmin } from "../../server/admin";
 import { hash } from "../../server/security";
 import { assetPath } from "../../server/projects";
 import { createProject, makeWall } from "../../src/domain/project";
@@ -32,6 +33,7 @@ const config = readConfig({
   APP_ORIGIN: "http://127.0.0.1:5174",
   DATA_DIR: path.join(root, "assets"),
   MAIL_CAPTURE_DIR: path.join(root, "mail"),
+  ADMIN_EMAIL: "permanent@example.com",
 });
 const db = database(config.databaseUrl);
 const app = await createApi(db, config);
@@ -640,6 +642,7 @@ describe("M12 — API com PostgreSQL 18.0 real", () => {
       expect(signedIn.json().account).toEqual({
         id: owner.id,
         email: owner.email,
+        admin: false,
       });
       const sessionCookie = cookies(signedIn);
       const list = await service.inject({
@@ -1412,5 +1415,460 @@ describe("M12 — API com PostgreSQL 18.0 real", () => {
       vi.unstubAllGlobals();
       await service.close();
     }
+  });
+});
+
+describe("T031 — administração", () => {
+  const permanent = "permanent@example.com";
+  const adminHeaders = (user: User) => ({
+    ...headers(user),
+    "x-ecovit-account": user.id,
+  });
+  const act = (
+    user: User,
+    id: string,
+    action: string,
+    input = { ...body(), reason: "Verificação administrativa" },
+  ) =>
+    app.inject({
+      method: "POST",
+      url: `/api/admin/users/${id}/actions`,
+      headers: adminHeaders(user),
+      payload: { ...input, action },
+    });
+  beforeEach(async () => {
+    await db.query("TRUNCATE ecovit_operation_events");
+  });
+
+  it("requires real verified login, authorization, scope, CSRF and protects the configured administrator", async () => {
+    const owner = await login(permanent),
+      ordinary = await login("ordinary@example.com");
+    for (const url of [
+      "/api/admin/overview",
+      "/api/admin/users",
+      "/api/admin/operation",
+      "/api/admin/audit",
+      `/api/admin/users/${owner.id}`,
+    ]) {
+      expect((await app.inject({ url })).statusCode).toBe(401);
+      expect(
+        (await app.inject({ url, headers: adminHeaders(ordinary) })).statusCode,
+      ).toBe(403);
+      expect(
+        (await app.inject({ url, headers: adminHeaders(owner) })).statusCode,
+      ).toBe(200);
+    }
+    expect(
+      (
+        await app.inject({ url: "/api/session", headers: headers(owner) })
+      ).json().account.admin,
+    ).toBe(true);
+    expect(
+      (
+        await app.inject({
+          url: "/api/admin/users",
+          headers: { ...adminHeaders(owner), "x-ecovit-account": ordinary.id },
+        })
+      ).statusCode,
+    ).toBe(409);
+    expect(
+      (
+        await app.inject({
+          method: "POST",
+          url: `/api/admin/users/${ordinary.id}/actions`,
+          headers: { ...adminHeaders(owner), "x-csrf-token": "wrong" },
+          payload: { ...body(), action: "grant", reason: "Test grant" },
+        })
+      ).statusCode,
+    ).toBe(403);
+    expect((await act(owner, ordinary.id, "grant")).statusCode).toBe(200);
+    for (const action of ["revoke", "block", "sessions"])
+      expect((await act(ordinary, owner.id, action)).statusCode).toBe(403);
+    expect((await act(owner, owner.id, "revoke")).statusCode).toBe(403);
+    const target = (
+      await app.inject({
+        url: `/api/admin/users/${owner.id}`,
+        headers: adminHeaders(ordinary),
+      })
+    ).json();
+    expect(target.account).toMatchObject({ admin: true, permanent: true });
+  });
+
+  it("delegates with equal permissions, idempotency and revokes all target sessions while preserving projects", async () => {
+    const owner = await login(permanent),
+      second = await login("second@example.com"),
+      third = await login("third@example.com");
+    const { doc } = await create(second, "Private geometry");
+    const input = { ...body(), reason: "Delegação de acesso" };
+    expect((await act(owner, second.id, "grant", input)).json().outcome).toBe(
+      "success",
+    );
+    expect((await act(owner, second.id, "grant", input)).json().outcome).toBe(
+      "success",
+    );
+    expect(
+      (
+        await db.query(
+          "SELECT count(*)::int AS n FROM ecovit_admin_audit WHERE actor_id=$1 AND operation_id=$2",
+          [owner.id, input.operationId],
+        )
+      ).rows[0].n,
+    ).toBe(1);
+    expect((await act(owner, third.id, "grant", input)).statusCode).toBe(409);
+    expect((await act(second, third.id, "grant")).json().outcome).toBe(
+      "success",
+    );
+    expect((await act(third, second.id, "revoke")).json().outcome).toBe(
+      "success",
+    );
+    expect(
+      (
+        await db.query(
+          "SELECT count(*)::int AS n FROM ecovit_sessions WHERE account_id=$1",
+          [second.id],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+    expect(
+      (
+        await db.query("SELECT owner_id FROM ecovit_projects WHERE id=$1", [
+          doc.project.id,
+        ])
+      ).rows[0].owner_id,
+    ).toBe(second.id);
+    expect(
+      (
+        await app.inject({
+          url: "/api/admin/users",
+          headers: adminHeaders(second),
+        })
+      ).statusCode,
+    ).toBe(401);
+    expect(
+      (
+        await app.inject({
+          url: `/api/projects/${doc.project.id}`,
+          headers: headers(third),
+        })
+      ).statusCode,
+    ).toBe(404);
+  });
+
+  it("blocks access, refuses promotion of blocked/deleting accounts and unlocks without reviving sessions", async () => {
+    const owner = await login(permanent),
+      user = await login("blocked@example.com");
+    const { doc } = await create(user);
+    const assetId = randomUUID();
+    await db.query(
+      "INSERT INTO ecovit_assets(id,owner_id,project_id,bytes,hash,ready,attached) VALUES($1,$2,$3,4,'test',true,true)",
+      [assetId, user.id, doc.project.id],
+    );
+    await db.query(
+      "INSERT INTO ecovit_project_assets(project_id,asset_id) VALUES($1,$2)",
+      [doc.project.id, assetId],
+    );
+    await writeFile(assetPath(config, assetId, user.id), "keep");
+    expect((await act(owner, user.id, "block")).json().outcome).toBe("success");
+    expect((await act(owner, user.id, "grant")).statusCode).toBe(403);
+    await cleanup(db, config);
+    await expect(
+      access(assetPath(config, assetId, user.id)),
+    ).resolves.toBeUndefined();
+    expect(
+      (
+        await app.inject({
+          method: "PUT",
+          url: `/api/projects/${doc.project.id}`,
+          headers: headers(user),
+          payload: { ...body("1"), doc: dehydrate(doc, {}) },
+        })
+      ).statusCode,
+    ).toBe(401);
+    expect((await act(owner, user.id, "unblock")).json().outcome).toBe(
+      "success",
+    );
+    expect(
+      (
+        await app.inject({
+          url: `/api/projects/${doc.project.id}`,
+          headers: headers(user),
+        })
+      ).statusCode,
+    ).toBe(401);
+    await db.query(
+      "UPDATE ecovit_accounts SET state='deleting',deleting_at=clock_timestamp() WHERE id=$1",
+      [user.id],
+    );
+    expect((await act(owner, user.id, "grant")).statusCode).toBe(404);
+  });
+
+  it("rolls back a privilege change if the audit cannot be persisted", async () => {
+    const owner = await login(permanent),
+      user = await login("rollback@example.com");
+    await db.query(
+      "CREATE FUNCTION t031_reject_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test audit failure'; END $$; CREATE TRIGGER t031_reject BEFORE INSERT ON ecovit_admin_audit FOR EACH ROW EXECUTE FUNCTION t031_reject_audit()",
+    );
+    try {
+      expect((await act(owner, user.id, "grant")).statusCode).toBe(500);
+      expect(
+        (
+          await db.query("SELECT is_admin FROM ecovit_accounts WHERE id=$1", [
+            user.id,
+          ])
+        ).rows[0].is_admin,
+      ).toBe(false);
+    } finally {
+      await db.query(
+        "DROP TRIGGER t031_reject ON ecovit_admin_audit; DROP FUNCTION t031_reject_audit()",
+      );
+    }
+  });
+
+  it("serializes competing revocations so an already revoked administrator cannot commit", async () => {
+    const owner = await login(permanent),
+      left = await login("left@example.com"),
+      right = await login("right@example.com");
+    await act(owner, left.id, "grant");
+    await act(owner, right.id, "grant");
+    const responses = await Promise.all([
+      act(left, right.id, "revoke"),
+      act(right, left.id, "revoke"),
+    ]);
+    expect(responses.map((r) => r.statusCode).sort()).toEqual([200, 401]);
+    expect(
+      (
+        await db.query(
+          "SELECT count(*)::int AS n FROM ecovit_accounts WHERE is_admin",
+        )
+      ).rows[0].n,
+    ).toBe(1);
+  });
+
+  it("counts project activity once per day and lists metadata without documents, with pagination and filters", async () => {
+    const owner = await login(permanent),
+      user = await login("metrics@example.com");
+    const { doc } = await create(user, "Metadata only");
+    await app.inject({
+      url: `/api/projects/${doc.project.id}`,
+      headers: headers(user),
+    });
+    await app.inject({
+      url: `/api/projects/${doc.project.id}`,
+      headers: headers(user),
+    });
+    expect(
+      (
+        await db.query(
+          "SELECT count(*)::int AS n FROM ecovit_activity WHERE account_id=$1",
+          [user.id],
+        )
+      ).rows[0].n,
+    ).toBe(1);
+    const metrics = (
+      await app.inject({
+        url: "/api/admin/overview?days=30",
+        headers: adminHeaders(owner),
+      })
+    ).json();
+    expect(metrics).toMatchObject({
+      active_users: 1,
+      projects: 1,
+      accounts: 2,
+      new_accounts: 2,
+    });
+    expect(metrics.coverage_since).toBeTruthy();
+    expect(metrics.coverage_partial).toBe(true);
+    await db.query(
+      "UPDATE ecovit_observation SET started_at=((clock_timestamp() AT TIME ZONE 'America/Sao_Paulo')::date-6) AT TIME ZONE 'America/Sao_Paulo' WHERE id=1",
+    );
+    try {
+      const complete = (
+        await app.inject({
+          url: "/api/admin/overview?days=7",
+          headers: adminHeaders(owner),
+        })
+      ).json();
+      expect(complete.coverage_partial).toBe(false);
+      expect(
+        (
+          await app.inject({
+            url: "/api/admin/overview?days=30",
+            headers: adminHeaders(owner),
+          })
+        ).json().coverage_partial,
+      ).toBe(true);
+    } finally {
+      await db.query(
+        "UPDATE ecovit_observation SET started_at=clock_timestamp() WHERE id=1",
+      );
+    }
+    const detail = await app.inject({
+      url: `/api/admin/users/${user.id}`,
+      headers: adminHeaders(owner),
+    });
+    expect(detail.json().projects[0]).toMatchObject({
+      name: "Metadata only",
+      revision: "1",
+    });
+    expect(detail.body).not.toContain("document");
+    expect(detail.body).not.toContain("model");
+    for (let i = 0; i < 26; i++)
+      await db.query("INSERT INTO ecovit_accounts(id,email) VALUES($1,$2)", [
+        randomUUID(),
+        `page${i}@example.com`,
+      ]);
+    const first = (
+      await app.inject({
+        url: "/api/admin/users?search=page",
+        headers: adminHeaders(owner),
+      })
+    ).json();
+    const next = (
+      await app.inject({
+        url: "/api/admin/users?search=page&page=2",
+        headers: adminHeaders(owner),
+      })
+    ).json();
+    expect(first.items).toHaveLength(25);
+    expect(next.items).toHaveLength(1);
+  });
+
+  it("records only safe technical occurrences and distinguishes expected refusals from failures and email acceptance", async () => {
+    const owner = await login(permanent);
+    await app.inject({
+      method: "POST",
+      url: `/api/uploads/${randomUUID()}/${randomUUID()}`,
+      headers: headers(owner),
+      payload: { secret: "do-not-record-this" },
+    });
+    await app.inject({
+      method: "POST",
+      url: `/api/projects/${randomUUID()}`,
+      headers: headers(owner),
+      payload: { sourceFile: "private-file-content" },
+    });
+    const mail = (
+      await app.inject({
+        url: "/api/admin/operation?category=mail&code=mail_accepted",
+        headers: adminHeaders(owner),
+      })
+    ).json();
+    expect(
+      mail.items.some(
+        (item: { outcome: string }) => item.outcome === "accepted",
+      ),
+    ).toBe(true);
+    const events = await app.inject({
+      url: "/api/admin/operation?days=30",
+      headers: adminHeaders(owner),
+    });
+    expect(
+      events
+        .json()
+        .items.some((item: { category: string }) => item.category === "upload"),
+    ).toBe(true);
+    expect(
+      events
+        .json()
+        .items.some((item: { category: string }) => item.category === "import"),
+    ).toBe(true);
+    for (const secret of [
+      permanent,
+      "private-file-content",
+      "do-not-record-this",
+      owner.csrf,
+      owner.cookie,
+    ])
+      expect(events.body).not.toContain(secret);
+    expect(events.json()).toMatchObject({ api: "ok", database: "ok" });
+  });
+
+  it("removes expired observations and audit entries and cascades actor/target identity on account deletion", async () => {
+    const owner = await login(permanent),
+      user = await login("delete@example.com"),
+      other = await login("remaining@example.com");
+    await create(user);
+    await act(owner, user.id, "grant");
+    await act(user, other.id, "grant");
+    await db.query(
+      "INSERT INTO ecovit_activity(account_id,day) VALUES($1,(clock_timestamp() AT TIME ZONE 'America/Sao_Paulo')::date-30)",
+      [other.id],
+    );
+    await db.query(
+      "INSERT INTO ecovit_operation_events(category,code,outcome,created_at) VALUES('save','old','failure',clock_timestamp()-interval '31 days')",
+    );
+    await db.query(
+      "UPDATE ecovit_admin_audit SET created_at=clock_timestamp()-interval '181 days' WHERE action='configured'",
+    );
+    await db.query(
+      "UPDATE ecovit_accounts SET state='deleting',deleting_at=clock_timestamp() WHERE id=$1",
+      [user.id],
+    );
+    await cleanup(db, config);
+    expect(
+      (
+        await db.query(
+          "SELECT 1 FROM ecovit_admin_audit WHERE actor_id=$1 OR target_id=$1",
+          [user.id],
+        )
+      ).rowCount,
+    ).toBe(0);
+    expect(
+      (
+        await db.query(
+          "SELECT 1 FROM ecovit_admin_audit WHERE action='configured'",
+        )
+      ).rowCount,
+    ).toBe(0);
+    expect(
+      (await db.query("SELECT 1 FROM ecovit_operation_events WHERE code='old'"))
+        .rowCount,
+    ).toBe(0);
+    expect((await db.query("SELECT 1 FROM ecovit_activity")).rowCount).toBe(0);
+    expect(
+      (await db.query("SELECT 1 FROM ecovit_accounts WHERE id=$1", [other.id]))
+        .rowCount,
+    ).toBe(1);
+  });
+
+  it("recovers through the server without a session and permanently configured email regains access on verified recadastro", async () => {
+    const user = await login("recover@example.com");
+    await recoverAdmin(db, config, user.id, "Recuperação operacional");
+    expect(
+      (
+        await app.inject({
+          url: "/api/admin/users",
+          headers: adminHeaders(user),
+        })
+      ).statusCode,
+    ).toBe(200);
+    expect(
+      (
+        await db.query(
+          "SELECT source,action FROM ecovit_admin_audit WHERE target_id=$1",
+          [user.id],
+        )
+      ).rows,
+    ).toEqual([{ source: "server", action: "recover" }]);
+    const owner = await login(permanent);
+    await db.query(
+      "UPDATE ecovit_accounts SET state='deleting',deleting_at=clock_timestamp() WHERE id=$1",
+      [owner.id],
+    );
+    await cleanup(db, config);
+    const replacement = await login(permanent);
+    expect(replacement.id).not.toBe(owner.id);
+    expect(
+      (
+        await app.inject({ url: "/api/session", headers: headers(replacement) })
+      ).json().account.admin,
+    ).toBe(true);
+    expect(
+      (
+        await db.query("SELECT 1 FROM ecovit_projects WHERE owner_id=$1", [
+          replacement.id,
+        ])
+      ).rowCount,
+    ).toBe(0);
   });
 });

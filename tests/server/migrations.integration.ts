@@ -12,7 +12,7 @@ const db = database(url.toString());
 let initial: Migration[];
 
 beforeAll(async () => {
-  initial = await loadMigrations();
+  initial = (await loadMigrations()).slice(0, 1);
   await root.query(`CREATE SCHEMA ${schema}`);
 });
 beforeEach(async () => {
@@ -42,6 +42,36 @@ async function structure() {
 }
 
 describe("incremental PostgreSQL migrations", () => {
+  it("T031 upgrades existing accounts and preserves the complete upgraded schema on repeat", async () => {
+    await migrate(db, initial);
+    const id = randomUUID();
+    await db.query("INSERT INTO ecovit_accounts(id,email) VALUES($1,$2)", [
+      id,
+      "upgrade@example.com",
+    ]);
+    await migrate(db, await loadMigrations());
+    const upgraded = await structure(),
+      versions = await history();
+    expect(versions.map((row) => row.version)).toEqual([1, 2]);
+    expect(
+      (
+        await db.query(
+          "SELECT is_admin,last_activity FROM ecovit_accounts WHERE id=$1",
+          [id],
+        )
+      ).rows,
+    ).toEqual([{ is_admin: false, last_activity: null }]);
+    await db.query("UPDATE ecovit_accounts SET state='blocked' WHERE id=$1", [
+      id,
+    ]);
+    await migrate(db, await loadMigrations());
+    expect(await structure()).toEqual(upgraded);
+    expect(await history()).toEqual(versions);
+    expect(
+      (await db.query("SELECT state FROM ecovit_accounts WHERE id=$1", [id]))
+        .rows[0].state,
+    ).toBe("blocked");
+  });
   it("preserves the legacy SQL structure, data and original history on repeat", async () => {
     // Start with the previously delivered SQL, not the new executor.
     await db.query(initial[0].sql);
@@ -52,8 +82,8 @@ describe("incremental PostgreSQL migrations", () => {
       id,
       "preserved@example.invalid",
     ]);
-    await migrate(db);
-    await migrate(db);
+    await migrate(db, initial);
+    await migrate(db, initial);
     expect(await structure()).toEqual(originalStructure);
     expect(await history()).toEqual(originalHistory);
     expect(
@@ -63,7 +93,7 @@ describe("incremental PostgreSQL migrations", () => {
   });
 
   it("creates the same initial schema in an empty schema", async () => {
-    await migrate(db);
+    await migrate(db, initial);
     expect((await history()).map((r) => r.version)).toEqual([1]);
     const actual = await structure();
     await root.query(`DROP SCHEMA ${schema} CASCADE; CREATE SCHEMA ${schema}`);
@@ -142,14 +172,16 @@ describe("incremental PostgreSQL migrations", () => {
   it.each(["gap", "empty", "future"])(
     "rejects %s history without applying new SQL",
     async (kind) => {
-      await migrate(db);
+      await migrate(db, initial);
       if (kind === "gap")
         await db.query("UPDATE ecovit_migrations SET version=2");
       if (kind === "empty") await db.query("DELETE FROM ecovit_migrations");
       if (kind === "future")
         await db.query("INSERT INTO ecovit_migrations(version) VALUES(2)");
       const previous = await history();
-      await expect(migrate(db)).rejects.toThrow(/inconsistente|desconhecida/);
+      await expect(migrate(db, initial)).rejects.toThrow(
+        /inconsistente|desconhecida/,
+      );
       expect(await history()).toEqual(previous);
     },
   );
@@ -158,7 +190,9 @@ describe("incremental PostgreSQL migrations", () => {
     await db.query(
       "CREATE TABLE unrelated(value text); INSERT INTO unrelated VALUES('keep')",
     );
-    await expect(migrate(db)).rejects.toThrow("histórico de migrações ausente");
+    await expect(migrate(db, initial)).rejects.toThrow(
+      "histórico de migrações ausente",
+    );
     expect((await db.query("SELECT * FROM unrelated")).rows).toEqual([
       { value: "keep" },
     ]);

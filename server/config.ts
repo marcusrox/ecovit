@@ -30,6 +30,9 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     return value;
   }
   const production = env.NODE_ENV === "production";
+  const adminEmail = env.ADMIN_EMAIL?.trim()
+    ? emailSchema.parse(env.ADMIN_EMAIL)
+    : undefined;
   const secret = env.SESSION_SECRET ?? "";
   if (secret.length < 32)
     throw new Error("SESSION_SECRET precisa de pelo menos 32 caracteres.");
@@ -56,6 +59,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     throw new Error("Configure RESEND_API_KEY e MAIL_FROM.");
   return {
     production,
+    adminEmail,
     devLoginEmail,
     secret,
     origin,
@@ -69,6 +73,10 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     projectLimit: positive("PROJECT_LIMIT", 20),
     imageLimit: positive("IMAGE_LIMIT", 524288000),
     validationMs: positive("VALIDATION_TIMEOUT_MS", 90000, 90000),
-    cookie: production ? "__Host-ecovit" : devLoginEmail ? "ecovit-dev" : "ecovit",
+    cookie: production
+      ? "__Host-ecovit"
+      : devLoginEmail
+        ? "ecovit-dev"
+        : "ecovit",
   };
 }

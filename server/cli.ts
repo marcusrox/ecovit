@@ -2,6 +2,7 @@ import { readConfig } from "./config";
 import { database, migrate } from "./db";
 import { MigrationError } from "./migrations";
 import { cleanup } from "./cleanup";
+import { recoverAdmin } from "./admin";
 import { mkdir, readFile } from "node:fs/promises";
 import { parseEnv } from "node:util";
 
@@ -51,7 +52,17 @@ try {
     db = database(config.databaseUrl);
     await mkdir(config.dataDir, { recursive: true });
     await cleanup(db, config);
-  } else throw new MigrationError("Use migrate ou cleanup.");
+  } else if (process.argv[2] === "admin-recover") {
+    const id = process.argv[3],
+      reason = process.argv[4];
+    if (!id || !reason || process.argv[5] !== "--confirm")
+      throw new MigrationError(
+        'Use admin-recover UUID "motivo sem dados pessoais" --confirm, após conferir a conta-alvo.',
+      );
+    const config = readConfig();
+    db = database(config.databaseUrl);
+    await recoverAdmin(db, config, id, reason);
+  } else throw new MigrationError("Use migrate, cleanup ou admin-recover.");
   console.log("Operação concluída.");
 } catch (error) {
   console.error(

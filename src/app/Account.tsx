@@ -30,6 +30,7 @@ import { useStore } from "../state/store";
 import { Icon } from "../ui/Icon";
 import { Brand } from "../ui/Brand";
 import { AccountAvatar } from "../ui/AccountAvatar";
+import { Admin } from "./Admin";
 import { VersionFooter } from "./ReleaseHistory";
 import styles from "../ui/App.module.css";
 
@@ -41,14 +42,24 @@ export function AccountButton() {
   const context = useContext(AccountContext);
   if (!context) return null;
   return (
-    <button
-      className={`${styles.iconText} ${styles.accountButton}`}
-      aria-label="Conta"
-      title={context.account.email}
-      onClick={context.open}
-    >
-      <AccountAvatar email={context.account.email} />
-    </button>
+    <>
+      {context.account.admin && (
+        <button
+          className={styles.iconText}
+          onClick={() => window.dispatchEvent(new Event("ecovit:open-admin"))}
+        >
+          Administração
+        </button>
+      )}
+      <button
+        className={`${styles.iconText} ${styles.accountButton}`}
+        aria-label="Conta"
+        title={context.account.email}
+        onClick={context.open}
+      >
+        <AccountAvatar email={context.account.email} />
+      </button>
+    </>
   );
 }
 function Login({
@@ -320,6 +331,27 @@ function AccountPanel({
       <div className={styles.settingsForm}>
         <div className={styles.settingsBody}>
           <div className={styles.accountSections}>
+            <section
+              className={styles.settingsCard}
+              aria-labelledby="account-privacy-title"
+            >
+              <h3 id="account-privacy-title">Uso dos dados</h3>
+              <p>
+                O Ecovit mantém sua conta e seus projetos privados e usa o
+                serviço de e-mail para enviar códigos de acesso. Administradores
+                consultam dados da conta, cotas e metadados dos projetos, sem
+                acesso aos desenhos.
+              </p>
+              <p>
+                Registramos atividade diária por 30 dias e a última atividade
+                enquanto a conta existir. Ocorrências técnicas sem identificação
+                são mantidas por 30 dias; intervenções administrativas, por até
+                180 dias. Excluir a conta também elimina sua atividade e
+                auditorias que a identifiquem em até 24 horas. Backups do
+                servidor seguem a administração do responsável e não são
+                apagados por essa confirmação.
+              </p>
+            </section>
             <section
               className={styles.settingsCard}
               aria-labelledby="account-usage-title"
@@ -683,6 +715,7 @@ export function AccountShell({ children }: { children: ReactNode }) {
   const [expired, setExpired] = useState(false);
   const [needsAuth, setNeedsAuth] = useState(false);
   const [panel, setPanel] = useState(false);
+  const [admin, setAdmin] = useState(false);
   const hasDocument = useStore((state) => !!state.doc);
   async function start() {
     setError("");
@@ -705,12 +738,18 @@ export function AccountShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     void start();
     const expire = () => {
+      setAdmin(false);
       useStore.setState({ readonly: true });
       setNeedsAuth(true);
       setExpired(true);
     };
     window.addEventListener("ecovit:auth-required", expire);
-    return () => window.removeEventListener("ecovit:auth-required", expire);
+    const openAdmin = () => setAdmin(true);
+    window.addEventListener("ecovit:open-admin", openAdmin);
+    return () => {
+      window.removeEventListener("ecovit:auth-required", expire);
+      window.removeEventListener("ecovit:open-admin", openAdmin);
+    };
   }, []);
   if (!ready)
     return (
@@ -768,6 +807,13 @@ export function AccountShell({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      {admin && account.admin && (
+        <Admin
+          key={account.id}
+          account={account}
+          close={() => setAdmin(false)}
+        />
+      )}
       {expired && (
         <Reauthenticate
           account={account}
