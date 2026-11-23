@@ -863,6 +863,32 @@ button.iconButton {
   color: #82917a;
   margin-bottom: 21px;
 }
+.textProperties label {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+  font-size: 12px;
+}
+.textProperties label:has(input[type="checkbox"]) {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+.textProperties input:not([type="checkbox"]),
+.textProperties select,
+.textProperties textarea {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+.textProperties textarea {
+  font: inherit;
+  padding: 8px;
+  border: 1px solid #cdd7ca;
+  border-radius: 5px;
+}
+.textProperties .furnitureActions .danger {
+  margin: 0;
+}
 .panelTitle button {
   border: 0;
   padding: 0 5px;

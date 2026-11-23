@@ -1,4 +1,4 @@
-import { labelFontSize, labelSpacing } from "./label-font";
+import { labelFont, labelSpacing } from "./label-font";
 import {
   useCallback,
   useEffect,
@@ -482,7 +482,7 @@ export function useTerrainCanvas(
                 const spacing = (value: number) =>
                   labelSpacing(value, camera.scale);
                 offset = spacing(offset);
-                ctx.font = `600 ${labelFontSize(12, camera.scale)}px Arial`;
+                ctx.font = labelFont(12, camera.scale, 600);
                 const w = ctx.measureText(value).width;
                 ctx.fillStyle = "rgba(255,255,255,.92)";
                 ctx.fillRect(

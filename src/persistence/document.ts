@@ -13,6 +13,7 @@ import {
   MAX_CUSTOM_ASSETS,
 } from "../domain/image-elements";
 import { z } from "zod";
+import { textSchema } from "../domain/text";
 import { validateSlab } from "../domain/slabs";
 import {
   LIMIT,
@@ -197,7 +198,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(30),
+    schemaVersion: z.literal(31),
     project: z
       .object({
         id,
@@ -469,6 +470,7 @@ const schema = z
               .strict(),
           )
           .max(4),
+        texts: z.array(textSchema),
         roomLabels: z.array(
           z
             .object({
@@ -997,10 +999,11 @@ export function validateProject(
       value.schemaVersion !== 27 &&
       value.schemaVersion !== 28 &&
       value.schemaVersion !== 29 &&
-      value.schemaVersion !== 30)
+      value.schemaVersion !== 30 &&
+      value.schemaVersion !== 31)
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 30; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 31; demais formatos não são convertidos.",
     );
   if (
     value.schemaVersion === 24 ||
@@ -1011,6 +1014,26 @@ export function validateProject(
     value.schemaVersion === 29
   )
     value = { ...value, schemaVersion: 30 };
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 30 &&
+    "model" in value &&
+    value.model &&
+    typeof value.model === "object"
+  ) {
+    if (
+      "texts" in value.model &&
+      (!Array.isArray(value.model.texts) || value.model.texts.length)
+    )
+      throw new Error("Arquivo inválido: textos em formato anterior.");
+    value = {
+      ...value,
+      schemaVersion: 31,
+      model: { ...value.model, texts: [] },
+    };
+  }
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");
@@ -1072,6 +1095,11 @@ export function validateProject(
       validateChannelReinforcement(f.channelReinforcement);
   }
   const walls = new Map(doc.model.walls.map((w) => [w.id, w]));
+  for (const text of doc.model.texts) {
+    take(text.id);
+    if (!floors.has(text.floorId))
+      throw new Error("Texto com pavimento inválido.");
+  }
   for (const asset of doc.model.customImageAssets) {
     take(asset.id);
     validateCustomAsset(asset);
@@ -1225,6 +1253,7 @@ export function importedCopy(doc: Project): Project {
     ...doc,
     model: {
       ...doc.model,
+      texts: doc.model.texts.map((t) => ({ ...t })),
       slabs: doc.model.slabs.map((slab) => ({
         ...slab,
         ...(slab.construction

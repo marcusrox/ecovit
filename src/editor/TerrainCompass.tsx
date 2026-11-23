@@ -1,4 +1,4 @@
-import { labelFontSize, LABEL_REFERENCE_SCALE } from "./label-font";
+import { labelFont, LABEL_REFERENCE_SCALE } from "./label-font";
 import {
   useCallback,
   useEffect,
@@ -193,7 +193,11 @@ export function useTerrainCompass(
                 ctx.restore();
               }
               ctx.fillStyle = "#183d31";
-              ctx.font = `600 ${labelFontSize(compass.size * LABEL_REFERENCE_SCALE * 0.14, camera.scale)}px Arial`;
+              ctx.font = labelFont(
+                compass.size * LABEL_REFERENCE_SCALE * 0.14,
+                camera.scale,
+                600,
+              );
               ctx.textAlign = "center";
               ctx.textBaseline = "middle";
               for (const [label, x, y] of [

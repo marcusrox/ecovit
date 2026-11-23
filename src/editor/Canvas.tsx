@@ -1,6 +1,13 @@
-import { labelFontSize, labelSpacing } from "./label-font";
+import {
+  DRAWING_FONT_FAMILY,
+  labelFont,
+  labelFontSize,
+  labelSpacing,
+} from "./label-font";
 import { displayDiagnostics } from "./diagnostics";
 import { useRoomCanvas } from "./Rooms";
+import { useTextCanvas } from "./Text";
+import { selectionHandles } from "./selection-handles";
 import { useTerrainCanvas } from "./Terrain";
 import { useTerrainCompass } from "./TerrainCompass";
 import { useReferenceImageCanvas } from "./ReferenceImage";
@@ -175,6 +182,16 @@ export function Canvas({
   const terrain = useTerrainCanvas(doc, tool, setTool, camera, host);
   const compass = useTerrainCompass(doc, tool, camera, host);
   const furniture = useImageElements(doc, tool, camera, host, setTool);
+  const texts = useTextCanvas(doc, tool, camera, host, setTool);
+  const annotationHandles =
+    mode === "plan" && tool === "select" && doc.model.texts.length > 0
+      ? selectionHandles(
+          doc,
+          selected,
+          camera.scale,
+          useStore.getState().terrainEditing,
+        )
+      : [];
   useLayoutEffect(() => {
     const element = host.current;
     if (element)
@@ -186,6 +203,7 @@ export function Canvas({
       busy ||
       !cameraReady ||
       !furniture.ready ||
+      !texts.ready ||
       !imageCanvas.ready
     )
       return;
@@ -200,6 +218,7 @@ export function Canvas({
     busy,
     cameraReady,
     furniture.ready,
+    texts.ready,
     imageCanvas.ready,
     camera,
     size,
@@ -301,6 +320,9 @@ export function Canvas({
     setOpeningPreview(null);
     setGroutHover(null);
   };
+  useEffect(() => {
+    if (readonly) cancel();
+  }, [readonly]);
   useEffect(() => {
     cancel();
     setHover(null);
@@ -563,10 +585,12 @@ export function Canvas({
       mode === "plan" &&
       (imageCanvas.bounds.length ||
         furniture.bounds.length ||
+        texts.bounds.length ||
         doc.model.terrain)
     ) {
       const points = [
         ...imageCanvas.bounds,
+        ...texts.bounds,
         ...(doc.model.terrain?.contour ?? []),
         ...compass.bounds,
         ...(mode === "plan" ? furniture.bounds : []),
@@ -691,7 +715,10 @@ export function Canvas({
         onDoubleClick={(e) => {
           if (e.button !== 0 || (e.target as HTMLElement).closest("button"))
             return;
-          if (rooms.doubleClick(world(pointer(e.clientX, e.clientY))))
+          if (
+            texts.doubleClick(world(pointer(e.clientX, e.clientY))) ||
+            rooms.doubleClick(world(pointer(e.clientX, e.clientY)))
+          )
             e.preventDefault();
         }}
         data-camera={JSON.stringify(camera)}
@@ -718,6 +745,7 @@ export function Canvas({
           if (
             (e.button !== 0 && e.button !== 1) ||
             gesture.current ||
+            texts.isDragging() ||
             rooms.isDragging() ||
             measurements.isDragging() ||
             furniture.isDragging() ||
@@ -780,6 +808,54 @@ export function Canvas({
             if (candidates.length > 1) setChoices(candidates);
             return;
           }
+          if (imageDraft) {
+            if (!readonly) imageCanvas.down(p);
+            return;
+          }
+          const priorityHandle =
+            !readonly &&
+            !imageDraft &&
+            !useStore.getState().slabDraft &&
+            !useStore.getState().furnitureDraft &&
+            !useStore.getState().terrainDraft &&
+            tool === "select" &&
+            annotationHandles.find(
+              (h) =>
+                Math.hypot(h.point.x - p.x, h.point.y - p.y) * camera.scale <=
+                h.radius,
+            );
+          if (priorityHandle) {
+            const h = priorityHandle;
+            if (h.kind === "wall") {
+              const wall = walls.find((w) => w.id === selected)!;
+              gesture.current = { type: "resize", wall, end: h.end! };
+              setPreview(wall);
+              return;
+            }
+            if (h.kind === "opening" && activeOpening) {
+              const wall = walls.find((w) => w.id === activeOpening.wallId)!;
+              gesture.current = {
+                type: "opening-resize",
+                wall,
+                opening: activeOpening,
+                end: h.end!,
+              };
+              setOpeningPreview(activeOpening);
+              return;
+            }
+            if (h.kind === "measurement" && measurements.down(p, e.altKey))
+              return;
+            if (h.kind === "room" && rooms.down(p, e.altKey)) return;
+            if (h.kind === "furniture" && furniture.down(p)) return;
+            if (h.kind === "slab" && slabs.down(p)) return;
+            if (h.kind === "terrain" && terrain.down(p, e.altKey)) return;
+            if (h.kind === "compass" && compass.down(p)) return;
+          }
+          if (texts.down(p)) {
+            e.preventDefault();
+            return;
+          }
+          if (tool === "text") return;
           if (readonly) return;
           if (rooms.down(p, e.altKey)) return;
           if (tool === "room" || tool === "room-boundary") return;
@@ -936,12 +1012,18 @@ export function Canvas({
           terrain.cancel();
           compass.cancel();
           furniture.cancel();
+          texts.cancel();
           if (rooms.isDragging()) rooms.cancel();
           measurements.cancel();
           cancel();
           slabs.cancel();
         }}
         onMouseMove={(e) => {
+          if (
+            gesture.current?.type !== "pan" &&
+            texts.move(world(pointer(e.clientX, e.clientY)))
+          )
+            return;
           if (
             gesture.current?.type !== "pan" &&
             rooms.move(world(pointer(e.clientX, e.clientY)), e.altKey)
@@ -982,6 +1064,12 @@ export function Canvas({
           }
         }}
         onMouseUp={(e) => {
+          if (
+            e.button === 0 &&
+            gesture.current?.type !== "pan" &&
+            texts.up(world(pointer(e.clientX, e.clientY)))
+          )
+            return;
           if (
             e.button === 0 &&
             gesture.current?.type !== "pan" &&
@@ -1168,6 +1256,7 @@ export function Canvas({
             if (
               !busy &&
               !gesture.current &&
+              !texts.isDragging() &&
               !rooms.isDragging() &&
               !measurements.isDragging() &&
               !terrain.isDragging() &&
@@ -1267,6 +1356,7 @@ export function Canvas({
                         camera.y -
                         labelSpacing(18, camera.scale)
                       }
+                      fontFamily={DRAWING_FONT_FAMILY}
                       fontSize={labelFontSize(11, camera.scale)}
                       fill="#205d48"
                     />
@@ -1291,6 +1381,7 @@ export function Canvas({
                   labelSpacing(26, camera.scale)
                 }
                 text={`${display(length(preview))} cm · face externa${wallEdit?.participants.length ? " · continuidade" : ""}${wallEdit?.message ? ` · ${wallEdit.message}` : ""}`}
+                fontFamily={DRAWING_FONT_FAMILY}
                 fontSize={labelFontSize(13, camera.scale)}
                 fill="#174332"
               />
@@ -1538,7 +1629,7 @@ export function Canvas({
                     const vertical = wall.a.x === wall.b.x;
                     const text = `C: ${display(length(wall))} cm · H: ${display(wall.height)} cm`;
                     ctx.save();
-                    ctx.font = `${labelFontSize(11, camera.scale)}px sans-serif`;
+                    ctx.font = labelFont(11, camera.scale);
                     ctx.fillStyle = "#234b40";
                     const metrics = ctx.measureText(text);
                     const ascent = metrics.actualBoundingBoxAscent;
@@ -1623,7 +1714,7 @@ export function Canvas({
                     );
                   ctx.setLineDash([]);
                   ctx.fillStyle = "#234b40";
-                  ctx.font = `${labelFontSize(11, camera.scale)}px sans-serif`;
+                  ctx.font = labelFont(11, camera.scale);
                   const label = `${openingLabel[o.kind]} · ${display(o.base)}–${display(o.base + o.height)} cm`,
                     metrics = ctx.measureText(label),
                     ascent = metrics.actualBoundingBoxAscent,
@@ -1790,10 +1881,27 @@ export function Canvas({
           {slabs.after}
           {measurements.layer}
           {rooms.layer}
+          {compass.layer}
+          {texts.layer}
           {furniture.controls}
           {imageCanvas.markers}
           {terrain.controls}
-          {compass.layer}
+          {mode === "plan" && !readonly && doc.model.texts.length > 0 && (
+            <Layer listening={false}>
+              {annotationHandles.map((h, i) => (
+                <Circle
+                  key={i}
+                  x={camera.x + h.point.x * camera.scale}
+                  y={camera.y + h.point.y * camera.scale}
+                  radius={5}
+                  fill="white"
+                  stroke="#34795d"
+                  strokeWidth={2}
+                />
+              ))}
+            </Layer>
+          )}
+          {texts.controls}
           {mode === "course" && (
             <ChannelReinforcementCanvas camera={camera} width={size.width} />
           )}
@@ -1815,6 +1923,8 @@ export function Canvas({
         !doc.model.measurements.length &&
         !doc.model.roomBoundaries.length &&
         !doc.model.roomLabels.length &&
+        !doc.model.texts.length &&
+        !useStore.getState().textDraft &&
         !doc.model.referenceImages.length &&
         !doc.model.imageElements.length &&
         !doc.model.terrain &&
@@ -1824,6 +1934,7 @@ export function Canvas({
         tool !== "measure" &&
         tool !== "furniture" &&
         tool !== "terrain" &&
+        tool !== "text" &&
         !preview && (
           <div className={styles.canvasHint}>
             <span>SEU PROJETO COMEÇA AQUI</span>

@@ -27,6 +27,7 @@ import { validateProject } from "../persistence/files";
 import { forgetProject, pendingErrorKind } from "../persistence/remote";
 import { mergeFloorView } from "../domain/floors";
 import { useMemo } from "react";
+import type { TextDraft } from "../domain/text";
 import { reconcileOpenings } from "../domain/openings";
 import { constructionOpenings } from "../domain/opening-appearance";
 import {
@@ -34,10 +35,17 @@ import {
   type FloorReference,
 } from "../domain/floor-reference";
 let retired = false;
+type Snapshot = {
+  doc: Project;
+  history: History;
+  activeFloorId: string | null;
+  calculate: boolean;
+};
 const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
     {
       ...previous.model,
+      texts: undefined,
       openings: constructionOpenings(previous.model.openings),
       terrain: undefined,
       measurements: undefined,
@@ -64,6 +72,7 @@ const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
     {
       ...next.model,
+      texts: undefined,
       openings: constructionOpenings(next.model.openings),
       terrain: undefined,
       measurements: undefined,
@@ -88,6 +97,7 @@ const changedInputs = (previous: Project, next: Project) =>
     next.project.groutSettings,
   ]);
 type Inspection = {
+  textDraft: TextDraft | null;
   terrainDraft: { points: Point[] } | null;
   terrainEditing: boolean;
   furnitureDraft: { element: ImageElement; asset?: CustomImageAsset } | null;
@@ -118,6 +128,7 @@ type Inspection = {
   diagnosticWalls: string[];
 };
 const inspection: Inspection = {
+  textDraft: null,
   terrainDraft: null,
   terrainEditing: false,
   furnitureDraft: null,
@@ -152,6 +163,7 @@ type State = Inspection & {
   switchFloor: (id: string) => void;
   history: History;
   busy: boolean;
+  saving: boolean;
   openingProjectId: string | null;
   readonly: boolean;
   saved:
@@ -174,17 +186,78 @@ type State = Inspection & {
       | "furniture"
       | "terrain"
       | "restore-grouts"
+      | "text"
       | "budget",
   ) => Promise<void>;
   undo: (redo?: boolean) => Promise<void>;
   notify: (message: string) => void;
   choose: (id: string | null) => void;
   retry: () => Promise<void>;
+  recalculate: () => Promise<void>;
+  suspend: (message?: string) => void;
   discard: () => Promise<void>;
 };
+type Handoff = {
+  state: State;
+  queued: Snapshot | null;
+  attempt: Snapshot | null;
+  calculationPending: Snapshot | null;
+  checkpoint: Pick<State, "doc" | "history" | "activeFloorId"> | null;
+  suspended: boolean;
+  lastWriteStarted: number | null;
+};
+const incomingHandoff = import.meta.hot?.data.handoff as
+  Promise<Handoff> | undefined;
+const incomingState = import.meta.hot?.data.state as State | undefined;
+const stateValues = (state: State) =>
+  Object.fromEntries(
+    Object.entries(state).filter(([, value]) => typeof value !== "function"),
+  ) as Partial<State>;
+let handoff: () => Promise<Handoff>;
 export const useStore = create<State>((set, get) => {
+  let queued: Snapshot | null = null;
+  let attempt: Snapshot | null = null;
+  let calculationPending: Snapshot | null = null;
+  let draining: Promise<void> | null = null;
+  let suspended = false;
+  let suspensionEpoch = 0;
+  let lastWriteStarted: number | null = null;
+  let wake: (() => void) | null = null;
   let checkpoint: Pick<State, "doc" | "history" | "activeFloorId"> | null =
     null;
+  handoff = async () => {
+    if (get().busy || get().saving)
+      await new Promise<void>((resolve) => {
+        const unsubscribe = useStore.subscribe((state) => {
+          if (!state.busy && !state.saving) {
+            unsubscribe();
+            resolve();
+          }
+        });
+      });
+    return {
+      state: get(),
+      queued,
+      attempt,
+      calculationPending,
+      checkpoint,
+      suspended,
+      lastWriteStarted,
+    };
+  };
+  if (incomingHandoff)
+    void incomingHandoff.then((previous) => {
+      ({
+        queued,
+        attempt,
+        calculationPending,
+        checkpoint,
+        suspended,
+        lastWriteStarted,
+      } = previous);
+      // Preserve session work, while installing the replacement module's actions.
+      set(stateValues(previous.state));
+    });
   function retainGroutResult(previous: Project, next: Project) {
     if (!changedInputs(previous, next)) return get().retainedGroutResult;
     // Merging a floor view can reorder records from other floors. Compare
@@ -213,85 +286,189 @@ export const useStore = create<State>((set, get) => {
       ? (previous.generated ?? get().retainedGroutResult)
       : get().retainedGroutResult;
   }
-  async function persist(doc: Project, calculate = true, write = true) {
-    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.17.0" } };
-    set({ doc, busy: true, saved: write ? "saving" : "saved" });
+  async function calculateDocument(doc: Project) {
     let courseMessage = "";
-    try {
-      if (write) {
-        const receipt = await saveProject(doc);
-        if (receipt?.updatedAt)
-          doc = {
-            ...doc,
-            metadata: {
-              ...doc.metadata,
-              updatedAt: receipt.updatedAt,
-              createdAt: receipt.createdAt ?? doc.metadata.createdAt,
-            },
-          };
+    if (doc.generationState.status === "outdated") {
+      if (typeof requestAnimationFrame === "function")
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => setTimeout(resolve, 0)),
+        );
+      try {
+        const generated = generate(doc);
+        doc = {
+          ...doc,
+          generated,
+          generationState: {
+            status: "current",
+            diagnostics: generated.diagnostics,
+          },
+        };
+        const current = get();
+        const count =
+          generated.floors.find(
+            (floor) => floor.floorId === current.activeFloorId,
+          )?.courses.length ?? 0;
+        const nextCourse = Math.min(current.course, Math.max(1, count));
+        if (nextCourse !== current.course)
+          courseMessage =
+            count > 0
+              ? `A fiada anterior deixou de existir. Selecionada a fiada ${count}.`
+              : "Este pavimento não tem fiadas disponíveis.";
+        set({ doc, course: nextCourse, retainedGroutResult: null });
+      } catch (error) {
+        set({
+          message: `Modelo salvo. Cálculo não concluído: ${error instanceof Error ? error.message : String(error)}. Use Recalcular.`,
+        });
+        return doc;
       }
-      set({ doc, readonly: false });
-      if (calculate && doc.generationState.status === "outdated") {
-        if (typeof requestAnimationFrame === "function")
-          await new Promise<void>((resolve) =>
-            requestAnimationFrame(() => setTimeout(resolve, 0)),
-          );
-        try {
-          const generated = generate(doc);
-          doc = {
-            ...doc,
-            generated,
-            generationState: {
-              status: "current",
-              diagnostics: generated.diagnostics,
-            },
-          };
-          const current = get();
-          const count =
-            generated.floors.find(
-              (floor) => floor.floorId === current.activeFloorId,
-            )?.courses.length ?? 0;
-          const nextCourse = Math.min(current.course, Math.max(1, count));
-          if (nextCourse !== current.course)
-            courseMessage =
-              count > 0
-                ? `A fiada anterior deixou de existir. Selecionada a fiada ${count}.`
-                : "Este pavimento não tem fiadas disponíveis.";
-          set({ doc, course: nextCourse, retainedGroutResult: null });
-        } catch (error) {
-          set({
-            saved: "saved",
-            message: `Modelo salvo. Cálculo não concluído: ${error instanceof Error ? error.message : String(error)}. Use Recalcular.`,
-          });
-          checkpoint = {
-            doc,
-            history: get().history,
-            activeFloorId: get().activeFloorId,
-          };
-          return;
-        }
-      }
-      set({ doc, saved: "saved", readonly: false, message: courseMessage });
-      checkpoint = {
-        doc,
-        history: get().history,
-        activeFloorId: get().activeFloorId,
-      };
-    } catch (error) {
-      const kind = pendingErrorKind(error);
-      set({
-        saved:
-          kind === "incerto"
-            ? "uncertain"
-            : kind === "conflito"
-              ? "conflict"
-              : "error",
-        readonly: true,
-        message: `${kind === "incerto" ? "Confirmação pendente. " : kind === "conflito" ? "Conflito. " : "Não salvo. "}${error instanceof Error ? error.message : String(error)}`,
-      });
-    } finally {
-      set({ busy: false });
     }
+    set({ doc, message: courseMessage });
+    return doc;
+  }
+  function fail(error: unknown) {
+    suspended = true;
+    const kind = pendingErrorKind(error);
+    set({
+      saved:
+        kind === "incerto"
+          ? "uncertain"
+          : kind === "conflito"
+            ? "conflict"
+            : "error",
+      readonly: true,
+      message: `${kind === "incerto" ? "Confirmação pendente. " : kind === "conflito" ? "Conflito. " : "Não salvo. "}${error instanceof Error ? error.message : String(error)}`,
+      terrainDraft: null,
+      terrainEditing: false,
+      furnitureDraft: null,
+      slabDraft: null,
+      slabEditing: false,
+      imageDraft: null,
+      imageRequest: null,
+      imageOpacity: null,
+      pendingOpening: null,
+    });
+  }
+  // The slot is occupied before preparing resources. Only the latest unsent
+  // snapshot is retained; history still records every accepted gesture.
+  function drain(): Promise<void> {
+    if (draining) return draining;
+    const run = async () => {
+      try {
+        while (!suspended && (attempt || queued || calculationPending)) {
+          if (calculationPending) {
+            const snapshot = calculationPending;
+            const calculated = await calculateDocument(snapshot.doc);
+            checkpoint = {
+              doc: calculated,
+              history: snapshot.history,
+              activeFloorId: snapshot.activeFloorId,
+            };
+            calculationPending = null;
+            continue;
+          }
+          if (!attempt) {
+            const delay =
+              lastWriteStarted === null
+                ? 0
+                : Math.max(0, lastWriteStarted + 1000 - Date.now());
+            if (delay)
+              await new Promise<void>((resolve) => {
+                const timer = setTimeout(() => {
+                  wake = null;
+                  resolve();
+                }, delay);
+                wake = () => {
+                  clearTimeout(timer);
+                  wake = null;
+                  resolve();
+                };
+              });
+            if (suspended) break;
+            attempt = queued;
+            queued = null;
+          }
+          const snapshot = attempt!;
+          const receipt = await saveProject(snapshot.doc, () => {
+            lastWriteStarted = Date.now();
+          });
+          let confirmed = snapshot.doc;
+          if (receipt?.updatedAt)
+            confirmed = {
+              ...confirmed,
+              metadata: {
+                ...confirmed.metadata,
+                updatedAt: receipt.updatedAt,
+                createdAt: receipt.createdAt ?? confirmed.metadata.createdAt,
+              },
+            };
+          checkpoint = {
+            doc: confirmed,
+            history: snapshot.history,
+            activeFloorId: snapshot.activeFloorId,
+          };
+          attempt = null;
+          // A response may acknowledge an older local intention. Never restore
+          // its drawing, resources, inspection or history over newer work.
+          if (get().doc === snapshot.doc) set({ doc: confirmed });
+          if (snapshot.calculate) {
+            if (suspended) {
+              // The write is confirmed, but offline recovery must finish the
+              // constructive calculation before releasing editing.
+              calculationPending = { ...snapshot, doc: confirmed };
+              break;
+            }
+            const calculated = await calculateDocument(confirmed);
+            checkpoint = { ...checkpoint, doc: calculated };
+          }
+        }
+        if (!suspended) set({ saved: "saved", readonly: false });
+      } catch (error) {
+        fail(error);
+      } finally {
+        set({ busy: false, saving: false });
+      }
+    };
+    // Assign before any async completion can release the slot.
+    draining = run().finally(() => {
+      draining = null;
+    });
+    return draining;
+  }
+  async function persist(
+    doc: Project,
+    calculate = true,
+    write = true,
+    background = false,
+  ) {
+    if (!write) {
+      set({ busy: true });
+      try {
+        doc = await calculateDocument(doc);
+        checkpoint = {
+          doc,
+          history: get().history,
+          activeFloorId: get().activeFloorId,
+        };
+      } finally {
+        set({ busy: false });
+      }
+      return;
+    }
+    doc = { ...doc, metadata: { ...doc.metadata, appVersion: "0.17.0" } };
+    queued = {
+      doc,
+      calculate,
+      history: get().history,
+      activeFloorId: get().activeFloorId,
+    };
+    set({
+      doc,
+      saving: true,
+      saved: "saving",
+      busy: !background || get().busy,
+    });
+    const completion = drain();
+    if (!background) await completion;
   }
   function referenceState(doc: Project, active: string | null, s: State) {
     const floorReferencesByFloor = Object.fromEntries(
@@ -334,6 +511,7 @@ export const useStore = create<State>((set, get) => {
           },
           ...(change.mode && change.mode !== s.mode
             ? {
+                textDraft: null,
                 terrainDraft: null,
                 terrainEditing: false,
                 furnitureDraft: null,
@@ -378,7 +556,8 @@ export const useStore = create<State>((set, get) => {
     doc: null,
     retainedGroutResult: null,
     history: { past: [], future: [] },
-    busy: false,
+    busy: !!incomingHandoff,
+    saving: !!incomingHandoff,
     openingProjectId: null,
     readonly: false,
     saved: "saved",
@@ -399,6 +578,7 @@ export const useStore = create<State>((set, get) => {
           : {}),
         ...(select !== s.select
           ? {
+              textDraft: null,
               terrainDraft: null,
               terrainEditing: false,
               slabDraft: null,
@@ -409,10 +589,13 @@ export const useStore = create<State>((set, get) => {
           : {}),
       })),
     open: async (requested, fresh = false) => {
-      if (retired || get().busy) return;
+      if (retired || get().busy || get().saving) return;
       const id =
         typeof requested === "string" ? requested : requested.project.id;
       if (get().doc?.project.id === id && !fresh) return;
+      suspended = false;
+      queued = attempt = calculationPending = null;
+      lastWriteStarted = null;
       set({ busy: true, openingProjectId: id, message: "" });
       try {
         // Let React paint the opening feedback and wait cursor before validation.
@@ -451,11 +634,15 @@ export const useStore = create<State>((set, get) => {
       }
     },
     close: () => {
-      if (get().busy) return;
+      if (get().busy || get().saving) return;
       if (get().doc) forgetProject(get().doc!.project.id);
       checkpoint = null;
+      queued = attempt = calculationPending = null;
+      suspended = false;
+      lastWriteStarted = null;
       set({
         doc: null,
+        textDraft: null,
         saved: "saved",
         message: "",
         retainedGroutResult: null,
@@ -478,6 +665,18 @@ export const useStore = create<State>((set, get) => {
         if (s.imageDraft && command !== "image" && command !== "floor")
           throw new Error("Conclua ou cancele o ajuste da imagem.");
         candidate = mergeFloorView(s.doc, candidate);
+        if (
+          command === "text" &&
+          [...candidate.model.texts, ...s.doc.model.texts].some(
+            (t) =>
+              t.floorId !== s.activeFloorId &&
+              JSON.stringify(
+                candidate.model.texts.find((x) => x.id === t.id),
+              ) !==
+                JSON.stringify(s.doc!.model.texts.find((x) => x.id === t.id)),
+          )
+        )
+          throw new Error("Edite textos somente no pavimento ativo.");
         if (command === "furniture") {
           if (
             [
@@ -735,14 +934,26 @@ export const useStore = create<State>((set, get) => {
           history: remember(s.history, s.doc),
           message: "",
         });
-        await persist(doc, changed);
+        await persist(doc, changed, true, !changed);
       } catch (e) {
         set({ message: e instanceof Error ? e.message : String(e) });
       }
     },
     undo: async (redo = false) => {
       const s = get();
-      if (retired || !s.doc || s.busy || s.readonly) return;
+      if (
+        retired ||
+        !s.doc ||
+        s.busy ||
+        s.readonly ||
+        s.saved !== "saved" ||
+        s.saving
+      )
+        return;
+      if (s.textDraft) {
+        set({ textDraft: null });
+        return;
+      }
       if (s.terrainDraft || s.terrainEditing) {
         set({ terrainDraft: null, terrainEditing: false });
         return;
@@ -796,12 +1007,13 @@ export const useStore = create<State>((set, get) => {
           history: next.history,
           select: null,
         });
-        await persist(doc, changedInputs(s.doc, next.doc));
+        const changed = changedInputs(s.doc, next.doc);
+        await persist(doc, changed, true, !changed);
       }
     },
     discard: async () => {
       const s = get();
-      if (!s.doc || s.busy) return;
+      if (!s.doc || s.busy || s.saving) return;
       const id = s.doc.project.id;
       if (s.saved === "uncertain") {
         set({
@@ -811,6 +1023,8 @@ export const useStore = create<State>((set, get) => {
         return;
       }
       forgetProject(id);
+      queued = attempt = calculationPending = null;
+      suspended = false;
       if (s.saved === "conflict") {
         await get().open(id, true);
         return;
@@ -831,6 +1045,24 @@ export const useStore = create<State>((set, get) => {
     },
     retry: async () => {
       const s = get();
+      if (retired || !s.doc || s.busy || s.saving) return;
+      const recoveryEpoch = suspensionEpoch;
+      if (attempt || queued || calculationPending) {
+        set({ busy: true, saving: true, saved: "saving", message: "" });
+        try {
+          if (!attempt) await checkRevision(s.doc.project.id);
+          if (recoveryEpoch !== suspensionEpoch) {
+            set({ busy: false, saving: false });
+            return;
+          }
+          suspended = false;
+          await drain();
+        } catch (error) {
+          fail(error);
+          set({ busy: false, saving: false });
+        }
+        return;
+      }
       if (
         !retired &&
         s.doc &&
@@ -840,6 +1072,8 @@ export const useStore = create<State>((set, get) => {
         set({ busy: true });
         try {
           await checkRevision(s.doc.project.id);
+          if (recoveryEpoch !== suspensionEpoch) return;
+          suspended = false;
           set({ readonly: false, saved: "saved", message: "" });
         } catch (error) {
           set({
@@ -862,23 +1096,54 @@ export const useStore = create<State>((set, get) => {
           s.saved !== "saved",
         );
     },
+    recalculate: async () => {
+      const s = get();
+      if (
+        retired ||
+        !s.doc ||
+        s.busy ||
+        s.saving ||
+        s.readonly ||
+        s.saved !== "saved"
+      )
+        return;
+      await persist(s.doc, true, false);
+    },
+    suspend: (
+      message = "Sem conexão. O desenho foi preservado. Use Tentar novamente para conferir o servidor antes de editar.",
+    ) => {
+      if (!get().doc) return;
+      suspensionEpoch++;
+      suspended = true;
+      wake?.();
+      set({
+        readonly: true,
+        saved: "unavailable",
+        message,
+        terrainDraft: null,
+        terrainEditing: false,
+        furnitureDraft: null,
+        imageDraft: null,
+        imageRequest: null,
+        imageOpacity: null,
+        slabDraft: null,
+        slabEditing: false,
+        pendingOpening: null,
+      });
+    },
+    ...(incomingState
+      ? { ...stateValues(incomingState), busy: true, saving: true }
+      : {}),
   };
 });
 
 if (import.meta.hot) {
-  import.meta.hot.dispose(async () => {
+  import.meta.hot.dispose((data) => {
     // A replaced store must finish its current write before replacement,
     // and must not start new writes while Vite loads its replacement.
     retired = true;
-    if (useStore.getState().busy)
-      await new Promise<void>((resolve) => {
-        const unsubscribe = useStore.subscribe((state) => {
-          if (!state.busy) {
-            unsubscribe();
-            resolve();
-          }
-        });
-      });
+    data.state = useStore.getState();
+    data.handoff = handoff();
   });
 }
 

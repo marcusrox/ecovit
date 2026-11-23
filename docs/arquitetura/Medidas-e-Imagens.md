@@ -2,6 +2,12 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
+## Anotações livres — T-033
+
+`model.texts` contém anotações com UUID, floorId, content, âncora x/y, width, size, rotation, bold, color, align, background e border. Coordenadas, largura e tamanho usam unidades internas inteiras de 0,1 mm; não há vínculo com paredes ou regiões de ambientes. Âncora no canto superior esquerdo local, rotação 0/90/180/270 em torno dela. Fonte IBM Plex Sans local nos pesos 400/600. Tamanho nominal de 1–100 cm, largura mínima de duas vezes esse tamanho e máxima de 10.000 cm. Validar IDs únicos, pavimento, dimensões, coordenadas, cor RGB opaca e orientação também na leitura; não persistir altura, métricas de fonte ou quebras automáticas.
+
+Conteúdo simples de até 2.000 unidades UTF-16, incluindo espaços/quebras; normalizar CRLF/CR para LF antes da contagem. Não aceitar vazio/só espaços nem truncar excessos. Preservar acentos, espaços e quebras explícitas; nunca interpretar HTML/Markdown. Layout deriva da fonte local, com altura automática e quebra por caracteres completos quando uma palavra ultrapassa a largura. O tamanho acompanha a escala mundial, sem usar o mínimo visual adaptativo dos rótulos derivados. Defaults de apresentação e detalhes de controles permanecem na T-033 e no componente. Textos não participam da atração de medidas ou das regiões de ambientes; não há geometria construtiva, área ou quantitativo derivado.
+
 ## Medidas independentes
 
 ### Dados e precisão

@@ -39,28 +39,43 @@ export type Usage = {
   projectLimit: number;
   imageLimit: number;
 };
-const revisions = new Map<string, { revision: string; account: string }>();
-const listedRevisions = new Map<
+// A replacement store may still be reconciling a captured request. Keep its
+// protocol session in memory across HMR, including the original operation ID.
+function sessionMap<K, V>(key: string): Map<K, V> {
+  const entries =
+    (import.meta.hot?.data[key] as Map<K, V> | undefined) ?? new Map<K, V>();
+  if (import.meta.hot) import.meta.hot.data[key] = entries;
+  return entries;
+}
+const revisions = sessionMap<string, { revision: string; account: string }>(
+  "revisions",
+);
+const listedRevisions = sessionMap<
   string,
   { revision: string; account: string }
->();
-const resources = new Map<string, { id: string; uploaded: boolean }>();
+>("listedRevisions");
+const resources = sessionMap<string, { id: string; uploaded: boolean }>(
+  "resources",
+);
 type Pending = {
   account: string;
   method: string;
+  source: Project;
+  prepared: boolean;
   body: {
     operationId: string;
     requestIssuedAt: string;
     expectedRevision?: string;
-    doc: RemoteProject;
+    doc: RemoteProject | null;
     sourceFile?: string;
   };
   uploads: { id: string; data: string; cacheKey: string }[];
   sent: boolean;
   uncertain: boolean;
+  refusal?: RemoteError;
 };
-const pending = new Map<string, Pending>();
-let usage: Usage = {
+const pending = sessionMap<string, Pending>("pending");
+let usage: Usage = (import.meta.hot?.data.usage as Usage | undefined) ?? {
   projects: 0,
   bytes: 0,
   projectLimit: 20,
@@ -225,7 +240,7 @@ export async function checkRevision(id: string) {
       "Outra sessão alterou ou removeu o projeto. Baixe sua versão ou abra a versão remota.",
     );
 }
-export async function saveProject(doc: Project) {
+export async function saveProject(doc: Project, onWriteStarted?: () => void) {
   const id = doc.project.id;
   let attempt = pending.get(id);
   if (!attempt) {
@@ -236,46 +251,57 @@ export async function saveProject(doc: Project) {
         "account_changed",
         "Entre na conta original antes de retomar este projeto.",
       );
-    const ids: Record<string, string> = {},
-      uploads: Pending["uploads"] = [];
-    for (const { key, image } of images(doc)) {
-      const cacheKey = `${account}:${id}:${await digest(image.data)}`;
-      let resource = resources.get(cacheKey);
-      if (!resource) {
-        resource = { id: crypto.randomUUID(), uploaded: false };
-        resources.set(cacheKey, resource);
-      }
-      ids[key] = resource.id;
-      if (
-        !resource.uploaded &&
-        !uploads.some((upload) => upload.id === resource.id)
-      )
-        uploads.push({ id: resource.id, data: image.data, cacheKey });
-    }
     const known = revisions.get(id);
+    const operationId = crypto.randomUUID();
+    const requestIssuedAt = requestTime();
     attempt = {
       account,
       method: known ? "PUT" : "POST",
+      source: doc,
+      prepared: false,
       body: {
-        operationId: crypto.randomUUID(),
-        requestIssuedAt: requestTime(),
+        operationId,
+        requestIssuedAt,
         expectedRevision: known?.revision,
-        doc: dehydrate(withoutResult(doc), ids),
+        doc: null,
         ...(!known ? { sourceFile: serializeFile(doc).text } : {}),
       },
-      uploads,
+      uploads: [],
       sent: false,
       uncertain: false,
     };
     pending.set(id, attempt);
   }
   try {
+    if (attempt.refusal?.retryAt && attempt.refusal.retryAt > Date.now())
+      throw attempt.refusal;
     if (attempt.account !== owner())
       throw new RemoteError(
         409,
         "account_changed",
         "Entre na conta original para recuperar a gravação.",
       );
+    if (!attempt.prepared) {
+      const ids: Record<string, string> = {},
+        uploads: Pending["uploads"] = [];
+      for (const { key, image } of images(attempt.source)) {
+        const cacheKey = `${attempt.account}:${id}:${await digest(image.data)}`;
+        let resource = resources.get(cacheKey);
+        if (!resource) {
+          resource = { id: crypto.randomUUID(), uploaded: false };
+          resources.set(cacheKey, resource);
+        }
+        ids[key] = resource.id;
+        if (
+          !resource.uploaded &&
+          !uploads.some((upload) => upload.id === resource.id)
+        )
+          uploads.push({ id: resource.id, data: image.data, cacheKey });
+      }
+      attempt.body.doc = dehydrate(withoutResult(attempt.source), ids);
+      attempt.uploads = uploads;
+      attempt.prepared = true;
+    }
     const recovered = attempt.sent;
     let receipt: Receipt | undefined;
     if (attempt.sent) {
@@ -314,6 +340,7 @@ export async function saveProject(doc: Project) {
         resources.set(upload.cacheKey, { id: upload.id, uploaded: true });
       }
       attempt.sent = true;
+      onWriteStarted?.();
       receipt = await api<Receipt>(`/projects/${id}`, {
         method: attempt.method,
         body: attempt.body,
@@ -363,14 +390,22 @@ export async function saveProject(doc: Project) {
     return receipt;
   } catch (error) {
     if (error instanceof RemoteError) {
+      attempt.refusal = error;
       if (attempt.sent && error.uncertain) attempt.uncertain = true;
       if (attempt.uncertain) error.confirmationPending = true;
     }
     throw error;
   }
 }
-const uncertainActions = new Set<string>();
-const actions = new Map<
+const uncertainActions =
+  (import.meta.hot?.data.uncertainActions as Set<string> | undefined) ??
+  new Set<string>();
+if (import.meta.hot)
+  import.meta.hot.dispose((data) => {
+    data.usage = usage;
+    data.uncertainActions = uncertainActions;
+  });
+const actions = sessionMap<
   string,
   {
     operationId: string;
@@ -379,7 +414,7 @@ const actions = new Map<
     name?: string;
     newId?: string;
   }
->();
+>("actions");
 export const pendingCopyName = (id: string) =>
   actions.get(`${id}:duplicate`)?.name;
 export async function projectAction(

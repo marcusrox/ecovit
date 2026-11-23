@@ -160,7 +160,11 @@ export function FiadaToolbar({
         data-tooltip="Desfazer (Ctrl+Z)"
         title="Desfazer (Ctrl+Z)"
         disabled={
-          busy || s.readonly || (!s.history.past.length && !s.slabEditing)
+          busy ||
+          s.saving ||
+          s.saved !== "saved" ||
+          s.readonly ||
+          (!s.history.past.length && !s.slabEditing)
         }
         onClick={() => void useStore.getState().undo()}
       >
@@ -171,7 +175,13 @@ export function FiadaToolbar({
         className={styles.iconButton}
         data-tooltip="Refazer (Ctrl+Y)"
         title="Refazer (Ctrl+Y)"
-        disabled={busy || s.readonly || !s.history.future.length}
+        disabled={
+          busy ||
+          s.saving ||
+          s.saved !== "saved" ||
+          s.readonly ||
+          !s.history.future.length
+        }
         onClick={() => void useStore.getState().undo(true)}
       >
         <Icon name="redo" />

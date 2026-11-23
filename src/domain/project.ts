@@ -5,6 +5,7 @@ import type {
   JunctionChoice,
 } from "./composition";
 import type { ClampSettings } from "./clamps";
+import type { TextAnnotation } from "./text";
 import type { SteelBudgetSettings, SteelPrices } from "./steel-budget";
 import type { ChannelReinforcementSettings } from "./channel-reinforcement";
 export type Point = { x: number; y: number };
@@ -166,10 +167,11 @@ export type Tool =
   | "room-boundary"
   | "furniture"
   | "terrain"
+  | "text"
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 30;
+  schemaVersion: 31;
   project: {
     id: string;
     name: string;
@@ -205,6 +207,7 @@ export type Project = {
     slabs: Slab[];
     measurements: Measurement[];
     roomLabels: RoomLabel[];
+    texts: TextAnnotation[];
     roomBoundaries: RoomBoundary[];
     referenceImages: ReferenceImage[];
     imageElements: ImageElement[];
@@ -273,7 +276,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 30,
+    schemaVersion: 31,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -296,6 +299,7 @@ export function createProject(
         },
       ],
       walls: [],
+      texts: [],
       openings: [],
       slabs: [],
       measurements: [],

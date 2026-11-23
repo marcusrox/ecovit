@@ -125,6 +125,7 @@ export function removeFloor(doc: Project, floorId: string): Project {
       ...doc.model,
       floors: doc.model.floors.filter((f) => f.id !== floorId),
       walls,
+      texts: doc.model.texts.filter((t) => t.floorId !== floorId),
       openings: doc.model.openings.filter((o) => ids.has(o.wallId)),
       slabs: doc.model.slabs.filter((s) => s.floorId !== floorId),
       measurements: doc.model.measurements.filter((m) => m.floorId !== floorId),
@@ -223,6 +224,12 @@ export function duplicateFloor(
           added.model.floors.findIndex((f) => f.id === b.floorId),
       ),
       walls: [...doc.model.walls, ...walls],
+      texts: [
+        ...doc.model.texts,
+        ...doc.model.texts
+          .filter((t) => t.floorId === floorId)
+          .map((t) => ({ ...t, id: crypto.randomUUID(), floorId: target.id })),
+      ],
       imageElements: [
         ...doc.model.imageElements,
         ...doc.model.imageElements
@@ -384,6 +391,10 @@ export function mergeFloorView(
         ...local.model.imageElements,
       ],
       customImageAssets: local.model.customImageAssets,
+      texts: [
+        ...root.model.texts.filter((t) => t.floorId !== id),
+        ...local.model.texts,
+      ],
       roomLabels: [
         ...root.model.roomLabels.filter((l) => l.floorId !== id),
         ...local.model.roomLabels,

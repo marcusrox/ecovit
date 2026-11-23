@@ -273,7 +273,8 @@ function AccountPanel({
   }
   function resolveEditor() {
     const state = useStore.getState();
-    if (state.busy) throw new Error("Aguarde a operação do projeto.");
+    if (state.busy || state.saving)
+      throw new Error("Aguarde a operação do projeto.");
     if (
       state.doc &&
       state.saved !== "saved" &&
@@ -472,7 +473,10 @@ function AccountPanel({
                   disabled={working}
                   onClick={() =>
                     void act(async () => {
-                      if (useStore.getState().busy)
+                      if (
+                        useStore.getState().busy ||
+                        useStore.getState().saving
+                      )
                         throw new Error("Aguarde a operação atual.");
                       const result = await loginCode(account.email, "delete");
                       setChallenge(result.id);
@@ -739,7 +743,11 @@ export function AccountShell({ children }: { children: ReactNode }) {
     void start();
     const expire = () => {
       setAdmin(false);
-      useStore.setState({ readonly: true });
+      useStore
+        .getState()
+        .suspend(
+          "Sessão expirada. Entre novamente para recuperar o salvamento; o desenho foi preservado.",
+        );
       setNeedsAuth(true);
       setExpired(true);
     };

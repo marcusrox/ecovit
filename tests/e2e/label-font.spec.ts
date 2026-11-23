@@ -1,8 +1,15 @@
 import { test, expect, type Page } from "./auth";
 import { createProject, type Project } from "../../src/domain/project";
+import { newText } from "../../src/domain/text";
 import { addRoomLabel } from "../../src/domain/rooms";
 
-type DrawnText = { text: string; font: number; y: number };
+type DrawnText = {
+  text: string;
+  font: number;
+  family: string;
+  x: number;
+  y: number;
+};
 async function state(page: Page): Promise<Project> {
   return page.evaluate(async () => {
     const path = "/src/state/store.ts";
@@ -13,6 +20,39 @@ async function texts(page: Page): Promise<DrawnText[]> {
   return page.evaluate(() =>
     (window as unknown as { drawnTexts: () => DrawnText[] }).drawnTexts(),
   );
+}
+async function recordTexts(page: Page) {
+  await page.evaluate(() => {
+    const contexts = new Map<HTMLCanvasElement, DrawnText[]>();
+    const clear = CanvasRenderingContext2D.prototype.clearRect,
+      fill = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.clearRect = function (...args) {
+      contexts.set(this.canvas, []);
+      return clear.apply(this, args);
+    };
+    CanvasRenderingContext2D.prototype.fillText = function (...args) {
+      const entries = contexts.get(this.canvas) ?? [];
+      entries.push({
+        text: args[0],
+        font: Number(this.font.match(/([\d.]+)px/)?.[1]),
+        family: this.font,
+        x:
+          this.getTransform().transformPoint({ x: args[1], y: args[2] }).x /
+          (this.canvas.width / this.canvas.getBoundingClientRect().width),
+        y:
+          this.getTransform().transformPoint({ x: args[1], y: args[2] }).y /
+          (this.canvas.height / this.canvas.getBoundingClientRect().height),
+      });
+      contexts.set(this.canvas, entries);
+      return fill.apply(this, args);
+    };
+    Object.assign(window, {
+      drawnTexts: () =>
+        [...contexts]
+          .filter(([canvas]) => canvas.isConnected)
+          .flatMap(([, entries]) => entries),
+    });
+  });
 }
 function fixture() {
   let d = createProject("T-019 Fontes", {
@@ -112,45 +152,29 @@ function fixture() {
   };
   d = addRoomLabel(d, floorId, { x: 15000, y: 25000 }).doc;
   d.model.roomLabels[0].name = "Sala de estar";
+  d.model.texts = [
+    {
+      ...newText(floorId, { x: 16000, y: 32000 }),
+      content: "Texto livre",
+      size: 1500,
+    },
+  ];
   return d;
 }
 
-for (const [zoom, roomFont, smallFont, terrainFont, compassFont] of [
-  [25, 7.613, 6.442, 7.027, 6],
-  [61, 13, 11, 12, 10.248],
-  [150, 20, 17.2492, 18, 16.0698],
-]) {
+for (const zoom of [25, 61, 150]) {
+  const ratio = zoom / 61,
+    roomFont = 13 * ratio,
+    smallFont = 11 * ratio,
+    terrainFont = 12 * ratio,
+    compassFont = ((10000 * 0.012 * zoom) / 100) * 0.14;
   test(
-    `T-019 fontes do desenho em ${zoom}% e controles fixos`,
+    `T-034 fontes do desenho em ${zoom}% e controles fixos`,
     { tag: "@interface" },
     async ({ page }) => {
-      await page.evaluate(() => {
-        const contexts = new Map<HTMLCanvasElement, DrawnText[]>();
-        const clear = CanvasRenderingContext2D.prototype.clearRect,
-          fill = CanvasRenderingContext2D.prototype.fillText;
-        CanvasRenderingContext2D.prototype.clearRect = function (...args) {
-          contexts.set(this.canvas, []);
-          return clear.apply(this, args);
-        };
-        CanvasRenderingContext2D.prototype.fillText = function (...args) {
-          const entries = contexts.get(this.canvas) ?? [];
-          entries.push({
-            text: args[0],
-            font: Number(this.font.match(/([\d.]+)px/)?.[1]),
-            y:
-              this.getTransform().transformPoint({ x: args[1], y: args[2] }).y /
-              (this.canvas.height / this.canvas.getBoundingClientRect().height),
-          });
-          contexts.set(this.canvas, entries);
-          return fill.apply(this, args);
-        };
-        Object.assign(window, {
-          drawnTexts: () =>
-            [...contexts]
-              .filter(([canvas]) => canvas.isConnected)
-              .flatMap(([, entries]) => entries),
-        });
-      });
+      if (zoom === 150)
+        await page.setViewportSize({ width: 1600, height: 1400 });
+      await recordTexts(page);
       const d = fixture();
       await page.getByTestId("import-file").setInputFiles({
         name: "fontes.ecovit",
@@ -200,7 +224,7 @@ for (const [zoom, roomFont, smallFont, terrainFont, compassFont] of [
       const roomTexts = await texts(page);
       const name = roomTexts.find((e) => e.text === "Sala de estar")!;
       const area = roomTexts.find((e) => e.text === "12,00 m²")!;
-      expect(area.y - name.y).toBeCloseTo(zoom === 25 ? 10.542 : 18, 1);
+      expect(area.y - name.y).toBeCloseTo(18 * ratio, 1);
       for (const prefix of [
         "C: ",
         "Porta ·",
@@ -214,11 +238,100 @@ for (const [zoom, roomFont, smallFont, terrainFont, compassFont] of [
       }
       await expect.poll(() => fontOf("Terreno ·")).toBeCloseTo(terrainFont, 2);
       await expect.poll(() => fontOf("N")).toBeCloseTo(compassFont, 2);
+      await expect
+        .poll(() => fontOf("Texto livre"))
+        .toBeCloseTo((1500 * 0.012 * zoom) / 100, 2);
+      for (const prefix of [
+        "Sala de estar",
+        "12,00 m²",
+        "Porta ·",
+        "Janela ·",
+        "Vão ·",
+        "C: ",
+        "220 cm",
+        "Terreno ·",
+        "N",
+        "A",
+        "B",
+        "Texto livre",
+      ]) {
+        expect(
+          (await texts(page)).find((e) => e.text.startsWith(prefix))?.family,
+        ).toContain("IBM Plex Sans");
+      }
+      // The area line belongs to the same hit box as the name at every zoom.
+      const host = await page.getByTestId("drawing").boundingBox();
+      await page.mouse.click(host!.x + area.x, host!.y + area.y);
+      await expect(
+        page.getByLabel("Nome do ambiente", { exact: true }),
+      ).toBeVisible();
       expect(await button.evaluate((el) => getComputedStyle(el).fontSize)).toBe(
         interfaceFont,
       );
       expect((await state(page)).model).toEqual(original.model);
-      await page.screenshot({ path: `.tools/t019-fontes-${zoom}.png` });
+      await page.screenshot({ path: `.tools/t034-fontes-${zoom}.png` });
     },
   );
 }
+
+test(
+  "T-034 nomes longos conservam linhas e seleção ao mudar zoom",
+  { tag: "@interface" },
+  async ({ page }) => {
+    await recordTexts(page);
+    const d = fixture();
+    d.model.roomLabels[0].name =
+      "Sala de estar e jantar integrada com cozinha e varanda";
+    await page
+      .getByTestId("import-file")
+      .setInputFiles({
+        name: "nomes.ecovit",
+        mimeType: "application/json",
+        buffer: Buffer.from(JSON.stringify(d)),
+      });
+    await expect(page.getByTestId("drawing")).toBeVisible();
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    const original = await state(page);
+    const camera = async () =>
+      JSON.parse(
+        (await page.getByTestId("drawing").getAttribute("data-camera"))!,
+      );
+    const roomLines = async () => {
+      const c = await camera();
+      return (await texts(page)).filter(
+        (t) => Math.abs(t.font - (13 * c.scale) / (0.012 * 0.61)) < 0.001,
+      );
+    };
+    await expect
+      .poll(async () => (await roomLines()).length)
+      .toBeGreaterThan(2);
+    const before = await roomLines();
+    for (let i = 0; i < 2; i++)
+      await page
+        .getByRole("button", { name: "Ampliar zoom", exact: true })
+        .click();
+    await expect
+      .poll(async () => (await roomLines()).map((t) => t.text))
+      .toEqual(before.map((t) => t.text));
+    const after = await roomLines(),
+      c = await camera();
+    expect(after[0].font / before[0].font).toBeCloseTo(1.44, 4);
+    expect(after[1].y - after[0].y).toBeCloseTo(
+      (18 * c.scale) / (0.012 * 0.61),
+      2,
+    );
+    const host = await page.getByTestId("drawing").boundingBox();
+    await page.mouse.dblclick(host!.x + after[0].x, host!.y + after[0].y);
+    const field = page.getByLabel("Nome do ambiente", { exact: true });
+    await expect(field).toBeFocused();
+    await expect(field).toHaveValue(d.model.roomLabels[0].name);
+    expect(
+      await field.evaluate((el: HTMLInputElement) => [
+        el.selectionStart,
+        el.selectionEnd,
+      ]),
+    ).toEqual([0, d.model.roomLabels[0].name.length]);
+    expect((await state(page)).model).toEqual(original.model);
+    await page.screenshot({ path: ".tools/t034-long-name.png" });
+  },
+);

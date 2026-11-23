@@ -190,6 +190,7 @@ it.each([false, true])(
     expect(s.readonly).toBe(false);
     expect(s.doc!.model).toEqual({
       ...original.model,
+      texts: [],
       terrain: null,
       roomLabels: [],
       roomBoundaries: [],
@@ -233,6 +234,7 @@ it.each([false, true])(
     const s = useStore.getState();
     expect(s.doc?.model).toEqual({
       ...original.model,
+      texts: [],
       terrain: null,
       roomLabels: [],
       roomBoundaries: [],
@@ -253,6 +255,7 @@ it.each([false, true])(
     expect(s.message).toContain("Cálculo não concluído: Falha simulada");
     expect(parseFile(serializeFile(s.doc!).text).model).toEqual({
       ...original.model,
+      texts: [],
       terrain: null,
       roomLabels: [],
       roomBoundaries: [],

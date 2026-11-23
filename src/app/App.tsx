@@ -1,4 +1,5 @@
 import { RoomProperties } from "../editor/Rooms";
+import { TextProperties, deleteTextSelection } from "../editor/Text";
 import { AccountButton, AccountShell } from "./Account";
 import {
   ReleaseHistory,
@@ -492,6 +493,7 @@ function Properties({ doc }: { doc: Project }) {
   );
 }
 function EditorApp() {
+  const textDraft = useStore((s) => s.textDraft);
   const mode = useStore((s) => s.mode);
   const groutMode = useStore((s) => s.groutMode);
   const selected = useStore((s) => s.select),
@@ -499,6 +501,7 @@ function EditorApp() {
   const editingDoc = useEditingProject();
   const doc = useStore((s) => s.doc),
     storeBusy = useStore((s) => s.busy),
+    saving = useStore((s) => s.saving),
     storeOpeningProjectId = useStore((s) => s.openingProjectId),
     readonly = useStore((s) => s.readonly),
     saved = useStore((s) => s.saved),
@@ -571,6 +574,7 @@ function EditorApp() {
   );
   const changeTool = useCallback((t: Tool) => {
     useStore.getState().inspect({
+      textDraft: null,
       imageDraft: null,
       imageOpacity: null,
       imageRequest: null,
@@ -657,6 +661,7 @@ function EditorApp() {
           s.terrainEditing
         )
           return;
+        if (deleteTextSelection()) return;
         if (s.pendingOpening) s.inspect({ pendingOpening: null });
         else if (s.doc.model.imageElements.some((i) => i.id === s.select)) {
           void s.commit(setImageElement(s.doc, null, s.select), "furniture");
@@ -697,14 +702,7 @@ function EditorApp() {
     window.addEventListener("keydown", key);
     window.addEventListener("beforeunload", leave);
     const offline = () => {
-      const s = useStore.getState();
-      if (s.doc && !s.busy && s.saved === "saved")
-        useStore.setState({
-          readonly: true,
-          saved: "unavailable",
-          message:
-            "Sem conexão. O desenho foi preservado. Use Tentar novamente para conferir o servidor antes de editar.",
-        });
+      useStore.getState().suspend();
     };
     window.addEventListener("offline", offline);
     return () => {
@@ -1068,7 +1066,7 @@ function EditorApp() {
             <button
               className={`${styles.projectsReturn} ${styles.iconText}`}
               title="Voltar à lista de projetos"
-              disabled={busy || importing}
+              disabled={busy || saving || importing}
               onClick={() => {
                 if (
                   ["error", "uncertain", "conflict", "unavailable"].includes(
@@ -1172,7 +1170,7 @@ function EditorApp() {
                 diagnostics={() => setDiagnostics(true)}
               />
               <button
-                disabled={busy || importing}
+                disabled={busy || saving || importing}
                 onClick={() => input.current?.click()}
                 className={`${styles.iconButton} ${styles.fileAction}`}
                 aria-label="Carregar arquivo"
@@ -1447,8 +1445,23 @@ function EditorApp() {
                     <span className={styles.toolButtonLabel}>Mobiliários</span>
                   </button>
                 )}
+                {mode === "plan" && (
+                  <button
+                    className={`${styles.iconText} ${styles.toolButton} ${tool === "text" ? styles.active : ""}`}
+                    aria-pressed={tool === "text"}
+                    disabled={
+                      busy || readonly || !!useStore.getState().imageDraft
+                    }
+                    title="Texto"
+                    onClick={() => changeTool("text")}
+                  >
+                    <Icon name="text" />
+                    <span className={styles.toolButtonLabel}>Texto</span>
+                  </button>
+                )}
                 {mode === "plan" &&
-                  (!!editingDoc!.model.terrain ||
+                  (!!editingDoc!.model.texts.length ||
+                    !!editingDoc!.model.terrain ||
                     !!editingDoc!.model.slabs.length ||
                     !!editingDoc!.model.imageElements.length ||
                     !!editingDoc!.model.roomLabels.length ||
@@ -1459,6 +1472,13 @@ function EditorApp() {
                       aria-label="Selecionar elemento"
                       disabled={busy}
                       value={
+                        (editingDoc!.model.texts.length > 0 &&
+                          editingDoc!.model.walls.some(
+                            (w) => w.id === selected,
+                          )) ||
+                        editingDoc!.model.texts.some(
+                          (t) => t.id === selected,
+                        ) ||
                         editingDoc!.model.terrain?.id === selected ||
                         (!!editingDoc!.model.terrain?.compass?.visible &&
                           compassSelectionId(editingDoc!.model.terrain) ===
@@ -1497,6 +1517,25 @@ function EditorApp() {
                       }}
                     >
                       <option value="">Selecionar elemento…</option>
+                      {editingDoc!.model.texts.length > 0 && (
+                        <optgroup label="Paredes">
+                          {editingDoc!.model.walls.map((w, i) => (
+                            <option key={w.id} value={w.id}>
+                              Parede {i + 1}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {!!editingDoc!.model.texts.length && (
+                        <optgroup label="Textos">
+                          {editingDoc!.model.texts.map((t, i) => (
+                            <option key={t.id} value={t.id}>
+                              Texto {i + 1} ·{" "}
+                              {t.content.split("\n")[0].slice(0, 60)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
                       {editingDoc!.model.terrain && (
                         <option value={editingDoc!.model.terrain.id}>
                           Terreno do projeto
@@ -1598,9 +1637,13 @@ function EditorApp() {
                 settings={() => setSettings(true)}
               />
             ) : mode === "plan" ? (
-              editingDoc!.model.terrain?.id === selected ||
-              (!!editingDoc!.model.terrain?.compass &&
-                compassSelectionId(editingDoc!.model.terrain) === selected) ? (
+              textDraft ||
+              editingDoc!.model.texts.some((t) => t.id === selected) ? (
+                <TextProperties setTool={changeTool} />
+              ) : editingDoc!.model.terrain?.id === selected ||
+                (!!editingDoc!.model.terrain?.compass &&
+                  compassSelectionId(editingDoc!.model.terrain) ===
+                    selected) ? (
                 <TerrainProperties doc={editingDoc!} />
               ) : editingDoc!.model.roomLabels.some((l) => l.id === selected) ||
                 editingDoc!.model.roomBoundaries.some(

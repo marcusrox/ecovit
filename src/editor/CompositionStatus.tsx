@@ -2,7 +2,15 @@ import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
 
 export function CompositionStatus() {
-  const { doc, busy, readonly, retry, retainedGroutResult } = useStore();
+  const {
+    doc,
+    busy,
+    saving,
+    saved,
+    readonly,
+    recalculate,
+    retainedGroutResult,
+  } = useStore();
   if (!doc) return null;
   const outdated = doc.generationState.status === "outdated";
   const message = busy
@@ -26,7 +34,10 @@ export function CompositionStatus() {
         {message}
       </span>
       {outdated && (
-        <button disabled={busy || readonly} onClick={() => void retry()}>
+        <button
+          disabled={busy || saving || saved !== "saved" || readonly}
+          onClick={() => void recalculate()}
+        >
           Recalcular
         </button>
       )}

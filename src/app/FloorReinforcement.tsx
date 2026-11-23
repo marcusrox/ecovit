@@ -107,7 +107,7 @@ function FerragensSession({
     if (!result.changes) return;
     if (!Object.keys(result.changes).length) {
       setBaseline(JSON.stringify(draft));
-      setMessage("Salvo. Nenhuma alteração pendente.");
+      setMessage("Nenhuma alteração para aplicar.");
       return;
     }
     setSubmitting(true);

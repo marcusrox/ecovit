@@ -1,4 +1,4 @@
-import { labelFontSize, labelSpacing } from "./label-font";
+import { labelFont, labelSpacing, LABEL_REFERENCE_SCALE } from "./label-font";
 import {
   useCallback,
   useEffect,
@@ -204,7 +204,7 @@ type Camera = { x: number; y: number; scale: number };
 type Drag =
   | { kind: "label"; original: RoomLabel; start: Point }
   | { kind: "line"; original: RoomBoundary; start: Point; end?: "a" | "b" };
-const wrappingFont = "13px sans-serif";
+const wrappingFont = labelFont(13, LABEL_REFERENCE_SCALE);
 function textLines(text: string, ctx: CanvasRenderingContext2D) {
   ctx.font = wrappingFont;
   const lines: string[] = [];
@@ -297,7 +297,7 @@ export function useRoomCanvas(
     return r.point;
   };
   const enabled = mode === "plan" && !busy && !readonly && !imageDraft;
-  const font = `${labelFontSize(13, camera.scale, "room")}px sans-serif`;
+  const font = labelFont(13, camera.scale);
   const lineHeight = labelSpacing(18, camera.scale);
   const layout = (l: RoomLabel) => {
     const region = l.review ? undefined : geometry.at(l.reference);

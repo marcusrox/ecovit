@@ -1,4 +1,6 @@
 import {
+  Type,
+  RotateCw,
   Tag,
   Spline,
   ImagePlus,
@@ -46,6 +48,8 @@ import styles from "./App.module.css";
 
 // Semantic names remain stable across screens; only this module imports Lucide.
 const icons = {
+  rotate: RotateCw,
+  text: Type,
   refresh: RefreshCw,
   terrain: LandPlot,
   furniture: Armchair,

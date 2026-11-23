@@ -34,6 +34,7 @@ export function requireAccount() {
   return accountScope ?? account.id;
 }
 export class RemoteError extends Error {
+  retryAt?: number;
   constructor(
     public status: number,
     public code: string,
@@ -132,11 +133,19 @@ export async function api<T>(
         (response.status === 409 && value.code === "account_changed"))
     )
       requestAuthentication();
-    throw new RemoteError(
+    const error = new RemoteError(
       response.status,
       value.code ?? "remote",
       value.message ?? "Solicitação não concluída.",
     );
+    const retryAfter = response.headers.get("Retry-After");
+    if (retryAfter) {
+      const until = /^\d+$/.test(retryAfter)
+        ? Date.now() + Number(retryAfter) * 1000
+        : Date.parse(retryAfter);
+      if (Number.isFinite(until) && until > Date.now()) error.retryAt = until;
+    }
+    throw error;
   }
   return value as T;
 }

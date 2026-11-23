@@ -18,6 +18,7 @@ import {
   projectAction,
   pendingCopyName,
   remoteUsage,
+  hasPending,
 } from "../src/persistence/remote";
 
 const fetcher = vi.fn<typeof fetch>();
@@ -72,8 +73,128 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   setAccountScope(null);
+  vi.useRealTimers();
+});
+
+it("T-032 falha na preparação conserva identidade e fonte capturadas antes do primeiro await", async () => {
+  const doc = createProject("Preparação interrompida", {
+    length: 2500,
+    width: 1250,
+    height: 700,
+  });
+  doc.model.customImageAssets = [
+    {
+      id: crypto.randomUUID(),
+      name: "a.png",
+      mime: "image/png",
+      width: 1,
+      height: 1,
+      data: "AQID",
+    },
+  ];
+  const identifiers = vi.spyOn(crypto, "randomUUID");
+  vi.spyOn(crypto.subtle, "digest").mockRejectedValueOnce(
+    new Error("preparo interrompido"),
+  );
+  await expect(saveProject(doc)).rejects.toThrow("preparo interrompido");
+  expect(hasPending()).toBe(true);
+  expect(fetcher).not.toHaveBeenCalled();
+  const operationId = identifiers.mock.results[0].value;
+  fetcher.mockImplementationOnce(async (url) =>
+    answer({ id: String(url).split("/").at(-1) }),
+  );
+  fetcher.mockImplementationOnce(confirm("1"));
+  await saveProject({
+    ...doc,
+    project: { ...doc.project, name: "Posterior" },
+    model: { ...doc.model, customImageAssets: [] },
+  });
+  const body = JSON.parse(fetcher.mock.calls[1][1]?.body as string);
+  expect(body.operationId).toBe(operationId);
+  expect(body.doc.project.name).toBe(doc.project.name);
+  expect(body.doc.model.customImageAssets).toHaveLength(1);
+});
+
+it("T-032 respeita Retry-After sem trocar pedido nem repetir automaticamente", async () => {
+  vi.useFakeTimers();
+  const doc = createProject("Cadência e limite", {
+    length: 2500,
+    width: 1250,
+    height: 700,
+  });
+  fetcher.mockResolvedValueOnce(
+    new Response(JSON.stringify({ code: "rate_limit", message: "Aguarde." }), {
+      status: 429,
+      headers: { "Retry-After": "60" },
+    }),
+  );
+  await expect(saveProject(doc)).rejects.toMatchObject({ status: 429 });
+  const original = JSON.parse(fetcher.mock.calls[0][1]?.body as string);
+  await expect(saveProject(doc)).rejects.toMatchObject({ status: 429 });
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  await vi.advanceTimersByTimeAsync(60000);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  fetcher.mockResolvedValueOnce(answer({ code: "operation_unknown" }, 404));
+  fetcher.mockImplementationOnce(confirm("1"));
+  fetcher.mockResolvedValueOnce(answer({ revision: "1", state: "active" }));
+  await saveProject(doc);
+  expect(JSON.parse(fetcher.mock.calls[2][1]?.body as string)).toEqual(
+    original,
+  );
+});
+
+it("T-032 captura recursos antes do upload e reutiliza bytes já confirmados", async () => {
+  const doc = createProject("Imagem em voo", {
+    length: 2500,
+    width: 1250,
+    height: 700,
+  });
+  doc.model.customImageAssets = [
+    {
+      id: crypto.randomUUID(),
+      name: "a.png",
+      mime: "image/png",
+      width: 1,
+      height: 1,
+      data: "AQID",
+    },
+  ];
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const started = vi.fn();
+  fetcher.mockImplementationOnce(async (url) => {
+    await gate;
+    return answer({ id: String(url).split("/").at(-1) });
+  });
+  fetcher.mockImplementationOnce(confirm("1"));
+  const saving = saveProject(doc, started);
+  await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+  expect(started).not.toHaveBeenCalled();
+  const latest = { ...doc, model: { ...doc.model, customImageAssets: [] } };
+  release();
+  await saving;
+  expect(started).toHaveBeenCalledTimes(1);
+  const body = JSON.parse(fetcher.mock.calls[1][1]?.body as string);
+  expect(body.doc.model.customImageAssets[0]).toMatchObject({
+    id: doc.model.customImageAssets[0].id,
+    resourceId: expect.any(String),
+  });
+  expect(body.doc.model.customImageAssets[0]).not.toHaveProperty("data");
+  fetcher.mockImplementationOnce(confirm("2"));
+  await saveProject(doc);
+  expect(fetcher).toHaveBeenCalledTimes(3);
+  fetcher.mockImplementationOnce(confirm("3"));
+  await saveProject(latest);
+  expect(
+    JSON.parse(fetcher.mock.calls[3][1]?.body as string).doc.model
+      .customImageAssets,
+  ).toEqual([]);
+  expect(doc.model.customImageAssets[0].data).toBe("AQID");
 });
 
 it("faz uma única chamada por save e a listagem não avança a revisão do documento aberto", async () => {

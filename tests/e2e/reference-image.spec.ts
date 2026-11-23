@@ -181,10 +181,11 @@ test(
     const output = parseFile(
       await readFile((await (await download).path())!, "utf8"),
     );
-    expect(output.schemaVersion).toBe(30);
+    expect(output.schemaVersion).toBe(31);
     expect(output.model.referenceImages).toEqual(
       (await state(page)).doc.model.referenceImages,
     );
+    await expect(page.getByRole("status")).toHaveText("Salvo");
     await page.reload();
     await page
       .getByRole("button", { name: /M8 Imagem/ })
