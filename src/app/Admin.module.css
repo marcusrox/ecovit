@@ -1,29 +1,33 @@
 .dialog {
-  width: min(1280px, calc(100vw - 48px));
-  max-width: none;
-  max-height: calc(100dvh - 48px);
-  padding: 0;
   color: #183e32;
 }
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 22px 28px;
+  padding: 18px 28px;
   border-bottom: 1px solid #dce5df;
+  flex-shrink: 0;
 }
 .header h2 {
-  margin: 6px 0;
+  margin: 4px 0 2px;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 600;
+  color: #204c3b;
 }
 .header p {
   margin: 0;
+  color: #647164;
+  font-size: 12px;
 }
 .tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 16px 28px;
+  padding: 14px 28px;
   border-bottom: 1px solid #dce5df;
+  flex-shrink: 0;
 }
 .tabs button[aria-pressed="true"] {
   background: #215543;
@@ -32,6 +36,8 @@
 .body {
   padding: 24px 28px;
   overflow: auto;
+  flex: 1;
+  min-height: 0;
 }
 .filters,
 .actions {
@@ -114,10 +120,6 @@
   margin-bottom: 16px;
 }
 @media (max-width: 700px) {
-  .dialog {
-    width: calc(100vw - 16px);
-    max-height: calc(100dvh - 16px);
-  }
   .header,
   .tabs,
   .body {

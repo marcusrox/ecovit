@@ -216,7 +216,7 @@ export function Admin({
   return (
     <dialog
       ref={dialog}
-      className={`${styles.modal} ${css.dialog}`}
+      className={`${styles.releasePage} ${css.dialog}`}
       aria-labelledby="admin-title"
       onKeyDown={(event) => event.stopPropagation()}
       onCancel={(event) => {
