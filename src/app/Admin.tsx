@@ -41,6 +41,39 @@ const categories: Record<string, string> = {
   upload: "Upload",
   import: "Importação",
 };
+const tabIcons = {
+  overview: "dashboard",
+  users: "users",
+  operation: "operation",
+  audit: "audit",
+} as const;
+const metricIcons: Record<
+  string,
+  | "users"
+  | "saved"
+  | "readonly"
+  | "delete"
+  | "userPlus"
+  | "operation"
+  | "plan"
+  | "hardDrive"
+> = {
+  "Contas existentes": "users",
+  "Contas ativas": "saved",
+  "Contas bloqueadas": "readonly",
+  "Contas em exclusão": "delete",
+  "Novos cadastros no período": "userPlus",
+  "Usuários ativos no período": "operation",
+  "Projetos fora da lixeira": "plan",
+  "Projetos na lixeira / em eliminação": "delete",
+  "Armazenamento contabilizado nas cotas": "hardDrive",
+};
+const stateClasses: Record<string, string> = {
+  active: css.stateActive,
+  blocked: css.stateBlocked,
+  deleting: css.stateDeleting,
+  trashed: css.stateOther,
+};
 type Data = {
   overview?: AdminOverview;
   users?: AdminUser[];
@@ -225,12 +258,18 @@ export function Admin({
       }}
     >
       <header className={css.header}>
-        <div>
-          <span className={styles.eyebrow}>ECOVIT</span>
+        <div className={css.titleGroup}>
+          <div className={css.titleBadges}>
+            <span className={styles.eyebrow}>ECOVIT</span>
+            <span className={css.adminBadge}>Painel de Administração</span>
+          </div>
           <h2 id="admin-title" tabIndex={-1}>
             Administração
           </h2>
-          <p>{account.email}</p>
+          <div className={css.accountIdentity}>
+            <Icon name="account" size="compact" />
+            <span>{account.email}</span>
+          </div>
         </div>
         <button
           type="button"
@@ -251,11 +290,17 @@ export function Admin({
         ].map(([key, label]) => (
           <button
             key={key}
+            type="button"
+            className={css.tabButton}
             disabled={working || !!pending}
             aria-pressed={tab === key}
             onClick={() => navigate(key)}
           >
-            {label}
+            <Icon
+              name={tabIcons[key as keyof typeof tabIcons]}
+              size="control"
+            />
+            <span>{label}</span>
           </button>
         ))}
       </nav>
@@ -407,10 +452,13 @@ export function Admin({
             </>
           )}
           <button
+            type="button"
+            className={css.filterButton}
             disabled={working}
             onClick={() => setRevision((value) => value + 1)}
           >
-            Atualizar
+            <Icon name="refresh" size="compact" />
+            <span>Atualizar</span>
           </button>
         </div>
         {error && (
@@ -422,9 +470,27 @@ export function Admin({
         {!data && !error && <p role="status">Consultando administração…</p>}
         {overview && (
           <>
-            <p>
-              Atualizado em {date(overview.updated_at)} · Horários de São Paulo.
-            </p>
+            <div className={css.overviewStatusBanner}>
+              <div className={css.overviewStatusItem}>
+                <Icon name="calendar" size="compact" />
+                <span>
+                  Atualizado em {date(overview.updated_at)} · Horários de São Paulo.
+                </span>
+              </div>
+              <div className={css.overviewStatusItem}>
+                <Icon name="info" size="compact" />
+                <span>
+                  Atividade registrada desde {date(overview.coverage_since)}.{" "}
+                  {overview.coverage_partial ? (
+                    <span className={css.partialBadge}>
+                      Cobertura parcial do período selecionado.
+                    </span>
+                  ) : (
+                    ""
+                  )}
+                </span>
+              </div>
+            </div>
             <div className={css.metrics}>
               {[
                 ["Contas existentes", overview.accounts],
@@ -443,23 +509,28 @@ export function Admin({
                   bytes(overview.bytes),
                 ],
               ].map(([label, value]) => (
-                <section key={label}>
-                  <h3>{label}</h3>
-                  <strong>{value}</strong>
+                <section key={label} className={css.metricCard}>
+                  <div className={css.metricHeader}>
+                    <span className={css.metricIconWrapper}>
+                      <Icon
+                        name={metricIcons[label] ?? "info"}
+                        size="control"
+                      />
+                    </span>
+                    <h3>{label}</h3>
+                  </div>
+                  <strong className={css.metricValue}>{value}</strong>
                 </section>
               ))}
             </div>
-            <p>
-              Atividade registrada desde {date(overview.coverage_since)}.{" "}
-              {overview.coverage_partial
-                ? "Cobertura parcial do período selecionado."
-                : ""}
-            </p>
-            <p>
-              Ativo: abriu ou alterou um projeto com sucesso. Totais atuais não
-              variam com o período. Contas eliminadas não entram nas métricas;
-              armazenamento não representa o disco total do servidor.
-            </p>
+            <div className={css.overviewNote}>
+              <Icon name="info" size="compact" />
+              <p>
+                Ativo: abriu ou alterou um projeto com sucesso. Totais atuais não
+                variam com o período. Contas eliminadas não entram nas métricas;
+                armazenamento não representa o disco total do servidor.
+              </p>
+            </div>
           </>
         )}
         {data?.users && (
@@ -493,7 +564,13 @@ export function Admin({
                           ? "Administrador"
                           : "Usuário"}
                     </td>
-                    <td>{states[item.state]}</td>
+                    <td>
+                      <span
+                        className={`${css.stateBadge} ${stateClasses[item.state] ?? css.stateOther}`}
+                      >
+                        {states[item.state]}
+                      </span>
+                    </td>
                     <td>{date(item.created_at)}</td>
                     <td>{date(item.last_activity)}</td>
                     <td>{item.projects}</td>
@@ -518,6 +595,8 @@ export function Admin({
         {user && (
           <>
             <button
+              type="button"
+              className={styles.iconText}
               disabled={working || !!pending}
               onClick={() => {
                 setTarget("");
@@ -525,7 +604,8 @@ export function Admin({
                 setMessage("");
               }}
             >
-              Voltar aos usuários
+              <Icon name="left" size="compact" />
+              <span>Voltar aos usuários</span>
             </button>
             <h3>{user.email}</h3>
             <p>Identificador: {user.id}</p>
@@ -670,19 +750,30 @@ export function Admin({
         )}
         {data?.events && (
           <>
-            <p>
-              API: disponível · Banco: acesso confirmado em{" "}
-              {date(data.checkedAt)}.
-            </p>
-            <p>
-              Última limpeza concluída: {date(data.lastCleanup)}. Sem registro
-              não comprova execução.
-            </p>
-            <p>
-              Coleta desde {date(data.coverageSince)}. Períodos anteriores não
-              têm cobertura. Aceitação do provedor não comprova entrega do
-              e-mail.
-            </p>
+            <div className={css.operationInfo}>
+              <div className={css.operationInfoItem}>
+                <Icon name="database" size="compact" />
+                <p>
+                  API: disponível · Banco: acesso confirmado em{" "}
+                  {date(data.checkedAt)}.
+                </p>
+              </div>
+              <div className={css.operationInfoItem}>
+                <Icon name="refresh" size="compact" />
+                <p>
+                  Última limpeza concluída: {date(data.lastCleanup)}. Sem registro
+                  não comprova execução.
+                </p>
+              </div>
+              <div className={css.operationInfoItem}>
+                <Icon name="info" size="compact" />
+                <p>
+                  Coleta desde {date(data.coverageSince)}. Períodos anteriores não
+                  têm cobertura. Aceitação do provedor não comprova entrega do
+                  e-mail.
+                </p>
+              </div>
+            </div>
             <div className={css.table}>
               <table>
                 <caption>Ocorrências técnicas</caption>
@@ -785,17 +876,21 @@ export function Admin({
         {data && tab !== "overview" && (
           <div className={css.actions}>
             <button
+              type="button"
               disabled={page === 1 || working || !!pending}
               onClick={() => setPage((value) => value - 1)}
             >
-              Anterior
+              <Icon name="left" size="compact" />
+              <span>Anterior</span>
             </button>
-            <span>Página {page}</span>
+            <span className={css.pageIndicator}>Página {page}</span>
             <button
+              type="button"
               disabled={!data.hasMore || working || !!pending}
               onClick={() => setPage((value) => value + 1)}
             >
-              Próxima
+              <span>Próxima</span>
+              <Icon name="right" size="compact" />
             </button>
           </div>
         )}

@@ -43,6 +43,15 @@ import {
   X,
   UserRound,
   RefreshCw,
+  LayoutDashboard,
+  Users,
+  Activity,
+  ShieldCheck,
+  Search,
+  Database,
+  Calendar,
+  UserPlus,
+  HardDrive,
 } from "lucide-react";
 import styles from "./App.module.css";
 
@@ -94,6 +103,15 @@ const icons = {
   readonly: LockKeyhole,
   account: UserRound,
   home: House,
+  dashboard: LayoutDashboard,
+  users: Users,
+  operation: Activity,
+  audit: ShieldCheck,
+  search: Search,
+  database: Database,
+  calendar: Calendar,
+  userPlus: UserPlus,
+  hardDrive: HardDrive,
 } as const;
 const sizes = { compact: 16, control: 18, card: 24, feature: 32 } as const;
 
