@@ -24,6 +24,7 @@ async function fixture(page: Page, pending = false) {
     channel: 100,
     "half-channel": 100,
   };
+  doc.project.settlement = { ac1: { percent: 10000, price: 0 } };
   floor.channelReinforcement = {
     enabled: true,
     count: 2,
@@ -40,13 +41,11 @@ async function fixture(page: Page, pending = false) {
     makeWall({ x: 0, y: 0 }, { x: 10000, y: 0 }, 1250, floor.id, 30000, 1)!,
   ];
   doc = addFloor(doc, { name: "Superior", level: 36000, defaultHeight: 30000 });
-  await page
-    .getByTestId("import-file")
-    .setInputFiles({
-      name: "aco.ecovit",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(doc)),
-    });
+  await page.getByTestId("import-file").setInputFiles({
+    name: "aco.ecovit",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(doc)),
+  });
   await expect(page.getByRole("status")).toContainText("Salvo");
   return doc;
 }
@@ -109,6 +108,7 @@ test(
     await expect(totals(page)).toHaveText([
       "R$ 225,00",
       "Indisponível",
+      "R$ 0,00",
       "Indisponível",
     ]);
     await setPrice(page, "8", "12");
@@ -122,6 +122,7 @@ test(
     await expect(totals(page)).toHaveText([
       "R$ 225,00",
       "R$ 43,91",
+      "R$ 0,00",
       "R$ 268,91",
     ]);
     const priced = await state(page);
@@ -139,6 +140,7 @@ test(
     await expect(totals(page)).toHaveText([
       "R$ 225,00",
       "R$ 43,91",
+      "R$ 0,00",
       "R$ 268,91",
     ]);
     expect((await state(page)).active).toBe(before.active);
@@ -165,6 +167,7 @@ test(
     await expect(totals(page)).toHaveText([
       "R$ 225,00",
       "R$ 48,94",
+      "R$ 0,00",
       "R$ 273,94",
     ]);
     await close(page);
@@ -187,7 +190,7 @@ test(
     const restored = parseFile(
       await readFile((await (await exported).path())!, "utf8"),
     );
-    expect(restored.schemaVersion).toBe(31);
+    expect(restored.schemaVersion).toBe(32);
     expect(restored.project.steelPrices).toEqual({
       "ca50-8": 1200,
       "ca50-10": 1000,
@@ -206,6 +209,7 @@ test(
     await expect(totals(page)).toHaveText([
       "R$ 225,00",
       "R$ 48,94",
+      "R$ 0,00",
       "R$ 273,94",
     ]);
   },
@@ -222,6 +226,7 @@ test(
     await expect(totals(page)).toHaveText([
       "R$ 225,00",
       "R$ 0,00",
+      "R$ 0,00",
       "R$ 225,00",
     ]);
     const saved = await state(page);
@@ -230,6 +235,7 @@ test(
     await expect(totals(page)).toHaveText([
       "R$ 225,00",
       "Indisponível",
+      "R$ 0,00",
       "Indisponível",
     ]);
     expect((await state(page)).past).toBe(saved.past);
@@ -241,6 +247,7 @@ test(
     await page.getByLabel("Perdas de tijolos (%)", { exact: true }).fill("x");
     await expect(totals(page)).toHaveText([
       "Indisponível",
+      "R$ 0,00",
       "R$ 0,00",
       "Indisponível",
     ]);

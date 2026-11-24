@@ -23,6 +23,11 @@ import {
   SteelBudgetDetail,
 } from "./SteelBudget";
 import styles from "../ui/App.module.css";
+import {
+  useSettlementBudget,
+  SettlementBudgetSummary,
+  SettlementBudgetDetail,
+} from "./SettlementBudget";
 
 const number = (n: number) => n.toLocaleString("pt-BR");
 function CountCells({ counts }: { counts: Counts }) {
@@ -216,6 +221,40 @@ export function Quantities({
     priceSaving,
     setPriceSaving,
   );
+  const settlement = useSettlementBudget(
+    doc,
+    open,
+    busy,
+    readonly,
+    priceSaving,
+    setPriceSaving,
+  );
+  const totals = [
+    {
+      label: "Subtotal de tijolos",
+      value: !invalidPrices ? budget?.total : undefined,
+      partial: report.available && report.partial,
+    },
+    {
+      label: "Subtotal de ferragens",
+      value: steel.costs.total,
+      partial: steel.report.available && steel.report.partial,
+    },
+    {
+      label: "Subtotal de assentamento",
+      value: settlement.report.available ? settlement.report.total : undefined,
+      partial: settlement.report.available && settlement.report.partial,
+    },
+  ];
+  let materialTotal: number | undefined;
+  let materialError = "";
+  if (totals.every((t) => t.value !== undefined)) {
+    const sum = totals.reduce((n, t) => n + BigInt(t.value!), 0n);
+    if (sum <= BigInt(Number.MAX_SAFE_INTEGER)) materialTotal = Number(sum);
+    else
+      materialError =
+        "Total dos materiais fora da representação numérica segura.";
+  }
   return (
     <>
       <button
@@ -270,10 +309,10 @@ export function Quantities({
               {display(doc.project.base.height)} cm
             </p>
             <p className={styles.note}>
-              Quantitativos e estimativa de custos de tijolos e ferragens do
-              projeto, com base nos preços informados e nas perdas de tijolos
-              definidas. Inclui resumo dos materiais e detalhamento por
-              pavimento e fiada.
+              Quantitativos e estimativa de custos de tijolos, ferragens e
+              materiais de assentamento do projeto, com base nos preços
+              informados e nas perdas de tijolos definidas. Inclui resumo dos
+              materiais e detalhamento por pavimento e fiada.
             </p>
           </header>
           {!report.available && <p role="alert">{report.reason}</p>}
@@ -327,10 +366,10 @@ export function Quantities({
               </label>
               <p id="loss-note" className={styles.note}>
                 Opcional. Aplicado por tipo de tijolo sobre o total do projeto,
-                com arredondamento para cima. Não afeta ferragens. Custos usam o
-                total estimado, incluindo perdas. Perdas e preços ficam salvos
-                no projeto. Saia do campo ou pressione Enter para salvar a
-                edição.
+                com arredondamento para cima. Não afeta ferragens nem
+                assentamento. Custos usam o total estimado, incluindo perdas.
+                Perdas e preços ficam salvos no projeto. Saia do campo ou
+                pressione Enter para salvar a edição.
               </p>
               <p role="status" aria-live="polite">
                 {priceSaving || saved === "saving"
@@ -453,11 +492,45 @@ export function Quantities({
                   </p>
                 )}
             </section>
-            <SteelBudgetSummary
-              model={steel}
-              brickTotal={!invalidPrices ? budget?.total : undefined}
-              brickPartial={report.available && report.partial}
-            />
+            <SteelBudgetSummary model={steel} />
+            <SettlementBudgetSummary model={settlement} />
+            <dl
+              className={styles.materialTotals}
+              aria-label="Totais dos materiais"
+            >
+              {totals.map((t) => (
+                <div key={t.label}>
+                  <dt>
+                    {t.label}
+                    {t.partial ? " · parcial" : ""}
+                  </dt>
+                  <dd>
+                    {t.value !== undefined ? money(t.value) : "Indisponível"}
+                  </dd>
+                </div>
+              ))}
+              <div>
+                <dt>
+                  Total dos materiais orçados (tijolos + ferragens +
+                  assentamento)
+                  {totals.some((t) => t.partial) ? " · parcial" : ""}
+                </dt>
+                <dd>
+                  {materialTotal !== undefined
+                    ? money(materialTotal)
+                    : "Indisponível"}
+                </dd>
+              </div>
+            </dl>
+            {materialError && <p role="alert">{materialError}</p>}
+            {materialTotal === undefined && (
+              <p className={styles.note}>
+                O total depende de quantitativos disponíveis, massas
+                cadastradas, perdas de tijolos válidas, distribuição de
+                assentamento completa e preços informados para os materiais
+                utilizados. Preço zero é diferente de preço ausente.
+              </p>
+            )}
           </section>
           {report.available && (
             <section
@@ -500,6 +573,13 @@ export function Quantities({
                       : ""}
                     . Quantidades geométricas, sem perdas.
                   </p>
+                  {consultedFloors.map((floor) => (
+                    <SettlementBudgetDetail
+                      key={`settlement:${floor.id}`}
+                      model={settlement}
+                      floorId={floor.id}
+                    />
+                  ))}
                   {consultedFloors.map((floor) => (
                     <SteelBudgetDetail
                       key={floor.id}

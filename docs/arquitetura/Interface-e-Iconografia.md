@@ -116,6 +116,12 @@ A consulta Áreas do projeto da T-030 reutiliza a apresentação documental do O
 
 ## Orçamento
 
+### Material de assentamento — T-035
+
+Terceiro grupo após tijolos/ferragens, no mesmo modal e com uma rolagem geral. Reutilizar campos decimais e estilos de tabela, sem novo ícone/navegação. Separar tabela de parâmetros (produto/embalagem, percentual, consumo por m², preço por embalagem) da tabela de consumo/compra global para manter legibilidade. Campos têm nomes por produto/unidade, validação associada e confirmação por Enter/blur. Mostrar soma/falta/excesso e configuração incompleta; prévia inválida não exibe derivados antigos como atuais.
+
+Áreas bruta/descontada/líquida e explicação de rendimentos editáveis antecedem quantidades. Distinguir kg e litros, consumo e embalagens inteiras; compra global arredonda uma vez por produto. O seletor de pavimento filtra também consumo/rateio de assentamento; cada andar mostra nome/cota e subtotal identificado como rateio da compra, incluindo sobras. Não exibir embalagens inteiras por andar. Resumo reúne três subtotais e total geral; identificar parcialidade/incompletude sem ocultar seções independentes. Manter foco, somente leitura e status de salvamento/recuperação existentes. Fórmulas e dados pertencem a Caderno/Quantitativos/Persistência.
+
 O acesso do cabeçalho passa a Orçamento, conservando o ícone central quantities e a apresentação iconText. Popup nativo amplo segue releasePage/releaseHeader do histórico: margens externas, fundo atenuado, cabeçalho e fechamento fixos enquanto o conteúdo rola. No Resumo do projeto, manter as colunas quantitativas, acrescentar preço unitário por tipo e custo como última coluna. Campos monetários têm nomes acessíveis por tipo, inputMode decimal, validação associada e bloqueio em somente leitura/processamento. Confirmar preço ao sair do campo ou por Enter; prévia válida dos custos acompanha a digitação, sem salvar até confirmar. Entrada inválida não confirma nem mostra custo antigo como válido. O popup informa o estado do salvamento; fechamento dá acesso à recuperação existente no editor. Detalhamento quantitativo continua consultável e o foco retorna ao botão Orçamento ao fechar.
 
 ### Formatação documental — Áreas e Orçamento

@@ -114,28 +114,11 @@ function Measures({ row }: { row?: SteelQuantity }) {
   );
 }
 
-export function SteelBudgetSummary({
-  model: m,
-  brickTotal,
-  brickPartial,
-}: {
-  model: Model;
-  brickTotal?: number;
-  brickPartial: boolean;
-}) {
+export function SteelBudgetSummary({ model: m }: { model: Model }) {
   const { report, costs } = m;
   const rows = report.available
     ? report.rows
     : steelCatalog.map((s) => ({ key: s.key, diameter: s.diameter }));
-  const partial = brickPartial || (report.available && report.partial);
-  let total: number | undefined,
-    totalError = "";
-  if (brickTotal !== undefined && costs.total !== undefined) {
-    const sum = BigInt(brickTotal) + BigInt(costs.total);
-    if (sum > BigInt(Number.MAX_SAFE_INTEGER))
-      totalError = "Total dos materiais fora da representação numérica segura.";
-    else total = Number(sum);
-  }
   return (
     <section className={styles.quantityGroup} aria-label="Ferragens do projeto">
       <h3>Ferragens do projeto</h3>
@@ -243,38 +226,6 @@ export function SteelBudgetSummary({
         </table>
       </div>
       {costs.error && <p role="alert">{costs.error}</p>}
-      <dl className={styles.materialTotals} aria-label="Totais dos materiais">
-        <div>
-          <dt>Subtotal de tijolos{brickPartial ? " · parcial" : ""}</dt>
-          <dd>
-            {brickTotal !== undefined ? money(brickTotal) : "Indisponível"}
-          </dd>
-        </div>
-        <div>
-          <dt>
-            Subtotal de ferragens
-            {report.available && report.partial ? " · parcial" : ""}
-          </dt>
-          <dd>
-            {costs.total !== undefined ? money(costs.total) : "Indisponível"}
-          </dd>
-        </div>
-        <div>
-          <dt>
-            Total dos materiais orçados (tijolos + ferragens)
-            {partial ? " · parcial" : ""}
-          </dt>
-          <dd>{total !== undefined ? money(total) : "Indisponível"}</dd>
-        </div>
-      </dl>
-      {totalError && <p role="alert">{totalError}</p>}
-      {total === undefined && (
-        <p className={styles.note}>
-          O total depende de quantitativos disponíveis, massas cadastradas,
-          perdas de tijolos válidas e preços informados para os materiais
-          utilizados. Preço zero é diferente de preço ausente.
-        </p>
-      )}
     </section>
   );
 }

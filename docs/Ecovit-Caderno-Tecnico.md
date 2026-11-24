@@ -1,5 +1,17 @@
 # Ecovit — Caderno técnico
 
+## T-035 — Convenção nominal de área e consumo de assentamento
+
+A área orçamentária de cada parede é comprimento entre `a`/`b` × altura confirmada, menos a união dos retângulos dos vãos no plano longitudinal/vertical dessa parede, recortados a seus limites. Posição/base dos vãos seguem o modelo vigente. Interseções de vãos não são descontadas duas vezes. Somar paredes uma vez por identidade em cada pavimento, e pavimentos para o projeto. Não considerar espessura, volume, área de ambientes, furos dos tijolos, grautes, quantidade de peças ou soma das duas faces. Não descontar encontros em L/T/cruz ou reparar diagnósticos de sobreposição. Exemplo: comprimentos 4 e 3 m com altura 3 m somam 21 m² brutos; vão de 2 m² deixa 19 m², independentemente da espessura. Convenção aprovada pelo solicitante, sem comprovação de consumo físico.
+
+Consumos padrão fornecidos pelo solicitante: AC1/AC2/AC3 e argamassa polimérica, 1,4 kg/m²; cola branca/especial, 80 ml/m². Rendimentos são consumos por área editáveis, sem recomendação de fabricante. Embalagens: AC1/2/3 20 kg; polimérica 3 kg; colas 1 litro. Para área líquida A e percentual p, área destinada=A×p/100; consumo=área destinada×rendimento; compra global=ceil(consumo/capacidade). Colas convertem 1000 ml para 1 litro. Não aplicar perdas de tijolos ou acréscimos do aço. Arredondar compra somente uma vez por produto no projeto, sem arredondar por parede/pavimento. Custo=embalagens×preço da embalagem; somar custos por produto.
+
+Dimensões usam inteiros de 0,1 mm: área interna/100.000.000 produz m². Percentuais são centésimos de ponto percentual, rendimentos são milésimos de kg/m² ou ml/m². Usar aritmética inteira/racional exata, sem derivar compra de valores arredondados para exibição. Preços/custos usam centavos inteiros seguros. Área ou produto sem uso tem consumo/custo zero.
+
+Ratear custo global C de cada produto por pavimento com área A_f: C_f=C×A_f/A. Atribuir piso inteiro em centavos e distribuir os centavos restantes pelos maiores restos; desempate por cota crescente e ID lexical. Pavimento vazio recebe zero; A=0 dispensa divisão. Subtotal do pavimento soma os custos rateados por produto e inclui parte das sobras; não representa compra independente. Somar subtotais deve fechar exatamente o custo global.
+
+Referências independentes: 100 m² com AC1 a R$30/saco →140 kg, 7 sacos, R$210. Distribuição 50% AC1 e 50% cola branca a R$20/litro →70 kg/4 sacos/R$120 e 4 litros/4 embalagens/R$80, subtotal R$200. Polimérica a R$15/pacote em 100 m² →140 kg/47 pacotes/R$705. Áreas de 60 e 40 m² com AC1 100% →84/56 kg, rateio R$126/R$84 da compra de sete sacos. Três andares de 1 m² a R$10/saco →um saco global, rateio R$3,34/R$3,33/R$3,33. Parâmetros e disponibilidade pertencem aos contratos de Quantitativos/Estado/Persistência.
+
 Este caderno define regras e convenções geométricas/construtivas, suas fontes, justificativas, exemplos independentes e limites de validade. Não especifica stack, estruturas de armazenamento, componentes de interface ou ciclo de operações: esses contratos pertencem à [Arquitetura Técnica](Ecovit-Arquitetura-Tecnica.md). O software implementa as convenções aqui identificadas por CT/EX; convenção nominal não equivale a medida física verificada ou aprovação estrutural.
 
 **Convenção vigente:** nominal-v13; extensão de alturas em CT-14.

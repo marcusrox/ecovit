@@ -2,6 +2,13 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
+## Orçamento de assentamento — T-035
+
+`project.settlement` é intenção orçamentária global excluída dos insumos construtivos, como os preços existentes. Campos individuais válidos confirmam por Enter/perda de foco com operação `budget`, inclusive percentuais cuja soma esteja incompleta. Prévia inválida não confirma; valores equivalentes aos padrões ausentes não criam operação. Consultar, filtrar e derivar áreas/custos não salva nem cria histórico. Confirmação parte do documento local mais recente e altera somente o campo correspondente, preservando outras edições aceitas.
+
+Alteração exclusiva de percentuais, rendimentos ou preços preserva composição e diagnósticos (atuais ou desatualizados), sem motor. Desfazer/refazer restaura parâmetros e ausência, sujeito aos bloqueios vigentes. Salvamento em segundo plano usa o fluxo compartilhado da T-032; falha conserva intenção local para download, repetição ou descarte explícito. Somente leitura bloqueia campos. Cópia de projeto e transporte preservam parâmetros; não há configuração independente por pavimento.
+
+
 ## M12 — estados remotos
 
 Esta seção rege os projetos remotos. Protocolo/armazenamento em [Persistência e compatibilidade](Persistencia-e-Compatibilidade.md#m12--persistência-remota); identidade em [Autenticação e acesso](Autenticacao-e-Acesso.md).

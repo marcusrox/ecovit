@@ -36,6 +36,14 @@ import {
 const integer = z.number().int().min(-LIMIT).max(LIMIT);
 const positive = integer.refine((n) => n > 0);
 const cents = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
+const settlementProduct = z
+  .object({
+    percent: z.number().int().min(0).max(10000).optional(),
+    yield: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional(),
+    price: cents.optional(),
+  })
+  .strict()
+  .optional();
 const point = z.object({ x: integer, y: integer }).strict();
 const id = z.string().uuid();
 const diagnostic = z
@@ -198,7 +206,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(31),
+    schemaVersion: z.literal(32),
     project: z
       .object({
         id,
@@ -210,6 +218,17 @@ const schema = z
         origin: point,
         initialWallHeight: positive.optional(),
         brickLossPercent: cents.optional(),
+        settlement: z
+          .object({
+            ac1: settlementProduct,
+            ac2: settlementProduct,
+            ac3: settlementProduct,
+            polymer: settlementProduct,
+            "white-glue": settlementProduct,
+            "special-glue": settlementProduct,
+          })
+          .strict()
+          .optional(),
         steelPrices: z
           .object({
             "ca60-5": cents.optional(),
@@ -595,6 +614,21 @@ export function validateProject(
   value: unknown,
   checkGenerated = true,
 ): Project {
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion >= 9 &&
+    value.schemaVersion <= 31 &&
+    "project" in value &&
+    value.project &&
+    typeof value.project === "object" &&
+    "settlement" in value.project
+  )
+    throw new Error(
+      "Arquivo inválido: materiais de assentamento em formato anterior.",
+    );
   if (
     value &&
     typeof value === "object" &&
@@ -1000,10 +1034,11 @@ export function validateProject(
       value.schemaVersion !== 28 &&
       value.schemaVersion !== 29 &&
       value.schemaVersion !== 30 &&
-      value.schemaVersion !== 31)
+      value.schemaVersion !== 31 &&
+      value.schemaVersion !== 32)
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 31; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 32; demais formatos não são convertidos.",
     );
   if (
     value.schemaVersion === 24 ||
@@ -1034,6 +1069,13 @@ export function validateProject(
       model: { ...value.model, texts: [] },
     };
   }
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 31
+  )
+    value = { ...value, schemaVersion: 32 };
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");

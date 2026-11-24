@@ -6,6 +6,7 @@ import type {
 } from "./composition";
 import type { ClampSettings } from "./clamps";
 import type { TextAnnotation } from "./text";
+import type { SettlementSettings } from "./settlement-budget";
 import type { SteelBudgetSettings, SteelPrices } from "./steel-budget";
 import type { ChannelReinforcementSettings } from "./channel-reinforcement";
 export type Point = { x: number; y: number };
@@ -171,7 +172,7 @@ export type Tool =
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 31;
+  schemaVersion: 32;
   project: {
     id: string;
     name: string;
@@ -183,6 +184,7 @@ export type Project = {
     channelLevels: ChannelLevel[];
     groutSettings: GroutSettings;
     steelPrices?: SteelPrices;
+    settlement?: SettlementSettings;
     brickLossPercent?: number;
     unitPrices?: Partial<
       Record<"whole" | "half" | "channel" | "half-channel", number>
@@ -276,7 +278,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 31,
+    schemaVersion: 32,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
