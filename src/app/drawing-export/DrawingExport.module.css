@@ -1,0 +1,172 @@
+.dialog {
+  width: calc(100vw - 32px);
+  height: calc(100dvh - 32px);
+  max-width: 1440px;
+  max-height: none;
+  padding: 0;
+  border: 1px solid #bccabd;
+  border-radius: 12px;
+  color: #203b2b;
+  background: #fafbf7;
+  box-shadow: 0 12px 50px #132c3440;
+  overflow: hidden;
+}
+.dialog::backdrop {
+  background: #18372c66;
+}
+.dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.dialog header,
+.dialog footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  flex-shrink: 0;
+  background: #f1f5ee;
+}
+.dialog header {
+  justify-content: space-between;
+  border-bottom: 1px solid #ccd7cb;
+}
+.dialog h1 {
+  font-size: 19px;
+  margin: 0;
+}
+.dialog footer {
+  justify-content: flex-end;
+  border-top: 1px solid #ccd7cb;
+}
+.body {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 0;
+  flex: 1;
+}
+.settings {
+  padding: 16px;
+  overflow: auto;
+  border-right: 1px solid #ccd7cb;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 12px;
+}
+.settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.settings input,
+.settings select {
+  width: 100%;
+  box-sizing: border-box;
+}
+.settings fieldset {
+  min-width: 0;
+  border: 1px solid #ccd7cb;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+.settings .checkbox {
+  flex-direction: row;
+  align-items: center;
+}
+.checkbox input {
+  width: auto;
+}
+.settings p {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.output {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  background: #e5eae3;
+  padding: 12px;
+  gap: 8px;
+}
+.output > p {
+  padding: 8px;
+  margin: 0;
+}
+.error {
+  color: #98362c;
+  background: #fff0e8;
+  border-radius: 5px;
+}
+.preview {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+.previewActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+.previewActions label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+}
+.sheet {
+  padding: 16px;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+.sheet canvas {
+  display: block;
+  margin: auto;
+  box-shadow: 0 3px 15px #0003;
+  background: white;
+}
+@media (max-width: 700px) {
+  .dialog {
+    width: calc(100vw - 12px);
+    height: calc(100dvh - 12px);
+  }
+  .body {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
+  .settings {
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid #ccd7cb;
+  }
+  .output {
+    min-height: 480px;
+    overflow: visible;
+    flex-shrink: 0;
+  }
+  .preview {
+    min-height: 450px;
+  }
+  .sheet {
+    min-height: 350px;
+  }
+  .dialog h1 {
+    font-size: 16px;
+  }
+  .dialog footer {
+    padding: 10px;
+    gap: 6px;
+  }
+}

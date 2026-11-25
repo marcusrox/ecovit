@@ -1,3 +1,4 @@
+import { usePendingEditorEdit } from "./pending-edit";
 import { useEffect, useState } from "react";
 import { displayDiagnostics } from "./diagnostics";
 import {
@@ -214,6 +215,20 @@ function OpeningForm({
   });
   const [error, setError] = useState(""),
     [options, setOptions] = useState<Suggestion[]>([]);
+  usePendingEditorEdit(
+    Object.entries({
+      "Posição do vão": o.offset,
+      "Largura do vão": o.width,
+      "Base do vão": o.base,
+      "Altura do vão": o.height,
+    }).some(([name, value]) => {
+      try {
+        return cm(values[name]) !== value;
+      } catch {
+        return true;
+      }
+    }),
+  );
   useEffect(() => {
     setValues({
       "Posição do vão": display(o.offset),

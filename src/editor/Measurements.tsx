@@ -1,4 +1,3 @@
-import { labelFont, labelSpacing } from "./label-font";
 import {
   useCallback,
   useEffect,
@@ -7,7 +6,17 @@ import {
   useState,
   type RefObject,
 } from "react";
-import { Layer, Shape, Circle } from "react-konva";
+import { Circle, Layer, Shape } from "react-konva";
+import {
+  attractMeasurement,
+  measurementOffset,
+  measurementTargets,
+  measurementText,
+  nearMeasurement,
+  roundedPoint,
+  validMeasurement,
+} from "../domain/measurements";
+import { openingBox, openingLabel, removeElement } from "../domain/openings";
 import {
   bounds,
   type LocalProject,
@@ -15,21 +24,11 @@ import {
   type Point,
   type Tool,
 } from "../domain/project";
-import { openingBox, openingLabel, removeElement } from "../domain/openings";
-import {
-  attractMeasurement,
-  measurementTargets,
-  measurementText,
-  nearMeasurement,
-  roundedPoint,
-  validMeasurement,
-  measurementGeometry,
-  measurementOffset,
-} from "../domain/measurements";
-import { useStore } from "../state/store";
 import { usePreferences } from "../state/preferences";
-import { Icon } from "../ui/Icon";
+import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
+import { Icon } from "../ui/Icon";
+import { drawMeasurements } from "./drawing/elements";
 
 type Camera = { x: number; y: number; scale: number };
 type Hit = { id: string; label: string };
@@ -413,75 +412,28 @@ export function useMeasurementCanvas(
       <Layer listening={false}>
         <Shape
           sceneFunc={(ctx) => {
-            for (const m of rendered) {
-              const line = measurementGeometry(m);
-              const a = {
-                x: line.a.x * camera.scale + camera.x,
-                y: line.a.y * camera.scale + camera.y,
-              };
-              const b = {
-                x: line.b.x * camera.scale + camera.x,
-                y: line.b.y * camera.scale + camera.y,
-              };
-              ctx.save();
-              ctx.strokeStyle =
-                m.id === select || m.id === preview?.id ? "#205d48" : "#52627b";
-              ctx.lineWidth = m.id === select ? 2 : 1;
-              ctx.beginPath();
-              ctx.moveTo(a.x, a.y);
-              ctx.lineTo(b.x, b.y);
-              // Witness lines join the measured anchors to the parallel cota.
-              if (m.offset) {
-                const sign = Math.sign(m.offset);
-                for (const [anchor, end] of [
-                  [m.a, a],
-                  [m.b, b],
-                ] as const) {
-                  ctx.moveTo(
-                    anchor.x * camera.scale + camera.x,
-                    anchor.y * camera.scale + camera.y,
-                  );
-                  ctx.lineTo(
-                    end.x + line.normal.x * sign * 4,
-                    end.y + line.normal.y * sign * 4,
-                  );
-                }
-              }
-              // Diagonal end marks use a constant screen size at every zoom.
-              if (m.a.x !== m.b.x || m.a.y !== m.b.y) {
-                const tx = (line.normal.y + line.normal.x) * 4;
-                const ty = (-line.normal.x + line.normal.y) * 4;
-                for (const end of [a, b]) {
-                  ctx.moveTo(end.x - tx, end.y - ty);
-                  ctx.lineTo(end.x + tx, end.y + ty);
-                }
-              }
-              ctx.stroke();
-              const editing = drag.current;
-              const showEditingLabel =
-                m.id === preview?.id &&
-                editing &&
-                (editing.type !== "move" ||
-                  Math.hypot(
-                    m.a.x - editing.original.a.x,
-                    m.a.y - editing.original.a.y,
-                  ) *
-                    camera.scale >=
-                    3);
-              if (visibleLabel || showEditingLabel) {
-                let angle = Math.atan2(b.y - a.y, b.x - a.x);
-                if (angle > Math.PI / 2) angle -= Math.PI;
-                if (angle <= -Math.PI / 2) angle += Math.PI;
-                ctx.translate((a.x + b.x) / 2, (a.y + b.y) / 2);
-                ctx.rotate(angle);
-                ctx.font = labelFont(11, camera.scale);
-                ctx.fillStyle = "#234b40";
-                const text = measurementText(m),
-                  width = ctx.measureText(text).width;
-                ctx.fillText(text, -width / 2, -labelSpacing(6, camera.scale));
-              }
-              ctx.restore();
-            }
+            drawMeasurements(
+              ctx._context,
+              rendered,
+              camera,
+              visibleLabel,
+              select,
+              preview,
+              (m) => {
+                const editing = drag.current;
+                return !!(
+                  m.id === preview?.id &&
+                  editing &&
+                  (editing.type !== "move" ||
+                    Math.hypot(
+                      m.a.x - editing.original.a.x,
+                      m.a.y - editing.original.a.y,
+                    ) *
+                      camera.scale >=
+                      3)
+                );
+              },
+            );
           }}
         />
         {!readonly &&

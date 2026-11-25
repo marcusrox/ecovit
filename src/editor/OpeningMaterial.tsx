@@ -1,3 +1,4 @@
+import { usePendingEditorEdit } from "./pending-edit";
 import { useEffect, useRef, useState } from "react";
 import type { Opening } from "../domain/project";
 import {
@@ -21,6 +22,11 @@ export function OpeningMaterialProperties({
     opening.material?.kind === "other" ? opening.material.description : "",
   );
   const [error, setError] = useState("");
+  usePendingEditorEdit(
+    other &&
+      (opening.material?.kind !== "other" ||
+        text.trim() !== opening.material.description),
+  );
   const frame = useRef<number | undefined>(undefined);
   const section = useRef<HTMLElement>(null);
   const cancel = () => {

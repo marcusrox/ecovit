@@ -1,3 +1,4 @@
+import { clampPoints } from "./drawing/primitives";
 import { Layer, Line, Circle, Text, Group } from "react-konva";
 import { display, type Project } from "../domain/project";
 import type { Clamp } from "../domain/clamps";
@@ -30,12 +31,7 @@ export function ClampsCanvas({
   return (
     <Layer>
       {clamps.map((c) => {
-        const points = [
-          (c.a.x + m / 2) * camera.scale + camera.x,
-          (c.a.y + m / 2) * camera.scale + camera.y,
-          (c.b.x + m / 2) * camera.scale + camera.x,
-          (c.b.y + m / 2) * camera.scale + camera.y,
-        ];
+        const points = clampPoints(c, m, camera);
         const x = (points[0] + points[2]) / 2,
           y = (points[1] + points[3]) / 2;
         return (

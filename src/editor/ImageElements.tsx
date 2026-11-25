@@ -1,11 +1,5 @@
+import { usePendingEditorEdit } from "./pending-edit";
 import Konva from "konva";
-import { usePreferences } from "../state/preferences";
-import {
-  acquireFurnitureBitmap,
-  furnitureBitmapLevel,
-  setFurnitureSmoothing,
-  type FurnitureBitmap,
-} from "./furniture-bitmaps";
 import {
   useCallback,
   useEffect,
@@ -16,12 +10,28 @@ import {
 } from "react";
 import {
   Circle,
-  Rect,
   Group,
   Image as KonvaImage,
   Layer,
   Line,
+  Rect,
 } from "react-konva";
+import {
+  catalogUrl,
+  imageCatalog,
+  imageCategories,
+} from "../domain/image-catalog";
+import {
+  elementCorners,
+  elementSideHandle,
+  elementUrl,
+  hitImageElement,
+  resizeElementSide,
+  setImageElement,
+  snapFurnitureAngle,
+  standardElement,
+  validateElement,
+} from "../domain/image-elements";
 import {
   cm,
   display,
@@ -32,26 +42,18 @@ import {
   type Point,
   type Tool,
 } from "../domain/project";
-import {
-  catalogUrl,
-  imageCatalog,
-  imageCategories,
-} from "../domain/image-catalog";
-import {
-  elementCorners,
-  elementSideHandle,
-  resizeElementSide,
-  elementUrl,
-  hitImageElement,
-  setImageElement,
-  snapFurnitureAngle,
-  standardElement,
-  validateElement,
-} from "../domain/image-elements";
 import { loadReference } from "../domain/reference-image";
+import { usePreferences } from "../state/preferences";
 import { useStore } from "../state/store";
-import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
+import { Icon } from "../ui/Icon";
+import { furniturePlacement } from "./drawing/primitives";
+import {
+  acquireFurnitureBitmap,
+  furnitureBitmapLevel,
+  setFurnitureSmoothing,
+  type FurnitureBitmap,
+} from "./furniture-bitmaps";
 
 type Camera = { x: number; y: number; scale: number };
 export function ObjectBitmap({
@@ -107,15 +109,7 @@ export function ObjectBitmap({
     <KonvaImage
       image={level.image}
       crop={level.crop}
-      x={element.x * camera.scale + camera.x}
-      y={element.y * camera.scale + camera.y}
-      offsetX={width / 2}
-      offsetY={height / 2}
-      width={width}
-      height={height}
-      rotation={element.angle}
-      scaleX={element.flipX ? -1 : 1}
-      scaleY={element.flipY ? -1 : 1}
+      {...furniturePlacement(element, camera)}
       opacity={ghost ? 0.65 : 1}
     />
   );
@@ -342,6 +336,12 @@ export function ImageElementProperties({ doc }: { doc: LocalProject }) {
   }, [e]);
   const collapsed = useStore((s) => s.propertiesCollapsed);
   const setCollapsed = useStore((s) => s.setPropertiesCollapsed);
+  usePendingEditorEdit(
+    name !== e.name ||
+      width !== display(e.width) ||
+      depth !== display(e.depth) ||
+      angle !== String(e.angle),
+  );
   const ratio = e.width / e.depth;
   function size(value: string, axis: "width" | "depth") {
     if (axis === "width") setWidth(value);

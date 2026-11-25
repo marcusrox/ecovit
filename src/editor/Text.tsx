@@ -1,11 +1,11 @@
 import {
-  useEffect,
   useCallback,
+  useEffect,
   useRef,
   useState,
   type RefObject,
 } from "react";
-import { Group, Layer, Rect, Text, Circle } from "react-konva";
+import { Circle, Group, Layer, Rect, Shape } from "react-konva";
 import {
   cm,
   display,
@@ -21,13 +21,18 @@ import {
   textLocal,
   textSchema,
   textWorld,
-  wrapText,
   type TextAnnotation,
   type TextDraft,
 } from "../domain/text";
 import { useStore } from "../state/store";
-import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
+import { Icon } from "../ui/Icon";
+import {
+  annotationLayout,
+  resetAnnotationLayouts,
+} from "./drawing/annotation-layout";
+import { drawAnnotation } from "./drawing/annotations";
+export { annotationLayout } from "./drawing/annotation-layout";
 
 const draftOf = (annotation: TextAnnotation, fresh = false): TextDraft => ({
   annotation: { ...annotation },
@@ -446,27 +451,6 @@ export function TextProperties({ setTool }: { setTool: (t: Tool) => void }) {
   );
 }
 
-let context: CanvasRenderingContext2D | null = null;
-let layouts = new WeakMap<
-  TextAnnotation,
-  { lines: string[]; height: number }
->();
-export function annotationLayout(t: TextAnnotation) {
-  const known = layouts.get(t);
-  if (known) return known;
-  context ??= document.createElement("canvas").getContext("2d");
-  if (!context) throw new Error("Não foi possível medir o texto.");
-  context.font = `${t.bold ? 600 : 400} 100px "IBM Plex Sans"`;
-  const ctx = context;
-  const lines = wrapText(
-    t.content,
-    Math.max(t.size * 2, t.width),
-    (value) => (ctx.measureText(value).width * t.size) / 100,
-  );
-  const result = { lines, height: lines.length * t.size * 1.25 };
-  layouts.set(t, result);
-  return result;
-}
 export function useTextCanvas(
   doc: LocalProject,
   tool: Tool,
@@ -493,7 +477,7 @@ export function useTextCanvas(
       document.fonts.load('400 100px "IBM Plex Sans"'),
       document.fonts.load('600 100px "IBM Plex Sans"'),
     ]).then(() => {
-      layouts = new WeakMap();
+      resetAnnotationLayouts();
       if (live) setFontReady(true);
     });
     return () => {
@@ -679,23 +663,15 @@ export function useTextCanvas(
               y={camera.y + t.y * camera.scale}
               rotation={t.rotation}
             >
-              <Rect
-                width={t.width * camera.scale}
-                height={layout.height * camera.scale}
-                fill={t.background ? "#f5f4ee" : undefined}
-                stroke={t.border ? "#64794f" : undefined}
-                strokeWidth={1}
-              />
-              <Text
-                text={layout.lines.join("\n")}
-                width={t.width * camera.scale}
-                fontFamily="IBM Plex Sans"
-                fontStyle={t.bold ? "600" : "400"}
-                fontSize={t.size * camera.scale}
-                lineHeight={1.25}
-                wrap="none"
-                align={t.align}
-                fill={t.color}
+              <Shape
+                sceneFunc={(ctx) =>
+                  drawAnnotation(
+                    ctx._context,
+                    t,
+                    { x: 0, y: 0, scale: camera.scale },
+                    false,
+                  )
+                }
               />
               {selected && (
                 <Rect

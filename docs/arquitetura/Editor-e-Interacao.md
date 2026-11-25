@@ -4,6 +4,16 @@
 
 ## Canvas, Planta e Fiada
 
+### Exportação de desenhos em PDF — T-037
+
+A exportação de desenhos é uma consulta local sobre uma revisão confirmada: um pavimento, Planta/Fiadas/ambos, sem alterar contexto, preferências, documento, histórico ou salvamento do editor. Planta usa intenção confirmada; Fiada exige composição vigente nominal-v13 e preserva parcialidade/pendências. Não chamar o motor para exportar. Alterações confirmadas ainda não salvas podem ser exportadas, com a condição indicada no documento. Edições não confirmadas precisam ser concluídas ou canceladas antes de gerar; `src/editor/pending-edit.ts` registra somente na sessão da interface os formulários locais que aguardam Aplicar, sem transferir seus rascunhos ao documento ou confirmá-los na exportação. Não há mudança de formato nativo, persistência ou serviço de PDF no servidor, nem dependência da implementação da T-038.
+
+`src/app/drawing-export/` separa configuração, preparação de páginas, geração e visualização do PDF. `src/domain/relevant-courses.ts` seleciona fiadas existentes por critérios da T-037: primeira, canaletas efetivas, grampos válidos/pendentes, início/fim de recortes dos vãos e último nível das paredes com primeiro nível seguinte existente. Grautes verticais e alternância normal não selecionam fiadas. `src/editor/drawing/` compartilha com o editor desenho de paredes/vãos, peças, lajes, terreno/rosa, medidas, ambientes, textos e transformações dos mobiliários; funções de pintura recebem dados e transformação, sem modificar a câmera ou o pavimento do editor.
+
+PDF gerado no navegador com pdf-lib; folhas rasterizadas a 300 dpi em papel A4/A3, margens de 10 mm e escalas explícitas. Desenhos usam dimensões do projeto, independentes do viewport; processamento sequencial das páginas evita montar todas as fiadas. Um conjunto de Fiadas conserva escala, origem de desenho e legenda comuns. Planta antecede Fiadas; observações complementares vêm ao final. Conteúdo que não cabe exige ajuste explícito, sem mosaico, cortes ou redução silenciosa. Recursos necessários precisam carregar; falhas preservam o projeto e permitem nova tentativa.
+
+A prévia usa PDF.js local e mostra o mesmo arquivo entregue pelo download, com navegação/ampliação. A geração é explícita e captura revisão, opções e preferências; mudança de opções invalida o resultado anterior e uma geração atrasada não libera download para escolhas diferentes. Bibliotecas de PDF e visualização são carregadas sob demanda. Imprimir posteriormente em tamanho real/100% é uma ação do usuário no leitor de PDF.
+
 Um Stage Konva representa a área do desenho. Usa camadas do mesmo espaço de edição para referência raster, malha, geometria, mobiliários e interação/seleção, conforme os contratos de cada elemento. São camadas do mesmo espaço de edição, sem canvases visíveis separados para Planta e Fiada. Zoom/enquadramento aceitam escala de 0,000001 a 0,12 pixel por unidade interna; o limite inferior permite enquadrar perímetros grandes de terreno e é aceito também na restauração da câmera local.
 
 Controles, campos e explicações serão elementos HTML acessíveis fora ou sobre o canvas. Não desenhar formulários dentro do canvas.

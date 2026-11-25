@@ -477,13 +477,13 @@ test(
       name: "Mobiliários",
     });
     await expect(dialog.getByRole("button", { name: /^Inserir / })).toHaveCount(
-      10,
+      13,
     );
     await dialog
       .getByRole("button", { name: "Paisagismo", exact: true })
       .click();
     await expect(dialog.getByRole("button", { name: /^Inserir / })).toHaveCount(
-      4,
+      6,
     );
     await page.keyboard.press("Escape");
     expect((await state(page)).history).toEqual(initial.history);

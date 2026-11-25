@@ -1,4 +1,4 @@
-import { labelFont, labelSpacing } from "./label-font";
+import { drawTerrainText } from "./drawing/elements";
 import {
   useCallback,
   useEffect,
@@ -16,6 +16,7 @@ import {
   type Tool,
 } from "../domain/project";
 import {
+  TERRAIN_MATERIALS,
   terrainAreaText,
   terrainContains,
   terrainDrawingDirection,
@@ -23,14 +24,14 @@ import {
   translateTerrain,
   validateTerrain,
   validateTerrainContour,
-  TERRAIN_MATERIALS,
 } from "../domain/terrain";
-import { useStore } from "../state/store";
+import { compassSelectionId, initialCompass } from "../domain/terrain-compass";
 import { usePreferences } from "../state/preferences";
-import { Icon } from "../ui/Icon";
-import { terrainTexture, TERRAIN_TILE_WORLD } from "./terrain-textures";
-import { initialCompass, compassSelectionId } from "../domain/terrain-compass";
+import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
+import { Icon } from "../ui/Icon";
+import { drawTerrain } from "./drawing/elements";
+import { terrainTexture } from "./terrain-textures";
 
 type Camera = { x: number; y: number; scale: number };
 const rounded = (p: Point) => ({ x: Math.round(p.x), y: Math.round(p.y) });
@@ -432,27 +433,7 @@ export function useTerrainCanvas(
       <Layer listening={false}>
         <Shape
           sceneFunc={(context) => {
-            const ctx = context._context;
-            ctx.save();
-            ctx.beginPath();
-            terrain.contour.forEach((p, i) => {
-              const q = screen(p);
-              if (i) ctx.lineTo(q.x, q.y);
-              else ctx.moveTo(q.x, q.y);
-            });
-            ctx.closePath();
-            const pattern = ctx.createPattern(tile, "repeat")!;
-            const origin = screen(terrain.textureOrigin),
-              scale = (TERRAIN_TILE_WORLD / tile.width) * camera.scale;
-            pattern.setTransform(
-              new DOMMatrix([scale, 0, 0, scale, origin.x, origin.y]),
-            );
-            ctx.fillStyle = pattern;
-            ctx.fill();
-            ctx.strokeStyle = "#64794f";
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            ctx.restore();
+            drawTerrain(context._context, terrain, tile, camera);
           }}
         />
       </Layer>
@@ -478,23 +459,7 @@ export function useTerrainCanvas(
                 ctx.stroke();
               };
               const text = (value: string, p: Point, offset = 0) => {
-                const q = screen(p);
-                const spacing = (value: number) =>
-                  labelSpacing(value, camera.scale);
-                offset = spacing(offset);
-                ctx.font = labelFont(12, camera.scale, 600);
-                const w = ctx.measureText(value).width;
-                ctx.fillStyle = "rgba(255,255,255,.92)";
-                ctx.fillRect(
-                  q.x - w / 2 - spacing(6),
-                  q.y - spacing(10) + offset,
-                  w + spacing(12),
-                  spacing(22),
-                );
-                ctx.fillStyle = "#254d38";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(value, q.x, q.y + offset + spacing(1));
+                drawTerrainText(ctx, value, p, camera, offset);
               };
               if (terrain) {
                 const label = terrainLabelPoint(terrain.contour);

@@ -1,4 +1,3 @@
-import { labelFont, LABEL_REFERENCE_SCALE } from "./label-font";
 import {
   useCallback,
   useEffect,
@@ -22,6 +21,7 @@ import {
   validateCompass,
 } from "../domain/terrain-compass";
 import { useStore } from "../state/store";
+import { drawCompass } from "./drawing/elements";
 
 type Camera = { x: number; y: number; scale: number };
 type Gesture = {
@@ -165,74 +165,7 @@ export function useTerrainCompass(
         <Layer listening={false}>
           <Shape
             sceneFunc={(context) => {
-              const ctx = context._context,
-                s = compass.size * camera.scale;
-              ctx.save();
-              ctx.translate(
-                camera.x + compass.center.x * camera.scale,
-                camera.y + compass.center.y * camera.scale,
-              );
-              ctx.rotate((compass.angle * Math.PI) / 180);
-              ctx.lineWidth = Math.max(0.7, s * 0.008);
-              ctx.strokeStyle = "#245d49";
-              for (let i = 0; i < 8; i++) {
-                ctx.save();
-                ctx.rotate((i * Math.PI) / 4);
-                const r = s * (i % 2 ? 0.22 : 0.32),
-                  w = s * 0.055;
-                for (const side of [-1, 1]) {
-                  ctx.beginPath();
-                  ctx.moveTo(0, -r);
-                  ctx.lineTo(side * w, 0);
-                  ctx.lineTo(0, s * 0.06);
-                  ctx.closePath();
-                  ctx.fillStyle = side < 0 ? "#245d49" : "#f8faf5";
-                  ctx.fill();
-                  ctx.stroke();
-                }
-                ctx.restore();
-              }
-              ctx.fillStyle = "#183d31";
-              ctx.font = labelFont(
-                compass.size * LABEL_REFERENCE_SCALE * 0.14,
-                camera.scale,
-                600,
-              );
-              ctx.textAlign = "center";
-              ctx.textBaseline = "middle";
-              for (const [label, x, y] of [
-                ["N", 0, -0.42],
-                ["L", 0.42, 0],
-                ["S", 0, 0.42],
-                ["O", -0.42, 0],
-              ] as const)
-                ctx.fillText(label, s * x, s * y);
-              if (selected) {
-                ctx.lineWidth = 1;
-                ctx.strokeStyle = "#245d49";
-                ctx.setLineDash([4, 3]);
-                ctx.strokeRect(-s / 2, -s / 2, s, s);
-                ctx.setLineDash([]);
-                ctx.beginPath();
-                ctx.moveTo(0, -s / 2);
-                ctx.lineTo(0, -s / 2 - 24);
-                ctx.stroke();
-                ctx.fillStyle = "white";
-                for (const [x, y] of [
-                  [-1, -1],
-                  [1, -1],
-                  [1, 1],
-                  [-1, 1],
-                ]) {
-                  ctx.fillRect((x * s) / 2 - 4, (y * s) / 2 - 4, 8, 8);
-                  ctx.strokeRect((x * s) / 2 - 4, (y * s) / 2 - 4, 8, 8);
-                }
-                ctx.beginPath();
-                ctx.arc(0, -s / 2 - 24, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-              }
-              ctx.restore();
+              drawCompass(context._context, compass, camera, selected);
             }}
           />
         </Layer>

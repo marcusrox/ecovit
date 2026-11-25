@@ -1,40 +1,30 @@
-import {
-  DRAWING_FONT_FAMILY,
-  labelFont,
-  labelFontSize,
-  labelSpacing,
-} from "./label-font";
-import { displayDiagnostics } from "./diagnostics";
-import { useRoomCanvas } from "./Rooms";
-import { useTextCanvas } from "./Text";
-import { selectionHandles } from "./selection-handles";
-import { useTerrainCanvas } from "./Terrain";
-import { useTerrainCompass } from "./TerrainCompass";
-import { useReferenceImageCanvas } from "./ReferenceImage";
-import { MIN_CAMERA_SCALE, useProjectCamera } from "./useProjectCamera";
 import type Konva from "konva";
 import {
   Fragment as ReactFragment,
-  useLayoutEffect,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import { Stage, Layer, Rect, Line, Circle, Text, Shape } from "react-konva";
+import { Circle, Layer, Line, Rect, Shape, Stage, Text } from "react-konva";
 import {
-  bounds,
-  connection,
-  display,
-  hitWalls,
-  length,
-  resizeWall,
-  snapPoint,
-  type Point,
-  type Wall,
-  type Opening,
-  type Tool,
-} from "../domain/project";
+  cursorCell,
+  openingCell,
+  openingDrawRange,
+  wallDraw,
+} from "../domain/drawing";
+import {
+  floorPlanBounds,
+  resolveFloorReference,
+} from "../domain/floor-reference";
+import {
+  activeGrout,
+  courseCells,
+  groutId,
+  toggleGrout,
+} from "../domain/grout";
+import { defaultAppearance } from "../domain/opening-appearance";
 import {
   openingBox,
   openingIssue,
@@ -43,45 +33,49 @@ import {
   putOpening,
 } from "../domain/openings";
 import {
+  bounds,
+  connection,
+  display,
+  hitWalls,
+  length,
+  resizeWall,
+  snapPoint,
+  type Opening,
+  type Point,
+  type Tool,
+  type Wall,
+} from "../domain/project";
+import {
   createContinuation,
   moveWall,
   type WallEdit,
 } from "../domain/wall-editing";
+import { usePreferences } from "../state/preferences";
 import {
-  cursorCell,
-  openingCell,
-  openingDrawRange,
-  wallDraw,
-} from "../domain/drawing";
-import {
-  useStore,
-  useEditingProject,
   useCourseDisplayComposition,
+  useEditingProject,
+  useStore,
 } from "../state/store";
 import styles from "../ui/App.module.css";
 import { Icon } from "../ui/Icon";
-import { useSlabCanvas } from "./Slabs";
-import { isChannel } from "../domain/channels";
-import {
-  floorPlanBounds,
-  resolveFloorReference,
-} from "../domain/floor-reference";
-import { FloorReferenceLayer } from "./FloorReference";
-import { drawPlanOpening } from "./opening-symbol";
-import { openingSymbolStrokes } from "../domain/opening-symbol";
-import { defaultAppearance } from "../domain/opening-appearance";
-import { usePreferences } from "../state/preferences";
-import { CompositionStatus } from "./CompositionStatus";
-import { ClampsCanvas, ClampsTooltip, type ClampHover } from "./Clamps";
 import { ChannelReinforcementCanvas } from "./ChannelReinforcement";
-import { useMeasurementCanvas } from "./Measurements";
+import { ClampsCanvas, ClampsTooltip, type ClampHover } from "./Clamps";
+import { CompositionStatus } from "./CompositionStatus";
+import { displayDiagnostics } from "./diagnostics";
+import { drawWallBand } from "./drawing/primitives";
+import { drawCoursePieces, drawWallOpenings } from "./drawing/shared";
+import { FloorReferenceLayer } from "./FloorReference";
 import { useImageElements } from "./ImageElements";
-import {
-  activeGrout,
-  courseCells,
-  groutId,
-  toggleGrout,
-} from "../domain/grout";
+import { DRAWING_FONT_FAMILY, labelFontSize, labelSpacing } from "./label-font";
+import { useMeasurementCanvas } from "./Measurements";
+import { useReferenceImageCanvas } from "./ReferenceImage";
+import { useRoomCanvas } from "./Rooms";
+import { selectionHandles } from "./selection-handles";
+import { useSlabCanvas } from "./Slabs";
+import { useTerrainCanvas } from "./Terrain";
+import { useTerrainCompass } from "./TerrainCompass";
+import { useTextCanvas } from "./Text";
+import { MIN_CAMERA_SCALE, useProjectCamera } from "./useProjectCamera";
 type Camera = { x: number; y: number; scale: number };
 type Gesture =
   | { type: "draw"; start: Point; cell: Point }
@@ -1283,28 +1277,25 @@ export function Canvas({
           <Layer listening={false}>
             {mode === "plan" &&
               rendered.map((w, i) => {
-                const b = bounds(w, module),
-                  selectedWall = selected === w.id,
+                const selectedWall = selected === w.id,
                   draft = preview?.id === w.id;
                 return (
-                  <Rect
+                  <Shape
                     key={w.id}
-                    x={b.x * camera.scale + camera.x}
-                    y={b.y * camera.scale + camera.y}
-                    width={b.width * camera.scale}
-                    height={b.height * camera.scale}
-                    fill={
-                      draft
-                        ? "#bbd5c9"
-                        : selectedWall
-                          ? "#759c8b"
-                          : hover === w.id
-                            ? "#a7bbae"
-                            : "#c0c9bc"
+                    sceneFunc={(ctx) =>
+                      drawWallBand(ctx._context, w, module, camera, {
+                        fill: draft
+                          ? "#bbd5c9"
+                          : selectedWall
+                            ? "#759c8b"
+                            : hover === w.id
+                              ? "#a7bbae"
+                              : "#c0c9bc",
+                        stroke: selectedWall || draft ? "#245d49" : "#637969",
+                        width: selectedWall ? 2 : 1,
+                        opacity: i === rendered.length - 1 && draft ? 0.8 : 1,
+                      })
                     }
-                    stroke={selectedWall || draft ? "#245d49" : "#637969"}
-                    strokeWidth={selectedWall ? 2 : 1}
-                    opacity={i === rendered.length - 1 && draft ? 0.8 : 1}
                   />
                 );
               })}
@@ -1390,136 +1381,30 @@ export function Canvas({
           {mode === "course" && (
             <Layer listening={false}>
               {courseWalls.map((w) => {
-                const b = bounds(w, module);
                 return (
-                  <Rect
+                  <Shape
                     key={`contour-${w.id}`}
                     name="course-wall-contour"
-                    x={b.x * camera.scale + camera.x}
-                    y={b.y * camera.scale + camera.y}
-                    width={b.width * camera.scale}
-                    height={b.height * camera.scale}
-                    stroke="#637969"
-                    strokeWidth={1}
-                    dash={[4, 3]}
+                    sceneFunc={(ctx) =>
+                      drawWallBand(ctx._context, w, module, camera, {
+                        contour: true,
+                      })
+                    }
                   />
                 );
               })}
               <Shape
                 sceneFunc={(ctx) => {
-                  const axes = new Map(
-                    output?.grouts?.map((a) => [groutId(a), a]) ?? [],
-                  );
-                  const render = (index: number, reference: boolean) => {
-                    for (const p of output?.courses[index]?.pieces ?? []) {
-                      const x = p.x * camera.scale + camera.x,
-                        y = p.y * camera.scale + camera.y,
-                        w = p.width * camera.scale,
-                        h = p.height * camera.scale;
-                      if (
-                        x + w < 0 ||
-                        y + h < 0 ||
-                        x > size.width ||
-                        y > size.height
-                      )
-                        continue;
-                      ctx.save();
-                      ctx.globalAlpha = reference
-                        ? 0.7
-                        : doc.generationState.status === "outdated" && !busy
-                          ? 0.4
-                          : 1;
-                      ctx.strokeStyle = reference ? "#4880a1" : "#42392f";
-                      ctx.lineWidth = reference ? 2 : 1;
-                      ctx.setLineDash(reference ? [4, 3] : []);
-                      if (!reference) {
-                        ctx.fillStyle = isChannel(p)
-                          ? p.kind === "channel"
-                            ? "#d5b565"
-                            : "#b38a37"
-                          : p.kind === "whole"
-                            ? "#ba906e"
-                            : "#895b3f";
-                        ctx.fillRect(x, y, w, h);
-                      }
-                      ctx.strokeRect(x, y, w, h);
-                      if (isChannel(p)) {
-                        ctx.strokeStyle = reference ? "#4880a1" : "#fff0b9";
-                        ctx.lineWidth = Math.max(
-                          2,
-                          module * camera.scale * 0.24,
-                        );
-                        ctx.beginPath();
-                        if (p.width > p.height) {
-                          ctx.moveTo(x + 2, y + h / 2);
-                          ctx.lineTo(x + w - 2, y + h / 2);
-                        } else if (p.height > p.width) {
-                          ctx.moveTo(x + w / 2, y + 2);
-                          ctx.lineTo(x + w / 2, y + h - 2);
-                        } else {
-                          const ws = doc.model.walls.filter(
-                            (w) =>
-                              p.wallIds.includes(w.id) &&
-                              w.height >= course * doc.project.base.height,
-                          );
-                          if (ws.some((w) => w.a.y === w.b.y)) {
-                            ctx.moveTo(x + 2, y + h / 2);
-                            ctx.lineTo(x + w - 2, y + h / 2);
-                          }
-                          if (ws.some((w) => w.a.x === w.b.x)) {
-                            ctx.moveTo(x + w / 2, y + 2);
-                            ctx.lineTo(x + w / 2, y + h - 2);
-                          }
-                        }
-                        ctx.stroke();
-                      }
-                      if (module * camera.scale >= 9) {
-                        ctx.fillStyle = "#f7eadd";
-                        for (let xx = 0; xx < p.width / module; xx++)
-                          for (let yy = 0; yy < p.height / module; yy++) {
-                            const axis = axes.get(
-                                groutId({
-                                  x: p.x + xx * module,
-                                  y: p.y + yy * module,
-                                }),
-                              ),
-                              row = output!.courses[index];
-                            const present =
-                              !!axis &&
-                              activeGrout(
-                                axis,
-                                doc.model.floors[0].level + row.bottom,
-                                doc.model.floors[0].level + row.top,
-                              );
-                            if (
-                              (reference && !present) ||
-                              (isChannel(p) && !groutMode && !present)
-                            )
-                              continue;
-                            ctx.fillStyle = present
-                              ? reference
-                                ? "#4880a1"
-                                : "#302c28"
-                              : "#f7eadd";
-                            ctx.beginPath();
-                            ctx.arc(
-                              x + (xx + 0.5) * module * camera.scale,
-                              y + (yy + 0.5) * module * camera.scale,
-                              module * camera.scale * 0.19,
-                              0,
-                              Math.PI * 2,
-                              false,
-                            );
-                            ctx.fill();
-                          }
-                      }
-                      ctx.restore();
-                    }
-                  };
-                  render(course - 1, false);
-                  if (ghost === "previous" && course > 1)
-                    render(course - 2, true);
-                  if (ghost === "next") render(course, true);
+                  drawCoursePieces(ctx._context, {
+                    doc,
+                    output,
+                    camera,
+                    size,
+                    course,
+                    ghost,
+                    busy,
+                    groutMode,
+                  });
                 }}
               />
               {courseWall &&
@@ -1606,194 +1491,19 @@ export function Canvas({
           <Layer listening={false}>
             <Shape
               sceneFunc={(ctx) => {
-                const visible = renderDoc.model.openings.map((o) =>
-                  openingPreview?.id === o.id ? openingPreview : o,
-                );
-                if (openingPreview && gesture.current?.type === "opening-draw")
-                  visible.push(openingPreview);
-                visible.sort(
-                  (a, b) =>
-                    Number(a.id === selected) - Number(b.id === selected),
-                );
-                const labels: {
-                  x: number;
-                  y: number;
-                  width: number;
-                  height: number;
-                }[] = [];
-                const gap = labelSpacing(5, camera.scale);
-                const clearance = labelSpacing(3, camera.scale);
-                const step = labelSpacing(14, camera.scale);
-                if (mode === "plan" && labelVisibility.wall) {
-                  for (const wall of rendered) {
-                    const vertical = wall.a.x === wall.b.x;
-                    const text = `C: ${display(length(wall))} cm · H: ${display(wall.height)} cm`;
-                    ctx.save();
-                    ctx.font = labelFont(11, camera.scale);
-                    ctx.fillStyle = "#234b40";
-                    const metrics = ctx.measureText(text);
-                    const ascent = metrics.actualBoundingBoxAscent;
-                    const descent = metrics.actualBoundingBoxDescent;
-                    const box = bounds(wall, module);
-                    let x = vertical
-                      ? box.x * camera.scale + camera.x - gap - ascent
-                      : ((wall.a.x + wall.b.x) / 2) * camera.scale +
-                        camera.x -
-                        metrics.width / 2;
-                    let y = vertical
-                      ? ((wall.a.y + wall.b.y) / 2) * camera.scale +
-                        camera.y +
-                        metrics.width / 2
-                      : box.y * camera.scale + camera.y - gap;
-                    const rect = () => ({
-                      x: vertical ? x - descent : x,
-                      y: vertical ? y - metrics.width : y - ascent,
-                      width: vertical ? ascent + descent : metrics.width,
-                      height: vertical ? metrics.width : ascent + descent,
-                    });
-                    let r = rect();
-                    while (
-                      labels.some(
-                        (l) =>
-                          r.x < l.x + l.width + clearance &&
-                          r.x + r.width + clearance > l.x &&
-                          r.y < l.y + l.height + clearance &&
-                          r.y + r.height + clearance > l.y,
-                      )
-                    ) {
-                      if (vertical) x -= step;
-                      else y -= step;
-                      r = rect();
-                    }
-                    labels.push(r);
-                    ctx.translate(x, y);
-                    if (vertical) ctx.rotate(-Math.PI / 2);
-                    ctx.fillText(text, 0, 0);
-                    ctx.restore();
-                  }
-                }
-                for (const o of visible) {
-                  const w = rendered.find((w) => w.id === o.wallId);
-                  if (!w || o.width <= 0) continue;
-                  const f = doc.model.floors[0],
-                    h = doc.project.base.height;
-                  if (
-                    mode === "course" &&
-                    !(
-                      f.level + (course - 1) * h <
-                        f.level + o.base + o.height &&
-                      f.level + course * h > f.level + o.base
-                    )
-                  )
-                    continue;
-                  const b = openingBox(o, w, module),
-                    x = b.x * camera.scale + camera.x,
-                    y = b.y * camera.scale + camera.y,
-                    width = b.width * camera.scale,
-                    height = b.height * camera.scale;
-                  ctx.save();
-                  ctx.strokeStyle = openingIssue(renderDoc, o)
-                    ? "#a0392c"
-                    : selected === o.id
-                      ? "#215f4b"
-                      : "#4b6072";
-                  ctx.lineWidth = selected === o.id ? 2 : 1;
-                  ctx.fillStyle = "#f6f8f3";
-                  ctx.setLineDash(o.kind === "opening" ? [4, 3] : []);
-                  if (mode === "plan")
-                    drawPlanOpening(
-                      ctx,
-                      o,
-                      w.a.y === w.b.y,
-                      x,
-                      y,
-                      width,
-                      height,
-                    );
-                  else {
-                    ctx.fillRect(x, y, width, height);
-                    ctx.strokeRect(x, y, width, height);
-                  }
-                  ctx.setLineDash([]);
-                  ctx.fillStyle = "#234b40";
-                  ctx.font = labelFont(11, camera.scale);
-                  const label = `${openingLabel[o.kind]} · ${display(o.base)}–${display(o.base + o.height)} cm`,
-                    metrics = ctx.measureText(label),
-                    ascent = metrics.actualBoundingBoxAscent,
-                    descent = metrics.actualBoundingBoxDescent,
-                    vertical = w.a.x === w.b.x;
-                  let labelX = vertical ? x - gap - ascent : x,
-                    labelY = vertical ? y + height : y - gap;
-                  if (
-                    mode === "plan" &&
-                    o.appearance?.type === "double-sliding"
-                  ) {
-                    for (const stroke of openingSymbolStrokes(
-                      o,
-                      !vertical,
-                      x,
-                      y,
-                      width,
-                      height,
-                    )) {
-                      for (const point of stroke.points) {
-                        if (vertical)
-                          labelX = Math.min(labelX, point.x - gap - ascent);
-                        else labelY = Math.min(labelY, point.y - gap);
-                      }
-                    }
-                  }
-                  const labelBounds = () => ({
-                    x: vertical ? labelX - descent : labelX,
-                    y: vertical ? labelY - metrics.width : labelY - ascent,
-                    width: vertical ? ascent + descent : metrics.width,
-                    height: vertical ? metrics.width : ascent + descent,
-                  });
-                  let bounds = labelBounds();
-                  while (
-                    (vertical ? bounds.x >= 0 : bounds.y >= 0) &&
-                    labels.some(
-                      (l) =>
-                        bounds.x < l.x + l.width + clearance &&
-                        bounds.x + bounds.width + clearance > l.x &&
-                        bounds.y < l.y + l.height + clearance &&
-                        bounds.y + bounds.height + clearance > l.y,
-                    )
-                  ) {
-                    if (vertical) labelX -= step;
-                    else labelY -= step;
-                    bounds = labelBounds();
-                  }
-                  if (
-                    labelVisibility[o.kind] &&
-                    (vertical ? bounds.x >= 0 : bounds.y >= 0)
-                  ) {
-                    labels.push(bounds);
-                    ctx.save();
-                    ctx.translate(labelX, labelY);
-                    if (vertical) ctx.rotate(-Math.PI / 2);
-                    ctx.fillText(label, 0, 0);
-                    ctx.restore();
-                  }
-                  if (mode === "plan" && selected === o.id && !readonly) {
-                    for (const [xx, yy] of w.a.y === w.b.y
-                      ? [
-                          [x, y + height / 2],
-                          [x + width, y + height / 2],
-                        ]
-                      : [
-                          [x + width / 2, y],
-                          [x + width / 2, y + height],
-                        ]) {
-                      ctx.beginPath();
-                      ctx.arc(xx, yy, 5, 0, Math.PI * 2);
-                      ctx.fillStyle = "#fff";
-                      ctx.fill();
-                      ctx.stroke();
-                    }
-                  }
-                  ctx.restore();
-                }
+                drawWallOpenings(ctx._context, {
+                  doc,
+                  renderDoc,
+                  rendered,
+                  camera,
+                  mode,
+                  course,
+                  openingPreview,
+                  creating: gesture.current?.type === "opening-draw",
+                  selected,
+                  readonly,
+                  labelVisibility,
+                });
               }}
             />
             {openingPreview && (

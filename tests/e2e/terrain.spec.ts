@@ -174,6 +174,9 @@ test(
     expect(await history(page)).toBe(past + 4);
     await page.keyboard.press("Control+z");
     expect((await state(page)).model.terrain!.compass!.angle).toBe(0);
+    await expect(
+      page.getByRole("button", { name: "Refazer", exact: true }),
+    ).toBeEnabled();
     await page.keyboard.press("Control+y");
     expect((await state(page)).model.terrain!.compass).toEqual(c);
     // Removing only the selected rose must preserve the terrain and its transform.
@@ -185,6 +188,9 @@ test(
       ...c,
       visible: false,
     });
+    await expect(
+      page.getByRole("button", { name: "Desfazer", exact: true }),
+    ).toBeEnabled();
     await page.keyboard.press("Control+z");
     for (const [width, height] of [
       [1366, 768],

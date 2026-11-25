@@ -1,4 +1,3 @@
-import { labelFont, labelSpacing, LABEL_REFERENCE_SCALE } from "./label-font";
 import {
   useCallback,
   useEffect,
@@ -9,6 +8,12 @@ import {
 } from "react";
 import { Layer, Shape } from "react-konva";
 import {
+  measurementTargets,
+  projection,
+  roundedPoint,
+} from "../domain/measurements";
+import { removeElement } from "../domain/openings";
+import {
   type LocalProject,
   type Point,
   type RoomBoundary,
@@ -17,22 +22,17 @@ import {
 } from "../domain/project";
 import {
   addRoomLabel,
-  revalidateRoomLabel,
   attractRoomPoint,
+  revalidateRoomLabel,
   roomAreaText,
   roomGeometry,
   validRoomBoundary,
   validRoomPoint,
 } from "../domain/rooms";
-import {
-  measurementTargets,
-  projection,
-  roundedPoint,
-} from "../domain/measurements";
-import { removeElement } from "../domain/openings";
 import { useStore } from "../state/store";
-import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
+import { Icon } from "../ui/Icon";
+import { drawRooms, roomLabelLayout } from "./drawing/room-label";
 
 export function RoomProperties({ doc }: { doc: LocalProject }) {
   const {
@@ -204,33 +204,6 @@ type Camera = { x: number; y: number; scale: number };
 type Drag =
   | { kind: "label"; original: RoomLabel; start: Point }
   | { kind: "line"; original: RoomBoundary; start: Point; end?: "a" | "b" };
-const wrappingFont = labelFont(13, LABEL_REFERENCE_SCALE);
-function textLines(text: string, ctx: CanvasRenderingContext2D) {
-  ctx.font = wrappingFont;
-  const lines: string[] = [];
-  let line = "";
-  for (const word of text.split(/\s+/)) {
-    const candidate = line ? `${line} ${word}` : word;
-    if (ctx.measureText(candidate).width <= 164) {
-      line = candidate;
-      continue;
-    }
-    if (line) {
-      lines.push(line);
-      line = "";
-    }
-    for (const char of word) {
-      if (line && ctx.measureText(line + char).width > 164) {
-        lines.push(line);
-        line = "";
-      }
-      line += char;
-    }
-  }
-  if (line) lines.push(line);
-  return lines;
-}
-
 export function useRoomCanvas(
   doc: LocalProject,
   tool: Tool,
@@ -297,21 +270,8 @@ export function useRoomCanvas(
     return r.point;
   };
   const enabled = mode === "plan" && !busy && !readonly && !imageDraft;
-  const font = labelFont(13, camera.scale);
-  const lineHeight = labelSpacing(18, camera.scale);
-  const layout = (l: RoomLabel) => {
-    const region = l.review ? undefined : geometry.at(l.reference);
-    const lines =
-      l.review || !region
-        ? ["Revisar ambiente"]
-        : [...textLines(l.name, canvas), roomAreaText(region.area)];
-    canvas.font = font;
-    const width =
-        Math.max(...lines.map((t) => canvas.measureText(t).width)) +
-        labelSpacing(12, camera.scale),
-      height = lines.length * lineHeight + labelSpacing(8, camera.scale);
-    return { lines, width, height };
-  };
+  const layout = (l: RoomLabel) =>
+    roomLabelLayout(l, geometry, canvas, camera.scale);
   const commitLine = (line: RoomBoundary) => {
     if (!validRoomBoundary(line)) {
       useStore
@@ -626,74 +586,15 @@ export function useRoomCanvas(
           )}
           <Shape
             sceneFunc={(ctx) => {
-              const native = ctx._context;
-              const screen = (p: Point) => ({
-                x: camera.x + p.x * camera.scale,
-                y: camera.y + p.y * camera.scale,
+              drawRooms(ctx._context, {
+                doc,
+                camera,
+                layout,
+                select,
+                linePreview,
+                labelPreview,
+                target,
               });
-              const lines = doc.model.roomBoundaries.map((l) =>
-                linePreview?.id === l.id ? linePreview : l,
-              );
-              if (linePreview && !lines.some((l) => l.id === linePreview.id))
-                lines.push(linePreview);
-              for (const l of lines) {
-                const a = screen(l.a),
-                  b = screen(l.b);
-                native.strokeStyle =
-                  l.id === select || l.id === linePreview?.id
-                    ? "#156d46"
-                    : "#596f65";
-                native.lineWidth = 1.5;
-                native.setLineDash([7, 5]);
-                native.beginPath();
-                native.moveTo(a.x, a.y);
-                native.lineTo(b.x, b.y);
-                native.stroke();
-                native.setLineDash([]);
-                if (l.id === select)
-                  for (const p of [a, b]) {
-                    native.fillStyle = "#fff";
-                    native.beginPath();
-                    native.arc(p.x, p.y, 5, 0, Math.PI * 2);
-                    native.fill();
-                    native.stroke();
-                  }
-              }
-              for (const original of doc.model.roomLabels) {
-                const l =
-                    labelPreview?.id === original.id ? labelPreview : original,
-                  box = layout(l),
-                  p = screen(l.position);
-                if (l.id === select) {
-                  native.strokeStyle = "#156d46";
-                  native.lineWidth = 1;
-                  native.strokeRect(
-                    p.x - box.width / 2,
-                    p.y - box.height / 2,
-                    box.width,
-                    box.height,
-                  );
-                }
-                native.fillStyle = l.review ? "#934b19" : "#203b2b";
-                native.font = font;
-                native.textAlign = "center";
-                native.textBaseline = "middle";
-                box.lines.forEach((text, i) =>
-                  native.fillText(
-                    text,
-                    p.x,
-                    p.y -
-                      ((box.lines.length - 1) * lineHeight) / 2 +
-                      i * lineHeight,
-                  ),
-                );
-              }
-              if (target) {
-                const p = screen(target);
-                native.strokeStyle = "#156d46";
-                native.lineWidth = 2;
-                native.strokeRect(p.x - 4, p.y - 4, 8, 8);
-              }
             }}
           />
         </Layer>

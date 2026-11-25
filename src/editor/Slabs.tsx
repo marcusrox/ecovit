@@ -1,34 +1,36 @@
+import { usePendingEditorEdit } from "./pending-edit";
 import { useEffect, useRef, useState } from "react";
-import { Layer, Shape, Line, Circle, Rect, Text } from "react-konva";
+import { Circle, Layer, Line, Rect, Shape, Text } from "react-konva";
+import { openingBox, openingLabel } from "../domain/openings";
 import {
   cm,
   display,
-  snapPoint,
-  slabTypes,
-  slabHeights,
-  type SlabConstruction,
   hitWalls,
+  slabHeights,
+  slabTypes,
+  snapPoint,
+  type LocalProject,
   type Point,
   type Slab,
-  type LocalProject,
+  type SlabConstruction,
   type Tool,
 } from "../domain/project";
-import { openingBox, openingLabel } from "../domain/openings";
 import {
+  onSegment,
   putSlab,
-  slabThickness,
   removeSlabElement,
   ringEdges,
   ringLocation,
-  onSegment,
-  slabIssue,
-  translateSlab,
   shiftSlabEdge,
+  slabIssue,
+  slabThickness,
+  translateSlab,
   validateRing,
 } from "../domain/slabs";
 import { useStore } from "../state/store";
-import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
+import { Icon } from "../ui/Icon";
+import { drawSlab } from "./drawing/elements";
 
 const slabTypeLabels: Record<SlabConstruction["type"], string> = {
   "lattice-clay": "Treliçada com lajotas",
@@ -100,6 +102,9 @@ export function SlabProperties({
     setDraft(constructionDraft(slab));
     setError("");
   }, [slab, editing, selected]);
+  usePendingEditorEdit(
+    JSON.stringify(draft) !== JSON.stringify(constructionDraft(slab)),
+  );
   if (!slab) return null;
   const disabled = busy || readonly || editing;
   function draftConstruction(): SlabConstruction {
@@ -798,21 +803,7 @@ export function useSlabCanvas(
       <Shape
         key={s.id}
         sceneFunc={(ctx) => {
-          ctx.beginPath();
-          for (const ring of [s.contour, ...s.openings.map((o) => o.contour)]) {
-            ring.forEach((p, i) => {
-              const q = screen(p);
-              if (i) ctx.lineTo(q.x, q.y);
-              else ctx.moveTo(q.x, q.y);
-            });
-            ctx.closePath();
-          }
-          const native = ctx._context;
-          native.fillStyle = "rgba(115,145,145,0.17)";
-          if (fill) native.fill("evenodd");
-          native.strokeStyle = color;
-          native.lineWidth = 1.5;
-          native.stroke();
+          drawSlab(ctx._context, s, camera, color, fill);
         }}
       />
     );

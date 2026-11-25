@@ -1,3 +1,4 @@
+import { DrawingExport } from "./drawing-export/DrawingExport";
 import { RoomProperties } from "../editor/Rooms";
 import { TextProperties, deleteTextSelection } from "../editor/Text";
 import { AccountButton, AccountShell } from "./Account";
@@ -1169,22 +1170,7 @@ function EditorApp() {
                 doc={doc}
                 diagnostics={() => setDiagnostics(true)}
               />
-              <button
-                disabled={busy || saving || importing}
-                onClick={() => input.current?.click()}
-                className={`${styles.iconButton} ${styles.fileAction}`}
-                aria-label="Carregar arquivo"
-                aria-busy={importing}
-                title="Carregar arquivo .ecovit"
-                data-tooltip="Carregar arquivo .ecovit"
-              >
-                <span
-                  className={importing ? styles.inlineSpinner : undefined}
-                  aria-hidden="true"
-                >
-                  <Icon name={importing ? "saving" : "upload"} />
-                </span>
-              </button>
+              <DrawingExport />
               <button
                 className={`${styles.iconButton} ${styles.fileAction}`}
                 aria-label="Baixar projeto"
