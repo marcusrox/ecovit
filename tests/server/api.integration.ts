@@ -120,6 +120,97 @@ afterAll(async () => {
 });
 
 describe("M12 — API com PostgreSQL 18.0 real", () => {
+  it("T-035 preserva assentamento na API e cópia e recusa configurações inválidas sem alterar a revisão", async () => {
+    const user = await login("assentamento@example.com");
+    const doc = createProject("Assentamento T-035", {
+      length: 2500,
+      width: 1250,
+      height: 700,
+    });
+    doc.project.settlement = {
+      ac1: { percent: 6000, yield: 1401, price: 3000 },
+      "white-glue": { percent: 4000, yield: 80001, price: 0 },
+    };
+    const url = `/api/projects/${doc.project.id}`;
+    const created = await app.inject({
+      method: "POST",
+      url,
+      headers: headers(user),
+      payload: { ...body(), doc: dehydrate(doc, {}) },
+    });
+    expect(created.statusCode, created.body).toBe(200);
+    const valid = dehydrate(doc, {});
+    for (const settlement of [
+      null,
+      { ac4: {} },
+      { ac1: null },
+      { ac1: { extra: 1 } },
+      { ac1: { percent: 10001 } },
+      { ac1: { yield: 0 } },
+      { ac1: { yield: 1.1 } },
+      { ac1: { price: -1 } },
+      { ac1: { price: Number.MAX_SAFE_INTEGER + 1 } },
+    ]) {
+      const response = await app.inject({
+        method: "PUT",
+        url,
+        headers: headers(user),
+        payload: {
+          ...body("1"),
+          doc: { ...valid, project: { ...valid.project, settlement } },
+        },
+      });
+      expect(response.statusCode, response.body).toBe(422);
+    }
+    const previousFormat = await app.inject({
+      method: "PUT",
+      url,
+      headers: headers(user),
+      payload: {
+        ...body("1"),
+        doc: {
+          ...valid,
+          schemaVersion: 31,
+          project: { ...valid.project, settlement: {} },
+        },
+      },
+    });
+    expect(previousFormat.statusCode, previousFormat.body).toBe(422);
+    const stored = await app.inject({ url, headers: headers(user) });
+    expect(stored.json().revision).toBe("1");
+    expect(stored.json().doc.project.settlement).toEqual(
+      doc.project.settlement,
+    );
+    // An intermediate, individually valid distribution is persistable.
+    doc.project.settlement.ac1!.percent = 5000;
+    const updated = await app.inject({
+      method: "PUT",
+      url,
+      headers: headers(user),
+      payload: { ...body("1"), doc: dehydrate(doc, {}) },
+    });
+    expect(updated.statusCode, updated.body).toBe(200);
+    const copied = await app.inject({
+      method: "POST",
+      url: `${url}/duplicate`,
+      headers: headers(user),
+      payload: {
+        ...body("2"),
+        name: "Cópia do assentamento",
+        newId: randomUUID(),
+      },
+    });
+    expect(copied.statusCode, copied.body).toBe(200);
+    const copy = await app.inject({
+      url: `/api/projects/${copied.json().projectId}`,
+      headers: headers(user),
+    });
+    expect(copy.statusCode, copy.body).toBe(200);
+    expect(copy.json().doc.project.settlement).toEqual(doc.project.settlement);
+    expect(copy.json().doc.schemaVersion).toBe(32);
+    expect(copy.json().doc.project).not.toHaveProperty("settlementTotal");
+  });
+
   it("exige origem/CSRF para código, limita tentativas sem rollback do contador e consome código uma única vez", async () => {
     const initial = await app.inject({ url: "/api/session" });
     const common = {

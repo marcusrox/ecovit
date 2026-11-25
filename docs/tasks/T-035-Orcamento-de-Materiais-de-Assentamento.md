@@ -4,9 +4,9 @@
 
 **Resumo** — Estimar colas e argamassas pela área de paredes descontada dos vãos, com percentuais, rendimentos e preços editáveis, compra em embalagens inteiras e subtotais por pavimento proporcionais à área líquida.
 
-**Execução** — Em execução
+**Execução** — Verificada
 
-**Data de execução** — —
+**Data de execução** — 2026-11-25
 
 **Aceite manual** — Pendente
 
@@ -120,18 +120,41 @@ As restrições anteriores do PRD/Quantitativos a tijolos e ferragens e a ausên
 
 ## Critérios de aceite
 
-- [ ] **A01** — O Orçamento apresenta a terceira seção com os seis produtos, embalagens e rendimentos padrão solicitados, com percentuais, preços e rendimentos independentes e editáveis.
-- [ ] **A02** — A área soma comprimento × altura de cada parede, descontando a união dos vãos contidos nela, por pavimento e projeto, sem fatores de espessura nem descontos nos encontros. Cada parede entra uma vez; área bruta, desconto e área líquida ficam identificados. O exemplo de 21 m² brutos e 19 m² líquidos é atendido.
-- [ ] **A03** — A distribuição admite de 0% a 100% por produto e exige soma exata de 100% para cálculo completo, sem ajuste automático. Estados intermediários e entradas inválidas são identificados e permitem concluir a configuração.
-- [ ] **A04** — Consumo e compra em embalagens inteiras seguem as fórmulas e os exemplos, com arredondamento global por produto, conversão correta de ml para litros e atualização por rendimento editado, sem aplicar perdas dos tijolos.
-- [ ] **A05** — Custos por produto, subtotal de assentamento e total geral dos três grupos são coerentes; preço ausente difere de zero, produto sem uso não exige preço e valores incompletos, parciais ou indisponíveis não são apresentados como totais completos.
-- [ ] **A06** — Configurações confirmadas sobrevivem a reabertura, cópia, arquivo, histórico e recuperação conforme os contratos existentes; legados conservam integridade. Edições orçamentárias não recalculam a alvenaria e respeitam somente leitura e bloqueios vigentes.
-- [ ] **A07** — Tijolos e ferragens preservam seus quantitativos, preços, perdas, detalhamentos e filtros; contratos responsáveis refletem a nova seção e a convenção nominal, sem ampliar o escopo construtivo.
-- [ ] **A08** — Cada pavimento apresenta área líquida, consumo por produto e subtotal de assentamento; custos da compra global são rateados pela área líquida, com centavos conciliados por produto, sem compra independente por andar. Exemplos de 60/40 m², empate de centavos e pavimento vazio são atendidos.
-- [ ] **A09** — O seletor existente filtra o detalhamento de assentamento sem alterar parâmetros, compra global, rateio, totais do resumo ou o pavimento ativo; Todos apresenta os pavimentos com seus subtotais e identificação inequívoca.
-- [ ] **A10** — Rendimentos aceitam até três casas decimais e são persistidos em milésimos; entradas inválidas não são arredondadas. Cálculo exato preserva múltiplos de embalagem e identifica resultados não representáveis sem invalidar parâmetros ou resultados independentes.
-- [ ] **A11** — O novo envelope transporta os parâmetros com validação estrita no cliente/API; legados abrem sem gravação automática e sem preço/produto inventado. Campos novos em envelope anterior são recusados; leitores antigos recusam o novo formato sem substituir o trabalho aberto. Composição nominal-v13, representação remota versão 1 e estrutura SQL são preservadas.
+- [x] **A01** — O Orçamento apresenta a terceira seção com os seis produtos, embalagens e rendimentos padrão solicitados, com percentuais, preços e rendimentos independentes e editáveis.
+- [x] **A02** — A área soma comprimento × altura de cada parede, descontando a união dos vãos contidos nela, por pavimento e projeto, sem fatores de espessura nem descontos nos encontros. Cada parede entra uma vez; área bruta, desconto e área líquida ficam identificados. O exemplo de 21 m² brutos e 19 m² líquidos é atendido.
+- [x] **A03** — A distribuição admite de 0% a 100% por produto e exige soma exata de 100% para cálculo completo, sem ajuste automático. Estados intermediários e entradas inválidas são identificados e permitem concluir a configuração.
+- [x] **A04** — Consumo e compra em embalagens inteiras seguem as fórmulas e os exemplos, com arredondamento global por produto, conversão correta de ml para litros e atualização por rendimento editado, sem aplicar perdas dos tijolos.
+- [x] **A05** — Custos por produto, subtotal de assentamento e total geral dos três grupos são coerentes; preço ausente difere de zero, produto sem uso não exige preço e valores incompletos, parciais ou indisponíveis não são apresentados como totais completos.
+- [x] **A06** — Configurações confirmadas sobrevivem a reabertura, cópia, arquivo, histórico e recuperação conforme os contratos existentes; legados conservam integridade. Edições orçamentárias não recalculam a alvenaria e respeitam somente leitura e bloqueios vigentes.
+- [x] **A07** — Tijolos e ferragens preservam seus quantitativos, preços, perdas, detalhamentos e filtros; contratos responsáveis refletem a nova seção e a convenção nominal, sem ampliar o escopo construtivo.
+- [x] **A08** — Cada pavimento apresenta área líquida, consumo por produto e subtotal de assentamento; custos da compra global são rateados pela área líquida, com centavos conciliados por produto, sem compra independente por andar. Exemplos de 60/40 m², empate de centavos e pavimento vazio são atendidos.
+- [x] **A09** — O seletor existente filtra o detalhamento de assentamento sem alterar parâmetros, compra global, rateio, totais do resumo ou o pavimento ativo; Todos apresenta os pavimentos com seus subtotais e identificação inequívoca.
+- [x] **A10** — Rendimentos aceitam até três casas decimais e são persistidos em milésimos; entradas inválidas não são arredondadas. Cálculo exato preserva múltiplos de embalagem e identifica resultados não representáveis sem invalidar parâmetros ou resultados independentes.
+- [x] **A11** — O novo envelope transporta os parâmetros com validação estrita no cliente/API; legados abrem sem gravação automática e sem preço/produto inventado. Campos novos em envelope anterior são recusados; leitores antigos recusam o novo formato sem substituir o trabalho aberto. Composição nominal-v13, representação remota versão 1 e estrutura SQL são preservadas.
 
 ## Resultado
 
+### Especificação e situação anterior
+
 Especificação criada e revisada a pedido do solicitante. Confirmados: distribuição total de 100%, compra em embalagens inteiras e rateio global pela área líquida de cada pavimento. Incluídos consumo e subtotais por pavimento, conciliação de centavos e filtro existente. Esclarecidos distribuição global uniforme, percentuais intermediários, área zero, parcialidade e conflitos com os limites do orçamento vigente. Em 2026-11-23, o solicitante descartou consideração de espessura na área e aceitou as propostas de precisão de rendimentos e compatibilidade; as três pendências de especificação foram encerradas com as regras acima. Conferência documental não constitui verificação técnica da funcionalidade: implementação e verificação técnica continuam pendentes; aceite manual pendente.
+
+### Conclusão técnica — 2026-11-25
+
+Revisada a implementação existente em `src/domain/settlement-budget.ts`, `src/app/SettlementBudget.tsx`, integração em `Quantities.tsx`, leitor compartilhado e exclusão dos parâmetros dos insumos construtivos. As regras e os contratos já implementados atenderam ao recorte; não foi necessária alteração funcional nesta revisão. Acrescentada a cobertura faltante de compatibilidade, limites, API e interface. Critérios abaixo verificados tecnicamente; aceite manual continua pendente.
+
+- **A01/A03/A04/A05** — Seis produtos com parâmetros independentes; padrões sem produto/preço inventado; distribuição intermediária persistível e soma exata; mistura de AC1/cola, conversão de litros, compra global, preços ausente/zero e inválidos. Exemplos de 100 m² (sete sacos/R$ 210, mistura/R$ 200 e polimérica/R$ 705) aprovados no domínio; AC1 e mistura conferidos também no navegador. Overflow de consumo e subtotal preserva parâmetros e resultados independentes, com indisponibilidade explícita.
+- **A02/A08** — Conferidos comprimento × altura, alturas distintas, união/recorte de vãos e independência de espessura/encontros, incluindo 21 m² brutos e 19 m² líquidos. Rateio de 60/40 m² fecha em R$ 126/R$ 84; empate de centavos por produto e pavimento vazio cobertos por testes. Compra não é arredondada por andar. Domínio preserva disponibilidade e parcialidade geométrica, sem contaminar assentamento por pendência exclusiva de ferragem.
+- **A06/A09** — Histórico, desfazer/refazer, confirmação atrasada, reabertura remota, arquivo, cópia pela API, falha de salvamento, download e descarte preservam parâmetros. Padrão equivalente não materializa configuração/histórico; somente leitura bloqueia os campos. Filtros Todos/um pavimento não alteram resumo, rateio ou pavimento ativo. Composição e diagnósticos preservados sem motor nas edições orçamentárias.
+- **A07** — Regressões dirigidas de tijolos (preços, perdas e histórico) e ferragens (preços, parâmetros por pavimento, totais, histórico e reabertura) aprovadas. Revisados RF-11, Caderno Técnico e os contratos de Quantitativos, Estado/Histórico, Persistência e Interface já atualizados pela implementação.
+- **A10/A11** — Parsing de rendimentos em milésimos, rejeição sem arredondamento e limite exato de embalagem cobertos. Leitor aceita envelopes 9–31, com fixtures contendo somente campos existentes em cada versão, normaliza para 32 sem mutar a fonte nem materializar assentamento e recusa o grupo novo em legado. Arquivo/cópia/transporte preservam parâmetros e validam objetos estritos. API real aceita configuração completa/intermediária, recusa parâmetros inválidos e formato anterior com assentamento sem alterar a revisão armazenada. Inspeção do leitor anterior no commit `18d4241` confirmou literal 31 e recusa explícita de versões fora de 9–31; não foi executado aplicativo antigo. Composição nominal-v13, representação remota 1 e SQL preservados.
+
+#### Verificação realizada
+
+A suíte unitária foi ampliada para todas as famílias porque o formato 32 usa o leitor compartilhado de documentos; no navegador, somente os fluxos de assentamento e as duas regressões orçamentárias afetadas foram selecionados, sem matriz ampla ou build.
+
+- **Unitários:** primeira rodada, 696 aprovados, 31 ignorados pela configuração existente e duas falhas em 79,24 s. Ambas eram dados incorretos nos testes novos: fixture de legado ainda incluía campos de versões posteriores e a área do caso de overflow atingia limite de custo antes do limite de consumo. Corrigidas as fixtures, mantendo todas as asserções; revalidação apenas de `tests/settlement-budget.test.ts`: 16 aprovados em 1,81 s. Resultado consolidado: **698 testes distintos aprovados e 31 ignorados**, sem somar repetições. Logs `.tools/t035-review-unit.log` e `.tools/t035-review-unit-recheck.log`.
+- **API:** um cenário dirigido T-035 aprovado em 3,09 s, por injeção HTTP com PostgreSQL 18/ecovit_test; demais cenários não selecionados. Conferidas criação, escrita intermediária, leitura, rejeições e duplicação. Log `.tools/t035-review-api.log`.
+- **Chrome:** cinco cenários distintos aprovados em aproximadamente 1,1 min: três T-035 e as regressões T-024/T-028. Incluem consulta, filtros, somente leitura, soma inválida, preços, ausência/zero, histórico, reabertura, arquivo, recuperação e layout em 900 px. Captura `.tools/t035-settlement-900.png` inspecionada. Log `.tools/t035-review-e2e.log`. Servidor próprio do runner na 5174, API 3002 e dados isolados; porta 5173 preservada. Ambiente já preparado nesta sessão, sem repetir provisionamento.
+- **Checagens:** typecheck e lint do recorte aprovados. Logs `.tools/t035-review-types.log`, `.tools/t035-review-lint.log`; conferência documental/diff em `.tools/t035-review-diff.log`. Sem enfraquecer asserções ou ampliar timeouts.
+
+Sem commit, push ou publicação nesta revisão. A verificação técnica conclui A01–A11; aceite manual depende de manifestação explícita do solicitante.

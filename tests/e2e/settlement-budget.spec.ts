@@ -159,6 +159,68 @@ test(
     ).toBe(true);
     await expect(inputs(page, "Percentual de Argamassa AC1 (%)")).toBeVisible();
     await page.screenshot({ path: ".tools/t035-settlement-900.png" });
+    // A default-equivalent value must not materialize configuration or history.
+    const unchanged = await snapshot(page);
+    await set(page, "Rendimento de Argamassa AC2 (kg/m²)", "1,4");
+    expect(await snapshot(page)).toEqual(unchanged);
+    await page.evaluate(async () => {
+      const path = "/src/state/store.ts";
+      (await import(path)).useStore.setState({ readonly: true });
+    });
+    await expect(
+      inputs(page, "Percentual de Argamassa AC1 (%)"),
+    ).toBeDisabled();
+    await expect(
+      inputs(page, "Rendimento de Cola especial (ml/m²)"),
+    ).toBeDisabled();
+    await expect(
+      inputs(page, "Preço de Argamassa AC1 (R$/saco de 20 kg)"),
+    ).toBeDisabled();
+    expect(await snapshot(page)).toEqual(unchanged);
+  },
+);
+
+test(
+  "T-035 mistura de produtos, distribuição inválida e preços ausente e zero",
+  { tag: "@interface" },
+  async ({ page }) => {
+    await fixture(page, true);
+    await open(page);
+    await set(page, "Percentual de Argamassa AC1 (%)", "50");
+    await set(page, "Percentual de Cola branca (%)", "50");
+    await set(page, "Preço de Cola branca (R$/litro)", "20");
+    const global = dialog(page).getByRole("region", {
+      name: "Quantitativos de assentamento",
+      exact: true,
+    });
+    const ac1 = global.locator('[data-settlement-key="ac1"]');
+    const glue = global.locator('[data-settlement-key="white-glue"]');
+    await expect(ac1).toHaveText("Argamassa AC15070 kg4R$ 120,00");
+    await expect(glue).toHaveText("Cola branca504 litros4R$ 80,00");
+    await expect(totals(page).last()).toHaveText("R$ 200,00");
+    const before = await snapshot(page);
+    await inputs(page, "Percentual de Argamassa AC1 (%)").fill("100,01");
+    await inputs(page, "Percentual de Argamassa AC1 (%)").press("Enter");
+    await expect(
+      inputs(page, "Percentual de Argamassa AC1 (%)"),
+    ).toHaveAttribute("aria-invalid", "true");
+    await expect(dialog(page)).toContainText("Distribuição inválida");
+    await expect(ac1).not.toContainText("70 kg");
+    await expect(totals(page).last()).toHaveText("Indisponível");
+    expect(await snapshot(page)).toEqual(before);
+    await set(page, "Percentual de Argamassa AC1 (%)", "50");
+    await set(page, "Preço de Cola branca (R$/litro)", "");
+    await expect(glue).toContainText("4 litros4—Informe o preço");
+    await expect(ac1).toContainText("R$ 120,00");
+    await expect(totals(page).last()).toHaveText("Indisponível");
+    await set(page, "Preço de Cola branca (R$/litro)", "0");
+    await expect(totals(page).last()).toHaveText("R$ 120,00");
+    await set(page, "Preço de Cola branca (R$/litro)", "20");
+    await expect(totals(page).last()).toHaveText("R$ 200,00");
+    const after = await snapshot(page);
+    expect(after.doc.generated).toEqual(before.doc.generated);
+    expect(after.doc.generationState).toEqual(before.doc.generationState);
+    expect(after.doc.project.unitPrices).toEqual(before.doc.project.unitPrices);
   },
 );
 

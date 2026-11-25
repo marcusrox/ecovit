@@ -326,8 +326,21 @@ it("formato 32 preserva configuração estrita em arquivo, cópia e transporte r
 });
 it("legados normalizam em memória sem materializar parâmetros; campo novo em formato antigo é recusado", () => {
   const d = fixture([0]);
-  for (const schemaVersion of [30, 31]) {
-    const old = { ...d, schemaVersion },
+  for (let schemaVersion = 9; schemaVersion <= 31; schemaVersion++) {
+    // Use only fields that actually existed in the target envelope.
+    const model: Partial<Project["model"]> = structuredClone(d.model);
+    if (schemaVersion < 17) delete model.terrain;
+    if (schemaVersion === 9) delete model.measurements;
+    if (schemaVersion < 11) delete model.referenceImages;
+    if (schemaVersion < 13) {
+      delete model.imageElements;
+      delete model.customImageAssets;
+    }
+    if (schemaVersion < 19) {
+      delete model.roomLabels;
+      delete model.roomBoundaries;
+    }
+    const old = { ...d, schemaVersion, model },
       before = structuredClone(old);
     const loaded = validateProject(old, false);
     expect(loaded.schemaVersion).toBe(32);
@@ -341,4 +354,34 @@ it("legados normalizam em memória sem materializar parâmetros; campo novo em f
         ),
       ).toThrow("formato anterior");
   }
+});
+
+it("overflow de consumo e de subtotal preserva resultados independentes e explicita a indisponibilidade", () => {
+  const d = fixture([100]);
+  // Isolate the area projection from the already-covered composition engine.
+  d.model.walls[0].height = 300000;
+  d.project.settlement = {
+    ac1: { percent: 5000, yield: Number.MAX_SAFE_INTEGER, price: 1000 },
+    ac2: { percent: 5000, price: 1000 },
+  };
+  const original = structuredClone(d.project.settlement);
+  let r = report(d);
+  expect(r.net).toBe(3000n * areaScale);
+  expect(row(r).error).toContain("Consumo");
+  expect(row(r).consumption).toBeUndefined();
+  expect(row(r).packages).toBeUndefined();
+  expect(row(r, "ac2").cost).toBe(105000);
+  expect(r.total).toBeUndefined();
+  expect(d.project.settlement).toEqual(original);
+  d.model.walls[0].height = 10000;
+  d.project.settlement = {
+    ac1: { percent: 5000, yield: 1, price: Number.MAX_SAFE_INTEGER },
+    ac2: { percent: 5000, yield: 1, price: Number.MAX_SAFE_INTEGER },
+  };
+  r = report(d);
+  expect(row(r).cost).toBe(Number.MAX_SAFE_INTEGER);
+  expect(row(r, "ac2").cost).toBe(Number.MAX_SAFE_INTEGER);
+  expect(r.total).toBeUndefined();
+  expect(r.floors[0].total).toBeUndefined();
+  expect(r.error).toContain("Subtotal");
 });
