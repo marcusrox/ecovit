@@ -8,7 +8,9 @@
 
 **Data de execução** — 2026-11-23
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
+
+**Data do aceite manual** — 2026-11-25
 
 ## Alteração e limites
 
@@ -157,3 +159,7 @@ O impacto concreto é no fluxo compartilhado de persistência, histórico e recu
 - **Chrome:** três cenários distintos aprovados, 22,4 s: movimentos reais durante resposta atrasada, histórico bloqueado por botões/atalhos e gesto posterior preservado; recusa dirigida, download da versão local e repetição literal do pedido original antes do posterior; offline/online sem retomada, recuperação explícita e Recalcular bloqueado por botão/comando, sem gravação extra para calcular. Conferidos também revisão sequencial, ausência de PUT concorrente e igualdade entre estado final remoto/local. Log: `.tools/t032-e2e-final.log`. Uma rodada anterior dos dois primeiros cenários passou em 22,8 s; não foi somada como cobertura distinta.
 - **Ambiente:** primeiro `test:env` não reconheceu o processo por restrição do sandbox e informou a porta 55432 ocupada. PID e postmaster.pid identificaram o cluster gerenciado esperado; a única reexecução, com acesso ao processo, preparou Node 24, PostgreSQL 18/ecovit_test e Chrome. Nenhum processo desconhecido foi encerrado; 5173 não foi usada. Logs: `.tools/t032-env.log` e `.tools/t032-env-recheck.log`.
 - Typecheck e lint do recorte aprovados; conferência final de diff registrada nos logs `.tools/t032-types-final.log`, `.tools/t032-lint.log`, `.tools/t032-e2e-lint.log`, `.tools/t032-preparation-lint.log` e `.tools/t032-diff.log`. Na inspeção final, o estado do protocolo (revisões, recursos e pedidos originais) passou a ser reutilizado em memória no hot reload; ajuste textual no formulário de ferragens evita declarar Salvo quando apenas não há mudanças a aplicar. Aceite manual não foi presumido.
+
+### Confirmação de aceite manual — 2026-11-25
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-25. Esta confirmação encerra a pendência de aceite da task; os registros anteriores preservam a situação à época e as evidências técnicas, sem representar nova execução de testes.

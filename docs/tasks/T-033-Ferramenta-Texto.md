@@ -8,7 +8,9 @@
 
 **Data de execução** — 2026-11-23
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
+
+**Data do aceite manual** — 2026-11-25
 
 ## Alteração e limites
 
@@ -161,3 +163,7 @@ A mudança de envelope afeta leitores compartilhados e o transporte de todas as 
 - **Checagens finais:** typecheck, lint do recorte sem avisos, referências documentais e diff aprovados. Logs: `.tools/t033-types-final.log`, `.tools/t033-lint.log` e `.tools/t033-diff.log`. Resultados técnicos não constituem aceite manual; commit, push e publicação não foram solicitados nesta implementação.
 
 Na última conferência dos atalhos/validação, Delete em prévia de criação/duplicação foi explicitamente bloqueado para não cair no comando genérico de exclusão e gerar operação vazia. A mensagem de combinação inválida agora informa a largura mínima numérica em cm, sem ampliar a caixa automaticamente. O cenário de criação confirma ambos e mantém foco, histórico e integridade: aprovado em 13,1 s (`.tools/t033-create-final.log`), sem contar a repetição como cobertura distinta. Lint dos arquivos finais e conferência documental registrados em `.tools/t033-create-lint.log`, `.tools/t033-canvas-lint.log` e `.tools/t033-doc-check.log`.
+
+### Confirmação de aceite manual — 2026-11-25
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-25. Esta confirmação encerra a pendência de aceite da task; os registros anteriores preservam a situação à época e as evidências técnicas, sem representar nova execução de testes.

@@ -8,7 +8,9 @@
 
 **Data de execução** — 2026-11-23
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
+
+**Data do aceite manual** — 2026-11-25
 
 ## Alteração e limites
 
@@ -40,3 +42,7 @@ Verificação proporcional ao impacto em tipografia, layout e seleção: **35 te
 - [ ] Conferir visualmente seleção e edição de etiquetas, incluindo nomes longos, no projeto do solicitante.
 
 Os critérios marcados registram verificação técnica. Aceite manual permanece pendente até manifestação explícita do solicitante.
+
+### Confirmação de aceite manual — 2026-11-25
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-25. Esta confirmação encerra a pendência de aceite da task; os registros anteriores preservam a situação à época e as evidências técnicas, sem representar nova execução de testes.

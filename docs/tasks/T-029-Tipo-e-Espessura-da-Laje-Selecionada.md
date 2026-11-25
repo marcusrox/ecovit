@@ -8,7 +8,9 @@
 
 **Data de execução** — 2026-11-18
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante
+
+**Data do aceite manual** — 2026-11-25
 
 ## Alteração e limites
 
@@ -65,3 +67,7 @@ A mudança de envelope afeta os leitores usados por todo o domínio; por isso fo
 - Typecheck, lint do recorte e conferência de diff aprovados. Logs locais: .tools/t029-unit.log, .tools/t029-unit-recheck.log, .tools/t029-unit-final.log, .tools/t029-e2e.log, .tools/t029-e2e-final.log, .tools/t029-types-final.log, .tools/t029-lint.log e .tools/t029-diff.log.
 
 Sem commit, push ou publicação nesta execução. Verificação técnica não constitui aceite manual.
+
+### Confirmação de aceite manual — 2026-11-25
+
+Aceite manual confirmado explicitamente pelo solicitante em 2026-11-25. Esta confirmação encerra a pendência de aceite da task; os registros anteriores preservam a situação à época e as evidências técnicas, sem representar nova execução de testes.
