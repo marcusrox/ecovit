@@ -582,5 +582,83 @@
         "source": "sources/banco-concreto-r1.svg"
       }
     ]
+  },
+  "approvedAdditions20261125": {
+    "method": "Built-in image_gen tool",
+    "approval": "User approved all eight artworks and dimensions on 2026-11-25 before catalog integration.",
+    "items": [
+      {
+        "id": "abajur",
+        "category": "Sala",
+        "name": "Abajur de mesa",
+        "revision": 1,
+        "widthCm": 35,
+        "depthCm": 35,
+        "source": "sources/abajur-r1-generation.json"
+      },
+      {
+        "id": "churrasqueira-alvenaria",
+        "category": "Varanda",
+        "name": "Churrasqueira de alvenaria",
+        "revision": 1,
+        "widthCm": 90,
+        "depthCm": 70,
+        "source": "sources/churrasqueira-alvenaria-r1-generation.json"
+      },
+      {
+        "id": "caminhonete",
+        "category": "Outros",
+        "name": "Caminhonete cabine dupla",
+        "revision": 1,
+        "widthCm": 220.8,
+        "depthCm": 537,
+        "source": "sources/caminhonete-r1-generation.json"
+      },
+      {
+        "id": "motocicleta",
+        "category": "Outros",
+        "name": "Motocicleta trail",
+        "revision": 1,
+        "widthCm": 81,
+        "depthCm": 206.7,
+        "source": "sources/motocicleta-r1-generation.json"
+      },
+      {
+        "id": "cadeira-compacta",
+        "category": "Sala",
+        "name": "Cadeira compacta",
+        "revision": 1,
+        "widthCm": 40,
+        "depthCm": 45,
+        "source": "sources/cadeira-compacta-r1-generation.json"
+      },
+      {
+        "id": "banqueta-alta",
+        "category": "Varanda",
+        "name": "Cadeira banqueta alta",
+        "revision": 1,
+        "widthCm": 45,
+        "depthCm": 45,
+        "source": "sources/banqueta-alta-r1-generation.json"
+      },
+      {
+        "id": "rede",
+        "category": "Varanda",
+        "name": "Rede armada",
+        "revision": 1,
+        "widthCm": 120,
+        "depthCm": 350,
+        "source": "sources/rede-r1-generation.json"
+      },
+      {
+        "id": "cadeira-jardim",
+        "category": "Varanda",
+        "name": "Cadeira de jardim",
+        "revision": 1,
+        "widthCm": 65,
+        "depthCm": 70,
+        "source": "sources/cadeira-jardim-r1-generation.json"
+      }
+    ]
   }
 }

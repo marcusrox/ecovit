@@ -1,0 +1,14 @@
+{
+  "id": "banqueta-alta",
+  "name": "Cadeira banqueta alta",
+  "category": "Varanda",
+  "revision": 1,
+  "widthCm": 45,
+  "depthCm": 45,
+  "method": "Built-in image_gen tool",
+  "background": "transparent alpha",
+  "approval": "Artwork and proposed dimensions explicitly approved by the user on 2026-11-25.",
+  "generationPrompt": "Use case: stylized-concept. Create ONE standalone new furniture PNG illustration for the Ecovit 2D architectural floor-plan catalog. STRICT TRUE ORTHOGRAPHIC TOP VIEW, camera EXACTLY 90 degrees overhead, zero perspective, zero isometric tilt, no elevation. Refined softly realistic architectural plan illustration, crisp thin warm-gray outlines, muted ivory/beige/light oak/sage colors or restrained natural material colors, delicate interior material detail, understated even lighting. Transparent real alpha background, narrow transparent margins, whole silhouette visible, centered, no cropping. Exactly one object, no floor, room, grid, frame, text, labels, dimensions, logo, watermark, exterior cast shadow or surrounding decoration. Match the Ecovit furniture library's realistic soft material finish, avoiding excessive detail. Subject: one high bar stool WITH a narrow LOW BACKREST at the TOP, illustrative full footprint WIDTH 45 cm DEPTH 45 cm. Rounded-square ivory upholstered seat on a slender charcoal-gray tubular metal frame, curved narrow backrest, small side glimpses of the supporting frame and a slim front footrest line only where not occluded in the exact overhead projection. Represents a high stool with about 75 cm seat height but do NOT draw a side elevation to show height. Square footprint ratio 1:1. No arms, no table, no extra objects.",
+  "sha256": "2a531fbf884b5f5c72f6f79ce6c452165c0a22f4de52b44d0208cae56f02cc0a",
+  "note": "Illustrative seat height 75 cm; catalog dimensions are the plan footprint only."
+}

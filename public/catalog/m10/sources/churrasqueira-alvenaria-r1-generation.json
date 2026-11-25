@@ -1,0 +1,13 @@
+{
+  "id": "churrasqueira-alvenaria",
+  "name": "Churrasqueira de alvenaria",
+  "category": "Varanda",
+  "revision": 1,
+  "widthCm": 90,
+  "depthCm": 70,
+  "method": "Built-in image_gen tool",
+  "background": "transparent alpha",
+  "approval": "Artwork and proposed dimensions explicitly approved by the user on 2026-11-25.",
+  "generationPrompt": "Use case: stylized-concept. Create ONE standalone new furniture PNG illustration for the Ecovit 2D architectural floor-plan catalog. STRICT TRUE ORTHOGRAPHIC TOP VIEW, camera EXACTLY 90 degrees overhead, zero perspective, zero isometric tilt, no elevation. Refined softly realistic architectural plan illustration, crisp thin warm-gray outlines, muted ivory/beige/light oak/sage colors or restrained natural material colors, delicate interior material detail, understated even lighting. Transparent real alpha background, narrow transparent margins, whole silhouette visible, centered, no cropping. Exactly one object, no floor, room, grid, frame, text, labels, dimensions, logo, watermark, exterior cast shadow or surrounding decoration. Match the Ecovit furniture library's realistic soft material finish, avoiding excessive detail. Subject: a compact built-in red-clay brick masonry barbecue, rectangular full footprint WIDTH 90 cm across the image, DEPTH 70 cm vertically. Architectural horizontal cut/top plan looking into the firebox, U-shaped thick masonry top surfaces at rear/top and sides, front open at bottom. Inner dark refractory firebox with a visible rectangular steel cooking grate, parallel grill bars and subtle inner masonry, matte terracotta bricks and pale mortar. No side counters, no accessories or flames, no perspective, no elevation, no roof/chimney hiding the cooking grate. Orthogonal outline, width-to-depth ratio 90:70.",
+  "sha256": "fff135bf79337ddc9e878e891e4c5522e295b42303baa18de07def4380569753"
+}

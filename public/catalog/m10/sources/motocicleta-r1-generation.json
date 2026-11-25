@@ -1,0 +1,17 @@
+{
+  "id": "motocicleta",
+  "name": "Motocicleta trail",
+  "category": "Outros",
+  "revision": 1,
+  "widthCm": 81,
+  "depthCm": 206.7,
+  "method": "Built-in image_gen tool",
+  "background": "transparent alpha",
+  "approval": "Artwork and proposed dimensions explicitly approved by the user on 2026-11-25.",
+  "generationPrompt": "Use case: stylized-concept. Create ONE standalone new furniture PNG illustration for the Ecovit 2D architectural floor-plan catalog. STRICT TRUE ORTHOGRAPHIC TOP VIEW, camera EXACTLY 90 degrees overhead, zero perspective, zero isometric tilt, no elevation. Refined softly realistic architectural plan illustration, crisp thin warm-gray outlines, muted ivory/beige/light oak/sage colors or restrained natural material colors, delicate interior material detail, understated even lighting. Transparent real alpha background, narrow transparent margins, whole silhouette visible, centered, no cropping. Exactly one object, no floor, room, grid, frame, text, labels, dimensions, logo, watermark, exterior cast shadow or surrounding decoration. Match the Ecovit furniture library's realistic soft material finish, avoiding excessive detail. Subject: one slim dual-sport/trail motorcycle with Honda NXR 160 Bros-like proportions, front wheel straight and facing UP, no rider, no luggage. Overall WIDTH 81 cm across handlebars/mirrors, LENGTH 206.7 cm, silhouette aspect ratio 81:206.7. Muted deep terracotta red fuel tank/front fender, long black saddle, black tires aligned longitudinally, silver metal details, handlebars and two symmetric mirrors visible, rear cargo rack and tail light at bottom. Exact overhead orthographic TOP VIEW; wheels seen as narrow top treads, never circular side-on wheel faces; no side elevation or diagonal bike. Anonymous no brands, letters or logo.",
+  "sha256": "55be53e2893e49b7f2ad74b83186eb8d331518e6697e73e3e0df1635c0ddacb5",
+  "dimensionalReference": {
+    "model": "Honda NXR 160 Bros",
+    "source": "https://www.honda.com.br/motos/adventure/trail/nxr160-bros"
+  }
+}

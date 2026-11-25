@@ -1,0 +1,14 @@
+{
+  "id": "rede",
+  "name": "Rede armada",
+  "category": "Varanda",
+  "revision": 1,
+  "widthCm": 120,
+  "depthCm": 350,
+  "method": "Built-in image_gen tool",
+  "background": "transparent alpha",
+  "approval": "Artwork and proposed dimensions explicitly approved by the user on 2026-11-25.",
+  "generationPrompt": "Use case: stylized-concept. Create ONE standalone new furniture PNG illustration for the Ecovit 2D architectural floor-plan catalog. STRICT TRUE ORTHOGRAPHIC TOP VIEW, camera EXACTLY 90 degrees overhead, zero perspective, zero isometric tilt, no elevation. Refined softly realistic architectural plan illustration, crisp thin warm-gray outlines, muted ivory/beige/light oak/sage colors or restrained natural material colors, delicate interior material detail, understated even lighting. Transparent real alpha background, narrow transparent margins, whole silhouette visible, centered, no cropping. Exactly one object, no floor, room, grid, frame, text, labels, dimensions, logo, watermark, exterior cast shadow or surrounding decoration. Match the Ecovit furniture library's realistic soft material finish, avoiding excessive detail. Subject: one EMPTY Brazilian fabric hammock hanging along the VERTICAL image axis, top-down orthographic plan. Full tip-to-tip footprint INCLUDING end ropes is WIDTH 120 cm and LENGTH 350 cm, aspect ratio 120:350. Soft cream and muted sage striped cloth, broad central gently bowed lens-shaped fabric body, clearly visible gathered woven suspension cords tapering at TOP and BOTTOM to small attachment loops. Cloth body roughly 220 cm long centered inside the 350 cm overall tip-to-tip length; ropes occupy the rest. Transparent all around and between rope strands. No person, pillow, stand, poles, hooks, walls, trees or ground shadow. From above, do not show side droop/elevation.",
+  "sha256": "4cbce6a4af3ea7c51e4b935ef576d4afdf5485266f28a4f446bb1605c6f4f66c",
+  "note": "Overall footprint includes suspension cords; no stand."
+}

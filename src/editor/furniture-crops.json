@@ -1,4 +1,10 @@
 {
+  "/catalog/m10/abajur-r1.png": {
+    "x": 41,
+    "y": 52,
+    "width": 1160,
+    "height": 1171
+  },
   "/catalog/m10/aparador-r1.png": {
     "x": 81,
     "y": 161,
@@ -41,6 +47,12 @@
     "width": 1648,
     "height": 734
   },
+  "/catalog/m10/banqueta-alta-r1.png": {
+    "x": 186,
+    "y": 38,
+    "width": 871,
+    "height": 1161
+  },
   "/catalog/m10/banqueta-r1.png": {
     "x": 90,
     "y": 93,
@@ -77,11 +89,23 @@
     "width": 999,
     "height": 974
   },
+  "/catalog/m10/cadeira-compacta-r1.png": {
+    "x": 117,
+    "y": 122,
+    "width": 920,
+    "height": 1122
+  },
   "/catalog/m10/cadeira-escritorio-r1.png": {
     "x": 107,
     "y": 70,
     "width": 1016,
     "height": 1128
+  },
+  "/catalog/m10/cadeira-jardim-r1.png": {
+    "x": 65,
+    "y": 82,
+    "width": 1072,
+    "height": 1151
   },
   "/catalog/m10/cadeira-r1.png": {
     "x": 200,
@@ -131,6 +155,12 @@
     "width": 317,
     "height": 1572
   },
+  "/catalog/m10/caminhonete-r1.png": {
+    "x": 11,
+    "y": 19,
+    "width": 782,
+    "height": 1915
+  },
   "/catalog/m10/canteiro-r1.png": {
     "x": 82,
     "y": 170,
@@ -148,6 +178,12 @@
     "y": 99,
     "width": 1908,
     "height": 526
+  },
+  "/catalog/m10/churrasqueira-alvenaria-r1.png": {
+    "x": 65,
+    "y": 85,
+    "width": 1292,
+    "height": 959
   },
   "/catalog/m10/churrasqueira-r1.png": {
     "x": 114,
@@ -299,6 +335,12 @@
     "width": 1228,
     "height": 832
   },
+  "/catalog/m10/motocicleta-r1.png": {
+    "x": 15,
+    "y": 14,
+    "width": 757,
+    "height": 1969
+  },
   "/catalog/m10/pia-com-bancada-r1.png": {
     "x": 66,
     "y": 75,
@@ -340,6 +382,12 @@
     "y": 14,
     "width": 396,
     "height": 1572
+  },
+  "/catalog/m10/rede-r1.png": {
+    "x": 65,
+    "y": 33,
+    "width": 603,
+    "height": 2074
   },
   "/catalog/m10/roupeiro-r1.png": {
     "x": 80,

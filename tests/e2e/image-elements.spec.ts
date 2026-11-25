@@ -142,6 +142,67 @@ async function insert(page: Page, name = "Sofá", category = "Sala") {
   return e;
 }
 
+test(
+  "Acervo ampliado insere os oito mobiliários aprovados com dimensões e artes transparentes",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    await open(page);
+    const before = await state(page);
+    const ids = [
+      "abajur",
+      "churrasqueira-alvenaria",
+      "caminhonete",
+      "motocicleta",
+      "cadeira-compacta",
+      "banqueta-alta",
+      "rede",
+      "cadeira-jardim",
+    ];
+    for (const id of ids) {
+      const item = catalogItem(id, 1)!;
+      const element = await insert(page, item.name, item.category);
+      expect(element).toMatchObject({
+        source: { kind: "catalog", itemId: id, revision: 1 },
+        width: item.width,
+        depth: item.depth,
+      });
+      const pixels = await page.evaluate(async (url) => {
+        const image = new Image();
+        image.src = url;
+        await image.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(image, 0, 0);
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        let transparent = false,
+          solid = false;
+        for (let n = 3; n < data.length; n += 4) {
+          transparent ||= data[n] === 0;
+          solid ||= data[n] > 8;
+        }
+        return { transparent, solid };
+      }, `/catalog/m10/${item.asset}-r1.png`);
+      expect(pixels, id).toEqual({ transparent: true, solid: true });
+    }
+    const after = await state(page);
+    expect(after.doc.model.imageElements).toHaveLength(8);
+    expect(after.doc.generated).toEqual(before.doc.generated);
+    expect(after.doc.generationState).toEqual(before.doc.generationState);
+    expect(after.doc.model.customImageAssets).toEqual([]);
+    const download = page.waitForEvent("download");
+    await page
+      .getByRole("button", { name: "Baixar projeto", exact: true })
+      .click();
+    const file = await download;
+    const output = JSON.parse(await readFile((await file.path())!, "utf8"));
+    expect(output.model.imageElements).toEqual(after.doc.model.imageElements);
+    expect(output.model.customImageAssets).toEqual([]);
+    expect(JSON.stringify(output)).not.toContain("data:image/png");
+  },
+);
+
 for (const kind of ["catalog", "custom"] as const) {
   test(
     `M10 espelhamento ${kind}: renderização girada, histórico, cópia, arquivo e readonly`,

@@ -66,10 +66,10 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-it("M10-A01 catálogo tem nove categorias e 64 opções com referências únicas e dimensões genéricas", () => {
+it("M10-A01 catálogo tem nove categorias e 72 opções com referências únicas e dimensões iniciais", () => {
   expect(imageCategories).toHaveLength(9);
-  expect(imageCatalog).toHaveLength(64);
-  expect(new Set(imageCatalog.map((i) => i.id)).size).toBe(64);
+  expect(imageCatalog).toHaveLength(72);
+  expect(new Set(imageCatalog.map((i) => i.id)).size).toBe(72);
   expect(imageCatalog.filter((i) => i.asset === "armario")).toHaveLength(2);
   expect(
     imageCatalog.every(
@@ -82,6 +82,62 @@ it("M10-A01 catálogo tem nove categorias e 64 opções com referências únicas
   ).toBe(true);
 });
 it.each([
+  {
+    id: "abajur",
+    category: "Sala",
+    name: "Abajur de mesa",
+    width: 3500,
+    depth: 3500,
+  },
+  {
+    id: "churrasqueira-alvenaria",
+    category: "Varanda",
+    name: "Churrasqueira de alvenaria",
+    width: 9000,
+    depth: 7000,
+  },
+  {
+    id: "caminhonete",
+    category: "Outros",
+    name: "Caminhonete cabine dupla",
+    width: 22080,
+    depth: 53700,
+  },
+  {
+    id: "motocicleta",
+    category: "Outros",
+    name: "Motocicleta trail",
+    width: 8100,
+    depth: 20670,
+  },
+  {
+    id: "cadeira-compacta",
+    category: "Sala",
+    name: "Cadeira compacta",
+    width: 4000,
+    depth: 4500,
+  },
+  {
+    id: "banqueta-alta",
+    category: "Varanda",
+    name: "Cadeira banqueta alta",
+    width: 4500,
+    depth: 4500,
+  },
+  {
+    id: "rede",
+    category: "Varanda",
+    name: "Rede armada",
+    width: 12000,
+    depth: 35000,
+  },
+  {
+    id: "cadeira-jardim",
+    category: "Varanda",
+    name: "Cadeira de jardim",
+    width: 6500,
+    depth: 7000,
+  },
   {
     id: "planta-folhas-largas",
     category: "Paisagismo",

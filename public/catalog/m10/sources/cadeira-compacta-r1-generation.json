@@ -1,0 +1,13 @@
+{
+  "id": "cadeira-compacta",
+  "name": "Cadeira compacta",
+  "category": "Sala",
+  "revision": 1,
+  "widthCm": 40,
+  "depthCm": 45,
+  "method": "Built-in image_gen tool",
+  "background": "transparent alpha",
+  "approval": "Artwork and proposed dimensions explicitly approved by the user on 2026-11-25.",
+  "generationPrompt": "Use case: stylized-concept. Create ONE standalone new furniture PNG illustration for the Ecovit 2D architectural floor-plan catalog. STRICT TRUE ORTHOGRAPHIC TOP VIEW, camera EXACTLY 90 degrees overhead, zero perspective, zero isometric tilt, no elevation. Refined softly realistic architectural plan illustration, crisp thin warm-gray outlines, muted ivory/beige/light oak/sage colors or restrained natural material colors, delicate interior material detail, understated even lighting. Transparent real alpha background, narrow transparent margins, whole silhouette visible, centered, no cropping. Exactly one object, no floor, room, grid, frame, text, labels, dimensions, logo, watermark, exterior cast shadow or surrounding decoration. Match the Ecovit furniture library's realistic soft material finish, avoiding excessive detail. Subject: one compact armless dining chair, full WIDTH 40 cm and DEPTH 45 cm, width:depth ratio 40:45. Light oak slender frame, small rounded-square beige upholstered seat, narrow gently curved wooden backrest at the TOP, visible small open gap between back and seat. Clearly a compact chair not a stool, no arms. Only surfaces seen in true overhead view, no vertical legs exposed in perspective.",
+  "sha256": "5b3d20bdadfdfea651053df42c4f9b732bf94185eb3ec8b6ebe4197b0e36b1b3"
+}
