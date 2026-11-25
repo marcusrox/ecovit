@@ -13,6 +13,10 @@ import {
   MAX_CUSTOM_ASSETS,
 } from "../domain/image-elements";
 import { z } from "zod";
+import {
+  openingMaterialSchema,
+  openingPricesSchema,
+} from "../domain/opening-budget";
 import { textSchema } from "../domain/text";
 import { validateSlab } from "../domain/slabs";
 import {
@@ -206,7 +210,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(32),
+    schemaVersion: z.literal(33),
     project: z
       .object({
         id,
@@ -218,6 +222,7 @@ const schema = z
         origin: point,
         initialWallHeight: positive.optional(),
         brickLossPercent: cents.optional(),
+        openingPrices: openingPricesSchema.optional(),
         settlement: z
           .object({
             ac1: settlementProduct,
@@ -399,6 +404,7 @@ const schema = z
                 id,
                 wallId: id,
                 kind: z.enum(["door", "window", "opening"]),
+                material: openingMaterialSchema.optional(),
                 appearance: z
                   .object({
                     type: z.enum([
@@ -424,7 +430,8 @@ const schema = z
                 base: integer,
                 height: positive,
               })
-              .strict(),
+              .strict()
+              .refine((o) => o.kind !== "opening" || o.material === undefined),
           )
           .max(MAX_OPENINGS),
         imageElements: z
@@ -614,6 +621,28 @@ export function validateProject(
   value: unknown,
   checkGenerated = true,
 ): Project {
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion >= 9 &&
+    value.schemaVersion <= 32
+  ) {
+    const old = value as { project?: object; model?: { openings?: unknown[] } };
+    if (
+      (old.project &&
+        typeof old.project === "object" &&
+        "openingPrices" in old.project) ||
+      (Array.isArray(old.model?.openings) &&
+        old.model.openings.some(
+          (o) => o && typeof o === "object" && "material" in o,
+        ))
+    )
+      throw new Error(
+        "Arquivo inválido: material ou preços de esquadrias em formato anterior.",
+      );
+  }
   if (
     value &&
     typeof value === "object" &&
@@ -1035,10 +1064,11 @@ export function validateProject(
       value.schemaVersion !== 29 &&
       value.schemaVersion !== 30 &&
       value.schemaVersion !== 31 &&
-      value.schemaVersion !== 32)
+      value.schemaVersion !== 32 &&
+      value.schemaVersion !== 33)
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 32; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 33; demais formatos não são convertidos.",
     );
   if (
     value.schemaVersion === 24 ||
@@ -1076,6 +1106,13 @@ export function validateProject(
     value.schemaVersion === 31
   )
     value = { ...value, schemaVersion: 32 };
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 32
+  )
+    value = { ...value, schemaVersion: 33 };
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");

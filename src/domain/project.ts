@@ -7,6 +7,7 @@ import type {
 import type { ClampSettings } from "./clamps";
 import type { TextAnnotation } from "./text";
 import type { SettlementSettings } from "./settlement-budget";
+import type { OpeningMaterial, OpeningPrice } from "./opening-budget";
 import type { SteelBudgetSettings, SteelPrices } from "./steel-budget";
 import type { ChannelReinforcementSettings } from "./channel-reinforcement";
 export type Point = { x: number; y: number };
@@ -123,6 +124,7 @@ export type Opening = {
   wallId: string;
   kind: "door" | "window" | "opening";
   appearance?: OpeningAppearance;
+  material?: OpeningMaterial;
   offset: number;
   width: number;
   base: number;
@@ -172,7 +174,7 @@ export type Tool =
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 32;
+  schemaVersion: 33;
   project: {
     id: string;
     name: string;
@@ -185,6 +187,7 @@ export type Project = {
     groutSettings: GroutSettings;
     steelPrices?: SteelPrices;
     settlement?: SettlementSettings;
+    openingPrices?: OpeningPrice[];
     brickLossPercent?: number;
     unitPrices?: Partial<
       Record<"whole" | "half" | "channel" | "half-channel", number>
@@ -278,7 +281,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 32,
+    schemaVersion: 33,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),

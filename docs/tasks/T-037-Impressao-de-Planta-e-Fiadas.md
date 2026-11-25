@@ -16,7 +16,7 @@ Adicionar ao aplicativo uma saída de impressão para a Planta e as Fiadas exist
 
 Usar a intenção e os resultados vigentes do editor. Preservar conteúdo, orientação, convenções geométricas e distinções visuais relevantes, incluindo vãos, medidas e anotações aplicáveis à Planta. Remover da saída os controles de edição, seleção, alças, hover e prévias transitórias. Não criar desenho paralelo ou inferir detalhamento executivo. Diagnósticos e composição parcial continuam identificados; ausência de resultado atual não pode imprimir fiada antiga como válida.
 
-Oferecer prévia e escolha explícita de escala e papel. Se o desenho não couber na área imprimível, informar antes de imprimir e permitir paginação em folhas identificadas ou ajuste de escala explícito; nunca reduzir silenciosamente uma escala declarada. A impressão deve poder ser usada para salvar PDF pelo diálogo do navegador. O relatório financeiro separado pertence à [T-036](T-036-Relatorio-de-Orcamento-em-PDF.md).
+Oferecer prévia e escolha explícita de escala e papel. Se o desenho não couber na área imprimível, informar antes de imprimir e permitir paginação em folhas identificadas ou ajuste de escala explícito; nunca reduzir silenciosamente uma escala declarada. A impressão deve poder ser usada para salvar PDF pelo diálogo do navegador. O relatório financeiro separado pertence à [T-038](T-038-Relatorio-de-Orcamento-em-PDF.md).
 
 ### Definições antes da implementação
 

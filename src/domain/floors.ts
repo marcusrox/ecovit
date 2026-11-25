@@ -290,6 +290,7 @@ export function duplicateFloor(
           .map((o) => ({
             ...o,
             ...(o.appearance ? { appearance: { ...o.appearance } } : {}),
+            ...(o.material ? { material: { ...o.material } } : {}),
             id: crypto.randomUUID(),
             wallId: ids.get(o.wallId)!,
           })),

@@ -2,6 +2,12 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
+## Esquadrias — formato 33 vigente
+
+Formato 33 acrescenta `model.openings[].material` opcional em portas/janelas e `project.openingPrices` opcional, array estrito de `{kind,type,width,height,material,price}`. Cada entrada exige porta/janela, tipo permitido para kind, dimensões inteiras positivas até LIMIT, material válido e preço em centavos inteiros não negativos seguros. Rejeitar combinações normalizadas duplicadas, inclusive descrições de Outro equivalentes em caixa/espaços externos. Entradas sem ocorrência são permitidas para retenção de preços; não persistir quantidades/custos. Material/descrição seguem Elementos construtivos. Recusar null, campos extras, conteúdo novo em envelopes 9–32 (mesmo coleção vazia) e material em vão livre.
+
+Leitor compartilhado cliente/API normaliza 9–32 para 33 em memória sem material/preço inventado, alteração da fonte ou gravação automática. Leitores anteriores recusam 33 antes de substituir o projeto aberto. Arquivo, cópias e representação remota 1 preservam materiais/preços, inclusive opções sem ocorrências. Composição nominal-v13 e SQL preservados.
+
 ## Assentamento — formato 32
 
 O formato 32 acrescenta `project.settlement` opcional: objeto estrito com chaves opcionais `ac1`, `ac2`, `ac3`, `polymer`, `white-glue`, `special-glue`. Entradas são objetos estritos com campos opcionais `percent` (inteiro 0–10000), `yield` (inteiro positivo seguro, milésimos de kg/m² ou ml/m²) e `price` (centavos inteiros não negativos seguros por embalagem). Ausência segue padrões de Quantitativos sem gravação ao consultar. Soma diferente de 100% é configuração incompleta permitida, não corrupção. Recusar null, chaves desconhecidas, tipos inválidos, valores fracionários/fora dos limites e presença do grupo em envelopes 9–31, inclusive vazio.
@@ -47,7 +53,7 @@ Dimensionar shared_buffers, work_mem e max_connections para o orçamento do Post
 
 Para reduzir escritas e volume, persistir a intenção completa validada e os recursos necessários à sua reconstrução; resultado gerado é derivado e permanece em memória. Abertura remota obtém todos os bytes de recursos próprios necessários ao documento, valida/reconstrói a memória e recompõe no navegador; não marcar abertura concluída com imagens faltantes. Isso preserva download em memória após desconexão. Falha de cálculo não torna a intenção salva inexistente. Não salvar peças/diagnósticos derivados no PostgreSQL nem fazer a segunda gravação somente para armazenar cálculo. Isso muda a representação remota prevista, sem remover o contrato atual de snapshot dos arquivos .ecovit.
 
-Representação remota versão 1, independente de schemaVersion=32 e da versão SQL: contém campos editáveis equivalentes ao documento vigente, com generated=null e estado outdated, e substitui bytes base64 por referências privadas aos recursos confirmados. Validar schema estrito próprio desta representação; não enviar esse DTO diretamente ao leitor de .ecovit. Um adaptador explícito reconstrói o documento vigente com imagens para domínio/exportação. Não inserir URLs, proprietário ou revisões de servidor no modelo geométrico. Recusar formatos remotos desconhecidos antes de alterar a memória.
+Representação remota versão 1, independente de schemaVersion=33 e da versão SQL: contém campos editáveis equivalentes ao documento vigente, com generated=null e estado outdated, e substitui bytes base64 por referências privadas aos recursos confirmados. Validar schema estrito próprio desta representação; não enviar esse DTO diretamente ao leitor de .ecovit. Um adaptador explícito reconstrói o documento vigente com imagens para domínio/exportação. Não inserir URLs, proprietário ou revisões de servidor no modelo geométrico. Recusar formatos remotos desconhecidos antes de alterar a memória.
 
 Server-side: validar intenção, referências, modularidade, limites e conteúdo real de novos recursos em toda mutação. Não confiar apenas no Zod/frontend. Gravação comum não recebe resultado derivado. Importação de .ecovit com resultado presente passa também pela conferência integral vigente, inclusive recomputação para recusar adulteração; compartilhar a validação existente no servidor. Após validação, extrair intenção para o remoto. Não remover snapshot suspeito antes de validar.
 
@@ -151,7 +157,7 @@ Fontes: PostgreSQL 18 — [JSON](https://www.postgresql.org/docs/18/datatype-jso
 
 ## Formato e leitores vigentes
 
-Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=32; leitura aceita somente envelopes 9–32. O envelope não versiona as regras construtivas: a composição vigente é nominal-v13. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; arquivos incompatíveis não substituem o trabalho aberto; registros IndexedDB anteriores não são consultados nem apagados.
+Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=33; leitura aceita somente envelopes 9–33. O envelope não versiona as regras construtivas: a composição vigente é nominal-v13. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; arquivos incompatíveis não substituem o trabalho aberto; registros IndexedDB anteriores não são consultados nem apagados.
 
 | Envelope lido | Normalização em memória para 30 |
 |---|---|

@@ -105,6 +105,7 @@ export function constructionOpenings(openings: Opening[]) {
   return openings.map((opening) => {
     const result = { ...opening };
     delete result.appearance;
+    delete result.material;
     return result;
   });
 }

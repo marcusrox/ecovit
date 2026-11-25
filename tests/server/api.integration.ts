@@ -120,6 +120,135 @@ afterAll(async () => {
 });
 
 describe("M12 — API com PostgreSQL 18.0 real", () => {
+  it("T-036 persiste material e preços retidos, duplica e recusa dados inválidos/legados sem alterar revisão", async () => {
+    const user = await login("esquadrias@example.com");
+    const doc = createProject("Esquadrias", {
+      length: 2500,
+      width: 1250,
+      height: 700,
+    });
+    const wall = makeWall(
+      { x: 0, y: 0 },
+      { x: 40000, y: 0 },
+      1250,
+      doc.model.floors[0].id,
+      28000,
+      1,
+    )!;
+    doc.model.walls = [wall];
+    doc.model.openings = [
+      {
+        id: randomUUID(),
+        wallId: wall.id,
+        kind: "door",
+        appearance: { type: "swing", orientation: 0 },
+        material: { kind: "other", description: "Madeira azul" },
+        offset: 2500,
+        width: 10000,
+        height: 21000,
+        base: 0,
+      },
+    ];
+    doc.project.openingPrices = [
+      {
+        kind: "door",
+        type: "swing",
+        material: { kind: "aluminium-glass" },
+        width: 10000,
+        height: 21000,
+        price: 50000,
+      },
+    ];
+    const url = `/api/projects/${doc.project.id}`;
+    const created = await app.inject({
+      method: "POST",
+      url,
+      headers: headers(user),
+      payload: { ...body(), doc: dehydrate(doc, {}) },
+    });
+    expect(created.statusCode, created.body).toBe(200);
+    const remote = dehydrate(doc, {});
+    for (const material of [
+      null,
+      { kind: "other", description: "" },
+      { kind: "other", description: "a\nb" },
+      { kind: "other", description: "x".repeat(101) },
+      { kind: "wood" },
+      { kind: "wood-glass", extra: 1 },
+    ]) {
+      const rejected = await app.inject({
+        method: "PUT",
+        url,
+        headers: headers(user),
+        payload: {
+          ...body("1"),
+          doc: {
+            ...remote,
+            model: {
+              ...remote.model,
+              openings: [{ ...remote.model.openings[0], material }],
+            },
+          },
+        },
+      });
+      expect(rejected.statusCode, rejected.body).toBe(422);
+    }
+    for (const doc of [
+      { ...remote, schemaVersion: 32 },
+      {
+        ...remote,
+        project: {
+          ...remote.project,
+          openingPrices: [
+            ...remote.project.openingPrices!,
+            ...remote.project.openingPrices!,
+          ],
+        },
+      },
+      {
+        ...remote,
+        project: {
+          ...remote.project,
+          openingPrices: [{ ...remote.project.openingPrices![0], price: -1 }],
+        },
+      },
+    ]) {
+      const rejected = await app.inject({
+        method: "PUT",
+        url,
+        headers: headers(user),
+        payload: { ...body("1"), doc },
+      });
+      expect(rejected.statusCode, rejected.body).toBe(422);
+    }
+    const stored = await app.inject({ url, headers: headers(user) });
+    expect(stored.json().revision).toBe("1");
+    expect(stored.json().doc.project.openingPrices).toEqual(
+      doc.project.openingPrices,
+    );
+    expect(stored.json().doc.model.openings[0].material).toEqual(
+      doc.model.openings[0].material,
+    );
+    const newId = randomUUID();
+    const copied = await app.inject({
+      method: "POST",
+      url: `${url}/duplicate`,
+      headers: headers(user),
+      payload: { ...body("1"), newId, name: "Cópia" },
+    });
+    expect(copied.statusCode, copied.body).toBe(200);
+    const copy = await app.inject({
+      url: `/api/projects/${newId}`,
+      headers: headers(user),
+    });
+    expect(copy.json().doc.project.openingPrices).toEqual(
+      doc.project.openingPrices,
+    );
+    expect(copy.json().doc.model.openings[0].material).toEqual(
+      doc.model.openings[0].material,
+    );
+  });
+
   it("T-035 preserva assentamento na API e cópia e recusa configurações inválidas sem alterar a revisão", async () => {
     const user = await login("assentamento@example.com");
     const doc = createProject("Assentamento T-035", {
@@ -207,7 +336,7 @@ describe("M12 — API com PostgreSQL 18.0 real", () => {
     });
     expect(copy.statusCode, copy.body).toBe(200);
     expect(copy.json().doc.project.settlement).toEqual(doc.project.settlement);
-    expect(copy.json().doc.schemaVersion).toBe(32);
+    expect(copy.json().doc.schemaVersion).toBe(33);
     expect(copy.json().doc.project).not.toHaveProperty("settlementTotal");
   });
 

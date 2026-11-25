@@ -8,6 +8,11 @@
 
 Alteração exclusiva de percentuais, rendimentos ou preços preserva composição e diagnósticos (atuais ou desatualizados), sem motor. Desfazer/refazer restaura parâmetros e ausência, sujeito aos bloqueios vigentes. Salvamento em segundo plano usa o fluxo compartilhado da T-032; falha conserva intenção local para download, repetição ou descarte explícito. Somente leitura bloqueia campos. Cópia de projeto e transporte preservam parâmetros; não há configuração independente por pavimento.
 
+## Material e preços de esquadrias — T-036
+
+Material de porta/janela é excluído dos insumos construtivos por `constructionOpenings`, assim como aparência. Material e `project.openingPrices` usam operação `budget`, histórico e salvamento em segundo plano, preservando composição/diagnósticos atuais ou desatualizados. Confirmação parte do documento local vigente e altera somente o campo correspondente. Preços confirmam por Enter/perda de foco, com prévia sem persistência; inválido não mostra custo anterior como atual. Falha conserva candidato para download/repetição/descarte; readonly e busy bloqueiam edição. Desfazer/refazer, cópias e transporte preservam material e preços retidos.
+
+Predefinidos confirmam pela seleção, sem materialização de ausência equivalente. Outro mantém material/descrição em rascunho e confirma ambos válidos por Enter/perda de foco. Cancelar, Escape ou trocar elemento prevalece sobre blur, descarta rascunho inclusive válido e não gera gravação intermediária. Criação pendente conserva material no rascunho até confirmar a ocorrência. Alterar tipo/tamanho/material passa a outra chave orçamentária: usar preço da combinação de destino ou ausência, sem transferência da origem. Remover última ocorrência oculta a linha, conservando preço apenas no projeto para reinserção; limpar preço remove somente aquela chave.
 
 ## M12 — estados remotos
 

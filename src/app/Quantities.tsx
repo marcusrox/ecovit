@@ -24,6 +24,11 @@ import {
 } from "./SteelBudget";
 import styles from "../ui/App.module.css";
 import {
+  useOpeningBudget,
+  OpeningBudgetSummary,
+  OpeningBudgetDetail,
+} from "./OpeningBudget";
+import {
   useSettlementBudget,
   SettlementBudgetSummary,
   SettlementBudgetDetail,
@@ -104,6 +109,15 @@ export function Quantities({
         ? [selectedFloor]
         : []
     : [];
+  const documentFloors = [...doc.model.floors].sort(
+    (a, b) => a.level - b.level || a.id.localeCompare(b.id),
+  );
+  const selectedDocumentFloor =
+    documentFloors.find((f) => f.id === floorId) ??
+    documentFloors.find((f) => f.id === activeFloorId) ??
+    documentFloors[0];
+  const consultedDocumentFloors =
+    floorId === "all" ? documentFloors : [selectedDocumentFloor];
   let estimate: ReturnType<typeof estimateLosses> | undefined;
   let lossError = "";
   if (report.available) {
@@ -229,6 +243,7 @@ export function Quantities({
     priceSaving,
     setPriceSaving,
   );
+  const openings = useOpeningBudget(doc, busy, readonly);
   const totals = [
     {
       label: "Subtotal de tijolos",
@@ -244,6 +259,11 @@ export function Quantities({
       label: "Subtotal de assentamento",
       value: settlement.report.available ? settlement.report.total : undefined,
       partial: settlement.report.available && settlement.report.partial,
+    },
+    {
+      label: "Subtotal de esquadrias",
+      value: openings.report.available ? openings.report.total : undefined,
+      partial: false,
     },
   ];
   let materialTotal: number | undefined;
@@ -494,6 +514,7 @@ export function Quantities({
             </section>
             <SteelBudgetSummary model={steel} />
             <SettlementBudgetSummary model={settlement} />
+            <OpeningBudgetSummary model={openings} />
             <dl
               className={styles.materialTotals}
               aria-label="Totais dos materiais"
@@ -512,7 +533,7 @@ export function Quantities({
               <div>
                 <dt>
                   Total dos materiais orçados (tijolos + ferragens +
-                  assentamento)
+                  assentamento + esquadrias)
                   {totals.some((t) => t.partial) ? " · parcial" : ""}
                 </dt>
                 <dd>
@@ -527,128 +548,142 @@ export function Quantities({
               <p className={styles.note}>
                 O total depende de quantitativos disponíveis, massas
                 cadastradas, perdas de tijolos válidas, distribuição de
-                assentamento completa e preços informados para os materiais
-                utilizados. Preço zero é diferente de preço ausente.
+                assentamento completa, tipo/material de esquadrias definidos e
+                preços informados para os materiais utilizados. Preço zero é
+                diferente de preço ausente.
               </p>
             )}
           </section>
-          {report.available && (
-            <section
-              className={styles.quantitySection}
-              aria-labelledby="budget-detail-title"
-            >
-              <h2 id="budget-detail-title">
-                <span
-                  className={styles.quantitySectionIndex}
-                  aria-hidden="true"
+          <section
+            className={styles.quantitySection}
+            aria-labelledby="budget-detail-title"
+          >
+            <h2 id="budget-detail-title">
+              <span className={styles.quantitySectionIndex} aria-hidden="true">
+                02
+              </span>
+              Detalhamento por pavimento
+            </h2>
+            <label className={styles.quantityLoss}>
+              Pavimento da consulta
+              <select
+                aria-label="Pavimento da consulta"
+                value={
+                  floorId === "all" ? "all" : (selectedDocumentFloor?.id ?? "")
+                }
+                onChange={(e) => setFloorId(e.target.value)}
+              >
+                <option value="all">Todos</option>
+                {documentFloors.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name} · {display(f.level)} cm
+                    {report.available &&
+                    report.floors.find((r) => r.id === f.id)?.partial
+                      ? " · Parcial"
+                      : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {openings.report.available &&
+              consultedDocumentFloors.map((f) => (
+                <OpeningBudgetDetail
+                  key={`openings:${f.id}`}
+                  report={
+                    openings.report as Extract<
+                      typeof openings.report,
+                      { available: true }
+                    >
+                  }
+                  floorId={f.id}
+                />
+              ))}
+            {report.available && consultedFloors.length > 0 && (
+              <>
+                <p>
+                  {floorId === "all"
+                    ? "Todos os pavimentos"
+                    : `${selectedFloor!.name} · ${display(selectedFloor!.level)} cm`}
+                  {consultedFloors.some((f) => f.partial)
+                    ? " · Parcial — há pendências"
+                    : ""}
+                  . Quantidades geométricas, sem perdas.
+                </p>
+                {consultedFloors.map((floor) => (
+                  <SettlementBudgetDetail
+                    key={`settlement:${floor.id}`}
+                    model={settlement}
+                    floorId={floor.id}
+                  />
+                ))}
+                {consultedFloors.map((floor) => (
+                  <SteelBudgetDetail
+                    key={floor.id}
+                    model={steel}
+                    floorId={floor.id}
+                  />
+                ))}
+                <div
+                  className={styles.quantityTable}
+                  tabIndex={0}
+                  role="region"
+                  aria-label="Peças por fiada"
                 >
-                  02
-                </span>
-                Detalhamento por pavimento
-              </h2>
-              <label className={styles.quantityLoss}>
-                Pavimento da consulta
-                <select
-                  aria-label="Pavimento da consulta"
-                  value={floorId === "all" ? "all" : (selectedFloor?.id ?? "")}
-                  onChange={(e) => setFloorId(e.target.value)}
-                >
-                  <option value="all">Todos</option>
-                  {report.floors.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.name} · {display(f.level)} cm
-                      {f.partial ? " · Parcial" : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {consultedFloors.length > 0 && (
-                <>
+                  <table>
+                    <caption>Fiadas locais</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Pavimento</th>
+                        <th scope="col">Fiada</th>
+                        {pieceKinds.map((kind) => (
+                          <th scope="col" key={kind}>
+                            {pieceLabels[kind]}
+                          </th>
+                        ))}
+                        <th scope="col">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {consultedFloors.flatMap((floor) =>
+                        floor.courses.map((c) => (
+                          <tr key={`${floor.id}:${c.number}`}>
+                            <th scope="row">
+                              {floor.name} · {display(floor.level)} cm
+                            </th>
+                            <td>{c.number}</td>
+                            <CountCells counts={c.counts} />
+                          </tr>
+                        )),
+                      )}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th scope="row" colSpan={2}>
+                          {floorId === "all"
+                            ? "Total dos pavimentos"
+                            : "Total do pavimento"}
+                        </th>
+                        <CountCells
+                          counts={
+                            floorId === "all"
+                              ? report.counts
+                              : selectedFloor!.counts
+                          }
+                        />
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                {!consultedFloors.some((f) => f.courses.length) && (
                   <p>
                     {floorId === "all"
-                      ? "Todos os pavimentos"
-                      : `${selectedFloor!.name} · ${display(selectedFloor!.level)} cm`}
-                    {consultedFloors.some((f) => f.partial)
-                      ? " · Parcial — há pendências"
-                      : ""}
-                    . Quantidades geométricas, sem perdas.
+                      ? "Estes pavimentos não têm fiadas. Quantidades zero."
+                      : "Este pavimento não tem fiadas. Quantidades zero."}
                   </p>
-                  {consultedFloors.map((floor) => (
-                    <SettlementBudgetDetail
-                      key={`settlement:${floor.id}`}
-                      model={settlement}
-                      floorId={floor.id}
-                    />
-                  ))}
-                  {consultedFloors.map((floor) => (
-                    <SteelBudgetDetail
-                      key={floor.id}
-                      model={steel}
-                      floorId={floor.id}
-                    />
-                  ))}
-                  <div
-                    className={styles.quantityTable}
-                    tabIndex={0}
-                    role="region"
-                    aria-label="Peças por fiada"
-                  >
-                    <table>
-                      <caption>Fiadas locais</caption>
-                      <thead>
-                        <tr>
-                          <th scope="col">Pavimento</th>
-                          <th scope="col">Fiada</th>
-                          {pieceKinds.map((kind) => (
-                            <th scope="col" key={kind}>
-                              {pieceLabels[kind]}
-                            </th>
-                          ))}
-                          <th scope="col">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {consultedFloors.flatMap((floor) =>
-                          floor.courses.map((c) => (
-                            <tr key={`${floor.id}:${c.number}`}>
-                              <th scope="row">
-                                {floor.name} · {display(floor.level)} cm
-                              </th>
-                              <td>{c.number}</td>
-                              <CountCells counts={c.counts} />
-                            </tr>
-                          )),
-                        )}
-                      </tbody>
-                      <tfoot>
-                        <tr>
-                          <th scope="row" colSpan={2}>
-                            {floorId === "all"
-                              ? "Total dos pavimentos"
-                              : "Total do pavimento"}
-                          </th>
-                          <CountCells
-                            counts={
-                              floorId === "all"
-                                ? report.counts
-                                : selectedFloor!.counts
-                            }
-                          />
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                  {!consultedFloors.some((f) => f.courses.length) && (
-                    <p>
-                      {floorId === "all"
-                        ? "Estes pavimentos não têm fiadas. Quantidades zero."
-                        : "Este pavimento não tem fiadas. Quantidades zero."}
-                    </p>
-                  )}
-                </>
-              )}
-            </section>
-          )}
+                )}
+              </>
+            )}
+          </section>
         </div>
       </dialog>
     </>

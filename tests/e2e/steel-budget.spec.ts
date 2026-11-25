@@ -109,6 +109,7 @@ test(
       "R$ 225,00",
       "Indisponível",
       "R$ 0,00",
+      "R$ 0,00",
       "Indisponível",
     ]);
     await setPrice(page, "8", "12");
@@ -122,6 +123,7 @@ test(
     await expect(totals(page)).toHaveText([
       "R$ 225,00",
       "R$ 43,91",
+      "R$ 0,00",
       "R$ 0,00",
       "R$ 268,91",
     ]);
@@ -140,6 +142,7 @@ test(
     await expect(totals(page)).toHaveText([
       "R$ 225,00",
       "R$ 43,91",
+      "R$ 0,00",
       "R$ 0,00",
       "R$ 268,91",
     ]);
@@ -168,6 +171,7 @@ test(
       "R$ 225,00",
       "R$ 48,94",
       "R$ 0,00",
+      "R$ 0,00",
       "R$ 273,94",
     ]);
     await close(page);
@@ -190,7 +194,7 @@ test(
     const restored = parseFile(
       await readFile((await (await exported).path())!, "utf8"),
     );
-    expect(restored.schemaVersion).toBe(32);
+    expect(restored.schemaVersion).toBe(33);
     expect(restored.project.steelPrices).toEqual({
       "ca50-8": 1200,
       "ca50-10": 1000,
@@ -210,6 +214,7 @@ test(
       "R$ 225,00",
       "R$ 48,94",
       "R$ 0,00",
+      "R$ 0,00",
       "R$ 273,94",
     ]);
   },
@@ -227,6 +232,7 @@ test(
       "R$ 225,00",
       "R$ 0,00",
       "R$ 0,00",
+      "R$ 0,00",
       "R$ 225,00",
     ]);
     const saved = await state(page);
@@ -235,6 +241,7 @@ test(
     await expect(totals(page)).toHaveText([
       "R$ 225,00",
       "Indisponível",
+      "R$ 0,00",
       "R$ 0,00",
       "Indisponível",
     ]);
@@ -247,6 +254,7 @@ test(
     await page.getByLabel("Perdas de tijolos (%)", { exact: true }).fill("x");
     await expect(totals(page)).toHaveText([
       "Indisponível",
+      "R$ 0,00",
       "R$ 0,00",
       "R$ 0,00",
       "Indisponível",

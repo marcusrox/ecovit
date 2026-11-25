@@ -27,6 +27,7 @@ import {
   orientationDescription,
 } from "../domain/opening-appearance";
 import { openingSymbolStrokes } from "../domain/opening-symbol";
+import { OpeningMaterialProperties } from "./OpeningMaterial";
 
 function OpeningPreview({
   opening,
@@ -315,6 +316,13 @@ function OpeningForm({
           </p>
         </section>
       )}
+      {o.kind !== "opening" && (
+        <OpeningMaterialProperties
+          key={`${o.id}:${JSON.stringify(o.material)}`}
+          opening={o}
+          pending={pending}
+        />
+      )}
       <form
         onKeyDown={(e) => {
           if (e.key === "Escape") {
@@ -466,6 +474,7 @@ function OpeningForm({
           <button
             type="button"
             disabled={disabled}
+            data-cancel-opening="true"
             onClick={() => {
               if (pending) {
                 s.inspect({ pendingOpening: null });
