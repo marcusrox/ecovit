@@ -1,6 +1,7 @@
 import { blockEditing } from "./auth";
 import { expect, test, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
+import { openingBox } from "../../src/domain/openings";
 import {
   createProject,
   makeWall,
@@ -51,6 +52,79 @@ function fixture() {
   );
   return d;
 }
+
+test(
+  "Aberturas interrompem faces da parede em Planta horizontal e vertical",
+  { tag: "@interface" },
+  async ({ page }) => {
+    const input = fixture();
+    input.model.openings = input.model.walls.flatMap((wall) =>
+      (["door", "window", "opening"] as const).map((kind, i) => ({
+        id: crypto.randomUUID(),
+        wallId: wall.id,
+        kind,
+        offset: 5000 + i * 10000,
+        width: 5000,
+        base: kind === "window" ? 11200 : 0,
+        height: kind === "window" ? 10500 : 21700,
+        ...(kind === "opening"
+          ? {}
+          : {
+              appearance: { type: "double-swing" as const, orientation: 0 },
+            }),
+      })),
+    );
+    const current = await load(page, input);
+    await page.getByRole("button", { name: "Enquadrar", exact: true }).click();
+    for (const wall of current.model.walls) {
+      // The selected wall has the widest outline; its faces must also disappear.
+      await page.evaluate(async (id) => {
+        const path = "/src/state/store.ts";
+        (await import(path)).useStore.getState().choose(id);
+      }, wall.id);
+      await canvases(page);
+      const horizontal = wall.a.y === wall.b.y;
+      const points = current.model.openings
+        .filter((o) => o.wallId === wall.id)
+        .flatMap((o) => {
+          const b = openingBox(o, wall, current.project.base.width);
+          return horizontal
+            ? [
+                { x: b.x + b.width * 0.3, y: b.y },
+                { x: b.x + b.width * 0.3, y: b.y + b.height },
+              ]
+            : [
+                { x: b.x, y: b.y + b.height * 0.3 },
+                { x: b.x + b.width, y: b.y + b.height * 0.3 },
+              ];
+        });
+      const colors = await page
+        .getByTestId("drawing")
+        .evaluate((drawing, points) => {
+          const camera = JSON.parse(drawing.getAttribute("data-camera")!);
+          const composite = document.createElement("canvas");
+          composite.width = drawing.clientWidth;
+          composite.height = drawing.clientHeight;
+          const ctx = composite.getContext("2d")!;
+          for (const layer of drawing.querySelectorAll("canvas"))
+            ctx.drawImage(layer, 0, 0, composite.width, composite.height);
+          return points.map((p) =>
+            Array.from(
+              ctx.getImageData(
+                Math.floor(p.x * camera.scale + camera.x),
+                Math.floor(p.y * camera.scale + camera.y),
+                1,
+                1,
+              ).data,
+            ),
+          );
+        }, points);
+      expect(colors).toEqual(points.map(() => [246, 248, 243, 255]));
+    }
+    expect(await doc(page)).toEqual(current);
+    await page.screenshot({ path: ".tools/opening-wall-cutouts.png" });
+  },
+);
 async function load(page: Page, value: unknown = fixture()) {
   await page.goto("/");
   await page.getByTestId("import-file").setInputFiles({

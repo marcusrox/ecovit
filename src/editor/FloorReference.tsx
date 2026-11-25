@@ -1,7 +1,7 @@
 import { Layer, Shape } from "react-konva";
 import { bounds, type Project } from "../domain/project";
 import { openingBox } from "../domain/openings";
-import { drawOpeningSymbol } from "./opening-symbol";
+import { drawPlanOpening } from "./opening-symbol";
 
 export function FloorReferenceLayer({
   doc,
@@ -57,16 +57,7 @@ export function FloorReferenceLayer({
               y = yy(b.y),
               width = b.width * camera.scale,
               height = b.height * camera.scale;
-            ctx.strokeRect(x, y, width, height);
-            drawOpeningSymbol(
-              ctx,
-              o,
-              w.a.y === w.b.y,
-              x,
-              y,
-              width,
-              height,
-            );
+            drawPlanOpening(ctx, o, w.a.y === w.b.y, x, y, width, height, true);
           }
           ctx.restore();
         }}

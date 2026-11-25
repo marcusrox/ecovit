@@ -67,7 +67,7 @@ import {
   resolveFloorReference,
 } from "../domain/floor-reference";
 import { FloorReferenceLayer } from "./FloorReference";
-import { drawOpeningSymbol } from "./opening-symbol";
+import { drawPlanOpening } from "./opening-symbol";
 import { openingSymbolStrokes } from "../domain/opening-symbol";
 import { defaultAppearance } from "../domain/opening-appearance";
 import { usePreferences } from "../state/preferences";
@@ -1699,11 +1699,9 @@ export function Canvas({
                       : "#4b6072";
                   ctx.lineWidth = selected === o.id ? 2 : 1;
                   ctx.fillStyle = "#f6f8f3";
-                  ctx.fillRect(x, y, width, height);
                   ctx.setLineDash(o.kind === "opening" ? [4, 3] : []);
-                  ctx.strokeRect(x, y, width, height);
                   if (mode === "plan")
-                    drawOpeningSymbol(
+                    drawPlanOpening(
                       ctx,
                       o,
                       w.a.y === w.b.y,
@@ -1712,6 +1710,10 @@ export function Canvas({
                       width,
                       height,
                     );
+                  else {
+                    ctx.fillRect(x, y, width, height);
+                    ctx.strokeRect(x, y, width, height);
+                  }
                   ctx.setLineDash([]);
                   ctx.fillStyle = "#234b40";
                   ctx.font = labelFont(11, camera.scale);

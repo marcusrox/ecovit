@@ -4,6 +4,8 @@
 
 ## Recorte de validação da interface
 
+Em Planta, portas, janelas e vãos livres interrompem as duas faces do contorno da parede somente na largura da abertura. O desenho próprio do elemento prevalece: manter laterais do vão e traços do símbolo, sem acrescentar contorno retangular genérico. O recorte inclui a espessura visual do traço da parede, inclusive selecionada, e acompanha prévias, movimento e redimensionamento em paredes horizontais e verticais. A referência de outro pavimento segue a mesma regra, mantendo transparência e estilo próprios. Fiada conserva sua representação existente.
+
 A seleção de verificações pertence somente a [Qualidade e desempenho](Qualidade-e-Desempenho.md#validação-proporcional-à-alteração). Este assunto define os padrões que a interface deve conservar, não uma rotina de testes por edição. As resoluções 1366×768, 1280×720 e 900×680 são referências para a homologação e para os riscos concretamente afetados; não multiplicar automaticamente uma correção por todas as telas/resoluções.
 
 ## M12 — conta e persistência remota
