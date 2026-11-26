@@ -111,7 +111,11 @@ test("todos os cenários descobertos mantêm uma única finalidade válida", () 
         "--list",
         "--reporter=json",
       ],
-      { encoding: "utf8", windowsHide: true },
+      {
+        encoding: "utf8",
+        windowsHide: true,
+        env: { ...process.env, M12_TEST_DATABASE_URL: "" },
+      },
     ),
   );
   const counts = new Map([

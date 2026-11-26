@@ -104,7 +104,7 @@ export function RoomProperties({ doc }: { doc: LocalProject }) {
         className={`${styles.reopen} ${styles.iconText}`}
         onClick={() => setCollapsed(false)}
       >
-        {label ? "Propriedades da etiqueta" : "Propriedades do fechamento"}
+        {label ? "Propriedades do ambiente" : "Propriedades do fechamento"}
         <Icon name="left" />
       </button>
     );
@@ -112,12 +112,12 @@ export function RoomProperties({ doc }: { doc: LocalProject }) {
     <aside
       className={styles.properties}
       aria-label={
-        label ? "Propriedades da etiqueta" : "Propriedades do fechamento"
+        label ? "Propriedades do ambiente" : "Propriedades do fechamento"
       }
     >
       <div className={styles.panelTitle}>
         <span>
-          {label ? "PROPRIEDADES DA ETIQUETA" : "FECHAMENTO SELECIONADO"}
+          {label ? "PROPRIEDADES DO AMBIENTE" : "FECHAMENTO SELECIONADO"}
         </span>
         <button
           aria-label="Recolher propriedades"
@@ -154,6 +154,33 @@ export function RoomProperties({ doc }: { doc: LocalProject }) {
                 }}
               />
             </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={label.excludedFromAreas ?? false}
+                disabled={busy || readonly}
+                onChange={(e) => {
+                  const excludedFromAreas = e.target.checked;
+                  void commit(
+                    {
+                      ...doc,
+                      model: {
+                        ...doc.model,
+                        roomLabels: doc.model.roomLabels.map((l) =>
+                          l.id === label.id ? { ...l, excludedFromAreas } : l,
+                        ),
+                      },
+                    },
+                    "room",
+                  );
+                }}
+              />
+              Desconsiderar das áreas útil e construída
+            </label>
+            <p className={styles.note}>
+              Mantém o nome e mostra 0,00 m². Desconta somente o espaço interno;
+              as paredes continuam na área construída.
+            </p>
           </section>
           <section
             className={styles.propertyInfo}
@@ -162,11 +189,13 @@ export function RoomProperties({ doc }: { doc: LocalProject }) {
             <dl className={styles.propertyFacts}>
               <dt>Área</dt>
               <dd>
-                {label.review
-                  ? "Revisar ambiente"
-                  : region
-                    ? roomAreaText(region.area)
-                    : "Revisar ambiente"}
+                {label.excludedFromAreas
+                  ? roomAreaText(0)
+                  : label.review
+                    ? "Revisar ambiente"
+                    : region
+                      ? roomAreaText(region.area)
+                      : "Revisar ambiente"}
               </dd>
             </dl>
           </section>
@@ -194,7 +223,7 @@ export function RoomProperties({ doc }: { doc: LocalProject }) {
         }}
       >
         <Icon name="delete" />
-        {label ? "Excluir etiqueta" : "Excluir linha"}
+        {label ? "Excluir ambiente" : "Excluir linha"}
       </button>
     </aside>
   );
@@ -546,7 +575,7 @@ export function useRoomCanvas(
       mode !== "plan"
         ? ""
         : tool === "room"
-          ? "Clique no interior do ambiente · Esc encerra Etiqueta"
+          ? "Clique dentro de uma região fechada para identificar o ambiente e calcular sua área. · Esc encerra Ambiente"
           : tool === "room-boundary"
             ? `${draft.current ? "Clique no ponto final" : "Clique no ponto inicial"} · Alt suspende atração · Esc cancela`
             : "",

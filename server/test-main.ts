@@ -40,7 +40,7 @@ stage("Aplicando migrações do schema de navegador");
 await migrate(db);
 stage("Limpando dados do ensaio anterior");
 await db.query(
-  "TRUNCATE ecovit_accounts,ecovit_challenges,ecovit_deletions,ecovit_rate_limits CASCADE",
+  "TRUNCATE ecovit_accounts,ecovit_challenges,ecovit_deletions,ecovit_rate_limits,ecovit_price_references CASCADE",
 );
 const api = await createApi(db, config);
 stage("Iniciando API isolada na porta 3002");

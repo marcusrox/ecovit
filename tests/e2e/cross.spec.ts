@@ -76,7 +76,7 @@ test(
     await load(page, frame());
     await fiada(page);
     const before = await exported(page);
-    expect(before.schemaVersion).toBe(33);
+    expect(before.schemaVersion).toBe(35);
     expect(before.generated!.convention).toBe("nominal-v13");
     expect(
       before.generated!.floors[0].courses.map((c) => c.pieces.length),

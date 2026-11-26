@@ -14,9 +14,16 @@ import {
   parseUnitPrice,
   priceText,
   money,
+  materialCosts,
 } from "../domain/budget";
 import { useStore } from "../state/store";
 import { Icon } from "../ui/Icon";
+import { withProjectPrice } from "../domain/price-references";
+import {
+  BudgetReferenceContext,
+  useBudgetReferences,
+  ReferencePriceButton,
+} from "./PriceReferences";
 import {
   useSteelBudget,
   SteelBudgetSummary,
@@ -65,6 +72,21 @@ export function Quantities({
   >({});
   const activeFloorId = useStore((s) => s.activeFloorId);
   const [open, setOpen] = useState(false);
+  const references = useBudgetReferences(
+    doc,
+    open,
+    busy,
+    readonly,
+    saved,
+    setPriceSaving,
+  );
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
+  const exportController = useRef<AbortController | null>(null);
+  useEffect(() => () => exportController.current?.abort(), []);
+  useEffect(() => {
+    if (!open) exportController.current?.abort();
+  }, [open]);
   const [lossDraft, setLossDraft] = useState<string>();
   const percent =
     lossDraft ?? lossPercentText(doc.project.brickLossPercent ?? 0);
@@ -165,24 +187,15 @@ export function Quantities({
     } catch {
       return;
     }
-    if (value !== latest.project.unitPrices?.[kind]) {
-      const prices = { ...latest.project.unitPrices };
-      if (value === undefined) delete prices[kind];
-      else prices[kind] = value;
-      const { unitPrices, ...project } = latest.project;
-      void unitPrices;
+    const next = withProjectPrice(
+      latest,
+      { group: "bricks", key: kind },
+      value,
+    );
+    if (next !== latest) {
       setPriceSaving(true);
       try {
-        await state.commit(
-          {
-            ...latest,
-            project: {
-              ...project,
-              ...(Object.keys(prices).length ? { unitPrices: prices } : {}),
-            },
-          },
-          "budget",
-        );
+        await state.commit(next, "budget");
       } finally {
         setPriceSaving(false);
       }
@@ -230,7 +243,7 @@ export function Quantities({
   const steel = useSteelBudget(
     doc,
     open,
-    busy,
+    busy || references.working,
     readonly,
     priceSaving,
     setPriceSaving,
@@ -238,12 +251,12 @@ export function Quantities({
   const settlement = useSettlementBudget(
     doc,
     open,
-    busy,
+    busy || references.working,
     readonly,
     priceSaving,
     setPriceSaving,
   );
-  const openings = useOpeningBudget(doc, busy, readonly);
+  const openings = useOpeningBudget(doc, busy || references.working, readonly);
   const totals = [
     {
       label: "Subtotal de tijolos",
@@ -266,17 +279,72 @@ export function Quantities({
       partial: false,
     },
   ];
-  let materialTotal: number | undefined;
-  let materialError = "";
-  if (totals.every((t) => t.value !== undefined)) {
-    const sum = totals.reduce((n, t) => n + BigInt(t.value!), 0n);
-    if (sum <= BigInt(Number.MAX_SAFE_INTEGER)) materialTotal = Number(sum);
-    else
-      materialError =
-        "Total dos materiais fora da representação numérica segura.";
+  const { total: materialTotal, error: materialError } = materialCosts(
+    totals.map((t) => t.value),
+  );
+  async function exportPdf() {
+    const state = useStore.getState();
+    if (
+      !state.doc ||
+      state.busy ||
+      references.working ||
+      state.saved === "saving" ||
+      exporting
+    )
+      return;
+    // Fields commit on blur. An invalid/unconfirmed draft must not be silently exported.
+    const hasDrafts =
+      lossDraft !== undefined ||
+      Object.keys(drafts).length > 0 ||
+      Object.keys(steel.drafts).length > 0 ||
+      Object.keys(settlement.drafts).length > 0 ||
+      Object.keys(openings.drafts).length > 0;
+    if (hasDrafts) {
+      setExportError(
+        "Conclua ou corrija os campos do orçamento antes de exportar o PDF.",
+      );
+      return;
+    }
+    const snapshot = state.doc,
+      emitted = new Date(),
+      unsaved = state.saved !== "saved";
+    const abort = new AbortController();
+    exportController.current = abort;
+    setExporting(true);
+    setExportError("");
+    try {
+      const { generateBudgetPdf } = await import("./budget-report/pdf");
+      const file = await generateBudgetPdf(
+        snapshot,
+        emitted,
+        unsaved,
+        abort.signal,
+      );
+      if (abort.signal.aborted) return;
+      const url = URL.createObjectURL(
+        new Blob([file.bytes], { type: "application/pdf" }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = file.filename;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) {
+      if (!abort.signal.aborted)
+        setExportError(
+          e instanceof Error
+            ? e.message
+            : "Não foi possível gerar o relatório PDF. Tente novamente.",
+        );
+    } finally {
+      if (exportController.current === abort) {
+        exportController.current = null;
+        setExporting(false);
+      }
+    }
   }
   return (
-    <>
+    <BudgetReferenceContext.Provider value={references}>
       <button
         ref={trigger}
         className={styles.iconText}
@@ -329,12 +397,50 @@ export function Quantities({
               {display(doc.project.base.height)} cm
             </p>
             <p className={styles.note}>
-              Quantitativos e estimativa de custos de tijolos, ferragens e
-              materiais de assentamento do projeto, com base nos preços
-              informados e nas perdas de tijolos definidas. Inclui resumo dos
-              materiais e detalhamento por pavimento e fiada.
+              Quantitativos e estimativa de custos de tijolos, ferragens,
+              materiais de assentamento e esquadrias do projeto, com base nos
+              preços informados e nas perdas de tijolos definidas. Inclui resumo
+              dos materiais e detalhamento por pavimento e fiada.
             </p>
           </header>
+          <button
+            className={styles.iconText}
+            disabled={
+              busy || references.working || saved === "saving" || exporting
+            }
+            onClick={() => void exportPdf()}
+          >
+            <Icon name="download" />{" "}
+            {exporting ? "Gerando relatório…" : "Baixar orçamento em PDF"}
+          </button>
+          <p className={styles.note}>
+            O relatório inclui todos os pavimentos e os valores confirmados nos
+            campos, independentemente do filtro da consulta.
+          </p>
+          {exporting && <p role="status">Preparando relatório PDF…</p>}
+          {exportError && (
+            <p role="alert" className={styles.errorText}>
+              {exportError}
+            </p>
+          )}
+          {references.working && (
+            <p role="status">
+              Consultando e incorporando preços de referência…
+            </p>
+          )}
+          {references.error && (
+            <p role="alert">
+              {references.error}{" "}
+              <button
+                disabled={
+                  busy || readonly || saved !== "saved" || references.working
+                }
+                onClick={references.reload}
+              >
+                Tentar consultar referências novamente
+              </button>
+            </p>
+          )}
           {!report.available && <p role="alert">{report.reason}</p>}
           <section className={styles.quantitySection}>
             <h2 id="budget-summary-title">
@@ -373,7 +479,7 @@ export function Quantities({
                   value={percent}
                   aria-invalid={!!lossError}
                   aria-describedby="loss-note"
-                  disabled={busy || readonly}
+                  disabled={busy || readonly || references.working}
                   onChange={(e) => setLossDraft(e.target.value)}
                   onBlur={() => void confirmLoss()}
                   onKeyDown={(e) => {
@@ -443,36 +549,50 @@ export function Quantities({
                             "—"
                           ) : (
                             <>
-                              <input
-                                className={styles.budgetPrice}
-                                aria-label={`Preço unitário de ${pieceLabels[kind]}`}
-                                aria-invalid={!!priceErrors[kind]}
-                                aria-describedby={
-                                  priceErrors[kind]
-                                    ? `price-error-${kind}`
-                                    : undefined
-                                }
-                                inputMode="decimal"
-                                placeholder="Não informado"
-                                value={
-                                  drafts[kind] ??
-                                  priceText(doc.project.unitPrices?.[kind])
-                                }
-                                disabled={busy || readonly}
-                                onChange={(e) =>
-                                  setDrafts((previous) => ({
-                                    ...previous,
-                                    [kind]: e.target.value,
-                                  }))
-                                }
-                                onBlur={() => void confirmPrice(kind)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    e.currentTarget.blur();
+                              <span className={styles.priceField}>
+                                <input
+                                  className={styles.budgetPrice}
+                                  aria-label={`Preço unitário de ${pieceLabels[kind]}`}
+                                  aria-invalid={!!priceErrors[kind]}
+                                  aria-describedby={
+                                    priceErrors[kind]
+                                      ? `price-error-${kind}`
+                                      : undefined
                                   }
-                                }}
-                              />
+                                  inputMode="decimal"
+                                  placeholder="Não informado"
+                                  value={
+                                    drafts[kind] ??
+                                    priceText(doc.project.unitPrices?.[kind])
+                                  }
+                                  disabled={
+                                    busy || readonly || references.working
+                                  }
+                                  onChange={(e) =>
+                                    setDrafts((previous) => ({
+                                      ...previous,
+                                      [kind]: e.target.value,
+                                    }))
+                                  }
+                                  onBlur={() => void confirmPrice(kind)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      e.currentTarget.blur();
+                                    }
+                                  }}
+                                />
+                                <ReferencePriceButton
+                                  item={{ group: "bricks", key: kind }}
+                                  clearDraft={() =>
+                                    setDrafts((previous) => {
+                                      const next = { ...previous };
+                                      delete next[kind];
+                                      return next;
+                                    })
+                                  }
+                                />
+                              </span>
                               {priceErrors[kind] && (
                                 <span
                                   role="alert"
@@ -686,6 +806,6 @@ export function Quantities({
           </section>
         </div>
       </dialog>
-    </>
+    </BudgetReferenceContext.Provider>
   );
 }

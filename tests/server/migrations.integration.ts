@@ -52,7 +52,7 @@ describe("incremental PostgreSQL migrations", () => {
     await migrate(db, await loadMigrations());
     const upgraded = await structure(),
       versions = await history();
-    expect(versions.map((row) => row.version)).toEqual([1, 2]);
+    expect(versions.map((row) => row.version)).toEqual([1, 2, 3]);
     expect(
       (
         await db.query(

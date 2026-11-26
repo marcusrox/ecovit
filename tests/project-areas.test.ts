@@ -4,6 +4,7 @@ import { addRoomLabel, roomAreaText } from "../src/domain/rooms";
 import { projectAreas } from "../src/domain/project-areas";
 import { duplicateFloor, removeFloor } from "../src/domain/floors";
 import { parseFile, serializeFile } from "../src/persistence/files";
+import { validateProject } from "../src/persistence/document";
 
 const p = (x: number, y: number): Point => ({ x, y });
 const fixture = () =>
@@ -45,6 +46,98 @@ function house(d: Project) {
 }
 const constructed = (d: Project) => projectAreas(d).constructed;
 describe("T-030 áreas do projeto", () => {
+  it("desconsidera só o interior do jardim, mantém paredes, nome e região externa", () => {
+    let d = fixture();
+    house(d);
+    rect(d, 30000, 30000, 30000, 20000);
+    d = addRoomLabel(d, d.model.floors[0].id, p(10000, 10000)).doc;
+    d = addRoomLabel(d, d.model.floors[0].id, p(40000, 40000)).doc;
+    const garden = d.model.roomLabels[1];
+    garden.name = "Jardim interno";
+    garden.excludedFromAreas = true;
+    garden.position = p(150000, 150000);
+    const result = projectAreas(d);
+    expect(result.useful.area).toBeCloseTo(70.44);
+    expect(result.constructed).toEqual({
+      area: 74,
+      closed: true,
+      pending: false,
+    });
+    expect(result.floors[0].rooms[1].region!.area).toBe(6);
+    const copied = parseFile(
+      serializeFile(duplicateFloor(d, d.model.floors[0].id, 28000, "Superior"))
+        .text,
+    );
+    expect(
+      copied.model.roomLabels.filter((l) => l.excludedFromAreas),
+    ).toHaveLength(2);
+    expect(copied.model.roomLabels[1].name).toBe("Jardim interno");
+    expect(projectAreas(copied).constructed.area).toBe(148);
+    garden.excludedFromAreas = false;
+    expect(projectAreas(d).constructed.area).toBe(80);
+    expect(projectAreas(d).useful.area).toBeCloseTo(76.44);
+  });
+  it("não desconta duas vezes regiões aninhadas nem a parede sólida dentro do jardim", () => {
+    let d = fixture();
+    house(d);
+    rect(d, 30000, 30000, 30000, 20000);
+    d.model.walls.push({
+      id: crypto.randomUUID(),
+      floorId: d.model.floors[0].id,
+      a: p(40000, 35000),
+      b: p(50000, 35000),
+      side: 1,
+      height: 28000,
+    });
+    d = addRoomLabel(d, d.model.floors[0].id, p(10000, 10000)).doc;
+    d = addRoomLabel(d, d.model.floors[0].id, p(55000, 45000)).doc;
+    d.model.roomLabels[1].excludedFromAreas = true;
+    expect(projectAreas(d).constructed.area).toBeCloseTo(74.1);
+    d.model.roomLabels[0].excludedFromAreas = true;
+    expect(projectAreas(d).constructed.area).toBeCloseTo(3.66);
+    expect(projectAreas(d).useful.area).toBe(0);
+  });
+  it("preserva exclusão em revisão sem inventar desconto de uma região perdida", () => {
+    let d = fixture();
+    rect(d, 0, 0, 30000, 20000);
+    d = addRoomLabel(d, d.model.floors[0].id, p(10000, 10000)).doc;
+    d.model.roomLabels[0].excludedFromAreas = true;
+    expect(projectAreas(d).constructed.area).toBe(0);
+    expect(projectAreas(d).useful.area).toBe(0);
+    d.model.roomLabels[0].review = true;
+    expect(projectAreas(d).constructed).toEqual({
+      area: null,
+      closed: true,
+      pending: true,
+    });
+    expect(projectAreas(d).useful).toEqual({ area: 0, count: 1, review: 1 });
+    expect(
+      parseFile(serializeFile(d).text).model.roomLabels[0].excludedFromAreas,
+    ).toBe(true);
+  });
+  it("formato 35 preserva a marca e converte 34 sem inventá-la; recusa tipo inválido e campo em legado", () => {
+    let d = fixture();
+    rect(d, 0, 0, 30000, 20000);
+    d = addRoomLabel(d, d.model.floors[0].id, p(10000, 10000)).doc;
+    const old = { ...d, schemaVersion: 34 };
+    const loaded = validateProject(old);
+    expect(loaded.schemaVersion).toBe(35);
+    expect(loaded.model.roomLabels[0].excludedFromAreas).toBeUndefined();
+    d.model.roomLabels[0].excludedFromAreas = true;
+    expect(validateProject(d).model.roomLabels[0].excludedFromAreas).toBe(true);
+    expect(() => validateProject({ ...d, schemaVersion: 34 })).toThrow(
+      /formato anterior/,
+    );
+    expect(() =>
+      validateProject({
+        ...d,
+        model: {
+          ...d.model,
+          roomLabels: [{ ...d.model.roomLabels[0], excludedFromAreas: "true" }],
+        },
+      }),
+    ).toThrow();
+  });
   it("E01/E04 inclui paredes e vazios internos, exclui continuação exterior da mesma parede", () => {
     const d = fixture();
     house(d);

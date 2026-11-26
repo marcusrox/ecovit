@@ -18,6 +18,10 @@ import {
   openingPricesSchema,
 } from "../domain/opening-budget";
 import { textSchema } from "../domain/text";
+import {
+  priceSourcesSchema,
+  validatePriceSources,
+} from "../domain/price-references";
 import { validateSlab } from "../domain/slabs";
 import {
   LIMIT,
@@ -210,7 +214,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(33),
+    schemaVersion: z.literal(35),
     project: z
       .object({
         id,
@@ -223,6 +227,7 @@ const schema = z
         initialWallHeight: positive.optional(),
         brickLossPercent: cents.optional(),
         openingPrices: openingPricesSchema.optional(),
+        priceSources: priceSourcesSchema.optional(),
         settlement: z
           .object({
             ac1: settlementProduct,
@@ -506,6 +511,7 @@ const schema = z
               position: point,
               reference: point,
               review: z.boolean(),
+              excludedFromAreas: z.boolean().optional(),
             })
             .strict(),
         ),
@@ -621,6 +627,37 @@ export function validateProject(
   value: unknown,
   checkGenerated = true,
 ): Project {
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion >= 9 &&
+    value.schemaVersion <= 34 &&
+    "model" in value &&
+    value.model &&
+    typeof value.model === "object" &&
+    "roomLabels" in value.model &&
+    Array.isArray(value.model.roomLabels) &&
+    value.model.roomLabels.some(
+      (label: unknown) =>
+        label && typeof label === "object" && "excludedFromAreas" in label,
+    )
+  )
+    throw new Error("Arquivo inválido: exclusão de área em formato anterior.");
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion >= 9 &&
+    value.schemaVersion <= 33 &&
+    "project" in value &&
+    value.project &&
+    typeof value.project === "object" &&
+    "priceSources" in value.project
+  )
+    throw new Error("Arquivo inválido: origens de preços em formato anterior.");
   if (
     value &&
     typeof value === "object" &&
@@ -1065,10 +1102,12 @@ export function validateProject(
       value.schemaVersion !== 30 &&
       value.schemaVersion !== 31 &&
       value.schemaVersion !== 32 &&
-      value.schemaVersion !== 33)
+      value.schemaVersion !== 33 &&
+      value.schemaVersion !== 34 &&
+      value.schemaVersion !== 35)
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 33; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 35; demais formatos não são convertidos.",
     );
   if (
     value.schemaVersion === 24 ||
@@ -1113,6 +1152,20 @@ export function validateProject(
     value.schemaVersion === 32
   )
     value = { ...value, schemaVersion: 33 };
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 33
+  )
+    value = { ...value, schemaVersion: 34 };
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 34
+  )
+    value = { ...value, schemaVersion: 35 };
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");
@@ -1126,6 +1179,7 @@ export function validateProject(
         }
       : parsed.data
   ) as Project;
+  validatePriceSources(doc);
   if (doc.model.openings.some((o) => !validAppearance(o)))
     throw new Error("Tipo ou orientação da esquadria inválidos.");
   const imageFloors = new Set<string>();

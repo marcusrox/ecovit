@@ -184,7 +184,7 @@ for (const zoom of [25, 61, 150]) {
       await expect(page.getByTestId("drawing")).toBeVisible();
       await expect(page.getByRole("status")).toContainText("Salvo");
       const original = await state(page),
-        button = page.getByRole("button", { name: "Etiqueta", exact: true });
+        button = page.getByRole("button", { name: "Ambiente", exact: true });
       const interfaceFont = await button.evaluate(
         (el) => getComputedStyle(el).fontSize,
       );

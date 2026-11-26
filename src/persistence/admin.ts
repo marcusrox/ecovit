@@ -54,7 +54,7 @@ export type AdminOverview = {
 };
 export type AdminAction = "block" | "unblock" | "sessions" | "grant" | "revoke";
 export const adminActionNames: Record<
-  AdminAction | "recover" | "configured",
+  AdminAction | "recover" | "configured" | "price",
   string
 > = {
   block: "Bloquear conta",
@@ -64,4 +64,5 @@ export const adminActionNames: Record<
   revoke: "Retirar administrador",
   recover: "Recuperar administração",
   configured: "Administrador configurado",
+  price: "Alterar preço de referência",
 };

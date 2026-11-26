@@ -1,6 +1,6 @@
 # Ecovit — Arquitetura Técnica
 
-Aplicação web 2D com editor no navegador, API no mesmo domínio e PostgreSQL. O contrato de transporte usa envelope 19 e composição nominal-v10, conforme a [matriz de compatibilidade](arquitetura/Persistencia-e-Compatibilidade.md#formato-e-leitores-vigentes).
+Aplicação web 2D com editor no navegador, API no mesmo domínio e PostgreSQL. O contrato de transporte usa envelope 35 e composição nominal-v13, conforme a [matriz de compatibilidade](arquitetura/Persistencia-e-Compatibilidade.md#formato-e-leitores-vigentes).
 
 ## Responsabilidades da documentação
 

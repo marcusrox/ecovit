@@ -2,6 +2,16 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
+## Incorporação e limpeza de preços — T-039
+
+Abrir o Orçamento editável pode incorporar preços de referência nos campos nunca preenchidos em uma única operação `budget`; sem incorporações, a abertura continua sem escrita. Somente leitura e estado de salvamento/recuperação pendente não iniciam incorporação. Consulta assíncrona usa o documento corrente antes de confirmar, preserva preços próprios aceitos no intervalo e ignora resultado após fechamento/troca de projeto. Falha de consulta informa impedimento sem alterar intenção; falha de gravação conserva candidato, indicação Não salvo e recuperação existente.
+
+Confirmação de campo escreve preço e origem juntos. Limpeza registra `cleared`, valor próprio registra `own`, cópia manual/automática de referência registra `reference`; origem ausente de legado é inferida pela presença do valor. Mudança de origem com preço numericamente igual é significativa; valor e origem equivalentes não geram operação. Desfazer/refazer restaura ambos, sem motor. Abertura seguinte só preenche novamente se o estado restaurado for nunca preenchido. Campos limpos não voltam a ser elegíveis automaticamente. Ação manual por campo usa referência vigente sem atualização futura, respeitando os mesmos bloqueios e a recuperação. Fórmulas, identidades e projeções seguem Quantitativos; serialização estrita segue Persistência.
+
+## Exportação do orçamento — T-038
+
+Gerar/baixar o relatório é leitura da revisão em memória capturada no início, sem commit, recálculo, histórico, gravação ou mudança de câmera/pavimento/filtro. Não iniciar durante processamento/salvamento ou com campos orçamentários em rascunho. Somente leitura permanece habilitada; revisão não salva é identificada como tal. Captura não acompanha edições posteriores. Fechar a consulta/desmontar cancela o trabalho; falha mantém o projeto e permite nova tentativa. Disponibilidade e parcialidade dos grupos seguem [Quantitativos](Quantitativos.md#relatório-de-orçamento-em-pdf--t-038).
+
 ## Orçamento de assentamento — T-035
 
 `project.settlement` é intenção orçamentária global excluída dos insumos construtivos, como os preços existentes. Campos individuais válidos confirmam por Enter/perda de foco com operação `budget`, inclusive percentuais cuja soma esteja incompleta. Prévia inválida não confirma; valores equivalentes aos padrões ausentes não criam operação. Consultar, filtrar e derivar áreas/custos não salva nem cria histórico. Confirmação parte do documento local mais recente e altera somente o campo correspondente, preservando outras edições aceitas.
@@ -154,3 +164,7 @@ Desfazer/refazer recupera o conjunto inteiro e pode restaurar uma laje com somen
 project.brickLossPercent guarda o percentual confirmado em centésimos de ponto percentual; ausência equivale a zero. Edição no Orçamento é rascunho até Enter/perda de foco. Confirmação válida e diferente do valor atual usa uma operação budget com histórico e salvamento, excluída dos insumos construtivos; não invalidar nem recalcular composição. Zero equivalente à ausência não cria operação só por consultar/confirmar o padrão.
 
 Desfazer/refazer restaura o percentual, inclusive ausência. Abrir/reabrir e cópias carregam o valor do projeto. Falha conserva o candidato em memória e aplica bloqueios/recuperação existentes; somente leitura e busy impedem edição. Não persistir texto inválido, filtros ou totais calculados.
+
+### Inclusão dos ambientes nas áreas — 2026-11-26
+
+Alterar `model.roomLabels[].excludedFromAreas` é uma operação room: confirma uma intenção, histórico e salvamento existentes, sem chamar composição. Desfazer/refazer restaura a marca e os totais derivados. Renomear, mover o texto, reconciliar/revalidar a referência e duplicar o pavimento preservam a escolha. O formato 35 e as cópias remotas/arquivos a transportam; ausência preserva inclusão anterior. Somente leitura/processamento bloqueiam a edição.

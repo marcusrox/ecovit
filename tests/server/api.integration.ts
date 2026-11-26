@@ -22,6 +22,12 @@ import { assetPath } from "../../server/projects";
 import { createProject, makeWall } from "../../src/domain/project";
 import { dehydrate } from "../../src/persistence/remote-document";
 import { generate } from "../../src/domain/composition";
+import {
+  priceItemKey,
+  projectPriceItems,
+  withProjectPrice,
+  type PriceItem,
+} from "../../src/domain/price-references";
 import { validateTestDatabaseUrl } from "../../scripts/load-test-env";
 
 const databaseUrl = validateTestDatabaseUrl(process.env.M12_TEST_DATABASE_URL);
@@ -111,7 +117,7 @@ beforeAll(async () => {
 });
 beforeEach(async () => {
   await db.query(
-    "TRUNCATE ecovit_accounts,ecovit_challenges,ecovit_deletions,ecovit_rate_limits CASCADE",
+    "TRUNCATE ecovit_accounts,ecovit_challenges,ecovit_deletions,ecovit_rate_limits,ecovit_price_references CASCADE",
   );
 });
 afterAll(async () => {
@@ -120,6 +126,227 @@ afterAll(async () => {
 });
 
 describe("M12 — API com PostgreSQL 18.0 real", () => {
+  it("T-039 protege referências, audita alterações, repete operação sem duplicar e preserva concorrência administrativa", async () => {
+    const admin = await login("permanent@example.com"),
+      common = await login("prices-user@example.com");
+    const item: PriceItem = { group: "bricks", key: "whole" };
+    expect((await app.inject({ url: "/api/admin/prices" })).statusCode).toBe(
+      401,
+    );
+    expect(
+      (await app.inject({ url: "/api/admin/prices", headers: headers(common) }))
+        .statusCode,
+    ).toBe(403);
+    const payload = { ...body(), item, price: 100, expectedPrice: null };
+    expect(
+      (
+        await app.inject({
+          method: "POST",
+          url: "/api/admin/prices",
+          headers: headers(common),
+          payload,
+        })
+      ).statusCode,
+    ).toBe(403);
+    const badHeaders = { ...headers(admin), "x-csrf-token": "invalid" };
+    expect(
+      (
+        await app.inject({
+          method: "POST",
+          url: "/api/admin/prices",
+          headers: badHeaders,
+          payload,
+        })
+      ).statusCode,
+    ).toBe(403);
+    for (let i = 0; i < 2; i++)
+      expect(
+        (
+          await app.inject({
+            method: "POST",
+            url: "/api/admin/prices",
+            headers: headers(admin),
+            payload,
+          })
+        ).statusCode,
+      ).toBe(200);
+    expect(
+      (
+        await db.query(
+          "SELECT count(*)::int AS n FROM ecovit_admin_audit WHERE action='price' AND actor_id=$1",
+          [admin.id],
+        )
+      ).rows[0].n,
+    ).toBe(1);
+    expect(
+      (
+        await app.inject({
+          method: "POST",
+          url: "/api/admin/prices",
+          headers: headers(admin),
+          payload: { ...body(), item, price: 200, expectedPrice: null },
+        })
+      ).statusCode,
+    ).toBe(409);
+    const looked = await app.inject({
+      method: "POST",
+      url: "/api/prices/lookup",
+      headers: headers(common),
+      payload: { items: [item] },
+    });
+    expect(looked.json()).toEqual({ references: [{ item, price: 100 }] });
+    const listed = await app.inject({
+      url: "/api/admin/prices",
+      headers: headers(admin),
+    });
+    expect(listed.json().references).toHaveLength(15);
+    expect(
+      (
+        await app.inject({
+          method: "POST",
+          url: "/api/admin/prices",
+          headers: headers(admin),
+          payload: { ...body(), item, price: 0, expectedPrice: 100 },
+        })
+      ).statusCode,
+    ).toBe(200);
+    expect(
+      (
+        await app.inject({
+          method: "POST",
+          url: "/api/admin/prices",
+          headers: headers(admin),
+          payload: { ...body(), item, price: null, expectedPrice: 0 },
+        })
+      ).statusCode,
+    ).toBe(200);
+  });
+  it("T-039 aprende a primeira esquadria em confirmação atômica e não sobrescreve referência ou aceita cadastro fictício", async () => {
+    const admin = await login("permanent@example.com"),
+      a = await login("first@example.com"),
+      b = await login("second@example.com");
+    async function project(user: User) {
+      const doc = createProject(
+        "Porta",
+        { length: 2500, width: 1250, height: 700 },
+        28000,
+      );
+      doc.model.walls = [
+        makeWall(
+          { x: 0, y: 0 },
+          { x: 40000, y: 0 },
+          1250,
+          doc.model.floors[0].id,
+          28000,
+          1,
+        )!,
+      ];
+      doc.model.openings = [
+        {
+          id: randomUUID(),
+          wallId: doc.model.walls[0].id,
+          kind: "door",
+          offset: 2500,
+          width: 5000,
+          base: 0,
+          height: 21000,
+          appearance: { type: "swing", orientation: 0 },
+          material: { kind: "wood-solid" },
+        },
+      ];
+      const result = await app.inject({
+        method: "POST",
+        url: `/api/projects/${doc.project.id}`,
+        headers: headers(user),
+        payload: { ...body(), doc: dehydrate(doc, {}) },
+      });
+      expect(result.statusCode, result.body).toBe(200);
+      return { doc, revision: result.json().revision };
+    }
+    const pa = await project(a),
+      pb = await project(b),
+      item = projectPriceItems(pa.doc).find((i) => i.group === "openings")!;
+    const fictitious = await app.inject({
+      method: "POST",
+      url: "/api/admin/prices",
+      headers: headers(admin),
+      payload: { ...body(), item, price: 1, expectedPrice: null },
+    });
+    expect(fictitious.statusCode).toBe(422);
+    const save = (
+      user: User,
+      p: typeof pa,
+      value: number,
+      revision = p.revision,
+    ) =>
+      app.inject({
+        method: "PUT",
+        url: `/api/projects/${p.doc.project.id}`,
+        headers: headers(user),
+        payload: {
+          ...body(revision),
+          doc: dehydrate(withProjectPrice(p.doc, item, value), {}),
+        },
+      });
+    const results = await Promise.all([save(a, pa, 12345), save(b, pb, 54321)]);
+    for (const result of results)
+      expect(result.statusCode, result.body).toBe(200);
+    const refs = await db.query(
+      "SELECT item,price::text FROM ecovit_price_references WHERE key=$1",
+      [priceItemKey(item)],
+    );
+    expect(refs.rowCount).toBe(1);
+    expect(["12345", "54321"]).toContain(refs.rows[0].price);
+    const original = Number(refs.rows[0].price);
+    const second = await save(a, pa, 99999, results[0].json().revision);
+    expect(second.statusCode).toBe(200);
+    expect(
+      (
+        await db.query(
+          "SELECT price::text FROM ecovit_price_references WHERE key=$1",
+          [priceItemKey(item)],
+        )
+      ).rows[0].price,
+    ).toBe(String(original));
+    const changed = await app.inject({
+      method: "POST",
+      url: "/api/admin/prices",
+      headers: headers(admin),
+      payload: { ...body(), item, price: 50000, expectedPrice: original },
+    });
+    expect(changed.statusCode).toBe(200);
+    const invalid = withProjectPrice(pa.doc, item, 77777);
+    invalid.project.priceSources![0].source = "cleared";
+    expect(
+      (
+        await app.inject({
+          method: "PUT",
+          url: `/api/projects/${pa.doc.project.id}`,
+          headers: headers(a),
+          payload: {
+            ...body(second.json().revision),
+            doc: dehydrate(invalid, {}),
+          },
+        })
+      ).statusCode,
+    ).toBe(422);
+    expect(
+      (
+        await db.query(
+          "SELECT price::text FROM ecovit_price_references WHERE key=$1",
+          [priceItemKey(item)],
+        )
+      ).rows[0].price,
+    ).toBe("50000");
+    const stored = (
+      await app.inject({
+        url: `/api/projects/${pa.doc.project.id}`,
+        headers: headers(a),
+      })
+    ).json();
+    expect(stored.doc.project.openingPrices[0].price).toBe(99999);
+    expect(stored.doc.project.priceSources[0].source).toBe("own");
+  });
   it("T-036 persiste material e preços retidos, duplica e recusa dados inválidos/legados sem alterar revisão", async () => {
     const user = await login("esquadrias@example.com");
     const doc = createProject("Esquadrias", {
@@ -336,7 +563,7 @@ describe("M12 — API com PostgreSQL 18.0 real", () => {
     });
     expect(copy.statusCode, copy.body).toBe(200);
     expect(copy.json().doc.project.settlement).toEqual(doc.project.settlement);
-    expect(copy.json().doc.schemaVersion).toBe(33);
+    expect(copy.json().doc.schemaVersion).toBe(35);
     expect(copy.json().doc.project).not.toHaveProperty("settlementTotal");
   });
 

@@ -2,6 +2,8 @@ import { test as base, expect, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { database } from "../../server/db";
+import { validateTestDatabaseUrl } from "../../scripts/load-test-env";
 
 export { expect };
 export type { Page };
@@ -88,6 +90,17 @@ export async function login(page: Page, email = `${randomUUID()}@example.com`) {
 }
 export const publicTest = base.extend({
   context: async ({ context }, provide) => {
+    // Reference prices are shared by accounts, so each scenario needs a clean catalogue.
+    const url = new URL(
+      validateTestDatabaseUrl(process.env.M12_TEST_DATABASE_URL),
+    );
+    url.searchParams.set("options", "-c search_path=m12_browser");
+    const prices = database(url.toString());
+    try {
+      await prices.query("TRUNCATE ecovit_price_references");
+    } finally {
+      await prices.end();
+    }
     const ip = [...crypto.getRandomValues(new Uint8Array(3))]
       .map((n) => n || 1)
       .join(".");

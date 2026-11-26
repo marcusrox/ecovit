@@ -161,3 +161,19 @@ Revalidação local direcionada: 11 testes aprovados no arquivo em 2,44 s, códi
 ## Confirmação de aceite — 2026-11-16
 
 Aceite manual confirmado explicitamente pelo solicitante ao pedir o registro dos dois aceites pendentes, T-018 e T-020. Esta confirmação encerra a pendência manual desta task, preservando as evidências técnicas e os registros históricos anteriores, sem representar nova execução de testes.
+
+### Refinamento autorizado — 2026-11-26
+
+Solicitante pediu renomear a ferramenta para Ambiente, com dica e orientação de nomeação/medição, e permitir desconsiderar um ambiente das áreas útil e construída, mantendo nome e 0,00 m². Confirmou que somente o espaço interno deve ser descontado da construída, preservando paredes. Implementação no aplicativo sem nova task, commit ou push. Nomenclatura e aceites anteriores acima são registros históricos; regras atuais em RF-21, CT-18, Medidas e imagens, Interface e iconografia e Persistência.
+
+Checkbox nas propriedades confirma pelo fluxo room, preservando salvamento/histórico e bloqueios; totais derivam da intenção, sem composição. Formato 35 conserva a marca em arquivos e cópias e normaliza 9–34 sem exclusões inventadas. Compartilhado o layout do desenho/exportação para nome e zero; revisão continua explícita, com construída não determinada quando a superfície a descontar perdeu a referência.
+
+Validação proporcional à nova intenção persistida, cálculo e interação: 37 testes em project-areas/rooms/price-references aprovados em 2,77 s, incluindo jardins de 6 m² no perímetro de 80 m² (resultado 74), paredes internas, regiões aninhadas, revisão, duplicação/transporte e leitura estrita/legados. Typecheck, lint de todos os fontes/testes alterados e diff aprovados. Dois cenários distintos Chrome aprovados: controles compactos/cancelamento/bloqueios em 8,9 s; novo fluxo de nome/zero, relatório, undo/redo, arquivo, reabertura remota e somente leitura em 13,2 s (33,8 s incluindo preparo). Primeira rodada do novo fluxo falhou por consultar a seleção após desfazer, que é limpa pelo comportamento existente; teste corrigido para selecionar novamente, sem alterar o aplicativo para contornar a asserção. Inspeção das capturas reais de propriedades e relatório. Sem repetir matriz, PDF ou migrações não afetados. Logs/capturas ignorados em .tools/room-areas/. Servidores próprios 5174/3002 e dados isolados; 5173 preservada. Aceite manual do refinamento pendente.
+
+### Aceite do refinamento — 2026-11-26
+
+Solicitante confirmou o aceite manual do refinamento com ‘Ficou bom’ e autorizou commit, push e acompanhamento do workflow até confirmar a publicação em produção. Evidências e aceites anteriores preservados.
+
+### Ajuste da expectativa de versão no CI — 2026-11-26
+
+Primeiro workflow do refinamento (45815132195, commit d10aa7c) aprovou lint e 754 testes, mas EX-63 em floors.test.ts ainda enumerava 35 entre os formatos futuros recusados. Atualizada somente essa entrada para 36, mantendo a recusa dos formatos antigos não suportados e demais asserções. Recorte local dos 33 testes de pavimentos aprovado em 1,61 s, log .tools/room-areas/floors-final.log. O deploy da tentativa falha foi pulado; aguardar workflow da correção para confirmar publicação.

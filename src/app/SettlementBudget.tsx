@@ -17,6 +17,8 @@ import {
 } from "../domain/settlement-budget";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
+import { withProjectPrice } from "../domain/price-references";
+import { ReferencePriceButton } from "./PriceReferences";
 
 export function useSettlementBudget(
   doc: Project,
@@ -81,7 +83,15 @@ export function useSettlementBudget(
     const product = settlementCatalog.find((s) => s.key === key)!;
     const fallback =
       field === "percent" ? 0 : field === "yield" ? product.yield : undefined;
-    if (value !== (latest.project.settlement?.[key]?.[field] ?? fallback)) {
+    const priceCandidate =
+      field === "price"
+        ? withProjectPrice(latest, { group: "settlement", key }, value)
+        : undefined;
+    if (
+      priceCandidate
+        ? priceCandidate !== latest
+        : value !== (latest.project.settlement?.[key]?.[field] ?? fallback)
+    ) {
       const next = {
         ...latest.project.settlement,
         [key]: { ...latest.project.settlement?.[key] },
@@ -91,7 +101,10 @@ export function useSettlementBudget(
       setPriceSaving(true);
       try {
         await state.commit(
-          { ...latest, project: { ...latest.project, settlement: next } },
+          priceCandidate ?? {
+            ...latest,
+            project: { ...latest.project, settlement: next },
+          },
           "budget",
         );
       } finally {
@@ -216,43 +229,61 @@ export function SettlementBudgetSummary({ model: m }: { model: Model }) {
                       {field === "yield" && (
                         <span className={styles.note}>{s.unit}/m²</span>
                       )}
-                      <input
-                        className={styles.budgetPrice}
-                        aria-label={label}
-                        inputMode="decimal"
-                        aria-invalid={!!error}
-                        aria-describedby={
-                          error ? `settlement-${id}` : undefined
+                      <span
+                        className={
+                          field === "price" ? styles.priceField : undefined
                         }
-                        disabled={m.blocked}
-                        placeholder={
-                          field === "price" ? "Não informado" : undefined
-                        }
-                        value={
-                          m.drafts[id] ??
-                          (field === "price"
-                            ? priceText(value)
-                            : field === "percent"
-                              ? lossPercentText(value ?? 0)
-                              : settlementNumber(
-                                  BigInt(value ?? s.yield),
-                                  1000n,
-                                ).replace(/\./g, ""))
-                        }
-                        onChange={(e) =>
-                          m.setDrafts((previous) => ({
-                            ...previous,
-                            [id]: e.target.value,
-                          }))
-                        }
-                        onBlur={() => void m.confirm(s.key, field)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            e.currentTarget.blur();
+                      >
+                        <input
+                          className={styles.budgetPrice}
+                          aria-label={label}
+                          inputMode="decimal"
+                          aria-invalid={!!error}
+                          aria-describedby={
+                            error ? `settlement-${id}` : undefined
                           }
-                        }}
-                      />
+                          disabled={m.blocked}
+                          placeholder={
+                            field === "price" ? "Não informado" : undefined
+                          }
+                          value={
+                            m.drafts[id] ??
+                            (field === "price"
+                              ? priceText(value)
+                              : field === "percent"
+                                ? lossPercentText(value ?? 0)
+                                : settlementNumber(
+                                    BigInt(value ?? s.yield),
+                                    1000n,
+                                  ).replace(/\./g, ""))
+                          }
+                          onChange={(e) =>
+                            m.setDrafts((previous) => ({
+                              ...previous,
+                              [id]: e.target.value,
+                            }))
+                          }
+                          onBlur={() => void m.confirm(s.key, field)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              e.currentTarget.blur();
+                            }
+                          }}
+                        />
+                        {field === "price" && (
+                          <ReferencePriceButton
+                            item={{ group: "settlement", key: s.key }}
+                            clearDraft={() =>
+                              m.setDrafts((previous) => {
+                                const next = { ...previous };
+                                delete next[id];
+                                return next;
+                              })
+                            }
+                          />
+                        )}
+                      </span>
                       {error && (
                         <span
                           role="alert"

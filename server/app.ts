@@ -7,6 +7,7 @@ import { authRoutes } from "./auth";
 import { projectsRoutes } from "./projects";
 import { ApiError } from "./security";
 import { adminRoutes } from "./admin";
+import { priceRoutes } from "./prices";
 import { recordEvent } from "./observation";
 
 export async function createApi(db: Pool, config: Config) {
@@ -140,5 +141,6 @@ export async function createApi(db: Pool, config: Config) {
   authRoutes(app, db, config);
   projectsRoutes(app, db, config);
   adminRoutes(app, db, config);
+  priceRoutes(app, db, config);
   return app;
 }

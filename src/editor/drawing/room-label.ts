@@ -35,8 +35,13 @@ export function roomLabelLayout(
   scale: number,
 ) {
   const region = l.review ? undefined : geometry.at(l.reference);
-  const lines =
-    l.review || !region
+  const lines = l.excludedFromAreas
+    ? [
+        ...textLines(l.name, canvas),
+        roomAreaText(0),
+        ...(l.review || !region ? ["Revisar ambiente"] : []),
+      ]
+    : l.review || !region
       ? ["Revisar ambiente"]
       : [...textLines(l.name, canvas), roomAreaText(region.area)];
   canvas.font = labelFont(13, scale);

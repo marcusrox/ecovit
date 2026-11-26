@@ -12,6 +12,7 @@ import {
 import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
 import css from "./Admin.module.css";
+import { AdminPrices } from "./AdminPrices";
 
 const date = (value?: string | null) =>
   value
@@ -46,6 +47,7 @@ const tabIcons = {
   users: "users",
   operation: "operation",
   audit: "audit",
+  prices: "prices",
 } as const;
 const metricIcons: Record<
   string,
@@ -139,6 +141,7 @@ export function Admin({
     const version = ++generation.current;
     setData(null);
     setError("");
+    if (tab === "prices") return;
     const query = new URLSearchParams({
       days: String(days),
       page: String(page),
@@ -287,6 +290,7 @@ export function Admin({
           ["users", "Usuários"],
           ["operation", "Operação"],
           ["audit", "Auditoria"],
+          ["prices", "Preços"],
         ].map(([key, label]) => (
           <button
             key={key}
@@ -305,176 +309,184 @@ export function Admin({
         ))}
       </nav>
       <div className={css.body}>
-        <div className={css.filters}>
-          {(tab === "overview" || tab === "operation") && (
-            <label>
-              Período
-              <select
-                disabled={working}
-                value={days}
-                onChange={(event) => {
-                  setDays(Number(event.target.value));
-                  setPage(1);
-                }}
-              >
-                <option value={7}>Últimos 7 dias</option>
-                <option value={30}>Últimos 30 dias</option>
-              </select>
-            </label>
-          )}
-          {tab === "users" && !target && (
-            <>
+        {tab === "prices" && (
+          <AdminPrices account={account.id} setWorking={setWorking} />
+        )}
+        {tab !== "prices" && (
+          <div className={css.filters}>
+            {(tab === "overview" || tab === "operation") && (
               <label>
-                Buscar e-mail
-                <input
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    setPage(1);
-                  }}
-                  maxLength={254}
-                />
-              </label>
-              <label>
-                Situação
+                Período
                 <select
-                  value={state}
+                  disabled={working}
+                  value={days}
                   onChange={(event) => {
-                    setState(event.target.value);
+                    setDays(Number(event.target.value));
                     setPage(1);
                   }}
                 >
-                  <option value="">Todas</option>
-                  {Object.entries(states)
-                    .slice(0, 3)
-                    .map(([key, label]) => (
+                  <option value={7}>Últimos 7 dias</option>
+                  <option value={30}>Últimos 30 dias</option>
+                </select>
+              </label>
+            )}
+            {tab === "users" && !target && (
+              <>
+                <label>
+                  Buscar e-mail
+                  <input
+                    value={search}
+                    onChange={(event) => {
+                      setSearch(event.target.value);
+                      setPage(1);
+                    }}
+                    maxLength={254}
+                  />
+                </label>
+                <label>
+                  Situação
+                  <select
+                    value={state}
+                    onChange={(event) => {
+                      setState(event.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="">Todas</option>
+                    {Object.entries(states)
+                      .slice(0, 3)
+                      .map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              </>
+            )}
+            {tab === "operation" && (
+              <>
+                <label>
+                  Categoria
+                  <select
+                    value={category}
+                    onChange={(event) => {
+                      setCategory(event.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="">Todas</option>
+                    {Object.entries(categories).map(([key, label]) => (
                       <option key={key} value={key}>
                         {label}
                       </option>
                     ))}
-                </select>
-              </label>
-            </>
-          )}
-          {tab === "operation" && (
-            <>
-              <label>
-                Categoria
-                <select
-                  value={category}
-                  onChange={(event) => {
-                    setCategory(event.target.value);
-                    setPage(1);
-                  }}
-                >
-                  <option value="">Todas</option>
-                  {Object.entries(categories).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Código técnico
-                <input
-                  maxLength={64}
-                  value={code}
-                  onChange={(event) => {
-                    setCode(event.target.value);
-                    setPage(1);
-                  }}
-                />
-              </label>
-            </>
-          )}
-          {tab === "audit" && (
-            <>
-              <label>
-                Administrador (UUID)
-                <input
-                  value={actor}
-                  onChange={(event) => {
-                    setActor(event.target.value);
-                    setPage(1);
-                  }}
-                />
-              </label>
-              <label>
-                Conta-alvo (UUID)
-                <input
-                  value={auditTarget}
-                  onChange={(event) => {
-                    setAuditTarget(event.target.value);
-                    setPage(1);
-                  }}
-                />
-              </label>
-              <label>
-                Ação
-                <select
-                  value={action}
-                  onChange={(event) => {
-                    setAction(event.target.value);
-                    setPage(1);
-                  }}
-                >
-                  <option value="">Todas</option>
-                  {Object.entries(adminActionNames).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                De
-                <input
-                  type="date"
-                  value={from}
-                  onChange={(event) => {
-                    setFrom(event.target.value);
-                    setPage(1);
-                  }}
-                />
-              </label>
-              <label>
-                Até
-                <input
-                  type="date"
-                  value={to}
-                  onChange={(event) => {
-                    setTo(event.target.value);
-                    setPage(1);
-                  }}
-                />
-              </label>
-            </>
-          )}
-          <button
-            type="button"
-            className={css.filterButton}
-            disabled={working}
-            onClick={() => setRevision((value) => value + 1)}
-          >
-            <Icon name="refresh" size="compact" />
-            <span>Atualizar</span>
-          </button>
-        </div>
+                  </select>
+                </label>
+                <label>
+                  Código técnico
+                  <input
+                    maxLength={64}
+                    value={code}
+                    onChange={(event) => {
+                      setCode(event.target.value);
+                      setPage(1);
+                    }}
+                  />
+                </label>
+              </>
+            )}
+            {tab === "audit" && (
+              <>
+                <label>
+                  Administrador (UUID)
+                  <input
+                    value={actor}
+                    onChange={(event) => {
+                      setActor(event.target.value);
+                      setPage(1);
+                    }}
+                  />
+                </label>
+                <label>
+                  Conta-alvo (UUID)
+                  <input
+                    value={auditTarget}
+                    onChange={(event) => {
+                      setAuditTarget(event.target.value);
+                      setPage(1);
+                    }}
+                  />
+                </label>
+                <label>
+                  Ação
+                  <select
+                    value={action}
+                    onChange={(event) => {
+                      setAction(event.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="">Todas</option>
+                    {Object.entries(adminActionNames).map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  De
+                  <input
+                    type="date"
+                    value={from}
+                    onChange={(event) => {
+                      setFrom(event.target.value);
+                      setPage(1);
+                    }}
+                  />
+                </label>
+                <label>
+                  Até
+                  <input
+                    type="date"
+                    value={to}
+                    onChange={(event) => {
+                      setTo(event.target.value);
+                      setPage(1);
+                    }}
+                  />
+                </label>
+              </>
+            )}
+            <button
+              type="button"
+              className={css.filterButton}
+              disabled={working}
+              onClick={() => setRevision((value) => value + 1)}
+            >
+              <Icon name="refresh" size="compact" />
+              <span>Atualizar</span>
+            </button>
+          </div>
+        )}
         {error && (
           <p role="alert" className={styles.errorText}>
             {error}
           </p>
         )}
         {message && <p role="status">{message}</p>}
-        {!data && !error && <p role="status">Consultando administração…</p>}
+        {!data && !error && tab !== "prices" && (
+          <p role="status">Consultando administração…</p>
+        )}
         {overview && (
           <>
             <div className={css.overviewStatusBanner}>
               <div className={css.overviewStatusItem}>
                 <Icon name="calendar" size="compact" />
                 <span>
-                  Atualizado em {date(overview.updated_at)} · Horários de São Paulo.
+                  Atualizado em {date(overview.updated_at)} · Horários de São
+                  Paulo.
                 </span>
               </div>
               <div className={css.overviewStatusItem}>
@@ -526,9 +538,10 @@ export function Admin({
             <div className={css.overviewNote}>
               <Icon name="info" size="compact" />
               <p>
-                Ativo: abriu ou alterou um projeto com sucesso. Totais atuais não
-                variam com o período. Contas eliminadas não entram nas métricas;
-                armazenamento não representa o disco total do servidor.
+                Ativo: abriu ou alterou um projeto com sucesso. Totais atuais
+                não variam com o período. Contas eliminadas não entram nas
+                métricas; armazenamento não representa o disco total do
+                servidor.
               </p>
             </div>
           </>
@@ -761,16 +774,16 @@ export function Admin({
               <div className={css.operationInfoItem}>
                 <Icon name="refresh" size="compact" />
                 <p>
-                  Última limpeza concluída: {date(data.lastCleanup)}. Sem registro
-                  não comprova execução.
+                  Última limpeza concluída: {date(data.lastCleanup)}. Sem
+                  registro não comprova execução.
                 </p>
               </div>
               <div className={css.operationInfoItem}>
                 <Icon name="info" size="compact" />
                 <p>
-                  Coleta desde {date(data.coverageSince)}. Períodos anteriores não
-                  têm cobertura. Aceitação do provedor não comprova entrega do
-                  e-mail.
+                  Coleta desde {date(data.coverageSince)}. Períodos anteriores
+                  não têm cobertura. Aceitação do provedor não comprova entrega
+                  do e-mail.
                 </p>
               </div>
             </div>
