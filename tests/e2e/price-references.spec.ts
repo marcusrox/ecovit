@@ -12,11 +12,14 @@ import {
   type PriceItem,
 } from "../../src/domain/price-references";
 import { readFile } from "node:fs/promises";
-const url = new URL(validateTestDatabaseUrl(process.env.M12_TEST_DATABASE_URL));
-url.searchParams.set("options", "-c search_path=m12_browser");
-const db = database(url.toString());
+let db: ReturnType<typeof database>;
+test.beforeAll(() => {
+  const url = new URL(validateTestDatabaseUrl(process.env.M12_TEST_DATABASE_URL));
+  url.searchParams.set("options", "-c search_path=m12_browser");
+  db = database(url.toString());
+});
 test.afterAll(async () => {
-  await db.end();
+  await db?.end();
 });
 async function seed(item: PriceItem, value: number) {
   await db.query(
