@@ -76,7 +76,7 @@ test(
     await draw(page, [30000, 0], [30000, 40000], 2);
     await draw(page, [30000, 40000], [0, 40000], 3);
     await draw(page, [0, 40000], [0, 0], 4);
-    await page.getByRole("button", { name: "Etiqueta", exact: true }).click();
+    await page.getByRole("button", { name: "Ambiente", exact: true }).click();
     await click(page, 15000, 15000);
     await expect
       .poll(async () => (await state(page)).model.roomLabels.length)
@@ -137,12 +137,12 @@ test(
   { tag: "@interface" },
   async ({ page }) => {
     await open(page);
-    await page.getByRole("button", { name: "Etiqueta", exact: true }).click();
+    await page.getByRole("button", { name: "Ambiente", exact: true }).click();
     await click(page, 15000, 15000);
     await expect(page.getByRole("status")).toContainText("Salvo");
     const original = (await state(page)).model.roomLabels[0];
     const panel = page.getByRole("complementary", {
-      name: "Propriedades da etiqueta",
+      name: "Propriedades do ambiente",
     });
     await expect(
       panel.getByText("PROPRIEDADES DA ETIQUETA", { exact: true }),
@@ -151,7 +151,7 @@ test(
     await panel.getByRole("button", { name: "Recolher propriedades" }).click();
     await expect(panel).toHaveCount(0);
     await page
-      .getByRole("button", { name: "Propriedades da etiqueta", exact: true })
+      .getByRole("button", { name: "Propriedades do ambiente", exact: true })
       .click();
     await expect(panel).toBeVisible();
     await panel.getByRole("button", { name: "Recolher propriedades" }).click();
@@ -194,7 +194,7 @@ test(
   { tag: "@fluxo" },
   async ({ page }) => {
     await open(page);
-    await page.getByRole("button", { name: "Etiqueta", exact: true }).click();
+    await page.getByRole("button", { name: "Ambiente", exact: true }).click();
     await click(page, 10000, 10000);
     await expect(page.getByLabel("Nome do ambiente")).toHaveValue("Ambiente 1");
     const original = await state(page);
@@ -229,9 +229,9 @@ test(
     ).toBeVisible();
     await page.screenshot({ path: ".tools/t018-revisao.png" });
     await page
-      .getByRole("button", { name: "Excluir etiqueta", exact: true })
+      .getByRole("button", { name: "Excluir ambiente", exact: true })
       .click();
-    await page.getByRole("button", { name: "Etiqueta", exact: true }).click();
+    await page.getByRole("button", { name: "Ambiente", exact: true }).click();
     await click(page, 10000, 10000);
     await expect(page.getByLabel("Nome do ambiente")).toHaveValue("Ambiente 2");
   },
@@ -242,7 +242,7 @@ test(
   { tag: "@fluxo" },
   async ({ page }) => {
     await open(page);
-    await page.getByRole("button", { name: "Etiqueta", exact: true }).click();
+    await page.getByRole("button", { name: "Ambiente", exact: true }).click();
     await click(page, 10000, 10000);
     const name = page.getByLabel("Nome do ambiente");
     await name.fill("Sala de estar");
@@ -333,7 +333,7 @@ test(
       buffer: Buffer.from(JSON.stringify(d)),
     });
     await expect(page.getByRole("status")).toContainText("Salvo");
-    await page.getByRole("button", { name: "Etiqueta", exact: true }).click();
+    await page.getByRole("button", { name: "Ambiente", exact: true }).click();
     await click(page, 15000, 15000);
     await expect(page.getByLabel("Nome do ambiente")).toHaveValue("Ambiente 1");
     await page.getByLabel("Nome do ambiente").fill("Sala de estar");
@@ -391,7 +391,7 @@ test(
   { tag: "@fluxo" },
   async ({ page }) => {
     await open(page);
-    await page.getByRole("button", { name: "Etiqueta", exact: true }).click();
+    await page.getByRole("button", { name: "Ambiente", exact: true }).click();
     await click(page, 10000, 10000);
     await expect(page.getByLabel("Nome do ambiente")).toHaveValue("Ambiente 1");
     const original = await state(page),
@@ -433,9 +433,12 @@ test(
   async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await open(page);
-    const label = page.getByRole("button", { name: "Etiqueta", exact: true }),
+    const label = page.getByRole("button", { name: "Ambiente", exact: true }),
       boundary = page.getByRole("button", { name: "Fechamento", exact: true });
-    await expect(label).toHaveAttribute("title", "Etiqueta com área");
+    await expect(label).toHaveAttribute(
+      "title",
+      "Nomear ambiente e calcular área",
+    );
     await expect(boundary).toHaveAttribute("title", "Fechamento de ambiente");
     await boundary.click();
     await click(page, 5000, 5000);
@@ -470,9 +473,12 @@ test(
     await expect(label).toHaveCount(0);
     await expect(boundary).toHaveCount(0);
     await expect(
-      page.getByText("Clique no interior do ambiente · Esc encerra Etiqueta", {
-        exact: true,
-      }),
+      page.getByText(
+        "Clique dentro de uma região fechada para identificar o ambiente e calcular sua área. · Esc encerra Ambiente",
+        {
+          exact: true,
+        },
+      ),
     ).toHaveCount(0);
     await page.getByRole("button", { name: "Planta", exact: true }).click();
     await page.getByLabel("Selecionar elemento").selectOption(selectedId);
@@ -480,5 +486,81 @@ test(
     await expect(label).toBeDisabled();
     await expect(boundary).toBeDisabled();
     await expect(page.getByLabel("Nome do ambiente")).toBeDisabled();
+  },
+);
+
+test(
+  "Ambiente desconsidera área útil e construída, preserva nome, histórico e arquivo",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    await open(page);
+    const tool = page.getByRole("button", { name: "Ambiente", exact: true });
+    await expect(tool).toHaveAttribute(
+      "title",
+      "Nomear ambiente e calcular área",
+    );
+    await tool.click();
+    await click(page, 10000, 10000);
+    await page.getByLabel("Nome do ambiente").fill("Jardim interno");
+    await page.getByLabel("Nome do ambiente").press("Enter");
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    const initial = await state(page);
+    const excluded = page.getByRole("checkbox", {
+      name: "Desconsiderar das áreas útil e construída",
+    });
+    await excluded.check();
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    expect((await state(page)).model.roomLabels[0].excludedFromAreas).toBe(
+      true,
+    );
+    expect((await state(page)).generated).toEqual(initial.generated);
+    const properties = page.getByRole("complementary", {
+      name: "Propriedades do ambiente",
+    });
+    await expect(properties).toContainText("0,00 m²");
+    await expect(properties).toContainText("Jardim interno");
+    await page.screenshot({ path: ".tools/room-areas/properties.png" });
+    await page.getByRole("button", { name: "Áreas", exact: true }).click();
+    const modal = page.getByRole("dialog", { name: "Áreas do projeto" });
+    await expect(
+      modal.getByRole("row").filter({ hasText: "Jardim interno" }),
+    ).toContainText("0,00 m²");
+    await expect(
+      modal.getByRole("region", { name: "Resumo do projeto" }),
+    ).not.toContainText("12,00 m²");
+    await expect(
+      modal
+        .getByRole("region", { name: "Resumo do projeto" })
+        .getByText("0,00 m²", { exact: true }),
+    ).toHaveCount(2);
+    await page.screenshot({ path: ".tools/room-areas/report.png" });
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Desfazer", exact: true }).click();
+    await page.getByLabel("Selecionar elemento").selectOption(initial.model.roomLabels[0].id);
+    await expect(excluded).not.toBeChecked();
+    await expect(properties).toContainText("12,00 m²");
+    await page.getByRole("button", { name: "Refazer", exact: true }).click();
+    await page.getByLabel("Selecionar elemento").selectOption(initial.model.roomLabels[0].id);
+    await expect(excluded).toBeChecked();
+    const download = page.waitForEvent("download");
+    await page
+      .getByRole("button", { name: "Baixar projeto", exact: true })
+      .click();
+    const file = parseFile(
+      await readFile((await (await download).path())!, "utf8"),
+    );
+    expect(file.model.roomLabels[0].excludedFromAreas).toBe(true);
+    expect(file.model.roomLabels[0].name).toBe("Jardim interno");
+    await page.reload();
+    await page
+      .getByRole("button", { name: /T-018 Ambientes/ })
+      .first()
+      .click();
+    await page
+      .getByLabel("Selecionar elemento")
+      .selectOption(file.model.roomLabels[0].id);
+    await expect(excluded).toBeChecked();
+    await blockEditing(page);
+    await expect(excluded).toBeDisabled();
   },
 );

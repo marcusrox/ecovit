@@ -469,10 +469,12 @@ function Properties({ doc }: { doc: Project }) {
           o corpo para mover ou uma ponta para ajustar.
         </p>
         <p>
-          Etiqueta: clique no interior de uma região fechada para nomear e medir
-          a área. Renomeie nas propriedades e arraste o texto livremente. A
-          referência fica no clique inicial; se perdida, exclua a etiqueta em
-          revisão e crie outra.
+          Ambiente: clique dentro de uma região fechada para identificar o
+          ambiente e calcular sua área. Renomeie nas propriedades e arraste o
+          texto livremente. Marque Desconsiderar das áreas útil e construída
+          para jardins e outros espaços que devem exibir 0,00 m². Se entrar em
+          revisão, clique no texto para reavaliar o fechamento na referência
+          original.
         </p>
         <p>
           Fechamento: dois cliques desenham uma linha, com atração suspensa por
@@ -1384,8 +1386,8 @@ function EditorApp() {
                     [
                       {
                         tool: "room",
-                        text: "Etiqueta",
-                        tip: "Etiqueta com área",
+                        text: "Ambiente",
+                        tip: "Nomear ambiente e calcular área",
                       },
                       {
                         tool: "room-boundary",
@@ -1544,7 +1546,7 @@ function EditorApp() {
                         </optgroup>
                       )}
                       {!!editingDoc!.model.roomLabels.length && (
-                        <optgroup label="Etiquetas">
+                        <optgroup label="Ambientes">
                           {editingDoc!.model.roomLabels.map((l) => (
                             <option key={l.id} value={l.id}>
                               {l.name}

@@ -164,3 +164,7 @@ Desfazer/refazer recupera o conjunto inteiro e pode restaurar uma laje com somen
 project.brickLossPercent guarda o percentual confirmado em centésimos de ponto percentual; ausência equivale a zero. Edição no Orçamento é rascunho até Enter/perda de foco. Confirmação válida e diferente do valor atual usa uma operação budget com histórico e salvamento, excluída dos insumos construtivos; não invalidar nem recalcular composição. Zero equivalente à ausência não cria operação só por consultar/confirmar o padrão.
 
 Desfazer/refazer restaura o percentual, inclusive ausência. Abrir/reabrir e cópias carregam o valor do projeto. Falha conserva o candidato em memória e aplica bloqueios/recuperação existentes; somente leitura e busy impedem edição. Não persistir texto inválido, filtros ou totais calculados.
+
+### Inclusão dos ambientes nas áreas — 2026-11-26
+
+Alterar `model.roomLabels[].excludedFromAreas` é uma operação room: confirma uma intenção, histórico e salvamento existentes, sem chamar composição. Desfazer/refazer restaura a marca e os totais derivados. Renomear, mover o texto, reconciliar/revalidar a referência e duplicar o pavimento preservam a escolha. O formato 35 e as cópias remotas/arquivos a transportam; ausência preserva inclusão anterior. Somente leitura/processamento bloqueiam a edição.

@@ -176,7 +176,8 @@ export function Areas({
                       <Useful value={report.useful} />
                     </div>
                     <p className={styles.note}>
-                      Soma das áreas dos ambientes válidos.
+                      Soma das áreas dos ambientes válidos, exceto os marcados
+                      para desconsiderar.
                     </p>
                   </div>
                   <div>
@@ -186,7 +187,8 @@ export function Areas({
                     </div>
                     <p className={styles.note}>
                       Inclui paredes e todo o interior dos perímetros externos,
-                      inclusive pátios e vazios internos.
+                      descontando o espaço interno dos ambientes marcados para
+                      desconsiderar. As paredes desses ambientes permanecem.
                     </p>
                   </div>
                 </div>
@@ -299,7 +301,17 @@ export function Areas({
                               </td>
                               <td>{room.label.name}</td>
                               <td>
-                                {room.region ? (
+                                {room.label.excludedFromAreas ? (
+                                  <>
+                                    {roomAreaText(0)}
+                                    <small>Desconsiderado das áreas</small>
+                                    {!room.region && (
+                                      <small className={styles.areaPending}>
+                                        Em revisão
+                                      </small>
+                                    )}
+                                  </>
+                                ) : room.region ? (
                                   roomAreaText(room.region.area)
                                 ) : (
                                   <>

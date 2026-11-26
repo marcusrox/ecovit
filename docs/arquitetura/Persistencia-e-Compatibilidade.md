@@ -2,11 +2,15 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
-## Preços de referência — formato 34 vigente
+## Ambientes desconsiderados — formato 35 vigente
+
+Formato 35 acrescenta `model.roomLabels[].excludedFromAreas` booleano opcional. Ausência/false mantém inclusão; true preserva o ambiente e sua identificação com contribuição útil zero e desconto interno na construída, conforme RF-21/CT-18. Leitor compartilhado normaliza envelopes 9–34 para 35 sem inventar a marca; rejeita esse campo em versões anteriores mesmo false, tipo inválido e propriedades extras. Leitores anteriores recusam 35. Arquivo, histórico, cópias e representação remota 1 conservam a intenção. Sem migração SQL; composição nominal-v13 e insumos construtivos permanecem.
+
+## Preços de referência — formato 34
 
 Formato 34 acrescenta `project.priceSources` opcional, array estrito de `{item,source}`. `source` é `own`, `reference` ou `cleared`. `item` é união estrita: `{group:bricks|steel|settlement,key}` com chave do catálogo correspondente, ou `{group:openings,option:{kind,type,width,height,material}}` validada pela identidade de preço da T-036. Rejeitar estados duplicados pela identidade normalizada, campos extras, null, chaves desconhecidas e inconsistência entre estado e preço efetivo: `cleared` exige ausência; `own`/`reference` exigem valor válido. Preço existente sem metadado continua próprio, inclusive zero; ausência sem metadado é elegível ao preenchimento. Não materializar estados ao apenas converter um legado.
 
-Leitor compartilhado normaliza envelopes 9–33 para 34 em memória, sem inventar referência ou limpar preço. Recusar `priceSources` em 9–33 mesmo vazio; leitores anteriores recusam 34. Arquivo/cópia/transporte preservam estados, inclusive de combinações de esquadrias sem ocorrência retidas para reinserção. Composição nominal-v13 e representação remota 1 permanecem. A assinatura de insumos construtivos não inclui os estados ou preços.
+Leitor compartilhado introduzido no formato 34 normaliza envelopes 9–33 para 34 em memória, sem inventar referência ou limpar preço. Recusar `priceSources` em 9–33 mesmo vazio; leitores anteriores recusam 34. Arquivo/cópia/transporte preservam estados, inclusive de combinações de esquadrias sem ocorrência retidas para reinserção. Composição nominal-v13 e representação remota 1 permanecem. A assinatura de insumos construtivos não inclui os estados ou preços.
 
 A migração SQL 003 cria `ecovit_price_references`: chave textual canônica única, identidade comercial validada em jsonb, preço bigint opcional em centavos seguros e data de atualização. O jsonb deste cadastro contém somente descritores de materiais validados, não documentos/desenhos; projetos e seus metadados continuam em json. Sem usuário/projeto de origem no cadastro comum. A migração concede DML à role de execução, preservando separação de privilégios e histórico de migrações.
 
@@ -65,7 +69,7 @@ Dimensionar shared_buffers, work_mem e max_connections para o orçamento do Post
 
 Para reduzir escritas e volume, persistir a intenção completa validada e os recursos necessários à sua reconstrução; resultado gerado é derivado e permanece em memória. Abertura remota obtém todos os bytes de recursos próprios necessários ao documento, valida/reconstrói a memória e recompõe no navegador; não marcar abertura concluída com imagens faltantes. Isso preserva download em memória após desconexão. Falha de cálculo não torna a intenção salva inexistente. Não salvar peças/diagnósticos derivados no PostgreSQL nem fazer a segunda gravação somente para armazenar cálculo. Isso muda a representação remota prevista, sem remover o contrato atual de snapshot dos arquivos .ecovit.
 
-Representação remota versão 1, independente de schemaVersion=34 e da versão SQL: contém campos editáveis equivalentes ao documento vigente, com generated=null e estado outdated, e substitui bytes base64 por referências privadas aos recursos confirmados. Validar schema estrito próprio desta representação; não enviar esse DTO diretamente ao leitor de .ecovit. Um adaptador explícito reconstrói o documento vigente com imagens para domínio/exportação. Não inserir URLs, proprietário ou revisões de servidor no modelo geométrico. Recusar formatos remotos desconhecidos antes de alterar a memória.
+Representação remota versão 1, independente de schemaVersion=35 e da versão SQL: contém campos editáveis equivalentes ao documento vigente, com generated=null e estado outdated, e substitui bytes base64 por referências privadas aos recursos confirmados. Validar schema estrito próprio desta representação; não enviar esse DTO diretamente ao leitor de .ecovit. Um adaptador explícito reconstrói o documento vigente com imagens para domínio/exportação. Não inserir URLs, proprietário ou revisões de servidor no modelo geométrico. Recusar formatos remotos desconhecidos antes de alterar a memória.
 
 Server-side: validar intenção, referências, modularidade, limites e conteúdo real de novos recursos em toda mutação. Não confiar apenas no Zod/frontend. Gravação comum não recebe resultado derivado. Importação de .ecovit com resultado presente passa também pela conferência integral vigente, inclusive recomputação para recusar adulteração; compartilhar a validação existente no servidor. Após validação, extrair intenção para o remoto. Não remover snapshot suspeito antes de validar.
 
@@ -169,7 +173,7 @@ Fontes: PostgreSQL 18 — [JSON](https://www.postgresql.org/docs/18/datatype-jso
 
 ## Formato e leitores vigentes
 
-Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=34; leitura aceita somente envelopes 9–34. O envelope não versiona as regras construtivas: a composição vigente é nominal-v13. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; arquivos incompatíveis não substituem o trabalho aberto; registros IndexedDB anteriores não são consultados nem apagados.
+Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=35; leitura aceita somente envelopes 9–35. O envelope não versiona as regras construtivas: a composição vigente é nominal-v13. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; arquivos incompatíveis não substituem o trabalho aberto; registros IndexedDB anteriores não são consultados nem apagados.
 
 | Envelope lido | Normalização em memória para 30 |
 |---|---|

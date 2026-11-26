@@ -261,3 +261,7 @@ Filtros e paginação têm rótulos visíveis. Estados de carregamento, consulta
 ### Tipografia dos textos associados ao desenho
 
 Rótulos de ambientes, paredes, portas/janelas/vãos, cotas, terreno e letras cardeais usam IBM Plex Sans já distribuída, como os objetos Texto. Tamanho e espaçamentos acompanham integralmente o zoom, mantendo a hierarquia por categoria definida em [Editor e interação](Editor-e-Interacao.md#tamanho-adaptável-das-fontes-dos-rótulos). Não limitar o tamanho visual em pixels. Controles, painéis ancorados à tela e sinais de operação conservam sua apresentação. A regra substitui a escala parcial anterior, conforme a T-034.
+
+### Ambiente e exclusão de áreas — 2026-11-26
+
+A ferramenta antes chamada Etiqueta passa a Ambiente, conservando Icon/room→Tag e os gestos existentes. Botão, dica, orientação de criação, ajuda, lista de elementos e propriedades identificam esse contexto. Nas propriedades, checkbox nativo para desconsiderar das áreas útil e construída, com explicação de que o nome e zero permanecem e somente o espaço interno é descontado. Respeitar busy/readonly e confirmação pelo fluxo room. A consulta Áreas identifica os ambientes desconsiderados, mostra zero e conserva o nome/localização; revisão continua explícita. Desmarcar restaura os valores derivados atuais. O desenho e sua exportação compartilham o mesmo layout.

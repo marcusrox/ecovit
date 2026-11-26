@@ -563,7 +563,7 @@ describe("M12 — API com PostgreSQL 18.0 real", () => {
     });
     expect(copy.statusCode, copy.body).toBe(200);
     expect(copy.json().doc.project.settlement).toEqual(doc.project.settlement);
-    expect(copy.json().doc.schemaVersion).toBe(34);
+    expect(copy.json().doc.schemaVersion).toBe(35);
     expect(copy.json().doc.project).not.toHaveProperty("settlementTotal");
   });
 

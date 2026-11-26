@@ -246,7 +246,7 @@ test(
       .click();
     const file = await download;
     const loaded = parseFile(await readFile((await file.path())!, "utf8"));
-    expect(loaded.schemaVersion).toBe(34);
+    expect(loaded.schemaVersion).toBe(35);
     expect(loaded.project.openingPrices?.[0].price).toBe(60000);
     expect(loaded.model.openings[0].material?.kind).toBe("wood-hollow");
     await page.evaluate(async () => {

@@ -141,7 +141,7 @@ it("arquivo, cópia e leitor preservam estado e preço; legado não recebe metad
   legacy.project.unitPrices = { whole: 0 };
   const old = { ...legacy, schemaVersion: 33 };
   const loaded = validateProject(old, false);
-  expect(loaded.schemaVersion).toBe(34);
+  expect(loaded.schemaVersion).toBe(35);
   expect(loaded.project.priceSources).toBeUndefined();
   expect(priceSource(loaded, brick)).toBe("own");
   expect(old.schemaVersion).toBe(33);

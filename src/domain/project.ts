@@ -64,6 +64,7 @@ export type RoomLabel = {
   position: Point;
   reference: Point;
   review: boolean;
+  excludedFromAreas?: boolean;
 };
 export type TerrainCompass = {
   visible: boolean;
@@ -175,7 +176,7 @@ export type Tool =
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 34;
+  schemaVersion: 35;
   project: {
     id: string;
     name: string;
@@ -283,7 +284,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 34,
+    schemaVersion: 35,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),
