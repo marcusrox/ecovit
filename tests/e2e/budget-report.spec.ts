@@ -240,3 +240,241 @@ test(
     });
   },
 );
+
+test(
+  "T-038 compartilha conteúdo e ordem da tela com valores estáticos e tabelas completas",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    const dialog = await fixture(page);
+    await expect(
+      dialog.getByRole("button", { name: "Baixar orçamento em PDF" }),
+    ).toBeEnabled();
+    await dialog.getByLabel("Pavimento da consulta").selectOption("all");
+    const data = await page.evaluate(async () => {
+      const storePath = "/src/state/store.ts",
+        reportPath = "/src/app/budget-report/model.ts";
+      const s = (await import(storePath)).useStore.getState();
+      const before = JSON.stringify(s.doc);
+      const report = (await import(reportPath)).prepareBudgetReport(
+        s.doc,
+        new Date(),
+        true,
+      );
+      const screen = document
+        .querySelector("[data-budget-content]")!
+        .cloneNode(true) as HTMLElement;
+      screen
+        .querySelectorAll(
+          "[data-print-omit], button, svg, [aria-hidden='true']",
+        )
+        .forEach((n) => n.remove());
+      screen
+        .querySelectorAll("input")
+        .forEach((n) =>
+          n.replaceWith(
+            document.createTextNode(
+              ` ${n.value || n.placeholder || "Não informado"} `,
+            ),
+          ),
+        );
+      const clean = (n: Node): string =>
+        (n.nodeType === 3
+          ? (n.textContent ?? "")
+          : [...n.childNodes]
+              .map((child) =>
+                child.nodeType === 3 ? child.textContent : ` ${clean(child)} `,
+              )
+              .join("")
+        )
+          .replace(/\s+/g, " ")
+          .trim();
+      return {
+        report,
+        before,
+        after: JSON.stringify(s.doc),
+        headings: [...screen.querySelectorAll("h1,h2,h3,h4")].map(clean),
+        tables: [...screen.querySelectorAll("table")].map((t) =>
+          [...t.rows]
+            .filter((r) => r.parentElement?.tagName !== "THEAD")
+            .map((r) =>
+              [...r.cells].flatMap((c) => [
+                clean(c),
+                ...Array(c.colSpan - 1).fill(""),
+              ]),
+            ),
+        ),
+      };
+    });
+    expect(data.after).toBe(data.before);
+    expect(
+      data.report.blocks
+        .filter((b: { kind: string }) => b.kind === "heading")
+        .map((b: { text: string }) => b.text),
+    ).toEqual(data.headings);
+    expect(
+      data.report.blocks
+        .filter(
+          (b: { kind: string; summary?: boolean }) =>
+            b.kind === "table" && !b.summary,
+        )
+        .map((b: { rows: string[][] }) => b.rows),
+    ).toEqual(data.tables);
+    const reportText = JSON.stringify(data.report);
+    expect(reportText).toContain("Não salvo");
+    expect(reportText).toContain("Fiadas locais");
+    expect(reportText).toContain("CA-50 · Ø 12,5 mm");
+    expect(reportText).toContain("Cola especial");
+    expect(reportText).toContain("Pavimento 3");
+    expect(reportText).toContain("Custos rateados da compra global");
+    expect(reportText).not.toContain("pressione Enter");
+    expect(reportText).not.toContain("Saia do campo");
+    expect(reportText).not.toContain("Pavimento da consulta");
+  },
+);
+
+test(
+  "T-038 confirma o campo ao clicar e exporta durante salvamento remoto e após falha",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    const dialog = await fixture(page);
+    const button = dialog.getByRole("button", {
+      name: "Baixar orçamento em PDF",
+    });
+    await expect(button).toBeEnabled();
+    // Hold only the remote write; the normal local commit and history must finish.
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await page.route("**/api/projects/*", async (route) => {
+      if (route.request().method() !== "PUT") return route.continue();
+      await gate;
+      await route.fulfill({
+        status: 422,
+        contentType: "application/json",
+        body: JSON.stringify({
+          code: "test_rejection",
+          message: "Gravação recusada no ensaio.",
+        }),
+      });
+    });
+    try {
+      const field = dialog.getByRole("textbox", {
+        name: "Perdas de tijolos (%)",
+        exact: true,
+      });
+      await field.fill("7");
+      const first = page.waitForEvent("download");
+      await button.click();
+      const download = await first;
+      const state = await page.evaluate(async () => {
+        const storePath = "/src/state/store.ts",
+          reportPath = "/src/app/budget-report/model.ts";
+        const s = (await import(storePath)).useStore.getState();
+        return {
+          percent: s.doc.project.brickLossPercent,
+          saved: s.saved,
+          report: (await import(reportPath)).prepareBudgetReport(
+            s.doc,
+            new Date(),
+            s.saved !== "saved",
+          ),
+          history: s.history.past.length,
+        };
+      });
+      expect(state.percent).toBe(700);
+      expect(state.saved).toBe("saving");
+      expect(state.history).toBeGreaterThan(0);
+      expect(JSON.stringify(state.report)).toContain("Não salvo");
+      expect(state.report.blocks).toContainEqual({
+        kind: "text",
+        text: "Perdas de tijolos (%) 7",
+      });
+      expect(
+        (
+          await PDFDocument.load(await readFile((await download.path())!))
+        ).getPageCount(),
+      ).toBeGreaterThan(4);
+      release();
+      await expect
+        .poll(async () =>
+          page.evaluate(async () => {
+            const path = "/src/state/store.ts";
+            return (await import(path)).useStore.getState().saved;
+          }),
+        )
+        .not.toBe("saving");
+      const before = await snapshot(page);
+      const second = page.waitForEvent("download");
+      await button.click();
+      await second;
+      expect(await snapshot(page)).toBe(before);
+    } finally {
+      release();
+    }
+  },
+);
+
+test(
+  "T-038 aguarda confirmação local atrasada do aço e preserva outro rascunho inválido",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    const dialog = await fixture(page);
+    const button = dialog.getByRole("button", {
+      name: "Baixar orçamento em PDF",
+    });
+    await expect(button).toBeEnabled();
+    await page.evaluate(async () => {
+      const path = "/src/state/store.ts";
+      const { useStore } = await import(path);
+      const original = useStore.getState().commit;
+      const gate = window as unknown as {
+        releaseBudgetConfirmation: () => void;
+      };
+      const ready = new Promise<void>((resolve) => {
+        gate.releaseBudgetConfirmation = resolve;
+      });
+      useStore.setState({
+        commit: async (...args: Parameters<typeof original>) => {
+          await ready;
+          await original(...args);
+        },
+      });
+    });
+    const steel = dialog.getByRole("textbox", {
+      name: "Preço por kg de CA-60 · Ø 5 mm",
+      exact: true,
+    });
+    await steel.fill("12,34");
+    const downloads: string[] = [];
+    page.on("download", (file) => downloads.push(file.suggestedFilename()));
+    const first = page.waitForEvent("download");
+    await button.click();
+    await expect(
+      dialog.getByRole("button", { name: "Gerando relatório…" }),
+    ).toBeDisabled();
+    expect(downloads).toEqual([]);
+    await page.evaluate(() =>
+      (
+        window as unknown as { releaseBudgetConfirmation: () => void }
+      ).releaseBudgetConfirmation(),
+    );
+    await first;
+    await expect(steel).toHaveValue("12,34");
+    const value = await page.evaluate(async () => {
+      const path = "/src/state/store.ts";
+      return (await import(path)).useStore.getState().doc.project.steelPrices;
+    });
+    expect(Object.values(value)).toContain(1234);
+    await steel.fill("inválido");
+    await dialog
+      .getByRole("textbox", { name: "Perdas de tijolos (%)", exact: true })
+      .fill("8");
+    await button.click();
+    await expect(
+      dialog.getByRole("alert").filter({ hasText: "Conclua ou corrija" }),
+    ).toBeVisible();
+    await expect(steel).toHaveValue("inválido");
+    expect(downloads).toHaveLength(1);
+  },
+);

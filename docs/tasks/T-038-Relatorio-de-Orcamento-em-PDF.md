@@ -4,11 +4,11 @@
 
 **Resumo** — Permite baixar o Orçamento em PDF para o projeto completo, acompanhando sua estrutura e informações, com valores estáticos no lugar dos campos editáveis e indicação de valores incompletos.
 
-**Execução** — Parcial: implementação anterior verificada; refinamentos da especificação local pendentes de conferência.
+**Execução** — Verificada
 
-**Data de execução** — 2026-11-25
+**Data de execução** — 2026-11-26
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante em 2026-11-26
 
 ## Alteração e limites
 
@@ -30,7 +30,7 @@ Durante processamento que altera os dados, aguardar sua conclusão antes de expo
 
 Gerar um documento legível em A4 retrato, com paginação, cabeçalhos de tabelas repetidos quando necessário e sem cortar valores ou misturar unidades. O PDF é uma saída de leitura: sua geração não altera projeto, histórico, câmera, pavimento ativo ou salvamento. Somente leitura pode exportar os dados disponíveis. Falha na geração preserva o projeto e permite nova tentativa.
 
-Referências: [PRD — RF-11](../Ecovit-PRD.md#rf-11--orçamento-quantitativos-e-arquivo-nativo), [Quantitativos](../arquitetura/Quantitativos.md), [Estado e histórico](../arquitetura/Estado-Historico-e-Operacoes.md) e [Interface e iconografia](../arquitetura/Interface-e-Iconografia.md). Na implementação, atualizar os contratos responsáveis para incorporar a nova saída PDF, hoje fora do escopo vigente; selecionar ferramentas compatíveis sem serviço externo desnecessário.
+Referências: [PRD — RF-11](../Ecovit-PRD.md#rf-11--orçamento-quantitativos-e-arquivo-nativo), [Quantitativos](../arquitetura/Quantitativos.md), [Estado e histórico](../arquitetura/Estado-Historico-e-Operacoes.md) e [Interface e iconografia](../arquitetura/Interface-e-Iconografia.md). A saída PDF integra os contratos responsáveis; manter ferramentas compatíveis sem serviço externo desnecessário.
 
 ## Critérios de aceite
 
@@ -42,7 +42,7 @@ Referências: [PRD — RF-11](../Ecovit-PRD.md#rf-11--orçamento-quantitativos-e
 - [x] **A04** — Tabelas longas, nomes extensos e múltiplos pavimentos permanecem legíveis, com unidades, cabeçalhos e páginas coerentes, sem cortes de conteúdo.
 - [x] **A05** — Exportar, inclusive em somente leitura, não grava nem modifica o projeto; processamento e falhas não expõem resultados antigos como atuais. Contratos e evidências da verificação pertinente são atualizados.
 
-### Refinamentos da especificação local — verificação pendente
+### Refinamentos da especificação local — verificados em 2026-11-26
 
 - [ ] **A01** — A ação baixa um PDF identificado, legível e paginado que acompanha a estrutura compartilhada do Orçamento, incluindo resumo global, os quatro grupos e seus detalhamentos na mesma organização e ordem. Melhorias de conteúdo e organização refletem-se nos dois formatos; campos editáveis aparecem como valores estáticos com rótulos e unidades, sem controles ou instruções exclusivas de edição. Explicações orçamentárias e linhas sem uso seguem o Orçamento; esquadrias incluem somente opções presentes no projeto.
 - [ ] **A02** — Quantidades, parâmetros, preços, custos e total correspondem à mesma revisão confirmada em memória e abrangem o projeto completo, incluindo a tabela de quantidades por fiada, com pavimentos identificados por nome e cota; o filtro local e o estado expandido ou recolhido das seções não reduzem o conteúdo exportado. Alterações confirmadas ainda não salvas, inclusive após falha de salvamento, podem ser exportadas com essa condição identificada no documento.
@@ -78,3 +78,54 @@ Evidências locais ignoradas pelo Git em `.tools/t038/`: `unit-final.log`, `brow
 ### Integração dos registros — 2026-11-26
 
 Integrados o refinamento documental local e o registro remoto da implementação anterior, preservando seus critérios e evidências. A verificação registrada em 2026-11-25 refere-se aos critérios anteriores; não comprova automaticamente os critérios refinados, que permanecem pendentes de confronto com o aplicativo. Os registros de prontidão acima descrevem a etapa anterior à implementação remota. Aceite manual permanece pendente. Integração documental conferida por diff, sem nova execução de testes.
+
+### Conferência dos refinamentos — 2026-11-26
+
+Inspeção dirigida do código, sem alteração funcional ou nova execução de testes. Diferenças confirmadas:
+
+- **A01** — `src/app/budget-report/model.ts` monta blocos, tabelas e textos próprios; compartilha projeções de domínio, mas não a estrutura de apresentação dos componentes do Orçamento. A tela concentra os resumos dos quatro grupos antes do detalhamento; o PDF intercala resumo e detalhes de cada grupo. Falta atender à apresentação compartilhada, com a mesma organização e preservação das informações, evitando evolução independente.
+- **A02/A05** — `src/app/Quantities.tsx` desabilita o botão e recusa a exportação quando `saved === "saving"`. Falta permitir exportar a revisão confirmada durante o salvamento remoto, com sua condição identificada, conforme o refinamento.
+- **A05** — A exportação recusa qualquer rascunho e não possui espera explícita pela confirmação normal disparada no blur. Falta assegurar o encadeamento dessa confirmação com a captura da revisão e conferir o clique diretamente após editar um campo válido; rascunhos inválidos ou outros rascunhos devem continuar exigindo correção ou desfazimento.
+
+Já presentes no código e/ou na evidência anterior: projeto completo sem filtro local, tabela por fiada, pavimentos com nome/cota, captura única antes da geração assíncrona, aviso de revisão não salva, motivos de indisponibilidade por grupo e esquadrias independentes da composição. A04 conserva a evidência anterior de paginação e legibilidade para a apresentação atual; mudanças futuras na apresentação exigem conferir o recorte afetado. Os critérios refinados não foram marcados como integralmente aprovados. Aceite manual permanece pendente. Nenhuma correção funcional foi implementada nesta conferência.
+
+
+### Implementação dos três refinamentos pendentes — 2026-11-26
+
+Implementação autorizada expressamente pelo solicitante nesta data. Concluídos os três pontos identificados na conferência anterior; A01–A05 refinados verificados tecnicamente. Aceite manual permanece pendente.
+
+- **A01/A02** — PDF deriva sua apresentação dos mesmos componentes da tela, por renderização estática sem efeitos ou consulta de referências. Preserva ordem de resumos/detalhes, tabelas, explicações, linhas sem uso e tabela por fiada; campos viram valores estáticos com rótulos/unidades, sem botões, filtro ou instruções de edição. Apresentação considera todos os pavimentos da revisão capturada; células mescladas dos totais são preservadas na paginação. Não há fórmulas paralelas ou seleção independente de conteúdo.
+- **A02/A05** — Retirado bloqueio por salvamento remoto. Ensaio reteve o PUT real enquanto o clique confirmou perdas de tijolos e baixou o PDF da revisão local; aviso Não salvo e preservação após rejeição do salvamento conferidos. Documento e condição de salvamento continuam capturados juntos antes da geração assíncrona.
+- **A05** — Confirmações normais de perdas/preços dos quatro grupos são acompanhadas localmente. Exportação aguarda as já iniciadas ao sair do campo, sincroniza a limpeza dos rascunhos no React e só então captura a revisão, sem esperar o envio remoto ou confirmar outros rascunhos. Cenário com confirmação de aço artificialmente atrasada verificou espera, download posterior e preservação de outro rascunho inválido. Processamento, somente leitura, falha/nova tentativa, captura anterior a edição posterior e cancelamento conservam os comportamentos conferidos.
+- **A03/A04** — Projeções de domínio e tratamento de ausência/zero, configuração faltante, parcialidade, base desatualizada e limites monetários preservados nos componentes compartilhados e nos testes dirigidos. PDF A4 de nove páginas, quatro pavimentos (um vazio), nomes/descrições extensos e tabelas continuadas renderizado com Poppler; todas as páginas inspecionadas, com conferência ampliada da primeira e última. Sem cortes, sobreposição ou perda de unidades/cabeçalhos.
+
+Validação proporcional pela apresentação compartilhada e pelo encadeamento de confirmação/exportação: **14 testes unitários aprovados em dois arquivos (690 ms)**; **seis cenários distintos aprovados no Chrome em recortes**, reaproveitando aspectos preservados sem somar reexecuções como cobertura. Rodadas finais pertinentes: apresentação/download/continuidade durante salvamento em browser-refinement-final.log (três aprovados, um caso de atraso falhou e foi corrigido); confirmação atrasada em browser-delayed-refinement.log (um aprovado, 13,4 s com preparo); captura/cancelamento e salvamento em browser-capture-refinement-final.log (dois aprovados, 19,2 s com preparo). Os casos anteriores de falha/nova tentativa/entradas inválidas permaneceram aprovados em browser-refinement.log. Lint do recorte e build com typecheck aprovados; frontend compilado em 10,25 s. Build conserva os avisos anteriores de tamanho do chunk principal e anotação da dependência; o renderizador estático acompanha o gerador sob demanda, sem biblioteca nova.
+
+Falhas corrigidas durante a entrega: pré-otimização explícita do renderizador para impedir recarga do Vite no primeiro download; extração consistente de nós de texto adjacentes entre renderização estática e tela; atualização efetiva do React após confirmação local atrasada. Testes foram adaptados à apresentação compartilhada, conservando verificações de totais, número de linhas de fiadas, indisponibilidade, limites, integridade e paginação. Nenhuma asserção foi enfraquecida e nenhum timeout foi ampliado.
+
+Evidências em .tools/t038/: unit-refinement-final.log, lint-refinement-final.log, build-refinement-final.log, logs de navegador acima, budget.pdf, final-page-*.png e final-contact.png. Preparo isolado inicialmente impedido pelo sandbox; reexecução com acesso autorizado confirmou o ambiente mantido Node 24/PostgreSQL 18/ecovit_test, sem infraestrutura alternativa. Navegador usou somente 5174/3002 e dados isolados; 5173 preservada. Sem commit, push ou publicação nesta implementação.
+
+
+### Totais no início do Orçamento — 2026-11-26
+
+A pedido do solicitante, movido o quadro de subtotais dos quatro grupos e total geral para a abertura do resumo do projeto, antes dos materiais. Bloco recebe fundo suave, borda e espaçamento próprios; total geral mantém o destaque existente. Avisos de valores incompletos acompanham o quadro. A apresentação compartilhada reflete a ordem no PDF. Conferência proporcional: inspeção do deslocamento/estilos e um teste existente do componente aprovado (1,41 s), verificando posição anterior aos materiais e preservação dos valores; sem navegador ou build para este ajuste local. Evidência: .tools/t038/totals-first-unit.log. Aceite manual continua pendente.
+
+
+### Ação de PDF flutuante — 2026-11-26
+
+A pedido do solicitante, movido Baixar orçamento em PDF para o topo esquerdo flutuante, no lado oposto a Voltar ao desenho. Reaproveitados os estilos flutuantes existentes, com distribuição específica do Orçamento, preservando a tela Áreas. Eventos, estados e mensagens de exportação mantidos. Testes não executados por instrução expressa do solicitante. Aceite manual permanece pendente.
+
+
+### Formatação do quadro de totais no PDF — 2026-11-26
+
+Corrigida a conversão do quadro compartilhado de subtotais/total: deixa de produzir parágrafos e passa a gerar tabela de duas colunas, com valores à direita e total geral em negrito, valor maior e fundo destacado. Dados/rótulos continuam provenientes dos mesmos componentes do Orçamento. Paginação mantém o quadro junto quando cabe em uma página. Conferência por inspeção do código e prévia estática do quadro renderizada com Poppler em .tools/t038/summary-format.png; esta prévia isola o paginador/estilos e não constitui novo teste do download completo. Não foram executados testes, preservando a instrução expressa anterior. Comparação de tabelas no cenário existente ajustada para distinguir o quadro de totais das tabelas de materiais. Aceite manual permanece pendente.
+
+
+### Unidades ao lado dos rendimentos — 2026-11-26
+
+A pedido do solicitante, movidas as unidades kg/m² e ml/m² para depois do campo de rendimento, na mesma linha, usando alinhamento flexível centralizado para manter os inputs na altura dos campos vizinhos. Valores, eventos e nomes acessíveis preservados; PDF compartilhado acompanha a ordem valor/unidade. Conferência por inspeção do componente e dos estilos, sem execução de testes conforme orientação vigente do solicitante. Aceite manual permanece pendente.
+
+
+### Aceite manual — 2026-11-26
+
+Aceite manual integral confirmado expressamente pelo solicitante em 2026-11-26, com autorização de commit e push. Registros anteriores de aceite pendente descrevem as etapas anteriores. Preservadas as evidências técnicas e seus limites; nenhum teste adicional foi executado para registrar este aceite.

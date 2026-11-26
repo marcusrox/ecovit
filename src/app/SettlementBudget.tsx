@@ -1,3 +1,4 @@
+import { useBudgetConfirmation } from "./BudgetConfirmation";
 import { useMemo, useState } from "react";
 import { display, type Project } from "../domain/project";
 import { money, priceText } from "../domain/budget";
@@ -153,6 +154,7 @@ function Areas({
   );
 }
 export function SettlementBudgetSummary({ model: m }: { model: Model }) {
+  const trackConfirmation = useBudgetConfirmation();
   const r = m.report;
   const fields = ["percent", "yield", "price"] as const;
   return (
@@ -164,8 +166,11 @@ export function SettlementBudgetSummary({ model: m }: { model: Model }) {
       <p className={styles.note}>
         Área de paredes pelo comprimento × altura, descontando vãos, sem ajuste
         por espessura. Distribua 100% entre os produtos. Rendimentos são
-        consumos por m² editáveis conforme sua execução. Saia do campo ou
-        pressione Enter para salvar.
+        consumos por m² editáveis conforme sua execução.
+        <span data-print-omit>
+          {" "}
+          Saia do campo ou pressione Enter para salvar.
+        </span>
       </p>
       {!r.available ? (
         <p>{r.reason}</p>
@@ -226,12 +231,13 @@ export function SettlementBudgetSummary({ model: m }: { model: Model }) {
                   const value = m.settings[s.key]?.[field];
                   return (
                     <td key={field}>
-                      {field === "yield" && (
-                        <span className={styles.note}>{s.unit}/m²</span>
-                      )}
                       <span
                         className={
-                          field === "price" ? styles.priceField : undefined
+                          field === "price"
+                            ? styles.priceField
+                            : field === "yield"
+                              ? styles.yieldField
+                              : undefined
                         }
                       >
                         <input
@@ -263,7 +269,9 @@ export function SettlementBudgetSummary({ model: m }: { model: Model }) {
                               [id]: e.target.value,
                             }))
                           }
-                          onBlur={() => void m.confirm(s.key, field)}
+                          onBlur={() =>
+                            trackConfirmation(m.confirm(s.key, field))
+                          }
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
                               e.preventDefault();
@@ -271,6 +279,9 @@ export function SettlementBudgetSummary({ model: m }: { model: Model }) {
                             }
                           }}
                         />
+                        {field === "yield" && (
+                          <span className={styles.note}>{s.unit}/m²</span>
+                        )}
                         {field === "price" && (
                           <ReferencePriceButton
                             item={{ group: "settlement", key: s.key }}

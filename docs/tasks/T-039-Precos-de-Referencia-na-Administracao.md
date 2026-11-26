@@ -8,7 +8,7 @@
 
 **Data de execução** — 2026-11-25
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante em 2026-11-26
 
 ## Alteração e limites
 
@@ -141,3 +141,8 @@ Após o push anterior, o CI aprovou lint e 750 testes, mas falhou na descoberta 
 Conexão do arquivo transferida para beforeAll e encerramento protegido em afterAll. Listar cenários não valida conexão nem cria pool. A execução real continua exigindo ecovit_test. Teste de classificação agora força variável vazia no subprocesso de listagem, evitando dependência acidental de .env.test local. Contrato de Qualidade atualizado: workflow mantém lint/unitários/build, testes com banco permanecem no ambiente de desenvolvimento; sem PostgreSQL/credenciais adicionados ao CI e sem exclusão de asserções.
 
 Validação: listagem direta do Chrome sem conexão configurada aprovada (50 arquivos, zero erros); cenário de fila de preços no Chrome com banco isolado aprovado em 41,2 s incluindo preparo; typecheck e lint dos dois arquivos aprovados. A checagem de classificação no Vitest aprovou cinco casos e excedeu 5 s no caso de descoberta, tanto na rodada inicial (13,20 s total) quanto na única reexecução fora do sandbox (21,75 s total). Timeout/asserções preservados; resultado local não declarado integralmente aprovado. Logs em .tools/discovery-fix/: discovery.json, discovery-exit.log, browser.log, types.log, lint.log, unit.log e unit-retry.log. Publicação depende da aprovação efetiva do workflow após o envio. Nenhuma alteração no aplicativo, schema ou migrações; porta 5173 preservada.
+
+
+### Aceite manual — 2026-11-26
+
+Aceite manual integral confirmado expressamente pelo solicitante em 2026-11-26, com autorização de commit e push. Registros anteriores de aceite pendente descrevem as etapas anteriores. Preservadas as evidências técnicas e seus limites; nenhum teste adicional foi executado para registrar este aceite.

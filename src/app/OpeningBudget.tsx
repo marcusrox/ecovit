@@ -1,3 +1,4 @@
+import { useBudgetConfirmation } from "./BudgetConfirmation";
 import { useMemo, useState } from "react";
 import { display, type Project } from "../domain/project";
 import { money, parseUnitPrice, priceText } from "../domain/budget";
@@ -100,6 +101,7 @@ function Identity({ row }: { row: OpeningBudgetRow }) {
   );
 }
 export function OpeningBudgetSummary({ model: m }: { model: Model }) {
+  const trackConfirmation = useBudgetConfirmation();
   const r = m.report;
   return (
     <section
@@ -160,7 +162,7 @@ export function OpeningBudgetSummary({ model: m }: { model: Model }) {
                                 [row.key]: e.target.value,
                               }))
                             }
-                            onBlur={() => void m.confirm(row)}
+                            onBlur={() => trackConfirmation(m.confirm(row))}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();

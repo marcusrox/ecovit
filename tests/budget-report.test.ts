@@ -15,7 +15,8 @@ import {
 import { settlementBudget } from "../src/domain/settlement-budget";
 import { steelCosts, steelQuantities } from "../src/domain/steel-budget";
 import {
-  prepareBudgetReport,
+  renderBudgetMarkup,
+  budgetReportIdentification,
   type BudgetReport,
 } from "../src/app/budget-report/model";
 import {
@@ -78,22 +79,29 @@ function fixture() {
   };
   return doc;
 }
-const content = (r: BudgetReport) =>
-  r.blocks
-    .map((b) =>
-      b.kind === "table"
-        ? [
-            b.title,
-            b.headers.join("|"),
-            ...b.rows.map((r) => r.join("|")),
-          ].join("\n")
-        : b.text,
-    )
-    .join("\n");
+const sharedBudgetPresentation = (
+  doc: ReturnType<typeof fixture>,
+  emitted: Date,
+  unsaved = false,
+) =>
+  budgetReportIdentification(doc, emitted, unsaved).join("\n") +
+  renderBudgetMarkup(doc);
+const content = (markup: string) =>
+  markup
+    .replace(/<input[^>]*>/g, (input) => {
+      const value = input.match(/value="([^"]*)"/)?.[1];
+      const placeholder = input.match(/placeholder="([^"]*)"/)?.[1];
+      return ` ${value || placeholder || "Não informado"} `;
+    })
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ");
 it("projeta a mesma revisão dos quatro grupos, todos os pavimentos e fiadas, sem mutar o documento", () => {
   const doc = fixture(),
     before = structuredClone(doc);
-  const result = prepareBudgetReport(doc, emitted);
+  const result = sharedBudgetPresentation(doc, emitted);
   const q = quantities(doc);
   if (!q.available) throw Error(q.reason);
   const b = budgetCosts(
@@ -108,21 +116,28 @@ it("projeta a mesma revisão dos quatro grupos, todos os pavimentos e fiadas, se
     s.total,
     openingBudget(doc).total,
   ]);
+  expect(result.indexOf('aria-label="Totais dos materiais"')).toBeLessThan(
+    result.indexOf('aria-labelledby="budget-bricks-title"'),
+  );
   const text = content(result);
   expect(text).toContain(
-    `Total dos materiais orçados: ${money(total.total!)}.`,
+    `Total dos materiais orçados (tijolos + ferragens + assentamento + esquadrias) ${money(total.total!)}`,
   );
   expect(text).toContain("Superior vazio");
   expect(text).toContain("280");
   expect(text).toContain("19:00:00");
   expect(text).toContain("Relatório Ω 漢字");
   expect(text).toContain("R$ 123,45");
-  expect(text).toContain("Rateio por pavimento");
-  expect(
-    result.blocks.filter(
-      (b) => b.kind === "table" && b.title.startsWith("Tijolos ·"),
-    ),
-  ).toHaveLength(2);
+  expect(text).toContain("Custos rateados da compra global");
+  expect(text).toContain("Fiadas locais");
+  const coursesBody = result.match(
+    /<caption>Fiadas locais<\/caption>[\s\S]*?<tbody>([\s\S]*?)<\/tbody>/,
+  )?.[1];
+  expect(coursesBody).toBeDefined();
+  expect(coursesBody!.match(/<tr>/g)).toHaveLength(
+    q.floors.flatMap((floor) => floor.courses).length,
+  );
+  expect(text).toContain("Térreo");
   expect(doc).toEqual(before);
 });
 it("distingue ausência, zero, configuração faltante e não inclui preços de esquadrias sem ocorrência", () => {
@@ -134,24 +149,24 @@ it("distingue ausência, zero, configuração faltante e não inclui preços de 
     price: 99999,
   });
   delete doc.project.unitPrices!.whole;
-  const text = content(prepareBudgetReport(doc, emitted));
+  const text = content(sharedBudgetPresentation(doc, emitted));
   expect(text).toContain("Não informado");
   expect(text).toContain("R$ 0,00");
   expect(text).not.toContain("R$ 999,99");
   expect(text).toContain(
-    "Total dos materiais orçados: Incompleto / indisponível",
+    "Total dos materiais orçados (tijolos + ferragens + assentamento + esquadrias) Indisponível",
   );
   delete doc.model.openings[0].material;
-  expect(content(prepareBudgetReport(doc, emitted))).toContain(
+  expect(content(sharedBudgetPresentation(doc, emitted))).toContain(
     "Defina material nas propriedades.",
   );
 });
 it("base desatualizada nunca exporta peças antigas e mantém esquadrias independentes", () => {
   const doc = fixture();
   doc.generationState = { status: "outdated", diagnostics: [] };
-  const text = content(prepareBudgetReport(doc, emitted, true));
+  const text = content(sharedBudgetPresentation(doc, emitted, true));
   expect(text).toContain("Composição indisponível");
-  expect(text).not.toContain("Fiada|Inteiro");
+  expect(text).not.toContain("Fiadas locais");
   expect(text).toContain("R$ 123,45");
   expect(text).toContain("Não salvo");
 });
@@ -168,19 +183,19 @@ it("parcialidade e distribuição intermediária conservam áreas e valores inde
     x: 0,
     y: 0,
   });
-  const text = content(prepareBudgetReport(doc, emitted));
-  expect(text).toContain("Parcial - há pendências");
-  expect(text).toContain("soma 60%");
+  const text = content(sharedBudgetPresentation(doc, emitted));
+  expect(text).toContain("Parcial — há pendências");
+  expect(text).toContain("Distribuição: 60%. Faltam 40%.");
   expect(text).toContain("Área bruta:");
   expect(text).toContain("R$ 123,45");
 });
 it("limites monetários não viram totais completos e preservam grupos independentes", () => {
   const doc = fixture();
   doc.project.unitPrices!.whole = Number.MAX_SAFE_INTEGER;
-  const text = content(prepareBudgetReport(doc, emitted));
+  const text = content(sharedBudgetPresentation(doc, emitted));
   expect(text).toContain("Custo fora da representação numérica segura");
   expect(text).toContain(
-    "Total dos materiais orçados: Incompleto / indisponível",
+    "Total dos materiais orçados (tijolos + ferragens + assentamento + esquadrias) Indisponível",
   );
   expect(text).toContain("R$ 123,45");
   expect(materialCosts([Number.MAX_SAFE_INTEGER, 1]).error).toContain(
@@ -258,4 +273,36 @@ it("mantém o cabeçalho junto da primeira linha da tabela", () => {
     if (marks.some((m) => m.kind === "rect" && m.header))
       expect(marks.some((m) => m.kind === "rect" && !m.header)).toBe(true);
   }
+});
+
+it("preserva células mescladas de totais sem cortar o rótulo na primeira coluna", () => {
+  const report: BudgetReport = {
+    title: "Totais",
+    blocks: [
+      {
+        kind: "table",
+        title: "Materiais",
+        headers: ["Produto", "Quantidade", "Preço", "Custo"],
+        widths: [1, 1, 1, 1],
+        rows: [["Subtotal de assentamento do pavimento", "", "", "R$ 123,45"]],
+        spans: [[3, 0, 0, 1]],
+      },
+    ],
+  };
+  const pages = layoutBudgetReport(
+    report,
+    (text, size) => text.length * size * 0.5,
+  );
+  expect(pages).toHaveLength(1);
+  const boxes = pages[0].filter((m) => m.kind === "rect" && !m.header);
+  expect(boxes).toHaveLength(2);
+  if (boxes[0].kind !== "rect" || boxes[1].kind !== "rect")
+    throw Error("Células ausentes");
+  expect(boxes[0].width).toBeCloseTo(boxes[1].width * 3);
+  expect(
+    pages[0].some(
+      (m) =>
+        m.kind === "text" && m.text === "Subtotal de assentamento do pavimento",
+    ),
+  ).toBe(true);
 });

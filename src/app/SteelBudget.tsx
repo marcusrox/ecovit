@@ -1,3 +1,4 @@
+import { useBudgetConfirmation } from "./BudgetConfirmation";
 import { useMemo, useState } from "react";
 import { display, type Project } from "../domain/project";
 import {
@@ -104,6 +105,7 @@ function Measures({ row }: { row?: SteelQuantity }) {
 }
 
 export function SteelBudgetSummary({ model: m }: { model: Model }) {
+  const trackConfirmation = useBudgetConfirmation();
   const { report, costs } = m;
   const rows = report.available
     ? report.rows
@@ -177,7 +179,7 @@ export function SteelBudgetSummary({ model: m }: { model: Model }) {
                                 [key]: e.target.value,
                               }))
                             }
-                            onBlur={() => void m.confirm(key)}
+                            onBlur={() => trackConfirmation(m.confirm(key))}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();

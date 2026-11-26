@@ -23,6 +23,7 @@ export type Mark =
       width: number;
       height: number;
       header: boolean;
+      highlight?: boolean;
     };
 export type Measure = (text: string, size: number, bold: boolean) => number;
 
@@ -76,29 +77,69 @@ export function layoutBudgetReport(
     const totalWidth = pageWidth - 2 * margin;
     const sum = block.widths.reduce((a, b) => a + b, 0);
     const widths = block.widths.map((w) => (totalWidth * w) / sum);
-    const cells = (row: string[], bold: boolean) =>
-      row.map((s, i) => wrap(s, widths[i] - 10, (t) => measure(t, 9, bold)));
+    const cells = (
+      row: string[],
+      bold: boolean,
+      spans?: number[],
+      emphasis = false,
+    ) =>
+      row.map((s, i) =>
+        spans?.[i] === 0
+          ? []
+          : wrap(
+              s,
+              widths
+                .slice(i, i + (spans?.[i] ?? 1))
+                .reduce((a, b) => a + b, 0) - 10,
+              (t) =>
+                measure(
+                  t,
+                  emphasis && i === widths.length - 1 ? 12 : 9,
+                  bold || emphasis,
+                ),
+            ),
+      );
     const headers = cells(block.headers, true);
     const title = wrap(block.title, totalWidth, (t) => measure(t, 10, true));
     const headerHeight =
       Math.max(...headers.map((c) => c.length)) * lineHeight + 10;
     const titleHeight = title.length * lineHeight + 6;
-    const drawRow = (row: string[][], count: number, header: boolean) => {
+    const drawRow = (
+      row: string[][],
+      count: number,
+      header: boolean,
+      spans?: number[],
+      emphasis = false,
+    ) => {
       const height = count * lineHeight + 10;
       let x = margin;
       row.forEach((lines, i) => {
+        if (spans?.[i] === 0) return;
+        const width = widths
+          .slice(i, i + (spans?.[i] ?? 1))
+          .reduce((a, b) => a + b, 0);
         current().push({
           kind: "rect",
           x,
           y,
-          width: widths[i],
+          width,
           height,
           header,
+          highlight: emphasis,
         });
+        const size = emphasis && i === widths.length - 1 ? 12 : 9;
         lines.forEach((line, j) =>
-          label(line, x + 5, y + 14 + j * lineHeight, 9, header),
+          label(
+            line,
+            block.summary && i === widths.length - 1
+              ? x + width - 5 - measure(line, size, header || emphasis)
+              : x + 5,
+            y + 14 + j * lineHeight,
+            size,
+            header || emphasis,
+          ),
         );
-        x += widths[i];
+        x += width;
       });
       y += height;
     };
@@ -118,9 +159,34 @@ export function layoutBudgetReport(
     const rows = block.rows.length
       ? block.rows
       : [["Sem itens neste grupo.", ...block.headers.slice(1).map(() => "-")]];
-    start(Math.max(...cells(rows[0], false).map((c) => c.length)));
-    for (const row of rows) {
-      const lines = cells(row, false);
+    if (block.summary) {
+      const height =
+        titleHeight +
+        headerHeight +
+        rows.reduce(
+          (sum, row, index) =>
+            sum +
+            Math.max(
+              ...cells(
+                row,
+                false,
+                block.spans?.[index],
+                index === rows.length - 1,
+              ).map((lines) => lines.length),
+            ) *
+              lineHeight +
+            10,
+          0,
+        );
+      if (height <= bottom - top) ensure(height);
+    }
+    start(
+      Math.max(...cells(rows[0], false, block.spans?.[0]).map((c) => c.length)),
+    );
+    for (const [index, row] of rows.entries()) {
+      const spans = block.spans?.[index];
+      const emphasis = !!block.summary && index === rows.length - 1;
+      const lines = cells(row, false, spans, emphasis);
       let offset = 0;
       const count = Math.max(...lines.map((c) => c.length));
       // Ordinary rows stay together; a row taller than a page continues with headers.
@@ -144,6 +210,8 @@ export function layoutBudgetReport(
           lines.map((c) => c.slice(offset, offset + take)),
           take,
           false,
+          spans,
+          emphasis,
         );
         offset += take;
         if (offset < count) {

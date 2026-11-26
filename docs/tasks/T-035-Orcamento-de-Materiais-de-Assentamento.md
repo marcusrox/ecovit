@@ -8,7 +8,7 @@
 
 **Data de execução** — 2026-11-25
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante em 2026-11-26
 
 ## Alteração e limites
 
@@ -158,3 +158,5 @@ A suíte unitária foi ampliada para todas as famílias porque o formato 32 usa 
 - **Checagens:** typecheck e lint do recorte aprovados. Logs `.tools/t035-review-types.log`, `.tools/t035-review-lint.log`; conferência documental/diff em `.tools/t035-review-diff.log`. Sem enfraquecer asserções ou ampliar timeouts.
 
 Sem commit, push ou publicação nesta revisão. A verificação técnica conclui A01–A11; aceite manual depende de manifestação explícita do solicitante.
+
+Aceite manual confirmado expressamente pelo solicitante em 2026-11-26. Mantidas as evidências da verificação técnica anterior, sem nova execução de testes para este registro.

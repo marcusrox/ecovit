@@ -51,7 +51,7 @@ export async function generateBudgetPdf(
       ctx.fillRect(0, 0, pageWidth, pageHeight);
       for (const mark of marks) {
         if (mark.kind === "rect") {
-          ctx.fillStyle = mark.header ? "#e8eee8" : "#ffffff";
+          ctx.fillStyle = mark.header || mark.highlight ? "#e8eee8" : "#ffffff";
           ctx.fillRect(mark.x, mark.y, mark.width, mark.height);
           ctx.strokeStyle = "#cbd6cc";
           ctx.lineWidth = 0.4;

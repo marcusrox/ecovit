@@ -10,7 +10,7 @@ Confirmação de campo escreve preço e origem juntos. Limpeza registra `cleared
 
 ## Exportação do orçamento — T-038
 
-Gerar/baixar o relatório é leitura da revisão em memória capturada no início, sem commit, recálculo, histórico, gravação ou mudança de câmera/pavimento/filtro. Não iniciar durante processamento/salvamento ou com campos orçamentários em rascunho. Somente leitura permanece habilitada; revisão não salva é identificada como tal. Captura não acompanha edições posteriores. Fechar a consulta/desmontar cancela o trabalho; falha mantém o projeto e permite nova tentativa. Disponibilidade e parcialidade dos grupos seguem [Quantitativos](Quantitativos.md#relatório-de-orçamento-em-pdf--t-038).
+Gerar/baixar o relatório é leitura da revisão em memória capturada no início, sem commit, recálculo, histórico, gravação ou mudança de câmera/pavimento/filtro. Aguardar apenas as confirmações locais já disparadas pelos eventos normais dos campos, inclusive blur, antes de capturar documento e situação de salvamento juntos; não confirmar outros rascunhos automaticamente. Entradas inválidas ou ainda em rascunho exigem correção ou desfazimento. Processamento que altera dados impede iniciar; o envio remoto de uma revisão já confirmada em memória não bloqueia a geração e não é aguardado. Somente leitura permanece habilitada; revisão não salva é identificada como tal. Captura não acompanha edições posteriores. Fechar a consulta/desmontar cancela o trabalho; falha mantém o projeto e permite nova tentativa. Disponibilidade e parcialidade dos grupos seguem [Quantitativos](Quantitativos.md#relatório-de-orçamento-em-pdf--t-038).
 
 ## Orçamento de assentamento — T-035
 

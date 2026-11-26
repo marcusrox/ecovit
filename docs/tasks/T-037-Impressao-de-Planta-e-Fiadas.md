@@ -8,7 +8,7 @@
 
 **Data de execução** — 2026-11-25
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado pelo solicitante em 2026-11-26
 
 ## Alteração e limites
 
@@ -125,3 +125,5 @@ Validação proporcional ampliada pela nova saída PDF, dependências e extraç�
 Falhas encontradas foram corrigidas e revalidadas no recorte afetado: nome acessível do diálogo e detecção de rascunhos locais. Seletores dos testes foram alinhados aos papéis acessíveis dos controles. Regressões existentes também continham expectativas antigas das categorias Sala/Paisagismo (atualizadas para 13/6) e atalhos de histórico disparados durante salvamento (agora aguardam habilitação de Desfazer/Refazer). Não foram removidas asserções nem ampliados timeouts. O primeiro oráculo de escala media apenas preenchimento, descontando as bordas; foi corrigido para medir o contorno real, com tolerância de um pixel.
 
 Logs/evidências locais ignorados pelo Git em .tools/t037/: unit-final.log, regression.log (três cenários aprovados e diagnóstico inicial), chrome-final.log (mobiliário e casos PDF aprovados), chrome-complete.log (cinco casos PDF e terreno aprovados), details-pending-fixed.log (canaletas/armaduras e campos pendentes aprovados), edge.log, lint-complete.log, build-complete.log, scale-outline.log e PDFs/PNGs renderizados. Registros históricos de implementação pendente acima correspondem às revisões anteriores da especificação; esta entrega não confirma aceite manual nem autoriza publicação.
+
+Aceite manual confirmado expressamente pelo solicitante em 2026-11-26. Mantidas as evidências da verificação técnica anterior, sem nova execução de testes para este registro.

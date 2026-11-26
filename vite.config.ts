@@ -6,6 +6,9 @@ export default defineConfig(({ mode }) => ({
   cacheDir:
     mode === "test" ? "node_modules/.vite-ecovit-tests" : "node_modules/.vite",
   plugins: [react()],
+  // The PDF loads this renderer on demand; optimize it before serving so the
+  // first export does not trigger a development reload and cancel the download.
+  optimizeDeps: { include: ["react-dom/server"] },
   define: { __ECOVIT_RELEASE__: JSON.stringify(readReleaseInfo()) },
   server: {
     // Logs, databases and extracted traces are diagnostics, not application inputs.
