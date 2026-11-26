@@ -53,11 +53,15 @@ import {
   Calendar,
   UserPlus,
   HardDrive,
+  Coins,
+  CircleArrowDown,
 } from "lucide-react";
 import styles from "./App.module.css";
 
 // Semantic names remain stable across screens; only this module imports Lucide.
 const icons = {
+  prices: Coins,
+  referencePrice: CircleArrowDown,
   rotate: RotateCw,
   text: Type,
   refresh: RefreshCw,

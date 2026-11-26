@@ -300,7 +300,7 @@ it("formato 32 preserva configuração estrita em arquivo, cópia e transporte r
   const d = fixture([1]);
   d.project.settlement = { ac1: { percent: 10000, yield: 1401, price: 3000 } };
   const loaded = parseFile(serializeFile(d).text);
-  expect(loaded.schemaVersion).toBe(33);
+  expect(loaded.schemaVersion).toBe(34);
   expect(loaded.project.settlement).toEqual(d.project.settlement);
   expect(importedCopy(loaded).project.settlement).toEqual(d.project.settlement);
   expect(hydrate(dehydrate(d, {}), {}).project.settlement).toEqual(
@@ -320,7 +320,7 @@ it("formato 32 preserva configuração estrita em arquivo, cópia e transporte r
     expect(() =>
       validateProject({ ...d, project: { ...d.project, settlement } }, false),
     ).toThrow();
-  expect(() => validateProject({ ...d, schemaVersion: 34 }, false)).toThrow(
+  expect(() => validateProject({ ...d, schemaVersion: 35 }, false)).toThrow(
     "Formato incompatível",
   );
 });
@@ -343,7 +343,7 @@ it("legados normalizam em memória sem materializar parâmetros; campo novo em f
     const old = { ...d, schemaVersion, model },
       before = structuredClone(old);
     const loaded = validateProject(old, false);
-    expect(loaded.schemaVersion).toBe(33);
+    expect(loaded.schemaVersion).toBe(34);
     expect(loaded.project).not.toHaveProperty("settlement");
     expect(old).toEqual(before);
     for (const settlement of [{}, null, { ac1: { percent: 0 } }])

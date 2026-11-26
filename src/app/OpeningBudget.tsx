@@ -3,7 +3,6 @@ import { display, type Project } from "../domain/project";
 import { money, parseUnitPrice, priceText } from "../domain/budget";
 import {
   openingBudget,
-  openingOptionKey,
   openingOptionLabel,
   openingMaterialLabel,
   withOpeningPrice,
@@ -12,6 +11,8 @@ import {
 } from "../domain/opening-budget";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
+import { withProjectPrice, priceItemSchema } from "../domain/price-references";
+import { ReferencePriceButton } from "./PriceReferences";
 
 export function useOpeningBudget(
   doc: Project,
@@ -62,14 +63,12 @@ export function useOpeningBudget(
       return;
     try {
       const price = parseUnitPrice(draft);
-      const current = latest.project.openingPrices?.find(
-        (p) => openingOptionKey(p) === row.key,
-      )?.price;
-      if (price !== current)
-        await state.commit(
-          withOpeningPrice(latest, row.option, price),
-          "budget",
-        );
+      const next = withProjectPrice(
+        latest,
+        priceItemSchema.parse({ group: "openings", option: row.option }),
+        price,
+      );
+      if (next !== latest) await state.commit(next, "budget");
       setDrafts((previous) => {
         if (previous[row.key] !== draft) return previous;
         const next = { ...previous };
@@ -141,33 +140,48 @@ export function OpeningBudgetSummary({ model: m }: { model: Model }) {
                     <Identity row={row} />
                     <td>
                       {row.option.type && row.option.material ? (
-                        <input
-                          className={styles.budgetPrice}
-                          aria-label={`Preço de ${openingOptionLabel(row.option)} · ${display(row.option.width)} × ${display(row.option.height)} cm · ${openingMaterialLabel(row.option.material)} (R$/unidade)`}
-                          inputMode="decimal"
-                          disabled={m.blocked}
-                          placeholder="Não informado"
-                          aria-invalid={
-                            m.drafts[row.key] !== undefined && !!row.error
-                          }
-                          aria-describedby={
-                            row.error ? `opening-price-error-${i}` : undefined
-                          }
-                          value={m.drafts[row.key] ?? priceText(row.price)}
-                          onChange={(e) =>
-                            m.setDrafts((previous) => ({
-                              ...previous,
-                              [row.key]: e.target.value,
-                            }))
-                          }
-                          onBlur={() => void m.confirm(row)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              e.currentTarget.blur();
+                        <span className={styles.priceField}>
+                          <input
+                            className={styles.budgetPrice}
+                            aria-label={`Preço de ${openingOptionLabel(row.option)} · ${display(row.option.width)} × ${display(row.option.height)} cm · ${openingMaterialLabel(row.option.material)} (R$/unidade)`}
+                            inputMode="decimal"
+                            disabled={m.blocked}
+                            placeholder="Não informado"
+                            aria-invalid={
+                              m.drafts[row.key] !== undefined && !!row.error
                             }
-                          }}
-                        />
+                            aria-describedby={
+                              row.error ? `opening-price-error-${i}` : undefined
+                            }
+                            value={m.drafts[row.key] ?? priceText(row.price)}
+                            onChange={(e) =>
+                              m.setDrafts((previous) => ({
+                                ...previous,
+                                [row.key]: e.target.value,
+                              }))
+                            }
+                            onBlur={() => void m.confirm(row)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                e.currentTarget.blur();
+                              }
+                            }}
+                          />
+                          <ReferencePriceButton
+                            item={priceItemSchema.parse({
+                              group: "openings",
+                              option: row.option,
+                            })}
+                            clearDraft={() =>
+                              m.setDrafts((previous) => {
+                                const next = { ...previous };
+                                delete next[row.key];
+                                return next;
+                              })
+                            }
+                          />
+                        </span>
                       ) : (
                         "Não configurado"
                       )}

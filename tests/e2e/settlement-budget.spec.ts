@@ -273,7 +273,7 @@ test(
       .click();
     const file = await download,
       loaded = parseFile(await readFile((await file.path())!, "utf8"));
-    expect(loaded.schemaVersion).toBe(33);
+    expect(loaded.schemaVersion).toBe(34);
     expect(loaded.project.settlement?.ac1).toEqual({
       percent: 10000,
       yield: 1500,

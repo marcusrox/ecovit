@@ -120,11 +120,23 @@ A consulta Áreas do projeto da T-030 reutiliza a apresentação documental do O
 
 ## Orçamento
 
+### Preços de referência — T-039
+
+Administração acrescenta a aba Preços, com ícone central `prices` → `Coins`, grupos/unidades existentes e edição de referência em centavos. Esquadrias são listadas somente após contribuição válida por uso real, com paginação; sem formulário de novas combinações. Validação e falha preservam o rascunho; repetição de confirmação incerta reutiliza o pedido, e conflito oferece atualização da consulta. Alterar referência informa que projetos já preenchidos conservam seus valores.
+
+Preços confirmam ao perder foco ou por Enter, sem botão de salvamento por item. Manter os campos disponíveis e o foco ao navegar por Tab durante o envio; confirmar alterações em sequência, atualizando somente o item confirmado sem remontar a lista. Falha preserva o pedido para repetição idempotente, os rascunhos e as alterações seguintes ainda não enviadas; oferecer nova tentativa. Atualização/paginação solicitada ao sair de um campo aguarda sua confirmação quando válida. Sem mudança de valor, não enviar nova mutação.
+
+Listas de preços apresentam dois materiais por linha a partir de 1100 px de viewport e um abaixo desse tamanho. Cada item associa rótulo/unidade a campo de largura estável. Validação inválida marca o input e mantém descrição acessível; texto completo aparece como dica discreta em hover/foco, fora do fluxo, sem aumentar colunas/linhas ou deslocar os demais campos. Reservar espaço para o status de gravação, evitando mudanças de posição entre envio e confirmação.
+
+No Orçamento, cada campo de preço elegível recebe botão somente com ícone central `referencePrice` → `CircleArrowDown`, compacto ao lado do input, sem rótulo visível permanente. Hint por hover/foco e nome acessível identificam ação/item; teclado aciona a mesma operação. Discrição não reduz contraste ou foco. Sem referência, manter indicação de indisponibilidade e impedir ação, sem apagar o campo; somente leitura/processamento/salvamento também bloqueiam. Durante consulta/incorporação ou ação manual, anunciar estado e impedir edições concorrentes dos campos. Falha de consulta oferece nova tentativa; falha de salvamento usa a recuperação existente. Limpeza explícita mantém campo vazio e custos incompletos, sem reposição automática. Regras de preenchimento e prioridade pertencem a Quantitativos.
+
 ### Esquadrias e material — T-036
 
 Propriedades de portas/janelas incluem seletor Material da esquadria junto da representação: Não definido, Madeira semioca, Madeira maciça, Madeira e vidro, Alumínio, Alumínio e vidro, Vidro temperado e Outro. Outro revela descrição, com erro associado e confirmação conjunta segundo Estado/Histórico. Usar campos e grupos existentes, sem novo ícone. Cancelar/Escape/troca de elemento não confirmam rascunho pelo blur.
 
-Quarto grupo no Orçamento apresenta somente opções presentes e indica material, tipo e dimensões de referência do vão bruto. Preço em R$/unidade apenas no resumo, acessível por combinação, com erros associados e bloqueios existentes. Tipo/material ausente recebe orientação para propriedades, sem preço editável. Detalhe por pavimento mostra preço em leitura e subtotal próprio; mantém uma rolagem geral do modal. Lista/filtro de pavimentos e quadro independem da composição e não expõem diagnósticos geométricos. Sem exportação PDF nesta entrega.
+Quarto grupo no Orçamento apresenta somente opções presentes e indica material, tipo e dimensões de referência do vão bruto. Preço em R$/unidade apenas no resumo, acessível por combinação, com erros associados e bloqueios existentes. Tipo/material ausente recebe orientação para propriedades, sem preço editável. Detalhe por pavimento mostra preço em leitura e subtotal próprio; mantém uma rolagem geral do modal. Lista/filtro de pavimentos e quadro independem da composição e não expõem diagnósticos geométricos. O relatório da T-038 integra o quadro e seus custos.
+
+A T-038 acrescenta ação textual com o ícone central download junto à introdução do Orçamento, mantendo retorno ao desenho disponível. Explicar abrangência global e uso dos valores confirmados, independentemente do filtro. Durante geração, desabilitar nova solicitação e anunciar progresso; erro acessível permite nova tentativa. Somente leitura pode baixar. Processamento/salvamento impede iniciar; rascunhos exigem conclusão/correção. Download direto do relatório A4 retrato, sem novo diálogo de prévia ou impressão. Paginação e conteúdo pertencem a [Quantitativos](Quantitativos.md#relatório-de-orçamento-em-pdf--t-038).
 
 ### Material de assentamento — T-035
 
@@ -240,7 +252,9 @@ Em Ferragens do pavimento, útil e sobreposição em cm ficam no grupo Graute ve
 
 ## Administração — T-031
 
-A entrada textual Administração aparece junto à conta somente para sessão com indicador administrativo. Abre diálogo nativo amplo, mantendo o contexto do editor, com quatro consultas: Visão geral, Usuários, Operação e Auditoria. Foco inicial no título, retorno ao acionador, Escape para fechar exceto durante envio. Fechar não altera documento ou câmera. Não acrescentar ícones a botões textuais sem necessidade; fechar reutiliza close do catálogo central.
+A entrada textual Administração aparece junto à conta somente para sessão com indicador administrativo. Abre diálogo nativo amplo, mantendo o contexto do editor, com Visão geral, Usuários, Operação, Auditoria e Preços (T-039). Foco inicial no título, retorno ao acionador, Escape para fechar exceto durante envio. Fechar não altera documento ou câmera. Não acrescentar ícones a botões textuais sem necessidade; fechar reutiliza close do catálogo central.
+
+Todas as abas usam apresentação compacta: controles de cerca de 28 px, tabelas com células de 6 × 9 px de padding, filtros e grupos com intervalos menores, mantendo foco, rótulos, rolagem e acesso às ações. Visão geral usa indicadores menores em grade responsiva, valores de 20 px, ícones existentes em contêineres de 24 px e fundos discretos em verde, azul e areia, sem sombras de cartões interativos. Preservar conteúdo, cálculo e significado dos indicadores. Aba ativa mantém destaque inclusive durante hover.
 
 Filtros e paginação têm rótulos visíveis. Estados de carregamento, consulta falha, cobertura parcial e ausência de registros são distintos. Troca de conta/sessão encerra o painel; respostas tardias não atualizam outro contexto. A confirmação de intervenção mostra conta-alvo e motivo, conserva o identificador e conteúdo em repetição após falha e não anuncia sucesso sem resposta confirmada. O administrador permanente é identificado e não tem ação de retirada. Listas de metadados não mostram miniaturas ou conteúdo dos desenhos.
 

@@ -15,6 +15,8 @@ import {
 import { money, parseUnitPrice, priceText } from "../domain/budget";
 import { useStore } from "../state/store";
 import styles from "../ui/App.module.css";
+import { withProjectPrice } from "../domain/price-references";
+import { ReferencePriceButton } from "./PriceReferences";
 
 export function useSteelBudget(
   doc: Project,
@@ -63,24 +65,11 @@ export function useSteelBudget(
     } catch {
       return;
     }
-    if (value !== latest.project.steelPrices?.[key]) {
-      const next = { ...latest.project.steelPrices };
-      if (value === undefined) delete next[key];
-      else next[key] = value;
-      const { steelPrices, ...project } = latest.project;
-      void steelPrices;
+    const next = withProjectPrice(latest, { group: "steel", key }, value);
+    if (next !== latest) {
       setPriceSaving(true);
       try {
-        await state.commit(
-          {
-            ...latest,
-            project: {
-              ...project,
-              ...(Object.keys(next).length ? { steelPrices: next } : {}),
-            },
-          },
-          "budget",
-        );
+        await state.commit(next, "budget");
       } finally {
         setPriceSaving(false);
       }
@@ -170,31 +159,43 @@ export function SteelBudgetSummary({ model: m }: { model: Model }) {
                   <td>
                     {known ? (
                       <>
-                        <input
-                          className={styles.budgetPrice}
-                          aria-label={`Preço por kg de ${steelLabel(item)}`}
-                          aria-invalid={!!m.errors[key]}
-                          aria-describedby={
-                            m.errors[key] ? `steel-price-${key}` : undefined
-                          }
-                          inputMode="decimal"
-                          placeholder="Não informado"
-                          disabled={m.blocked}
-                          value={m.drafts[key] ?? priceText(m.prices[key])}
-                          onChange={(e) =>
-                            m.setDrafts((previous) => ({
-                              ...previous,
-                              [key]: e.target.value,
-                            }))
-                          }
-                          onBlur={() => void m.confirm(key)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              e.currentTarget.blur();
+                        <span className={styles.priceField}>
+                          <input
+                            className={styles.budgetPrice}
+                            aria-label={`Preço por kg de ${steelLabel(item)}`}
+                            aria-invalid={!!m.errors[key]}
+                            aria-describedby={
+                              m.errors[key] ? `steel-price-${key}` : undefined
                             }
-                          }}
-                        />
+                            inputMode="decimal"
+                            placeholder="Não informado"
+                            disabled={m.blocked}
+                            value={m.drafts[key] ?? priceText(m.prices[key])}
+                            onChange={(e) =>
+                              m.setDrafts((previous) => ({
+                                ...previous,
+                                [key]: e.target.value,
+                              }))
+                            }
+                            onBlur={() => void m.confirm(key)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                e.currentTarget.blur();
+                              }
+                            }}
+                          />
+                          <ReferencePriceButton
+                            item={{ group: "steel", key }}
+                            clearDraft={() =>
+                              m.setDrafts((previous) => {
+                                const next = { ...previous };
+                                delete next[key];
+                                return next;
+                              })
+                            }
+                          />
+                        </span>
                         {m.errors[key] && (
                           <span
                             id={`steel-price-${key}`}

@@ -40,6 +40,7 @@ const filters = z
         "revoke",
         "recover",
         "configured",
+        "price",
       ])
       .default(""),
     from: z.string().datetime().optional(),
@@ -67,7 +68,7 @@ const accountFields = `a.id,a.email,a.state,a.created_at,a.last_activity,(a.is_a
  (SELECT count(*)::int FROM ecovit_projects p WHERE p.owner_id=a.id) AS projects,
  (SELECT COALESCE(sum(bytes),0)::float8 FROM ecovit_assets r WHERE r.owner_id=a.id) AS bytes`;
 
-async function adminIdentity(
+export async function adminIdentity(
   db: Pool | PoolClient,
   request: FastifyRequest,
   config: Config,

@@ -12,9 +12,38 @@ import { withOpeningPrice, openingOption } from "../src/domain/opening-budget";
 import { useStore } from "../src/state/store";
 import * as engine from "../src/domain/composition";
 import { parseFile, serializeFile } from "../src/persistence/files";
+import {
+  incorporatePrices,
+  withProjectPrice,
+  priceSource,
+} from "../src/domain/price-references";
 const state = () => useStore.getState();
 const save = vi.mocked(saveProject);
 const receipt = { revision: "2" } as Awaited<ReturnType<typeof saveProject>>;
+it("T-039 incorporação e limpeza preservam resultado e restauram origem no histórico sem motor", async () => {
+  const original = state().doc!,
+    generate = vi.spyOn(engine, "generate");
+  const item = { group: "bricks" as const, key: "whole" as const };
+  await state().commit(
+    incorporatePrices(original, [{ item, price: 100 }]),
+    "budget",
+  );
+  expect(state().doc!.generated).toEqual(original.generated);
+  expect(priceSource(state().doc!, item)).toBe("reference");
+  await state().commit(
+    withProjectPrice(state().doc!, item, undefined),
+    "budget",
+  );
+  expect(priceSource(state().doc!, item)).toBe("cleared");
+  await state().undo();
+  expect(priceSource(state().doc!, item)).toBe("reference");
+  await state().undo(true);
+  expect(priceSource(state().doc!, item)).toBe("cleared");
+  expect(generate).not.toHaveBeenCalled();
+  expect(
+    parseFile(serializeFile(state().doc!).text).project.priceSources,
+  ).toEqual(state().doc!.project.priceSources);
+});
 beforeEach(async () => {
   vi.useFakeTimers();
   save.mockResolvedValue(receipt);

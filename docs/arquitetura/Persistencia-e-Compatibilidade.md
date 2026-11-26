@@ -2,7 +2,19 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
-## Esquadrias — formato 33 vigente
+## Preços de referência — formato 34 vigente
+
+Formato 34 acrescenta `project.priceSources` opcional, array estrito de `{item,source}`. `source` é `own`, `reference` ou `cleared`. `item` é união estrita: `{group:bricks|steel|settlement,key}` com chave do catálogo correspondente, ou `{group:openings,option:{kind,type,width,height,material}}` validada pela identidade de preço da T-036. Rejeitar estados duplicados pela identidade normalizada, campos extras, null, chaves desconhecidas e inconsistência entre estado e preço efetivo: `cleared` exige ausência; `own`/`reference` exigem valor válido. Preço existente sem metadado continua próprio, inclusive zero; ausência sem metadado é elegível ao preenchimento. Não materializar estados ao apenas converter um legado.
+
+Leitor compartilhado normaliza envelopes 9–33 para 34 em memória, sem inventar referência ou limpar preço. Recusar `priceSources` em 9–33 mesmo vazio; leitores anteriores recusam 34. Arquivo/cópia/transporte preservam estados, inclusive de combinações de esquadrias sem ocorrência retidas para reinserção. Composição nominal-v13 e representação remota 1 permanecem. A assinatura de insumos construtivos não inclui os estados ou preços.
+
+A migração SQL 003 cria `ecovit_price_references`: chave textual canônica única, identidade comercial validada em jsonb, preço bigint opcional em centavos seguros e data de atualização. O jsonb deste cadastro contém somente descritores de materiais validados, não documentos/desenhos; projetos e seus metadados continuam em json. Sem usuário/projeto de origem no cadastro comum. A migração concede DML à role de execução, preservando separação de privilégios e histórico de migrações.
+
+`POST /api/prices/lookup` recebe identidades e retorna somente referências correspondentes, com sessão, escopo de conta, origem/CSRF, limite de frequência e resposta privada sem cache. `GET /api/admin/prices` reúne catálogos fixos e esquadrias existentes paginadas; `POST` na mesma rota altera um preço com autorização administrativa revalidada na transação, valor anterior esperado, identificador de repetição e timestamp. Conflito exige atualizar a consulta; repetir o mesmo pedido não reaplica nem duplica auditoria. Esquadria sem registro de uso não pode ser criada pela manutenção. A ação `price` reutiliza a auditoria administrativa, vinculando responsável à própria conta e registrando item/valores, sem revelar projetos de origem.
+
+Primeira contribuição de esquadria ocorre na transação que salva uma alteração de preço próprio em projeto validado; inserção com chave única e `ON CONFLICT DO NOTHING` mantém a primeira confirmação bem-sucedida. Ordenar identidades antes de inserir múltiplas combinações. Recibo/revisão e validação existentes impedem aprender de gravação recusada ou duplicar efeito por repetição. Não acessar banco de produção para preparar esta entrega; a migração segue o workflow vigente quando a publicação for autorizada.
+
+## Esquadrias — formato 33
 
 Formato 33 acrescenta `model.openings[].material` opcional em portas/janelas e `project.openingPrices` opcional, array estrito de `{kind,type,width,height,material,price}`. Cada entrada exige porta/janela, tipo permitido para kind, dimensões inteiras positivas até LIMIT, material válido e preço em centavos inteiros não negativos seguros. Rejeitar combinações normalizadas duplicadas, inclusive descrições de Outro equivalentes em caixa/espaços externos. Entradas sem ocorrência são permitidas para retenção de preços; não persistir quantidades/custos. Material/descrição seguem Elementos construtivos. Recusar null, campos extras, conteúdo novo em envelopes 9–32 (mesmo coleção vazia) e material em vão livre.
 
@@ -53,7 +65,7 @@ Dimensionar shared_buffers, work_mem e max_connections para o orçamento do Post
 
 Para reduzir escritas e volume, persistir a intenção completa validada e os recursos necessários à sua reconstrução; resultado gerado é derivado e permanece em memória. Abertura remota obtém todos os bytes de recursos próprios necessários ao documento, valida/reconstrói a memória e recompõe no navegador; não marcar abertura concluída com imagens faltantes. Isso preserva download em memória após desconexão. Falha de cálculo não torna a intenção salva inexistente. Não salvar peças/diagnósticos derivados no PostgreSQL nem fazer a segunda gravação somente para armazenar cálculo. Isso muda a representação remota prevista, sem remover o contrato atual de snapshot dos arquivos .ecovit.
 
-Representação remota versão 1, independente de schemaVersion=33 e da versão SQL: contém campos editáveis equivalentes ao documento vigente, com generated=null e estado outdated, e substitui bytes base64 por referências privadas aos recursos confirmados. Validar schema estrito próprio desta representação; não enviar esse DTO diretamente ao leitor de .ecovit. Um adaptador explícito reconstrói o documento vigente com imagens para domínio/exportação. Não inserir URLs, proprietário ou revisões de servidor no modelo geométrico. Recusar formatos remotos desconhecidos antes de alterar a memória.
+Representação remota versão 1, independente de schemaVersion=34 e da versão SQL: contém campos editáveis equivalentes ao documento vigente, com generated=null e estado outdated, e substitui bytes base64 por referências privadas aos recursos confirmados. Validar schema estrito próprio desta representação; não enviar esse DTO diretamente ao leitor de .ecovit. Um adaptador explícito reconstrói o documento vigente com imagens para domínio/exportação. Não inserir URLs, proprietário ou revisões de servidor no modelo geométrico. Recusar formatos remotos desconhecidos antes de alterar a memória.
 
 Server-side: validar intenção, referências, modularidade, limites e conteúdo real de novos recursos em toda mutação. Não confiar apenas no Zod/frontend. Gravação comum não recebe resultado derivado. Importação de .ecovit com resultado presente passa também pela conferência integral vigente, inclusive recomputação para recusar adulteração; compartilhar a validação existente no servidor. Após validação, extrair intenção para o remoto. Não remover snapshot suspeito antes de validar.
 
@@ -157,7 +169,7 @@ Fontes: PostgreSQL 18 — [JSON](https://www.postgresql.org/docs/18/datatype-jso
 
 ## Formato e leitores vigentes
 
-Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=33; leitura aceita somente envelopes 9–33. O envelope não versiona as regras construtivas: a composição vigente é nominal-v13. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; arquivos incompatíveis não substituem o trabalho aberto; registros IndexedDB anteriores não são consultados nem apagados.
+Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=34; leitura aceita somente envelopes 9–34. O envelope não versiona as regras construtivas: a composição vigente é nominal-v13. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; arquivos incompatíveis não substituem o trabalho aberto; registros IndexedDB anteriores não são consultados nem apagados.
 
 | Envelope lido | Normalização em memória para 30 |
 |---|---|
@@ -341,6 +353,40 @@ location /api/ {
 location / { try_files $uri $uri/ /index.html; }
 location = /index.html { expires -1; }
 ```
+
+#### MIME de módulos JavaScript e cache da prévia PDF
+
+Arquivos `.mjs`, incluindo o worker do PDF.js usado na prévia, devem ser servidos com `Content-Type: application/javascript` ou `text/javascript`. A resposta `application/octet-stream` impede a execução do módulo no navegador e causa falha de visualização do PDF.
+
+No aaPanel, abrir **Files / Arquivos → /www/server/nginx/conf/**, fazer uma cópia de segurança de `mime.types` e editar a entrada JavaScript existente para incluir `mjs`, preservando as demais extensões e tipos:
+
+```nginx
+application/javascript    js mjs;
+```
+
+Se a entrada existente usar `text/javascript`, conservar esse tipo e acrescentar somente a extensão `mjs`. O `nginx.conf` deve incluir o arquivo `mime.types` no contexto `http`; não inserir uma tabela parcial de tipos no site que substitua os demais mapeamentos. Essa configuração deve ser conferida em cada instalação.
+
+No Terminal do aaPanel, validar antes de aplicar:
+
+```sh
+/www/server/nginx/sbin/nginx -t
+```
+
+Somente após `syntax is ok` e `test is successful`, recarregar:
+
+```sh
+/www/server/nginx/sbin/nginx -s reload
+```
+
+Conferir a URL do worker da revisão publicada na aba **Rede / Network** do navegador e consultar seus cabeçalhos, substituindo a URL abaixo pela efetivamente carregada; o hash do nome muda entre builds:
+
+```sh
+curl -sS -I 'https://ecovit.idevs.com.br/assets/pdf.worker.min-HASH.mjs'
+```
+
+Exigir HTTP 200 e um dos tipos JavaScript acima. Depois, recarregar o aplicativo e verificar geração, prévia e download do PDF. Não é necessário reiniciar Node/PM2 ou publicar novamente para aplicar somente essa correção MIME.
+
+Se o Console ainda indicar `application/octet-stream` após a resposta pública estar corrigida, abrir F12 → **Rede / Network**, marcar **Desabilitar cache / Disable cache** e recarregar com **Ctrl + Shift + R**, mantendo as ferramentas abertas. Gerar novamente e conferir os cabeçalhos da requisição do worker. Após validar prévia e download, desmarcar a opção. Se a resposta pública continuar antiga e `CF-Cache-Status` indicar `HIT`, invalidar no Cloudflare somente a URL afetada e conferir novamente.
 
 A API confia em encaminhamento somente do proxy em loopback. O proxy deve substituir X-Forwarded-For pelo IP validado do visitante, sem concatenar valor arbitrário enviado pelo cliente. Se houver outro proxy/CDN, o administrador valida sua cadeia antes de aceitar IPs encaminhados. Headers de segurança devem permanecer efetivos também no HTML e em respostas de erro: no Nginx, add_header de um location pode substituir a herança; repetir/incluir o conjunto comum quando houver diretivas específicas, ou configurar cache por expires. Validar configuração efetiva, HTTPS e ausência de cache de /api. Não expor API/PostgreSQL ou imagens diretamente à internet.
 

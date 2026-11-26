@@ -110,7 +110,7 @@ it("formato 31 preserva textos no arquivo/remoto e normaliza legados sem aceitar
     doc = putText(d, t);
   const loaded = parseFile(serializeFile(doc).text);
   expect(loaded.model.texts).toEqual([t]);
-  expect(loaded.schemaVersion).toBe(33);
+  expect(loaded.schemaVersion).toBe(34);
   expect(importedCopy(loaded).model.texts).toEqual([t]);
   for (const patch of [
     { floorId: crypto.randomUUID() },
@@ -132,7 +132,7 @@ it("formato 31 preserva textos no arquivo/remoto e normaliza legados sem aceitar
   expect(
     validateProject({ ...d, schemaVersion: 30, model: oldModel }).model.texts,
   ).toEqual([]);
-  expect(() => validateProject({ ...doc, schemaVersion: 34 })).toThrow(
+  expect(() => validateProject({ ...doc, schemaVersion: 35 })).toThrow(
     "Formato incompatível",
   );
 });

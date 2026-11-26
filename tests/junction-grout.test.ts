@@ -552,7 +552,7 @@ describe("T-023 padrões nominais de graute nos encontros", () => {
     };
     const source = JSON.stringify(old);
     const restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(33);
+    expect(restored.schemaVersion).toBe(34);
     expect(restored.model.floors.map((f) => f.groutMode)).toEqual([
       "reinforced",
       "reinforced",
@@ -591,7 +591,7 @@ describe("T-023 padrões nominais de graute nos encontros", () => {
           },
         }),
       ).toThrow("estrutura");
-    expect(() => validateProject({ ...doc, schemaVersion: 34 })).toThrow(
+    expect(() => validateProject({ ...doc, schemaVersion: 35 })).toThrow(
       "incompatível",
     );
     const invalid = current(doc);

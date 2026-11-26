@@ -25,6 +25,7 @@ import {
   requireAccountScope,
 } from "./security";
 import { validateIsolated } from "./validation";
+import { learnOpeningPrices } from "./prices";
 
 const uuid = z
   .string()
@@ -470,6 +471,7 @@ export function projectsRoutes(app: FastifyInstance, db: Pool, config: Config) {
       async (client, owner) => {
         const now = new Date().toISOString();
         let createdAt = now;
+        let previousDocument: RemoteProject | undefined;
         if (create) {
           await ensureRoom(client, owner);
           const existing = await client.query(
@@ -484,6 +486,7 @@ export function projectsRoutes(app: FastifyInstance, db: Pool, config: Config) {
             );
         } else {
           const row = await ownedProject(client, owner, id, true);
+          previousDocument = row.document;
           createdAt = row.document.metadata.createdAt;
           if (row.state !== "active")
             throw new ApiError(
@@ -521,6 +524,7 @@ export function projectsRoutes(app: FastifyInstance, db: Pool, config: Config) {
           nextRevision = updated.rows[0].revision;
         }
         await associate(client, owner, id, document);
+        await learnOpeningPrices(client, document, previousDocument);
         return {
           projectId: id,
           revision: nextRevision,

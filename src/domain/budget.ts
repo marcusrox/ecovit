@@ -31,6 +31,14 @@ export function money(cents: number): string {
   return `R$ ${BigInt(whole).toLocaleString("pt-BR")},${fraction}`;
 }
 
+export function materialCosts(values: (number | undefined)[]) {
+  if (values.some((value) => value === undefined)) return {};
+  const sum = values.reduce<bigint>((n, value) => n + BigInt(value!), 0n);
+  return sum <= limit
+    ? { total: Number(sum) }
+    : { error: "Total dos materiais fora da representação numérica segura." };
+}
+
 export function budgetCosts(counts: Counts, prices: UnitPrices) {
   const costs: Partial<Record<(typeof pieceKinds)[number], number>> = {};
   let total = 0n,
