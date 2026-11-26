@@ -168,3 +168,7 @@ Desfazer/refazer restaura o percentual, inclusive ausência. Abrir/reabrir e có
 ### Inclusão dos ambientes nas áreas — 2026-11-26
 
 Alterar `model.roomLabels[].excludedFromAreas` é uma operação room: confirma uma intenção, histórico e salvamento existentes, sem chamar composição. Desfazer/refazer restaura a marca e os totais derivados. Renomear, mover o texto, reconciliar/revalidar a referência e duplicar o pavimento preservam a escolha. O formato 35 e as cópias remotas/arquivos a transportam; ausência preserva inclusão anterior. Somente leitura/processamento bloqueiam a edição.
+
+## Impermeabilizante e rejunte — T-040
+
+project.surface contém somente intenção orçamentária, excluída dos insumos construtivos. Confirmações por Enter/blur usam budget, documento local mais recente, histórico e salvamento em segundo plano existentes, sem recomposição. A cópia de referência grava preço/origem/descrição juntos; preço próprio ou limpeza remove a descrição capturada. Desfazer/refazer restaura todo o conjunto. Percentuais e rendimentos não recebem referência. Rascunhos inválidos não confirmam e impedem captura de PDF até correção; somente leitura/processamento e recuperação mantêm os bloqueios existentes.

@@ -6,6 +6,7 @@ import {
   type PriceReference,
 } from "../domain/price-references";
 import { priceText, parseUnitPrice } from "../domain/budget";
+import { referenceDescriptionSchema } from "../domain/surface-budget";
 import css from "./Admin.module.css";
 
 type PriceJob = {
@@ -13,6 +14,8 @@ type PriceJob = {
   key: string;
   text: string;
   price: number | null;
+  description?: string;
+  descriptionText?: string;
 };
 type PriceRequest = {
   job: PriceJob;
@@ -20,6 +23,8 @@ type PriceRequest = {
     item: PriceReference["item"];
     price: number | null;
     expectedPrice: number | null;
+    description?: string | null;
+    expectedDescription?: string | null;
     operationId: string;
     requestIssuedAt: string;
   };
@@ -40,6 +45,9 @@ export function AdminPrices({
   const [error, setError] = useState(""),
     [message, setMessage] = useState("");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [descriptionDrafts, setDescriptionDrafts] = useState<
+    Record<string, string>
+  >({});
   const [saving, setSaving] = useState(false),
     [failed, setFailed] = useState(false);
   const confirmed = useRef(new Map<string, PriceReference>()),
@@ -78,6 +86,12 @@ export function AdminPrices({
     };
   }, [account, page, revision]);
   function clearDraft(job: PriceJob) {
+    setDescriptionDrafts((previous) => {
+      if (previous[job.key] !== job.descriptionText) return previous;
+      const next = { ...previous };
+      delete next[job.key];
+      return next;
+    });
     setDrafts((previous) => {
       if (previous[job.key] !== job.text) return previous;
       const next = { ...previous };
@@ -100,7 +114,12 @@ export function AdminPrices({
         if (!pending.current) {
           const job = queue.current.shift()!;
           const expectedPrice = confirmed.current.get(job.key)?.price ?? null;
-          if (job.price === expectedPrice) {
+          const expectedDescription =
+            confirmed.current.get(job.key)?.description ?? null;
+          if (
+            job.price === expectedPrice &&
+            (job.description ?? null) === expectedDescription
+          ) {
             clearDraft(job);
             continue;
           }
@@ -110,6 +129,9 @@ export function AdminPrices({
               item: job.item,
               price: job.price,
               expectedPrice,
+              ...(job.item.group === "surface"
+                ? { description: job.description ?? null, expectedDescription }
+                : {}),
               operationId: crypto.randomUUID(),
               requestIssuedAt: requestTime(),
             },
@@ -122,7 +144,13 @@ export function AdminPrices({
           body: request.input,
         });
         if (!alive.current || getAccountScope() !== account) return;
-        const updated = { item: request.job.item, price: request.job.price };
+        const updated: PriceReference = {
+          item: request.job.item,
+          price: request.job.price,
+          ...(request.job.description === undefined
+            ? {}
+            : { description: request.job.description }),
+        };
         confirmed.current.set(request.job.key, updated);
         setData(
           (previous) =>
@@ -158,15 +186,27 @@ export function AdminPrices({
   }
   function save(row: PriceReference) {
     const key = priceItemKey(row.item),
-      text = drafts[key];
-    if (text === undefined) return;
+      text = drafts[key] ?? priceText(row.price ?? undefined);
+    if (drafts[key] === undefined && descriptionDrafts[key] === undefined)
+      return;
     let value: number | undefined;
+    let description: string | undefined;
+    const descriptionText = descriptionDrafts[key] ?? row.description ?? "";
     try {
       value = parseUnitPrice(text);
+      if (row.item.group === "surface" && value !== undefined)
+        description = referenceDescriptionSchema.parse(descriptionText);
     } catch {
       return;
     }
-    const job = { item: row.item, key, text, price: value ?? null };
+    const job: PriceJob = {
+      item: row.item,
+      key,
+      text,
+      price: value ?? null,
+      description,
+      descriptionText,
+    };
     const waiting = queue.current.findIndex((entry) => entry.key === key);
     if (waiting < 0) queue.current.push(job);
     else queue.current[waiting] = job;
@@ -204,9 +244,10 @@ export function AdminPrices({
         </button>
       </div>
       <p>
-        Salvo ao sair do campo ou pressionar Enter. Valores já incorporados aos
-        projetos não mudam. Zero é válido; campo vazio indica referência
-        ausente.
+        Preços sem descrição são salvos ao sair do campo ou pressionar Enter.
+        Para impermeabilizante e rejunte, confirme descrição e preço juntos em
+        Salvar referência ou por Enter. Valores já incorporados aos projetos não
+        mudam. Zero é válido; campo vazio indica referência ausente.
       </p>
       <p>
         Esquadrias aparecem após o primeiro preço confirmado de uma combinação
@@ -227,86 +268,146 @@ export function AdminPrices({
       )}
       {!data && !error && <p role="status">Consultando preços…</p>}
       {data &&
-        ["bricks", "steel", "settlement", "openings"].map((group, index) => (
-          <section key={group}>
-            <h4>
-              {
-                [
-                  "Tijolos · R$/unidade",
-                  "Ferragens · R$/kg",
-                  "Assentamento · R$/embalagem",
-                  "Esquadrias · Preço do conjunto (R$/un.)",
-                ][index]
-              }
-            </h4>
-            {group === "openings" && (
-              <p>
-                Informe a referência por conjunto completo: para portas de
-                madeira, inclua folha, batente, guarnições e ferragens previstas;
-                para as demais portas e janelas, inclua marco, folhas, ferragens
-                e vidro, quando aplicáveis. Não inclua instalação.
-              </p>
-            )}
-            <ul className={css.priceGrid}>
-              {data.references
-                .filter((row) => row.item.group === group)
-                .map((row, index) => {
-                  const key = priceItemKey(row.item),
-                    value = drafts[key] ?? priceText(row.price ?? undefined);
-                  let invalid = "";
-                  try {
-                    parseUnitPrice(value);
-                  } catch (e) {
-                    invalid = (e as Error).message;
-                  }
-                  const id = `reference-price-${group}-${index}`,
-                    errorId = `${id}-error`;
-                  return (
-                    <li key={key} className={css.priceItem}>
-                      <label htmlFor={id}>{priceItemLabel(row.item)}</label>
-                      <span className={css.priceControl}>
-                        <input
-                          id={id}
-                          aria-label={`Referência de ${priceItemLabel(row.item)}`}
-                          inputMode="decimal"
-                          aria-invalid={!!invalid}
-                          aria-describedby={invalid ? errorId : undefined}
-                          placeholder="Não informado"
-                          value={value}
-                          onChange={(e) =>
-                            setDrafts((previous) => ({
-                              ...previous,
-                              [key]: e.target.value,
-                            }))
-                          }
-                          onBlur={() => save(row)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              e.currentTarget.blur();
-                            }
-                          }}
-                        />
-                        {invalid && (
-                          <span
-                            id={errorId}
-                            role="alert"
-                            className={css.priceValidation}
-                          >
-                            {invalid}
-                          </span>
-                        )}
-                      </span>
-                    </li>
-                  );
-                })}
-            </ul>
-            {group === "openings" &&
-              !data.references.some((row) => row.item.group === group) && (
-                <p>Nenhuma esquadria cadastrada nesta página.</p>
+        ["bricks", "steel", "settlement", "openings", "surface"].map(
+          (group, index) => (
+            <section key={group}>
+              <h4>
+                {
+                  [
+                    "Tijolos · R$/unidade",
+                    "Ferragens · R$/kg",
+                    "Assentamento · R$/embalagem",
+                    "Esquadrias · Preço do conjunto (R$/un.)",
+                    "Impermeabilizante e rejunte · R$/embalagem",
+                  ][index]
+                }
+              </h4>
+              {group === "openings" && (
+                <p>
+                  Informe a referência por conjunto completo: para portas de
+                  madeira, inclua folha, batente, guarnições e ferragens
+                  previstas; para as demais portas e janelas, inclua marco,
+                  folhas, ferragens e vidro, quando aplicáveis. Não inclua
+                  instalação.
+                </p>
               )}
-          </section>
-        ))}
+              {group === "surface" && (
+                <p>
+                  Identifique o produto e a embalagem de referência. Preencha a
+                  descrição e o preço e use Salvar referência. O usuário
+                  informará o rendimento no projeto e poderá alterar o preço.
+                </p>
+              )}
+              <ul className={css.priceGrid}>
+                {data.references
+                  .filter((row) => row.item.group === group)
+                  .map((row, index) => {
+                    const key = priceItemKey(row.item),
+                      value = drafts[key] ?? priceText(row.price ?? undefined);
+                    let invalid = "";
+                    const description =
+                      descriptionDrafts[key] ?? row.description ?? "";
+                    try {
+                      const parsed = parseUnitPrice(value);
+                      if (
+                        group === "surface" &&
+                        parsed !== undefined &&
+                        !referenceDescriptionSchema.safeParse(description)
+                          .success
+                      )
+                        throw new Error(
+                          "Informe o produto e a embalagem de referência (até 160 caracteres).",
+                        );
+                    } catch (e) {
+                      invalid = (e as Error).message;
+                    }
+                    const id = `reference-price-${group}-${index}`,
+                      errorId = `${id}-error`;
+                    return (
+                      <li
+                        key={key}
+                        className={`${css.priceItem} ${group === "surface" ? css.surfacePriceItem : ""}`}
+                      >
+                        <label htmlFor={id}>{priceItemLabel(row.item)}</label>
+                        {group === "surface" && (
+                          <label>
+                            Produto e embalagem de referência
+                            <input
+                              aria-label={`Produto e embalagem de referência de ${priceItemLabel(row.item)}`}
+                              maxLength={160}
+                              value={description}
+                              onChange={(e) =>
+                                setDescriptionDrafts((previous) => ({
+                                  ...previous,
+                                  [key]: e.target.value,
+                                }))
+                              }
+                              aria-invalid={!!invalid}
+                              aria-describedby={invalid ? errorId : undefined}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  save(row);
+                                }
+                              }}
+                            />
+                          </label>
+                        )}
+                        <span className={css.priceControl}>
+                          <input
+                            id={id}
+                            aria-label={`Referência de ${priceItemLabel(row.item)}`}
+                            inputMode="decimal"
+                            aria-invalid={!!invalid}
+                            aria-describedby={invalid ? errorId : undefined}
+                            placeholder="Não informado"
+                            value={value}
+                            onChange={(e) =>
+                              setDrafts((previous) => ({
+                                ...previous,
+                                [key]: e.target.value,
+                              }))
+                            }
+                            onBlur={() => {
+                              if (group !== "surface") save(row);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                if (group === "surface") save(row);
+                                else e.currentTarget.blur();
+                              }
+                            }}
+                          />
+                          {invalid && (
+                            <span
+                              id={errorId}
+                              role="alert"
+                              className={css.priceValidation}
+                            >
+                              {invalid}
+                            </span>
+                          )}
+                        </span>
+                        {group === "surface" && (
+                          <button
+                            disabled={saving || failed || !!invalid}
+                            onClick={() => save(row)}
+                          >
+                            Salvar referência de {priceItemLabel(row.item)}
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+              </ul>
+              {group === "openings" &&
+                !data.references.some((row) => row.item.group === group) && (
+                  <p>Nenhuma esquadria cadastrada nesta página.</p>
+                )}
+            </section>
+          ),
+        )}
       <div className={css.actions}>
         <button
           disabled={page === 1 || saving || failed}

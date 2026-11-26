@@ -14,7 +14,9 @@ import {
 import { readFile } from "node:fs/promises";
 let db: ReturnType<typeof database>;
 test.beforeAll(() => {
-  const url = new URL(validateTestDatabaseUrl(process.env.M12_TEST_DATABASE_URL));
+  const url = new URL(
+    validateTestDatabaseUrl(process.env.M12_TEST_DATABASE_URL),
+  );
   url.searchParams.set("options", "-c search_path=m12_browser");
   db = database(url.toString());
 });
@@ -23,8 +25,15 @@ test.afterAll(async () => {
 });
 async function seed(item: PriceItem, value: number) {
   await db.query(
-    "INSERT INTO ecovit_price_references(key,item,price) VALUES($1,$2::jsonb,$3) ON CONFLICT(key) DO UPDATE SET price=EXCLUDED.price",
-    [priceItemKey(item), JSON.stringify(item), value],
+    "INSERT INTO ecovit_price_references(key,item,price,description) VALUES($1,$2::jsonb,$3,$4) ON CONFLICT(key) DO UPDATE SET price=EXCLUDED.price,description=EXCLUDED.description",
+    [
+      priceItemKey(item),
+      JSON.stringify(item),
+      value,
+      item.group === "surface"
+        ? "Produto de referência · embalagem de 5 kg"
+        : null,
+    ],
   );
 }
 async function fixture(page: Page) {
@@ -150,7 +159,7 @@ test(
       initial.history.past.length + 1,
     );
     expect(incorporated.doc.generated).toEqual(initial.doc.generated);
-    expect(incorporated.doc.project.priceSources).toHaveLength(15);
+    expect(incorporated.doc.project.priceSources).toHaveLength(17);
     await close(page);
     await seed({ group: "bricks", key: "half" }, 200);
     await open(page);

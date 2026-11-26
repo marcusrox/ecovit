@@ -552,7 +552,7 @@ describe("T-023 padrões nominais de graute nos encontros", () => {
     };
     const source = JSON.stringify(old);
     const restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(35);
+    expect(restored.schemaVersion).toBe(36);
     expect(restored.model.floors.map((f) => f.groutMode)).toEqual([
       "reinforced",
       "reinforced",

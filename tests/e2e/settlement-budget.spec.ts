@@ -95,6 +95,8 @@ test(
       "R$ 0,00",
       "Indisponível",
       "R$ 0,00",
+      "R$ 0,00",
+      "R$ 0,00",
       "Indisponível",
     ]);
     expect((await snapshot(page)).past).toBe(before.past);
@@ -113,6 +115,8 @@ test(
       "R$ 0,00",
       "R$ 0,00",
       "R$ 210,00",
+      "R$ 0,00",
+      "R$ 0,00",
       "R$ 0,00",
       "R$ 210,00",
     ]);
@@ -137,6 +141,8 @@ test(
       "R$ 0,00",
       "R$ 0,00",
       "R$ 210,00",
+      "R$ 0,00",
+      "R$ 0,00",
       "R$ 0,00",
       "R$ 210,00",
     ]);
@@ -267,6 +273,8 @@ test(
       "R$ 0,00",
       "R$ 280,00",
       "R$ 0,00",
+      "R$ 0,00",
+      "R$ 0,00",
       "R$ 280,00",
     ]);
     await close(page);
@@ -276,7 +284,7 @@ test(
       .click();
     const file = await download,
       loaded = parseFile(await readFile((await file.path())!, "utf8"));
-    expect(loaded.schemaVersion).toBe(35);
+    expect(loaded.schemaVersion).toBe(36);
     expect(loaded.project.settlement?.ac1).toEqual({
       percent: 10000,
       yield: 1500,

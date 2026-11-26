@@ -170,7 +170,7 @@ it("formato 33 preserva dados, preços ausentes do desenho e cópia de pavimento
   let d = fixture();
   d = withOpeningPrice(d, openingOption(d.model.openings[0]), 12345);
   const loaded = parseFile(serializeFile(d).text);
-  expect(loaded.schemaVersion).toBe(35);
+  expect(loaded.schemaVersion).toBe(36);
   expect(loaded.project.openingPrices).toEqual(d.project.openingPrices);
   expect(loaded.model.openings).toEqual(d.model.openings);
   expect(importedCopy(loaded).project.openingPrices).toEqual(
@@ -189,7 +189,7 @@ it("legado 32 abre sem material/preço e recusa campos novos, dados inválidos e
   d.model.openings.forEach((o) => delete o.material);
   const old = { ...d, schemaVersion: 32 },
     before = structuredClone(old);
-  expect(validateProject(old, false).schemaVersion).toBe(35);
+  expect(validateProject(old, false).schemaVersion).toBe(36);
   expect(old).toEqual(before);
   expect(() =>
     validateProject(

@@ -2,7 +2,15 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
-## Ambientes desconsiderados — formato 35 vigente
+## Impermeabilizante e rejunte — formato 36 vigente
+
+Formato 36 acrescenta `project.surface` opcional e estrito, com entradas opcionais waterproofing/jointing. Cada entrada admite percent inteiro 0–10000, yield inteiro positivo seguro em milésimos de m²/embalagem, price em centavos inteiros seguros não negativos e referenceDescription de 1–160 caracteres após trim. A união de identidades de `priceSources` inclui `{group:surface,key:waterproofing|jointing}`. Fonte reference exige preço e descrição capturada; own/cleared não conservam descrição. Cliente/API usam o mesmo leitor e validação de consistência. Parâmetros e descrições acompanham histórico, cópia e transporte; totais não são persistidos.
+
+Normalizar envelopes 9–35 para 36 em memória sem materializar parâmetros, preços ou referências. Recusar surface e novas identidades em envelopes anteriores, inclusive grupo vazio. Leitores anteriores recusam 36 antes de substituir o desenho. Composição nominal-v13 e representação remota 1 permanecem.
+
+A migração SQL 004 adiciona description ao cadastro de referências. Nos itens surface, preço presente exige descrição de produto e embalagem, e limpeza remove ambos; outros grupos não usam descrição. GET administrativo e lookup retornam o par. POST administrativo valida description e expectedDescription, confirma preço/descrição juntos e compara ambos os valores anteriores na transação; mantém autorização revalidada, CSRF, idempotência, conflito e auditoria com descrição anterior/nova. Rendimento e percentual não entram no cadastro. Edições de projeto não contribuem referências destes produtos.
+
+## Ambientes desconsiderados — formato 35
 
 Formato 35 acrescenta `model.roomLabels[].excludedFromAreas` booleano opcional. Ausência/false mantém inclusão; true preserva o ambiente e sua identificação com contribuição útil zero e desconto interno na construída, conforme RF-21/CT-18. Leitor compartilhado normaliza envelopes 9–34 para 35 sem inventar a marca; rejeita esse campo em versões anteriores mesmo false, tipo inválido e propriedades extras. Leitores anteriores recusam 35. Arquivo, histórico, cópias e representação remota 1 conservam a intenção. Sem migração SQL; composição nominal-v13 e insumos construtivos permanecem.
 

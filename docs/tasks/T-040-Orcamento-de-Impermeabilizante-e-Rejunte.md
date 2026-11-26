@@ -4,7 +4,7 @@
 
 **Resumo** — Estime a compra de impermeabilizante e rejunte pela área das paredes, com percentual de aplicação, rendimento e preço por embalagem. Os custos integram o orçamento e o relatório PDF.
 
-**Execução** — Pendente
+**Execução** — Em execução
 
 **Data de execução** — —
 
@@ -12,7 +12,7 @@
 
 ## Alteração e limites
 
-Acrescentar impermeabilizante e rejunte ao Orçamento do próprio aplicativo, após os grupos existentes. Cada produto tem uma linha de parâmetros, sem catálogo de marcas, tipos ou opções comerciais. O usuário escolhe o produto fora do Ecovit e informa seu rendimento; o preço pode vir da referência cadastrada na Administração ou ser informado/alterado pelo usuário no projeto. Esta task especifica a alteração; sua criação não autoriza a implementação.
+Acrescentar impermeabilizante e rejunte ao Orçamento do próprio aplicativo, após os grupos existentes. Cada produto tem uma linha de parâmetros, sem catálogo de marcas, tipos ou opções comerciais. O usuário escolhe o produto fora do Ecovit e informa seu rendimento; o preço pode vir da referência cadastrada na Administração ou ser informado/alterado pelo usuário no projeto. Implementação autorizada pelo solicitante em 26/11/2026.
 
 ### Área de aplicação
 
@@ -84,11 +84,21 @@ Referências: [PRD — Orçamento](../Ecovit-PRD.md), [Caderno Técnico — T-03
 - [ ] **A06** — Resumo, total geral, filtro/detalhamento e PDF incluem os dois novos materiais de forma coerente. Filtrar ou recolher o detalhamento não altera áreas globais, compra ou custos; o PDF inclui todos os pavimentos. Preservar os grupos existentes, a consulta de preços de referência e a estabilidade do status.
 - [ ] **A07** — Parâmetros persistem em reabertura, cópia, arquivo e histórico; edição não recalcula a composição. Somente leitura, salvamento e recuperação seguem os fluxos existentes. Legados permanecem utilizáveis com aplicação inicial de 0%; a nova versão obrigatória do envelope e a validação cliente/API preservam parâmetros, descrições capturadas e estados de origem/limpeza dos preços, recusando dados incompatíveis sem perda silenciosa.
 - [ ] **A08** — Administração permite cadastrar, alterar e limpar as duas referências em R$/embalagem. O Orçamento incorpora somente preços nunca preenchidos, permite edição própria e uso manual da referência vigente, preserva zero e limpeza intencional e não propaga mudanças administrativas automaticamente a preços já incorporados. Edição no projeto não altera o cadastro global; origem e limpeza acompanham histórico, cópia e arquivo. Percentual/rendimento não são preenchidos pela referência, e a interface orienta a correspondência entre preço e rendimento da mesma embalagem. Consulta preserva valores exibidos e espaço do status; somente leitura e PDF não incorporam referências.
-
 - [ ] **A09** — Cada referência com preço cadastrado identifica produto e embalagem por descrição curta na Administração e no Orçamento. Incorporação automática e cópia manual capturam preço e descrição coerentes no projeto, preservados em histórico, cópia, arquivo e PDF; mudança administrativa não renomeia referência já incorporada. Preço próprio ou limpeza retira a identificação associada à referência anterior. Cadastro/alteração mantém preço e descrição consistentes inclusive em conflito, repetição ou falha, sem criar catálogo de variantes.
 
 Escolher a conferência proporcional conforme [Qualidade e Desempenho](../arquitetura/Qualidade-e-Desempenho.md#validação-proporcional-à-alteração), respeitando as instruções do solicitante para a execução. Esta especificação não impõe homologação ampla.
 
 ## Resultado
 
-Task criada com área-base de duas faces descontando vãos e parâmetros de percentual, rendimento por embalagem e preço por embalagem confirmados pelo solicitante para ambos os produtos. Escopo atualizado a pedido do solicitante para incluir referências administrativas dos dois preços, reutilizadas e editáveis no Orçamento conforme a T-039. Revisão aprovada pelo solicitante acrescenta descrição curta do produto e embalagem de referência, distingue aplicação zero de área indisponível, exige nova versão do envelope e corrige o exemplo de compra consolidada para diferenciar o arredondamento por pavimento. Implementação e aceite manual pendentes. Nenhuma alteração funcional ou teste realizado na criação ou atualização desta task.
+Implementação realizada em 26/11/2026, com validação funcional pendente. Aceite manual permanece pendente; os critérios não foram marcados como verificados sem execução funcional.
+
+| Critérios | Implementação e evidência disponível |
+|---|---|
+| A01–A05 | Área compartilhada em wall-budget-area.ts, duas faces, percentuais independentes, compra racional consolidada e rateio em surface-budget.ts. Acrescentados cenários automatizados com os exemplos, zero, indisponibilidade, precisão e limites; não executados. |
+| A06 | SurfaceBudget.tsx integrado à consulta, resumo, detalhe e renderização compartilhada do PDF; rascunhos entram no bloqueio de exportação. Conferência por inspeção, sem navegador ou geração de PDF. |
+| A07 | Formato 36 e validação compartilhada, preservando parâmetros, origem e descrição em histórico/cópia/arquivo; legados normalizados sem preenchimento. Expectativas do formato atual ajustadas na cobertura existente, sem execução. |
+| A08–A09 | Administração confirma preço/descrição juntos; API compara ambos no controle de conflito e mantém autorização, idempotência e auditoria. Migração SQL 004 adicionada. Incorporação/cópia captura descrição, edição própria/limpeza a remove. Cenários de API e domínio adicionados, não executados. |
+
+Verificações estáticas: typecheck e ESLint dos arquivos alterados aprovados; saída, código e duração em .tools/logs/t040-typecheck-final.log, t040-lint.log, t040-lint-final.log e t040-lint-last.log. Diff conferido sem erros de whitespace (.tools/logs/t040-diff-check.log). Não foram executados testes unitários, de API ou navegador, nem build, respeitando a orientação anterior do solicitante de não testar. Estes resultados não confirmam os critérios funcionais nem o aceite manual.
+
+A migração 004 não foi aplicada ao banco do aplicativo durante este trabalho. O servidor local já aberto precisa ser reiniciado pelo solicitante com ./Start-Ecovit.ps1 -Task dev para aplicar as migrações pelo fluxo mantido; o servidor da porta 5173 não foi iniciado, encerrado ou reiniciado pelo Codex. Banco de testes e produção não foram acessados. A extensão do arquivo, da API administrativa e dos novos campos motivou a conferência estática de tipos e lint; não houve ampliação para suíte ou homologação.

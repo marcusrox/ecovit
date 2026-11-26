@@ -6,6 +6,7 @@ import type {
 } from "./composition";
 import type { ClampSettings } from "./clamps";
 import type { TextAnnotation } from "./text";
+import type { SurfaceSettings } from "./surface-budget";
 import type { SettlementSettings } from "./settlement-budget";
 import type { OpeningMaterial, OpeningPrice } from "./opening-budget";
 import type { PriceSources } from "./price-references";
@@ -176,7 +177,7 @@ export type Tool =
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 35;
+  schemaVersion: 36;
   project: {
     id: string;
     name: string;
@@ -189,6 +190,7 @@ export type Project = {
     groutSettings: GroutSettings;
     steelPrices?: SteelPrices;
     settlement?: SettlementSettings;
+    surface?: SurfaceSettings;
     openingPrices?: OpeningPrice[];
     priceSources?: PriceSources;
     brickLossPercent?: number;
@@ -284,7 +286,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 35,
+    schemaVersion: 36,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),

@@ -123,7 +123,13 @@ export function useBudgetReferences(
         throw new Error(
           "Aguarde concluir a operação do projeto antes de usar a referência.",
         );
-      const next = withProjectPrice(s.doc, item, reference.price, "reference");
+      const next = withProjectPrice(
+        s.doc,
+        item,
+        reference.price,
+        "reference",
+        reference.description,
+      );
       if (next !== s.doc) {
         setPriceSaving(true);
         try {
@@ -169,13 +175,16 @@ export function ReferencePriceButton({
 }) {
   const context = useContext(BudgetReferenceContext);
   if (!context) return null;
-  const available = context.references.some(
+  const reference = context.references.find(
     (r) => priceItemKey(r.item) === priceItemKey(item) && r.price !== null,
   );
+  const available = reference !== undefined;
   const hint = available
-    ? item.group === "openings"
-      ? "Usar preço de referência do conjunto completo, sem instalação"
-      : "Usar preço de referência"
+    ? item.group === "surface"
+      ? `Usar preço de referência: ${reference.description}`
+      : item.group === "openings"
+        ? "Usar preço de referência do conjunto completo, sem instalação"
+        : "Usar preço de referência"
     : "Preço de referência indisponível";
   return (
     <span className={styles.referenceHint} data-tooltip={hint}>

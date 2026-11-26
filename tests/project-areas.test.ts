@@ -121,7 +121,7 @@ describe("T-030 áreas do projeto", () => {
     d = addRoomLabel(d, d.model.floors[0].id, p(10000, 10000)).doc;
     const old = { ...d, schemaVersion: 34 };
     const loaded = validateProject(old);
-    expect(loaded.schemaVersion).toBe(35);
+    expect(loaded.schemaVersion).toBe(36);
     expect(loaded.model.roomLabels[0].excludedFromAreas).toBeUndefined();
     d.model.roomLabels[0].excludedFromAreas = true;
     expect(validateProject(d).model.roomLabels[0].excludedFromAreas).toBe(true);

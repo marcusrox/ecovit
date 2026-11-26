@@ -291,7 +291,7 @@ test(
       await readFile((await (await exported).path())!, "utf8"),
     );
     expect(downloaded.model.floors).toEqual(doc.model.floors);
-    expect(downloaded.schemaVersion).toBe(35);
+    expect(downloaded.schemaVersion).toBe(36);
     await page.reload();
     await page.getByText(doc.project.name, { exact: true }).click();
     await expect(page.getByRole("status")).toContainText("Salvo");

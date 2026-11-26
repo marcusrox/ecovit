@@ -17,6 +17,7 @@ import {
   openingMaterialSchema,
   openingPricesSchema,
 } from "../domain/opening-budget";
+import { surfaceSettingsSchema } from "../domain/surface-budget";
 import { textSchema } from "../domain/text";
 import {
   priceSourcesSchema,
@@ -214,7 +215,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(35),
+    schemaVersion: z.literal(36),
     project: z
       .object({
         id,
@@ -228,6 +229,7 @@ const schema = z
         brickLossPercent: cents.optional(),
         openingPrices: openingPricesSchema.optional(),
         priceSources: priceSourcesSchema.optional(),
+        surface: surfaceSettingsSchema.optional(),
         settlement: z
           .object({
             ac1: settlementProduct,
@@ -627,6 +629,29 @@ export function validateProject(
   value: unknown,
   checkGenerated = true,
 ): Project {
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion <= 35 &&
+    "project" in value &&
+    value.project &&
+    typeof value.project === "object"
+  ) {
+    const old = value.project as {
+      surface?: unknown;
+      priceSources?: { item?: { group?: string } }[];
+    };
+    if (
+      "surface" in old ||
+      (Array.isArray(old.priceSources) &&
+        old.priceSources.some((p) => p?.item?.group === "surface"))
+    )
+      throw new Error(
+        "Arquivo inválido: materiais de superfície em formato anterior.",
+      );
+  }
   if (
     value &&
     typeof value === "object" &&
@@ -1104,10 +1129,11 @@ export function validateProject(
       value.schemaVersion !== 32 &&
       value.schemaVersion !== 33 &&
       value.schemaVersion !== 34 &&
-      value.schemaVersion !== 35)
+      value.schemaVersion !== 35 &&
+      value.schemaVersion !== 36)
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 35; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 36; demais formatos não são convertidos.",
     );
   if (
     value.schemaVersion === 24 ||
@@ -1166,6 +1192,13 @@ export function validateProject(
     value.schemaVersion === 34
   )
     value = { ...value, schemaVersion: 35 };
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 35
+  )
+    value = { ...value, schemaVersion: 36 };
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");

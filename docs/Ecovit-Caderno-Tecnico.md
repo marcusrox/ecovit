@@ -1,5 +1,13 @@
 # Ecovit — Caderno técnico
 
+## T-040 — Impermeabilizante e rejunte por área das duas faces
+
+Convenção nominal confirmada pelo solicitante: área-base B = 2 × área líquida de paredes da T-035, incluindo o desconto da união dos vãos uma única vez em cada face. Não alterar a área de assentamento. O percentual p de cada produto é independente, entre 0 e 100%, e a área destinada A = B × p / 100. É estimativa uniforme por pavimento, sem identificar paredes externas ou regiões específicas; 50% não comprova correspondência com fachadas.
+
+Rendimento R é informado pelo usuário em m² por embalagem para o tratamento completo (todas as demãos/aplicações previstas), sem padrão de fabricante. Compra global N = teto(A/R), custo C = N × preço por embalagem. Não exigir peso/volume, acrescentar demãos/perdas ou incluir instalação/mão de obra. Usar cálculo racional exato e arredondar somente a compra global de cada produto; não calcular a compra por áreas arredondadas. Para custo local, aplicar a conciliação de centavos e os desempates T-035 às áreas de aplicação, incluindo sobras.
+
+Exemplos independentes: 100 m² líquidos de paredes dão B=200 m². Impermeabilizante a 50%, R=30 m²/embalagem e preço R$150 → A=100 m², quatro embalagens, R$600. Rejunte a 45%, R=20 m²/embalagem e preço R$80 → A=90 m², cinco embalagens, R$400. Dois andares com 10 e 20 m² de aplicação e R=30 m²/embalagem a R$150 compram uma embalagem global, com rateios R$50 e R$100; arredondar cada andar compraria incorretamente duas. Estes parâmetros são ilustrativos, sem recomendação de produto ou comprovação de consumo físico.
+
 ## T-035 — Convenção nominal de área e consumo de assentamento
 
 A área orçamentária de cada parede é comprimento entre `a`/`b` × altura confirmada, menos a união dos retângulos dos vãos no plano longitudinal/vertical dessa parede, recortados a seus limites. Posição/base dos vãos seguem o modelo vigente. Interseções de vãos não são descontadas duas vezes. Somar paredes uma vez por identidade em cada pavimento, e pavimentos para o projeto. Não considerar espessura, volume, área de ambientes, furos dos tijolos, grautes, quantidade de peças ou soma das duas faces. Não descontar encontros em L/T/cruz ou reparar diagnósticos de sobreposição. Exemplo: comprimentos 4 e 3 m com altura 3 m somam 21 m² brutos; vão de 2 m² deixa 19 m², independentemente da espessura. Convenção aprovada pelo solicitante, sem comprovação de consumo físico.

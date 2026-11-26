@@ -120,9 +120,7 @@ it("projeta a mesma revisão dos quatro grupos, todos os pavimentos e fiadas, se
     result.indexOf('aria-labelledby="budget-bricks-title"'),
   );
   const text = content(result);
-  expect(text).toContain(
-    `Total dos materiais orçados (tijolos + ferragens + assentamento + esquadrias) ${money(total.total!)}`,
-  );
+  expect(text).toContain(`Total dos materiais orçados ${money(total.total!)}`);
   expect(text).toContain("Superior vazio");
   expect(text).toContain("280");
   expect(text).toContain("19:00:00");
@@ -153,9 +151,7 @@ it("distingue ausência, zero, configuração faltante e não inclui preços de 
   expect(text).toContain("Não informado");
   expect(text).toContain("R$ 0,00");
   expect(text).not.toContain("R$ 999,99");
-  expect(text).toContain(
-    "Total dos materiais orçados (tijolos + ferragens + assentamento + esquadrias) Indisponível",
-  );
+  expect(text).toContain("Total dos materiais orçados Indisponível");
   delete doc.model.openings[0].material;
   expect(content(sharedBudgetPresentation(doc, emitted))).toContain(
     "Defina material nas propriedades.",
@@ -194,9 +190,7 @@ it("limites monetários não viram totais completos e preservam grupos independe
   doc.project.unitPrices!.whole = Number.MAX_SAFE_INTEGER;
   const text = content(sharedBudgetPresentation(doc, emitted));
   expect(text).toContain("Custo fora da representação numérica segura");
-  expect(text).toContain(
-    "Total dos materiais orçados (tijolos + ferragens + assentamento + esquadrias) Indisponível",
-  );
+  expect(text).toContain("Total dos materiais orçados Indisponível");
   expect(text).toContain("R$ 123,45");
   expect(materialCosts([Number.MAX_SAFE_INTEGER, 1]).error).toContain(
     "representação numérica segura",

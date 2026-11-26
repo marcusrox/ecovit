@@ -31,6 +31,11 @@ import {
   SteelBudgetSummary,
   SteelBudgetDetail,
 } from "./SteelBudget";
+import {
+  useSurfaceBudget,
+  SurfaceBudgetSummary,
+  SurfaceBudgetDetail,
+} from "./SurfaceBudget";
 import styles from "../ui/App.module.css";
 import {
   useOpeningBudget,
@@ -274,6 +279,14 @@ export function Quantities({
     setPriceSaving,
   );
   const openings = useOpeningBudget(doc, busy, readonly || references.working);
+  const surface = useSurfaceBudget(
+    doc,
+    open,
+    busy,
+    readonly || references.working,
+    priceSaving,
+    setPriceSaving,
+  );
   const totals = [
     {
       label: "Subtotal de tijolos",
@@ -296,6 +309,17 @@ export function Quantities({
       partial: false,
     },
   ];
+  totals.push(
+    ...surface.report.rows.map((row) => ({
+      label:
+        row.key === "waterproofing"
+          ? "Subtotal de impermeabilizante"
+          : "Subtotal de rejunte",
+      value: row.cost,
+      partial:
+        surface.report.partial && (surface.settings[row.key]?.percent ?? 0) > 0,
+    })),
+  );
   const { total: materialTotal, error: materialError } = materialCosts(
     totals.map((t) => t.value),
   );
@@ -305,7 +329,8 @@ export function Quantities({
       Object.keys(drafts).length > 0 ||
       Object.keys(steel.drafts).length > 0 ||
       Object.keys(settlement.drafts).length > 0 ||
-      Object.keys(openings.drafts).length > 0,
+      Object.keys(openings.drafts).length > 0 ||
+      Object.keys(surface.drafts).length > 0,
     referenceWorking: references.working,
   };
   async function exportPdf() {
@@ -437,9 +462,10 @@ export function Quantities({
               </p>
               <p className={styles.note}>
                 Quantitativos e estimativa de custos de tijolos, ferragens,
-                materiais de assentamento e esquadrias do projeto, com base nos
-                preços informados e nas perdas de tijolos definidas. Inclui
-                resumo dos materiais e detalhamento por pavimento e fiada.
+                materiais de assentamento, esquadrias, impermeabilizante e
+                rejunte do projeto, com base nos preços informados e nas perdas
+                de tijolos definidas. Inclui resumo dos materiais e detalhamento
+                por pavimento e fiada.
               </p>
             </header>
             <p data-print-omit className={styles.note}>
@@ -503,8 +529,7 @@ export function Quantities({
                 ))}
                 <div>
                   <dt>
-                    Total dos materiais orçados (tijolos + ferragens +
-                    assentamento + esquadrias)
+                    Total dos materiais orçados
                     {totals.some((t) => t.partial) ? " · parcial" : ""}
                   </dt>
                   <dd>
@@ -520,7 +545,9 @@ export function Quantities({
                   O total depende de quantitativos disponíveis, massas
                   cadastradas, perdas de tijolos válidas, distribuição de
                   assentamento completa, tipo/material de esquadrias definidos e
-                  preços informados para os materiais utilizados. Preço zero é
+                  preços informados para os materiais utilizados, além de
+                  rendimento e preço por embalagem de impermeabilizante e
+                  rejunte quando sua aplicação for maior que zero. Preço zero é
                   diferente de preço ausente.
                 </p>
               )}
@@ -719,6 +746,7 @@ export function Quantities({
               <SteelBudgetSummary model={steel} />
               <SettlementBudgetSummary model={settlement} />
               <OpeningBudgetSummary model={openings} />
+              <SurfaceBudgetSummary model={surface} />
             </section>
             {!printing && (
               <button
@@ -784,6 +812,13 @@ export function Quantities({
                     floorId={f.id}
                   />
                 ))}
+              {consultedDocumentFloors.map((f) => (
+                <SurfaceBudgetDetail
+                  key={`surface:${f.id}`}
+                  model={surface}
+                  floorId={f.id}
+                />
+              ))}
               {report.available && consultedFloors.length > 0 && (
                 <>
                   <p>

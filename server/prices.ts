@@ -12,6 +12,7 @@ import {
   priceSource,
   referenceCents,
 } from "../src/domain/price-references";
+import { referenceDescriptionSchema } from "../src/domain/surface-budget";
 import type { RemoteProject } from "../src/persistence/remote-document";
 import type { Config } from "./config";
 import { transaction } from "./db";
@@ -53,10 +54,34 @@ const patchSchema = z
     item: priceItemSchema,
     price: referenceCents.nullable(),
     expectedPrice: referenceCents.nullable(),
+    description: referenceDescriptionSchema.nullable().optional(),
+    expectedDescription: referenceDescriptionSchema.nullable().optional(),
     operationId: z.string().uuid(),
     requestIssuedAt: z.string().datetime(),
   })
-  .strict();
+  .strict()
+  .superRefine((input, ctx) => {
+    if (input.item.group === "surface") {
+      if (
+        (input.price !== null) !== (input.description != null) ||
+        input.expectedDescription === undefined
+      )
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Informe produto e embalagem da referência com preço e seu valor anterior.",
+        });
+    } else if (
+      input.description !== undefined ||
+      input.expectedDescription !== undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Descrição permitida somente para impermeabilizante e rejunte.",
+      });
+    }
+  });
 export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
   async function user(request: FastifyRequest) {
     const account = await identity(db, request, config);
@@ -73,12 +98,13 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
       .strict()
       .parse(request.body);
     const result = await db.query(
-      "SELECT item,price::text FROM ecovit_price_references WHERE key=ANY($1::text[])",
+      "SELECT item,price::text,description FROM ecovit_price_references WHERE key=ANY($1::text[])",
       [[...new Set(items.map(priceItemKey))]],
     );
     return {
       references: result.rows.map((r) => ({
         item: r.item,
+        ...(r.description == null ? {} : { description: r.description }),
         price: r.price === null ? null : Number(r.price),
       })),
     };
@@ -91,10 +117,10 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
       .strict()
       .parse(request.query);
     const fixed = await db.query(
-      "SELECT key,item,price::text FROM ecovit_price_references WHERE item->>'group'<>'openings'",
+      "SELECT key,item,price::text,description FROM ecovit_price_references WHERE item->>'group'<>'openings'",
     );
     const openings = await db.query(
-      "SELECT item,price::text FROM ecovit_price_references WHERE item->>'group'='openings' ORDER BY key LIMIT 26 OFFSET $1",
+      "SELECT item,price::text,description FROM ecovit_price_references WHERE item->>'group'='openings' ORDER BY key LIMIT 26 OFFSET $1",
       [(page - 1) * 25],
     );
     const map = new Map(fixed.rows.map((r) => [r.key, r]));
@@ -102,6 +128,9 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
       references: [
         ...fixedPriceItems.map((item) => ({
           item,
+          ...(map.get(priceItemKey(item))?.description == null
+            ? {}
+            : { description: map.get(priceItemKey(item))!.description }),
           price:
             map.get(priceItemKey(item))?.price === undefined ||
             map.get(priceItemKey(item))?.price === null
@@ -110,6 +139,7 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
         })),
         ...openings.rows.slice(0, 25).map((r) => ({
           item: r.item,
+          ...(r.description == null ? {} : { description: r.description }),
           price: r.price === null ? null : Number(r.price),
         })),
       ],
@@ -155,7 +185,7 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
       );
       const row = (
         await client.query(
-          "SELECT price::text FROM ecovit_price_references WHERE key=$1 FOR UPDATE",
+          "SELECT price::text,description FROM ecovit_price_references WHERE key=$1 FOR UPDATE",
           [key],
         )
       ).rows[0];
@@ -166,22 +196,31 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
           "A esquadria ainda não foi cadastrada por uso em projeto.",
         );
       const current = row?.price == null ? null : Number(row.price);
-      if (current !== input.expectedPrice)
+      if (
+        current !== input.expectedPrice ||
+        (input.item.group === "surface" &&
+          (row?.description ?? null) !== input.expectedDescription)
+      )
         throw new ApiError(
           409,
           "price_changed",
           "A referência mudou. Atualize a consulta antes de confirmar outro valor.",
         );
       await client.query(
-        "INSERT INTO ecovit_price_references(key,item,price) VALUES($1,$2::jsonb,$3) ON CONFLICT(key) DO UPDATE SET price=EXCLUDED.price,updated_at=clock_timestamp()",
-        [key, JSON.stringify(input.item), input.price],
+        "INSERT INTO ecovit_price_references(key,item,price,description) VALUES($1,$2::jsonb,$3,$4) ON CONFLICT(key) DO UPDATE SET price=EXCLUDED.price,description=EXCLUDED.description,updated_at=clock_timestamp()",
+        [
+          key,
+          JSON.stringify(input.item),
+          input.price,
+          input.description ?? null,
+        ],
       );
       await client.query(
         "INSERT INTO ecovit_admin_audit(id,actor_id,target_id,source,action,reason,outcome,operation_id,fingerprint) VALUES($1,$2,$2,'panel','price',$3,'success',$4,$5)",
         [
           randomUUID(),
           actor.id,
-          `Referência ${priceItemLabel(input.item)}: ${current ?? "ausente"} → ${input.price ?? "ausente"} centavos.`,
+          `Referência ${priceItemLabel(input.item)}: ${current ?? "ausente"} → ${input.price ?? "ausente"} centavos.${input.item.group === "surface" ? ` Produto/embalagem: ${row?.description ?? "ausente"} → ${input.description ?? "ausente"}.` : ""}`,
           input.operationId,
           fingerprint,
         ],
