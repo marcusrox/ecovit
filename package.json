@@ -25,7 +25,8 @@
     "test:e2e:load": "node --import tsx scripts/run-e2e-group.ts load",
     "test:env": "node --import tsx scripts/test-environment.ts prepare",
     "test:env:check": "node --import tsx scripts/test-environment.ts check",
-    "test:env:stop": "node --import tsx scripts/test-environment.ts stop"
+    "test:env:stop": "node --import tsx scripts/test-environment.ts stop",
+    "test:formats": "vitest run tests/project-format.test.ts tests/project-copy.test.ts tests/floors.test.ts tests/channel-reinforcement.test.ts tests/clamps.test.ts tests/junction-grout.test.ts tests/opening-budget.test.ts tests/settlement-budget.test.ts tests/slabs.test.ts tests/steel-budget.test.ts tests/text.test.ts tests/budget.test.ts tests/price-references.test.ts tests/surface-budget.test.ts tests/image-elements.test.ts tests/measurements.test.ts tests/rooms.test.ts tests/project-areas.test.ts tests/reference-image.test.ts tests/terrain.test.ts tests/terrain-compass.test.ts tests/opening-appearance.test.ts tests/floor-reinforcement-draft.test.ts --testNamePattern=\"contrato de formatos|leitor|formato|legado|migra|transporte|cópia|versões futuras|EX-63\""
   },
   "dependencies": {
     "fastify": "5.12.7",

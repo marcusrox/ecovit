@@ -1,4 +1,9 @@
 import {
+  CURRENT_PROJECT_FORMAT,
+  MIN_SUPPORTED_PROJECT_FORMAT,
+  isSupportedProjectFormat,
+} from "../domain/project-format";
+import {
   validRoomBoundary,
   validRoomPoint,
   roomGeometry,
@@ -215,7 +220,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(37),
+    schemaVersion: z.literal(CURRENT_PROJECT_FORMAT),
     project: z
       .object({
         id,
@@ -629,6 +634,15 @@ export function validateProject(
   value: unknown,
   checkGenerated = true,
 ): Project {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    !("schemaVersion" in value) ||
+    !isSupportedProjectFormat(value.schemaVersion)
+  )
+    throw new Error(
+      `Formato incompatível. Use um projeto de versão ${MIN_SUPPORTED_PROJECT_FORMAT} a ${CURRENT_PROJECT_FORMAT}; demais formatos não são convertidos.`,
+    );
   if (
     value &&
     typeof value === "object" &&
@@ -1138,23 +1152,11 @@ export function validateProject(
     !value ||
     typeof value !== "object" ||
     !("schemaVersion" in value) ||
-    (value.schemaVersion !== 24 &&
-      value.schemaVersion !== 25 &&
-      value.schemaVersion !== 26 &&
-      value.schemaVersion !== 27 &&
-      value.schemaVersion !== 28 &&
-      value.schemaVersion !== 29 &&
-      value.schemaVersion !== 30 &&
-      value.schemaVersion !== 31 &&
-      value.schemaVersion !== 32 &&
-      value.schemaVersion !== 33 &&
-      value.schemaVersion !== 34 &&
-      value.schemaVersion !== 35 &&
-      value.schemaVersion !== 36 &&
-      value.schemaVersion !== 37)
+    !isSupportedProjectFormat(value.schemaVersion) ||
+    value.schemaVersion < 24
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 37; demais formatos não são convertidos.",
+      `Formato incompatível. Use um projeto de versão ${MIN_SUPPORTED_PROJECT_FORMAT} a ${CURRENT_PROJECT_FORMAT}; demais formatos não são convertidos.`,
     );
   if (
     value.schemaVersion === 24 ||

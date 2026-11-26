@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { describe, expect, it } from "vitest";
 import {
   createProject,
@@ -273,7 +274,7 @@ describe("T-025 grampos nominais", () => {
     delete old.generated.floors[0].clamps;
     const source = structuredClone(old),
       restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(37);
+    expect(restored.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(restored.generated).toBeNull();
     expect(restored.model.floors[0].clamps).toBeUndefined();
     expect(old).toEqual(source);
@@ -294,8 +295,8 @@ describe("T-025 grampos nominais", () => {
     const bad = structuredClone(d);
     bad.generated!.floors[0].clamps!.pop();
     expect(() => validateProject(bad)).toThrow("inconsistente");
-    expect(() => validateProject({ ...d, schemaVersion: 36 })).toThrow(
-      "incompatível",
-    );
+    expect(() =>
+      validateProject({ ...d, schemaVersion: CURRENT_PROJECT_FORMAT + 1 }),
+    ).toThrow("incompatível");
   });
 });

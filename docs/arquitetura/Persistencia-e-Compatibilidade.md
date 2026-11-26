@@ -2,6 +2,10 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
+## Versão vigente e faixa suportada
+
+`src/domain/project-format.ts` é a fonte única de CURRENT_PROJECT_FORMAT e MIN_SUPPORTED_PROJECT_FORMAT. Criação, tipo Project, schema do leitor e identificação de compatibilidade usam essas definições e isSupportedProjectFormat, que aceita somente inteiros na faixa inclusiva. O leitor verifica a versão original antes das migrações. Fronteiras e passos históricos continuam com números explícitos: aumentar a versão vigente não substitui a implementação da migração correspondente. Testes de versão atual usam a constante; testes de versão futura usam CURRENT_PROJECT_FORMAT + 1, preservando os casos históricos fixos.
+
 ## Produto e embalagem editáveis — formato 37 vigente
 
 Formato 37 acrescenta productDescription opcional às entradas de project.surface: texto com trim e até 160 caracteres, inclusive vazio para representar limpeza intencional. É a identificação editável do produto/embalagem no projeto, independente da origem do preço. Referências copiadas preenchem preço, referência capturada e descrição editável juntos; preço próprio ou limpeza preserva productDescription e remove somente referenceDescription. A identidade das referências e as fórmulas permanecem.

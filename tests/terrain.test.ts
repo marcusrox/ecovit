@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { beforeEach, expect, it, vi } from "vitest";
 vi.mock("../src/persistence/remote", () => ({
   forgetProject: vi.fn(),
@@ -271,7 +272,7 @@ it("M11 formato vigente conserva terreno e lê 9–16 sem mutação ou campos no
     }
     const before = JSON.stringify(old);
     expect(validateProject(old).model.terrain).toBeNull();
-    expect(validateProject(old).schemaVersion).toBe(37);
+    expect(validateProject(old).schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(JSON.stringify(old)).toBe(before);
     expect(() =>
       validateProject({ ...old, model: { ...old.model, terrain: null } }),

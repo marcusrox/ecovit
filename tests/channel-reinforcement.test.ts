@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { describe, expect, it } from "vitest";
 import {
   createProject,
@@ -256,7 +257,7 @@ describe("T-026 armaduras longitudinais nominais", () => {
     delete old.generated.floors[0].reinforcement;
     const source = structuredClone(old),
       loaded = validateProject(old);
-    expect(loaded.schemaVersion).toBe(37);
+    expect(loaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(loaded.model.floors[0].channelReinforcement).toBeUndefined();
     expect(loaded.generated).toBeNull();
     expect(old).toEqual(source);
@@ -276,8 +277,8 @@ describe("T-026 armaduras longitudinais nominais", () => {
     const bad = structuredClone(d);
     bad.generated!.floors[0].reinforcement![0].count = 7;
     expect(() => validateProject(bad)).toThrow("inconsistente");
-    expect(() => validateProject({ ...d, schemaVersion: 36 })).toThrow(
-      "incompatível",
-    );
+    expect(() =>
+      validateProject({ ...d, schemaVersion: CURRENT_PROJECT_FORMAT + 1 }),
+    ).toThrow("incompatível");
   });
 });

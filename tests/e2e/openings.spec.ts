@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../../src/domain/project-format";
 import { login } from "./auth";
 import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
@@ -136,7 +137,7 @@ test(
       "window",
       "opening",
     ]);
-    expect(initial.schemaVersion).toBe(37);
+    expect(initial.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(initial.generated!.convention).toBe("nominal-v13");
     await page
       .getByRole("button", { name: "Selecionar", exact: false })

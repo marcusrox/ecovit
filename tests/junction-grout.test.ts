@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { describe, expect, it } from "vitest";
 import {
   createProject,
@@ -552,7 +553,7 @@ describe("T-023 padrões nominais de graute nos encontros", () => {
     };
     const source = JSON.stringify(old);
     const restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(37);
+    expect(restored.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(restored.model.floors.map((f) => f.groutMode)).toEqual([
       "reinforced",
       "reinforced",
@@ -591,9 +592,9 @@ describe("T-023 padrões nominais de graute nos encontros", () => {
           },
         }),
       ).toThrow("estrutura");
-    expect(() => validateProject({ ...doc, schemaVersion: 36 })).toThrow(
-      "incompatível",
-    );
+    expect(() =>
+      validateProject({ ...doc, schemaVersion: CURRENT_PROJECT_FORMAT + 1 }),
+    ).toThrow("incompatível");
     const invalid = current(doc);
     invalid.generated!.floors[0].grouts!.pop();
     expect(() => validateProject(invalid)).toThrow("inconsistente");

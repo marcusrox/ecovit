@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { describe, it, expect } from "vitest";
 import { createProject, makeWall } from "../src/domain/project";
 import { editFloor, duplicateFloor } from "../src/domain/floors";
@@ -37,7 +38,7 @@ describe("Confirmação conjunta das ferragens", () => {
     const copy = duplicateFloor(next, floor.id, 14000, "Superior");
     expect(copy.model.floors[1].groutDiameter).toBe(125);
     const restored = parseFile(serializeFile(copy).text);
-    expect(restored.schemaVersion).toBe(37);
+    expect(restored.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(restored.model.floors.map((f) => f.groutDiameter)).toEqual([
       125, 125,
     ]);
@@ -69,7 +70,7 @@ describe("Confirmação conjunta das ferragens", () => {
     const old = { ...doc, schemaVersion: 24 };
     const source = JSON.stringify(old);
     const loaded = validateProject(old);
-    expect(loaded.schemaVersion).toBe(37);
+    expect(loaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(loaded.model.floors[0]).toEqual(floor);
     expect(JSON.stringify(old)).toBe(source);
     const draft = floorReinforcementDraft(loaded.model.floors[0], loaded);

@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../../src/domain/project-format";
 import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
 import {
@@ -174,7 +175,7 @@ test(
     await opening(page);
     const before = await exported(page),
       slab = before.model.slabs[0];
-    expect(before.schemaVersion).toBe(37);
+    expect(before.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(slab.openings).toHaveLength(1);
     await page
       .getByLabel("Selecionar elemento", { exact: true })

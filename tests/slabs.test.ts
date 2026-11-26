@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { describe, expect, it } from "vitest";
 import {
   createProject,
@@ -411,7 +412,7 @@ describe("CT-13 / EX-65–74", () => {
     expect(copy.openings[0].id).not.toBe(slab.openings[0].id);
     const changed = editFloor(copied, copy.floorId, { level: -2100 });
     expect(changed.model.slabs.find((s) => s.id === copy.id)).toEqual(copy);
-    expect(validateProject(changed).schemaVersion).toBe(37);
+    expect(validateProject(changed).schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(removeFloor(copied, copy.floorId).model.slabs).toEqual([slab]);
     const local = floorView(copied, copy.floorId);
     expect(local.model.slabs).toEqual([copy]);
@@ -573,7 +574,7 @@ describe("T-029 configuração nominal da laje", () => {
       model: { ...doc.model, slabs: [{ ...slab, thickness: 1401 }] },
     };
     const loaded = validateProject(legacy);
-    expect(loaded.schemaVersion).toBe(37);
+    expect(loaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(loaded.model.slabs[0].thickness).toBe(1401);
     expect(loaded.model.slabs[0]).not.toHaveProperty("construction");
     expect(legacy.schemaVersion).toBe(26);
@@ -592,9 +593,9 @@ describe("T-029 configuração nominal da laje", () => {
         },
       }),
     ).toThrow("formato anterior");
-    expect(() => validateProject({ ...doc, schemaVersion: 36 })).toThrow(
-      "incompatível",
-    );
+    expect(() =>
+      validateProject({ ...doc, schemaVersion: CURRENT_PROJECT_FORMAT + 1 }),
+    ).toThrow("incompatível");
   });
 
   it("transporta configurações e copia pavimentos/projeto sem vínculo", () => {

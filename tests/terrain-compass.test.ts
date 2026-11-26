@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { expect, it } from "vitest";
 import { createProject, LIMIT, type Terrain } from "../src/domain/project";
 import {
@@ -39,7 +40,7 @@ it("rosa inicia desligada em arquivos anteriores; ativação cria posição e ta
     old = { ...d, model: { ...d.model }, schemaVersion: 17 };
   Reflect.deleteProperty(old.model, "roomLabels");
   Reflect.deleteProperty(old.model, "roomBoundaries");
-  expect(validateProject(old).schemaVersion).toBe(37);
+  expect(validateProject(old).schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
   expect(validateProject(old).model.terrain?.compass).toBeUndefined();
   expect(old.schemaVersion).toBe(17);
   const c = initialCompass(d.model.terrain!);

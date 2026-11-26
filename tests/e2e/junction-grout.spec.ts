@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../../src/domain/project-format";
 import { openFerragens, closeFerragens } from "./floor-reinforcement-helpers";
 import { test, expect, blockEditing, type Page } from "./auth";
 import {
@@ -202,7 +203,7 @@ test(
       .click();
     const file = await download;
     const loaded = parseFile(await readFile((await file.path())!, "utf8"));
-    expect(loaded.schemaVersion).toBe(37);
+    expect(loaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(loaded.model.floors.map((f) => f.groutMode)).toEqual([
       "simple",
       "reinforced",

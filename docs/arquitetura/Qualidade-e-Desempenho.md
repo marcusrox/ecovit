@@ -38,6 +38,8 @@ Uma correção pontual revalida os critérios afetados, sem reiniciar os demais.
 
 Selecionar tipos/lint/build pelo contrato tocado. Build é pertinente a compilação, configuração, dependências ou empacotamento, ou a pedido explícito, e já inclui typecheck. Não repetir os dois nem executar build por padrão para texto. Preferir ferramentas e testes existentes; não introduzir biblioteca, fixture ou serviço só para uma conferência trivial. Registrar em uma frase o recorte e, se houver, a razão da ampliação. Aceite manual continua separado do resultado técnico.
 
+O recorte mantido `test:formats` seleciona os cenários de leitura, migração, versões futuras, cópia e transporte dos contratos de arquivo. É a conferência direcionada para mudanças de formato; não inicia banco ou navegador e não substitui homologação completa quando solicitada. A política de versões fica em project-format.ts; cenários históricos conservam suas fronteiras numéricas, enquanto expectativas de versão atual/futura acompanham a constante vigente.
+
 ## Falhas do ambiente
 
 Após a primeira falha aparentemente ambiental, permitir até **2 minutos de diagnóstico adicional** e **no máximo uma reexecução**, somente após identificar e corrigir uma causa reversível/autorizada. Sem evidência de mudança, não repetir. Esse limite não encurta testes legítimos em andamento nem altera seus timeouts. Erro de asserção ou possivelmente causado pela alteração é regressão a investigar, não atalho para dispensar teste.

@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { beforeEach, expect, it, vi } from "vitest";
 vi.mock("../src/persistence/remote", () => ({
   forgetProject: vi.fn(),
@@ -119,7 +120,7 @@ it("M7 formato 16 preserva afastamento em arquivo/cópia/pavimento e lê 15 sem 
   Reflect.deleteProperty(old.model, "roomBoundaries");
   delete old.model.measurements[0].offset;
   const original = JSON.stringify(old);
-  expect(validateProject(old).schemaVersion).toBe(37);
+  expect(validateProject(old).schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
   expect(JSON.stringify(old)).toBe(original);
   expect(
     measurementGeometry(validateProject(old).model.measurements[0]).a,

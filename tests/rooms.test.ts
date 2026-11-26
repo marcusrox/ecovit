@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../src/persistence/remote", () => ({
   forgetProject: vi.fn(),
@@ -410,7 +411,7 @@ describe("T-018 referências e intenção", () => {
     old.schemaVersion = 18;
     delete old.model.roomLabels;
     delete old.model.roomBoundaries;
-    expect(validateProject(old).schemaVersion).toBe(37);
+    expect(validateProject(old).schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(validateProject(old).model.roomLabels).toEqual([]);
     old.model.roomLabels = [];
     expect(() => validateProject(old)).toThrow(/anterior/);

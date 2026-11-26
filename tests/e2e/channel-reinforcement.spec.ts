@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../../src/domain/project-format";
 import { openFerragens, closeFerragens } from "./floor-reinforcement-helpers";
 import { test, expect, rejectSaves, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
@@ -291,7 +292,7 @@ test(
       await readFile((await (await exported).path())!, "utf8"),
     );
     expect(downloaded.model.floors).toEqual(doc.model.floors);
-    expect(downloaded.schemaVersion).toBe(37);
+    expect(downloaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     await page.reload();
     await page.getByText(doc.project.name, { exact: true }).click();
     await expect(page.getByRole("status")).toContainText("Salvo");

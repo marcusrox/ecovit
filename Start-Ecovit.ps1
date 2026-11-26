@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('dev','dev:test','typecheck','lint','test','test:api','test:e2e','test:e2e:edge','test:e2e:full','test:e2e:interface','test:e2e:flows','test:e2e:load','test:env','test:env:check','test:env:stop','build','api:dev','api:start','db:migrate','data:cleanup')][string]$Task = 'dev',
+  [ValidateSet('dev','dev:test','typecheck','lint','test','test:formats','test:api','test:e2e','test:e2e:edge','test:e2e:full','test:e2e:interface','test:e2e:flows','test:e2e:load','test:env','test:env:check','test:env:stop','build','api:dev','api:start','db:migrate','data:cleanup')][string]$Task = 'dev',
   [string[]]$TestArguments = @()
 )
 $ErrorActionPreference = 'Stop'

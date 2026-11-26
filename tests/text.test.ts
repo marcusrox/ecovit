@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createProject, type Project } from "../src/domain/project";
 import {
@@ -110,7 +111,7 @@ it("formato 31 preserva textos no arquivo/remoto e normaliza legados sem aceitar
     doc = putText(d, t);
   const loaded = parseFile(serializeFile(doc).text);
   expect(loaded.model.texts).toEqual([t]);
-  expect(loaded.schemaVersion).toBe(37);
+  expect(loaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
   expect(importedCopy(loaded).model.texts).toEqual([t]);
   for (const patch of [
     { floorId: crypto.randomUUID() },
@@ -132,9 +133,9 @@ it("formato 31 preserva textos no arquivo/remoto e normaliza legados sem aceitar
   expect(
     validateProject({ ...d, schemaVersion: 30, model: oldModel }).model.texts,
   ).toEqual([]);
-  expect(() => validateProject({ ...doc, schemaVersion: 36 })).toThrow(
-    "Formato incompatível",
-  );
+  expect(() =>
+    validateProject({ ...doc, schemaVersion: CURRENT_PROJECT_FORMAT + 1 }),
+  ).toThrow("Formato incompatível");
 });
 it("duplicação/remoção de pavimento e merge preservam isolamento e ordem dos textos", () => {
   const d = project(),

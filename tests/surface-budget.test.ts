@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { expect, it } from "vitest";
 import { createProject, makeWall } from "../src/domain/project";
 import { addFloor } from "../src/domain/floors";
@@ -123,7 +124,7 @@ it("T-040: preserva descrição e origem sem vínculo futuro, permite próprio/l
     ]),
   ).toBe(doc);
   const restored = parseFile(serializeFile(doc).text);
-  expect(restored.schemaVersion).toBe(37);
+  expect(restored.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
   expect(importedCopy(restored).project.surface).toEqual(doc.project.surface);
   const own = withProjectPrice(restored, item, 8000);
   expect(own.project.surface?.jointing?.referenceDescription).toBeUndefined();
@@ -141,7 +142,7 @@ it("T-040: preserva descrição e origem sem vínculo futuro, permite próprio/l
   );
   expect(
     validateProject({ ...original, schemaVersion: 35 }, false).schemaVersion,
-  ).toBe(37);
+  ).toBe(CURRENT_PROJECT_FORMAT);
   const invalid = structuredClone(doc);
   delete invalid.project.surface!.jointing!.referenceDescription;
   expect(() => validateProject(invalid, false)).toThrow(/inconsistente/);

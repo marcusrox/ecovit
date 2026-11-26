@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../../src/domain/project-format";
 import { blockEditing } from "./auth";
 import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
@@ -422,7 +423,7 @@ for (const kind of ["catalog", "custom"] as const) {
         .getByRole("button", { name: "Baixar projeto", exact: true })
         .click();
       const text = await readFile((await (await event).path())!, "utf8");
-      expect(JSON.parse(text).schemaVersion).toBe(37);
+      expect(JSON.parse(text).schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
       await page.reload();
       await page
         .getByRole("button", { name: /M10 teste/ })
@@ -524,7 +525,7 @@ test(
     const file = await event;
     const text = await readFile((await file.path())!, "utf8"),
       output = JSON.parse(text);
-    expect(output.schemaVersion).toBe(37);
+    expect(output.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(output.model.customImageAssets).toEqual([]);
     expect(text).not.toContain("data:image");
     expect(Buffer.byteLength(text)).toBeLessThan(10000);

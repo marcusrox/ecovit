@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../../src/domain/project-format";
 import { test, expect, rejectSaves, type Page } from "./auth";
 import {
   createProject,
@@ -284,7 +285,7 @@ test(
       .click();
     const file = await download,
       loaded = parseFile(await readFile((await file.path())!, "utf8"));
-    expect(loaded.schemaVersion).toBe(37);
+    expect(loaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(loaded.project.settlement?.ac1).toEqual({
       percent: 10000,
       yield: 1500,

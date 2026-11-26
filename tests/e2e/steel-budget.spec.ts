@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../../src/domain/project-format";
 import { test, expect, rejectSaves, type Page } from "./auth";
 import { openFerragens, closeFerragens } from "./floor-reinforcement-helpers";
 import {
@@ -205,7 +206,7 @@ test(
     const restored = parseFile(
       await readFile((await (await exported).path())!, "utf8"),
     );
-    expect(restored.schemaVersion).toBe(37);
+    expect(restored.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(restored.project.steelPrices).toEqual({
       "ca50-8": 1200,
       "ca50-10": 1000,

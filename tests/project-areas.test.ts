@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { describe, expect, it } from "vitest";
 import { createProject, type Project, type Point } from "../src/domain/project";
 import { addRoomLabel, roomAreaText } from "../src/domain/rooms";
@@ -121,7 +122,7 @@ describe("T-030 áreas do projeto", () => {
     d = addRoomLabel(d, d.model.floors[0].id, p(10000, 10000)).doc;
     const old = { ...d, schemaVersion: 34 };
     const loaded = validateProject(old);
-    expect(loaded.schemaVersion).toBe(37);
+    expect(loaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(loaded.model.roomLabels[0].excludedFromAreas).toBeUndefined();
     d.model.roomLabels[0].excludedFromAreas = true;
     expect(validateProject(d).model.roomLabels[0].excludedFromAreas).toBe(true);

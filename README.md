@@ -118,6 +118,8 @@ Escolher o recorte pela [validação proporcional](docs/arquitetura/Qualidade-e-
 - Os comandos de navegador abaixo usam M12_TEST_DATABASE_URL definido no ambiente, banco ecovit_test, schema próprio, captura de e-mail e API/Vite na porta **5174**. Cada execução inicia servidor novo, sem reaproveitar a instância do solicitante.
 - Para verificação interativa isolada, configure .env.test com M12_TEST_DATABASE_URL e execute .\Start-Ecovit.ps1 -Task dev:test. Esse servidor reinicializa as contas de teste; não usar dados pessoais. Códigos ficam apenas em .tools/m12/browser-mail nesse ambiente, sem endpoint especial de login.
 
+Para mudanças no formato `.ecovit`, execute `npm run test:formats` ou `./Start-Ecovit.ps1 -Task test:formats`. O recorte cobre versão atual/futura, migrações históricas, campos novos em envelopes antigos, cópia e transporte, sem banco ou navegador. Versões atuais/futuras são relativas à política central; números de migrações históricas permanecem explícitos.
+
 Para texto/componente compartilhado, preferir a conferência local existente: `npm test -- tests/version-footer.test.ts` não exige navegador, banco ou autenticação. O critério da task deve descrever o resultado; somente impacto concreto ou solicitação explícita exige ampliar a validação.
 
 Google Chrome é o padrão cotidiano; selecionar arquivos/cenários afetados. Usar Edge em verificações específicas de compatibilidade e ambos na homologação completa, conforme [Qualidade e desempenho](docs/arquitetura/Qualidade-e-Desempenho.md#verificação-em-navegadores). Chrome e Edge continuam suportados.

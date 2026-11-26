@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../../src/domain/project-format";
 import { rejectSaves } from "./auth";
 import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
@@ -76,7 +77,7 @@ test(
     await load(page, frame());
     await fiada(page);
     const before = await exported(page);
-    expect(before.schemaVersion).toBe(37);
+    expect(before.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(before.generated!.convention).toBe("nominal-v13");
     expect(
       before.generated!.floors[0].courses.map((c) => c.pieces.length),

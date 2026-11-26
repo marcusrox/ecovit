@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../../src/domain/project-format";
 import { blockEditing } from "./auth";
 import { test, expect, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
@@ -300,7 +301,7 @@ test(
     const output = parseFile(
       await readFile((await (await download).path())!, "utf8"),
     );
-    expect(output.schemaVersion).toBe(37);
+    expect(output.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(output.model.measurements).toEqual(
       (await state(page)).model.measurements,
     );

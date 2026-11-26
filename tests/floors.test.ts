@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { describe, expect, it } from "vitest";
 import {
   createProject,
@@ -296,15 +297,23 @@ describe("M4.1 — contratos e isolamento EX-56–64", () => {
       "compatíveis",
     );
   });
-  it.each([1, 2, 3, 4, 5, 6, 7, 8, 36, 99])(
-    "EX-63 recusa envelope %i sem conversão",
-    (version) => {
-      const d = project();
-      expect(() =>
-        parseFile(JSON.stringify({ ...d, schemaVersion: version })),
-      ).toThrow("incompatível");
-    },
-  );
+  it.each([
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    CURRENT_PROJECT_FORMAT + 1,
+    Number.MAX_SAFE_INTEGER,
+  ])("EX-63 recusa envelope %i sem conversão", (version) => {
+    const d = project();
+    expect(() =>
+      parseFile(JSON.stringify({ ...d, schemaVersion: version })),
+    ).toThrow("incompatível");
+  });
   it("EX-63 reabertura, cópia, snapshot adulterado e associações cruzadas", () => {
     let d = project();
     const w = wall(d);

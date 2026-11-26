@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { expect, it } from "vitest";
 import { createProject, makeWall, type Project } from "../src/domain/project";
 import { generate } from "../src/domain/composition";
@@ -300,7 +301,7 @@ it("formato 32 preserva configuração estrita em arquivo, cópia e transporte r
   const d = fixture([1]);
   d.project.settlement = { ac1: { percent: 10000, yield: 1401, price: 3000 } };
   const loaded = parseFile(serializeFile(d).text);
-  expect(loaded.schemaVersion).toBe(37);
+  expect(loaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
   expect(loaded.project.settlement).toEqual(d.project.settlement);
   expect(importedCopy(loaded).project.settlement).toEqual(d.project.settlement);
   expect(hydrate(dehydrate(d, {}), {}).project.settlement).toEqual(
@@ -320,9 +321,9 @@ it("formato 32 preserva configuração estrita em arquivo, cópia e transporte r
     expect(() =>
       validateProject({ ...d, project: { ...d.project, settlement } }, false),
     ).toThrow();
-  expect(() => validateProject({ ...d, schemaVersion: 36 }, false)).toThrow(
-    "Formato incompatível",
-  );
+  expect(() =>
+    validateProject({ ...d, schemaVersion: CURRENT_PROJECT_FORMAT + 1 }, false),
+  ).toThrow("Formato incompatível");
 });
 it("legados normalizam em memória sem materializar parâmetros; campo novo em formato antigo é recusado", () => {
   const d = fixture([0]);
@@ -343,7 +344,7 @@ it("legados normalizam em memória sem materializar parâmetros; campo novo em f
     const old = { ...d, schemaVersion, model },
       before = structuredClone(old);
     const loaded = validateProject(old, false);
-    expect(loaded.schemaVersion).toBe(37);
+    expect(loaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(loaded.project).not.toHaveProperty("settlement");
     expect(old).toEqual(before);
     for (const settlement of [{}, null, { ac1: { percent: 0 } }])

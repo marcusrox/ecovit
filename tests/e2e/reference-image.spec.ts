@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../../src/domain/project-format";
 import { blockEditing } from "./auth";
 import { expect, test, type Page } from "./auth";
 import { createProject, type Project } from "../../src/domain/project";
@@ -181,7 +182,7 @@ test(
     const output = parseFile(
       await readFile((await (await download).path())!, "utf8"),
     );
-    expect(output.schemaVersion).toBe(37);
+    expect(output.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(output.model.referenceImages).toEqual(
       (await state(page)).doc.model.referenceImages,
     );

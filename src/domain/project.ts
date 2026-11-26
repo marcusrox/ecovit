@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "./project-format";
 import type {
   Composition,
   ProjectComposition,
@@ -177,7 +178,7 @@ export type Tool =
   | Opening["kind"];
 export type Project = {
   format: "ecovit";
-  schemaVersion: 37;
+  schemaVersion: typeof CURRENT_PROJECT_FORMAT;
   project: {
     id: string;
     name: string;
@@ -286,7 +287,7 @@ export function createProject(
   const now = new Date().toISOString();
   return {
     format: "ecovit",
-    schemaVersion: 37,
+    schemaVersion: CURRENT_PROJECT_FORMAT,
     project: {
       id: crypto.randomUUID(),
       name: name.trim(),

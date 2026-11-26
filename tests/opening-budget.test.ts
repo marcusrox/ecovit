@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { expect, it } from "vitest";
 import { createProject, makeWall, type Opening } from "../src/domain/project";
 import { addFloor, duplicateFloor } from "../src/domain/floors";
@@ -170,7 +171,7 @@ it("formato 33 preserva dados, preços ausentes do desenho e cópia de pavimento
   let d = fixture();
   d = withOpeningPrice(d, openingOption(d.model.openings[0]), 12345);
   const loaded = parseFile(serializeFile(d).text);
-  expect(loaded.schemaVersion).toBe(37);
+  expect(loaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
   expect(loaded.project.openingPrices).toEqual(d.project.openingPrices);
   expect(loaded.model.openings).toEqual(d.model.openings);
   expect(importedCopy(loaded).project.openingPrices).toEqual(
@@ -189,7 +190,9 @@ it("legado 32 abre sem material/preço e recusa campos novos, dados inválidos e
   d.model.openings.forEach((o) => delete o.material);
   const old = { ...d, schemaVersion: 32 },
     before = structuredClone(old);
-  expect(validateProject(old, false).schemaVersion).toBe(37);
+  expect(validateProject(old, false).schemaVersion).toBe(
+    CURRENT_PROJECT_FORMAT,
+  );
   expect(old).toEqual(before);
   expect(() =>
     validateProject(
@@ -250,9 +253,12 @@ it("legado 32 abre sem material/preço e recusa campos novos, dados inválidos e
       false,
     ),
   ).toThrow();
-  expect(() => validateProject({ ...valid, schemaVersion: 36 }, false)).toThrow(
-    "Formato incompatível",
-  );
+  expect(() =>
+    validateProject(
+      { ...valid, schemaVersion: CURRENT_PROJECT_FORMAT + 1 },
+      false,
+    ),
+  ).toThrow("Formato incompatível");
 });
 it("material não muda a composição nominal", () => {
   const d = fixture();

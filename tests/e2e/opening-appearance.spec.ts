@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../../src/domain/project-format";
 import { blockEditing } from "./auth";
 import { expect, test, type Page } from "./auth";
 import { readFile } from "node:fs/promises";
@@ -280,7 +281,7 @@ test(
     await settled(page);
     expect((await doc(page)).model.openings).toEqual(selected.model.openings);
     const copy = await exported(page);
-    expect(copy.schemaVersion).toBe(37);
+    expect(copy.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(copy.model.openings).toEqual(selected.model.openings);
     expect(copy.generated).toEqual(before.generated);
     const second = await context.newPage();

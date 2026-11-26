@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { expect, it } from "vitest";
 import { createProject, makeWall } from "../src/domain/project";
 import { openingOption } from "../src/domain/opening-budget";
@@ -141,7 +142,7 @@ it("arquivo, cópia e leitor preservam estado e preço; legado não recebe metad
   legacy.project.unitPrices = { whole: 0 };
   const old = { ...legacy, schemaVersion: 33 };
   const loaded = validateProject(old, false);
-  expect(loaded.schemaVersion).toBe(37);
+  expect(loaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
   expect(loaded.project.priceSources).toBeUndefined();
   expect(priceSource(loaded, brick)).toBe("own");
   expect(old.schemaVersion).toBe(33);

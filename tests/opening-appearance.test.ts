@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../src/domain/project-format";
 import { afterEach, expect, it, vi } from "vitest";
 vi.mock("../src/persistence/remote", () => ({
   forgetProject: vi.fn(),
@@ -185,7 +186,7 @@ it("EX-99 transporte/cópias e envelopes anteriores preservam genéricos sem toc
     if (version === 9) delete old.model.measurements;
     const original = JSON.stringify(old);
     const restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(37);
+    expect(restored.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(restored.model.openings[0].appearance).toBeUndefined();
     expect(JSON.stringify(old)).toBe(original);
     old.model.openings[0].appearance = { type: "swing", orientation: 0 };

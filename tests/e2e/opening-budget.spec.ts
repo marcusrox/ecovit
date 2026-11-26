@@ -1,3 +1,4 @@
+import { CURRENT_PROJECT_FORMAT } from "../../src/domain/project-format";
 import { test, expect, rejectSaves, type Page } from "./auth";
 import {
   createProject,
@@ -251,7 +252,7 @@ test(
       .click();
     const file = await download;
     const loaded = parseFile(await readFile((await file.path())!, "utf8"));
-    expect(loaded.schemaVersion).toBe(37);
+    expect(loaded.schemaVersion).toBe(CURRENT_PROJECT_FORMAT);
     expect(loaded.project.openingPrices?.[0].price).toBe(60000);
     expect(loaded.model.openings[0].material?.kind).toBe("wood-hollow");
     await page.evaluate(async () => {

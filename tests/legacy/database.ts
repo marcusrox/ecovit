@@ -1,3 +1,4 @@
+import { isSupportedProjectFormat } from "../../src/domain/project-format";
 // Historical IndexedDB fixture. Never imported by the M12 application.
 import Dexie, { type Table } from "dexie";
 import type { Project } from "../../src/domain/project";
@@ -15,10 +16,7 @@ export const listProjects = async () =>
   (await projects.orderBy("updatedAt").reverse().toArray()).map((row) => ({
     id: row.id,
     name: row.doc.project.name,
-    compatible: [
-      9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
-      28, 29, 30, 31, 32, 33, 34, 35,
-    ].includes(row.doc.schemaVersion),
+    compatible: isSupportedProjectFormat(row.doc.schemaVersion),
     updatedAt: row.updatedAt,
     walls: row.doc.model.walls.length,
   }));
