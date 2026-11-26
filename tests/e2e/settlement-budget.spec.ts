@@ -116,6 +116,9 @@ test(
       "R$ 0,00",
       "R$ 210,00",
     ]);
+    await dialog(page)
+      .getByRole("button", { name: "Exibir detalhamento" })
+      .click();
     await inputs(page, "Pavimento da consulta").selectOption("all");
     const detail = dialog(page).getByRole("region", {
       name: "Assentamento do pavimento consultado",

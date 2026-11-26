@@ -235,10 +235,18 @@ export function AdminPrices({
                   "Tijolos · R$/unidade",
                   "Ferragens · R$/kg",
                   "Assentamento · R$/embalagem",
-                  "Esquadrias · R$/unidade",
+                  "Esquadrias · Preço do conjunto (R$/un.)",
                 ][index]
               }
             </h4>
+            {group === "openings" && (
+              <p>
+                Informe a referência por conjunto completo: para portas de
+                madeira, inclua folha, batente, guarnições e ferragens previstas;
+                para as demais portas e janelas, inclua marco, folhas, ferragens
+                e vidro, quando aplicáveis. Não inclua instalação.
+              </p>
+            )}
             <ul className={css.priceGrid}>
               {data.references
                 .filter((row) => row.item.group === group)

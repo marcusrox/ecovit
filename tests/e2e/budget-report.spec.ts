@@ -80,9 +80,11 @@ test(
   async ({ page }) => {
     const dialog = await fixture(page);
     await page.setViewportSize({ width: 900, height: 680 });
+    await dialog.getByRole("button", { name: "Exibir detalhamento" }).click();
     await dialog
       .getByLabel("Pavimento da consulta")
       .selectOption({ label: "Térreo · 0 cm" });
+    await dialog.getByRole("button", { name: "Ocultar detalhamento" }).click();
     const before = await snapshot(page);
     await dialog
       .getByRole("button", { name: "Baixar orçamento em PDF" })
@@ -249,6 +251,7 @@ test(
     await expect(
       dialog.getByRole("button", { name: "Baixar orçamento em PDF" }),
     ).toBeEnabled();
+    await dialog.getByRole("button", { name: "Exibir detalhamento" }).click();
     await dialog.getByLabel("Pavimento da consulta").selectOption("all");
     const data = await page.evaluate(async () => {
       const storePath = "/src/state/store.ts",

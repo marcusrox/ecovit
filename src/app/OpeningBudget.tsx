@@ -111,9 +111,12 @@ export function OpeningBudgetSummary({ model: m }: { model: Model }) {
       <h3>Esquadrias do projeto</h3>
       <p className={styles.note}>
         Portas e janelas por tipo, tamanho e material. Dimensões de referência
-        do vão bruto, não de fabricação. Preço por unidade da esquadria
-        especificada, sem acréscimo automático de instalação. Defina tipo e
-        material nas propriedades do elemento.
+        do vão bruto, não de fabricação. Informe o preço por conjunto completo:
+        para portas de madeira, inclua folha, batente, guarnições e ferragens
+        previstas; para as demais portas e janelas, inclua marco, folhas,
+        ferragens e vidro, quando aplicáveis. Não inclua instalação. Os preços
+        de referência seguem a mesma composição. Defina tipo e material nas
+        propriedades do elemento.
       </p>
       {!r.available ? (
         <p role="alert">{r.reason}</p>
@@ -132,7 +135,7 @@ export function OpeningBudgetSummary({ model: m }: { model: Model }) {
                   <th scope="col">Esquadria / material</th>
                   <th scope="col">Vão bruto (L × H)</th>
                   <th scope="col">Quantidade</th>
-                  <th scope="col">Preço (R$/unidade)</th>
+                  <th scope="col">Preço do conjunto (R$/un.)</th>
                   <th scope="col">Custo (R$)</th>
                 </tr>
               </thead>
@@ -252,7 +255,7 @@ export function OpeningBudgetDetail({
               <th scope="col">Esquadria / material</th>
               <th scope="col">Vão bruto (L × H)</th>
               <th scope="col">Quantidade</th>
-              <th scope="col">Preço (R$/unidade)</th>
+              <th scope="col">Preço do conjunto (R$/un.)</th>
               <th scope="col">Custo (R$)</th>
             </tr>
           </thead>

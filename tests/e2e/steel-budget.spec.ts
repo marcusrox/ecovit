@@ -131,6 +131,9 @@ test(
     expect(priced.doc.generated).toEqual(before.doc.generated);
     expect(priced.past).toBe(before.past + 2);
     await budget(page)
+      .getByRole("button", { name: "Exibir detalhamento" })
+      .click();
+    await budget(page)
       .getByLabel("Pavimento da consulta", { exact: true })
       .selectOption(original.model.floors[1].id);
     await expect(
@@ -263,6 +266,9 @@ test(
     await fixture(page, true);
     await open(page);
     await expect(budget(page)).toContainText("Ferragens parciais");
+    await budget(page)
+      .getByRole("button", { name: "Exibir detalhamento" })
+      .click();
     await expect(
       page.getByRole("region", {
         name: "Ferragens do pavimento consultado",

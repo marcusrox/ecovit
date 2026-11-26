@@ -131,6 +131,9 @@ test(
       "R$ 1.500,00",
       "R$ 1.500,00",
     ]);
+    await dialog(page)
+      .getByRole("button", { name: "Exibir detalhamento" })
+      .click();
     await dialog(page).getByLabel("Pavimento da consulta").selectOption("all");
     const detail = dialog(page).getByRole("region", {
       name: /^Esquadrias de /,

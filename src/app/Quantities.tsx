@@ -76,6 +76,7 @@ export function Quantities({
   >({});
   const activeFloorId = useStore((s) => s.activeFloorId);
   const [open, setOpen] = useState(printing);
+  const [detailVisible, setDetailVisible] = useState(false);
   const references = useBudgetReferences(
     doc,
     open && !printing,
@@ -259,20 +260,20 @@ export function Quantities({
   const steel = useSteelBudget(
     doc,
     open,
-    busy || references.working,
-    readonly,
+    busy,
+    readonly || references.working,
     priceSaving,
     setPriceSaving,
   );
   const settlement = useSettlementBudget(
     doc,
     open,
-    busy || references.working,
-    readonly,
+    busy,
+    readonly || references.working,
     priceSaving,
     setPriceSaving,
   );
-  const openings = useOpeningBudget(doc, busy || references.working, readonly);
+  const openings = useOpeningBudget(doc, busy, readonly || references.working);
   const totals = [
     {
       label: "Subtotal de tijolos",
@@ -387,6 +388,7 @@ export function Quantities({
               preview: null,
               groutCell: null,
             });
+            setDetailVisible(false);
             setOpen(true);
           }}
         >
@@ -450,11 +452,16 @@ export function Quantities({
                 {exportError}
               </p>
             )}
-            {references.working && (
-              <p role="status">
+            <p data-print-omit role="status">
+              <span
+                className={
+                  references.working ? undefined : styles.budgetStatusIdle
+                }
+                aria-hidden={!references.working}
+              >
                 Consultando e incorporando preços de referência…
-              </p>
-            )}
+              </span>
+            </p>
             {references.error && (
               <p role="alert">
                 {references.error}{" "}
@@ -713,7 +720,22 @@ export function Quantities({
               <SettlementBudgetSummary model={settlement} />
               <OpeningBudgetSummary model={openings} />
             </section>
+            {!printing && (
+              <button
+                type="button"
+                data-print-omit
+                className={styles.quantityDetailToggle}
+                aria-expanded={detailVisible}
+                aria-controls="budget-detail"
+                onClick={() => setDetailVisible((visible) => !visible)}
+              >
+                <Icon name={detailVisible ? "collapse" : "expand"} />
+                {detailVisible ? "Ocultar detalhamento" : "Exibir detalhamento"}
+              </button>
+            )}
             <section
+              id="budget-detail"
+              hidden={!printing && !detailVisible}
               className={styles.quantitySection}
               aria-labelledby="budget-detail-title"
             >

@@ -84,6 +84,55 @@ const summary = (page: Page) =>
   report(page).getByRole("region", { name: "Resumo do projeto" });
 
 test(
+  "Orçamento: detalhamento recolhido alterna por teclado sem alterar o projeto",
+  { tag: "@interface" },
+  async ({ page }) => {
+    await load(page);
+    const before = await snapshot(page);
+    const trigger = page.getByRole("button", {
+      name: "Orçamento",
+      exact: true,
+    });
+    await trigger.click();
+    const modal = report(page);
+    const detail = modal.locator("#budget-detail");
+    const toggle = modal.getByRole("button", { name: "Exibir detalhamento" });
+    await expect(detail).toBeHidden();
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await expect(toggle).toHaveAttribute("aria-controls", "budget-detail");
+    await expect(toggle.locator("svg")).toHaveCount(1);
+    await expect(modal.locator("#budget-summary-title")).toHaveCSS(
+      "font-size",
+      "20px",
+    );
+    await toggle.focus();
+    await page.keyboard.press("Enter");
+    const hide = modal.getByRole("button", { name: "Ocultar detalhamento" });
+    await expect(hide).toHaveAttribute("aria-expanded", "true");
+    await expect(hide).toBeFocused();
+    await expect(detail).toBeVisible();
+    await expect(modal.locator("#budget-detail-title")).toHaveCSS(
+      "font-size",
+      "20px",
+    );
+    const filter = modal.getByLabel("Pavimento da consulta");
+    await filter.selectOption("all");
+    await hide.focus();
+    await page.keyboard.press("Space");
+    await expect(detail).toBeHidden();
+    await expect(toggle).toBeFocused();
+    await toggle.click();
+    await expect(filter).toHaveValue("all");
+    expect(await snapshot(page)).toBe(before);
+    await page.keyboard.press("Escape");
+    await expect(trigger).toBeFocused();
+    await trigger.click();
+    await expect(detail).toBeHidden();
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  },
+);
+
+test(
   "M5 A01/03/05/06/10: consulta sem escrita, perdas persistidas e contexto preservado",
   { tag: "@fluxo" },
   async ({ page }) => {
@@ -112,6 +161,9 @@ test(
       }),
     ).toBeVisible();
     await report(page).getByLabel("Perdas de tijolos (%)").press("Enter");
+    await report(page)
+      .getByRole("button", { name: "Exibir detalhamento" })
+      .click();
     await report(page)
       .getByLabel("Pavimento da consulta")
       .selectOption(d.model.floors[0].id);
@@ -583,6 +635,7 @@ test(
       }),
     ).toBe(true);
     const filter = modal.getByLabel("Pavimento da consulta");
+    await modal.getByRole("button", { name: "Exibir detalhamento" }).click();
     await filter.selectOption("all");
     const courses = modal.getByRole("region", { name: "Peças por fiada" });
     await expect(

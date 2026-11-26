@@ -173,7 +173,9 @@ export function ReferencePriceButton({
     (r) => priceItemKey(r.item) === priceItemKey(item) && r.price !== null,
   );
   const hint = available
-    ? "Usar preço de referência"
+    ? item.group === "openings"
+      ? "Usar preço de referência do conjunto completo, sem instalação"
+      : "Usar preço de referência"
     : "Preço de referência indisponível";
   return (
     <span className={styles.referenceHint} data-tooltip={hint}>
