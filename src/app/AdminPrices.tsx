@@ -194,6 +194,13 @@ export function AdminPrices({
     const descriptionText = descriptionDrafts[key] ?? row.description ?? "";
     try {
       value = parseUnitPrice(text);
+      // A new description without a price remains a draft until the pair is complete.
+      if (
+        row.item.group === "surface" &&
+        value === undefined &&
+        drafts[key] === undefined
+      )
+        return;
       if (row.item.group === "surface" && value !== undefined)
         description = referenceDescriptionSchema.parse(descriptionText);
     } catch {
@@ -244,10 +251,10 @@ export function AdminPrices({
         </button>
       </div>
       <p>
-        Preços sem descrição são salvos ao sair do campo ou pressionar Enter.
-        Para impermeabilizante e rejunte, confirme descrição e preço juntos em
-        Salvar referência ou por Enter. Valores já incorporados aos projetos não
-        mudam. Zero é válido; campo vazio indica referência ausente.
+        Salvo ao sair do campo ou pressionar Enter. Para impermeabilizante e
+        rejunte, o preço só é confirmado com produto e embalagem preenchidos.
+        Valores já incorporados aos projetos não mudam. Zero é válido; campo
+        vazio indica referência ausente.
       </p>
       <p>
         Esquadrias aparecem após o primeiro preço confirmado de uma combinação
@@ -294,8 +301,9 @@ export function AdminPrices({
               {group === "surface" && (
                 <p>
                   Identifique o produto e a embalagem de referência. Preencha a
-                  descrição e o preço e use Salvar referência. O usuário
-                  informará o rendimento no projeto e poderá alterar o preço.
+                  descrição e o preço; as alterações são salvas ao sair do
+                  campo. O usuário informará o rendimento no projeto e poderá
+                  alterar o preço.
                 </p>
               )}
               <ul className={css.priceGrid}>
@@ -344,10 +352,11 @@ export function AdminPrices({
                               }
                               aria-invalid={!!invalid}
                               aria-describedby={invalid ? errorId : undefined}
+                              onBlur={() => save(row)}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
-                                  save(row);
+                                  e.currentTarget.blur();
                                 }
                               }}
                             />
@@ -368,14 +377,11 @@ export function AdminPrices({
                                 [key]: e.target.value,
                               }))
                             }
-                            onBlur={() => {
-                              if (group !== "surface") save(row);
-                            }}
+                            onBlur={() => save(row)}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
-                                if (group === "surface") save(row);
-                                else e.currentTarget.blur();
+                                e.currentTarget.blur();
                               }
                             }}
                           />
@@ -389,14 +395,6 @@ export function AdminPrices({
                             </span>
                           )}
                         </span>
-                        {group === "surface" && (
-                          <button
-                            disabled={saving || failed || !!invalid}
-                            onClick={() => save(row)}
-                          >
-                            Salvar referência de {priceItemLabel(row.item)}
-                          </button>
-                        )}
                       </li>
                     );
                   })}

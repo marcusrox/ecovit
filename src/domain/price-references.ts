@@ -145,16 +145,26 @@ export function withProjectPrice(
     projectPrice(doc, item) === price &&
     priceSource(doc, item) === actualSource &&
     (item.group !== "surface" ||
-      doc.project.surface?.[item.key]?.referenceDescription === captured)
+      (doc.project.surface?.[item.key]?.referenceDescription === captured &&
+        (actualSource !== "reference" ||
+          doc.project.surface?.[item.key]?.productDescription === captured)))
   )
     return doc;
   let next = doc;
   if (item.group === "surface") {
     const entry = { ...doc.project.surface?.[item.key] };
+    if (
+      entry.productDescription === undefined &&
+      entry.referenceDescription !== undefined
+    )
+      entry.productDescription = entry.referenceDescription;
     delete entry.referenceDescription;
     if (price === undefined) delete entry.price;
     else entry.price = price;
-    if (captured !== undefined) entry.referenceDescription = captured;
+    if (captured !== undefined) {
+      entry.referenceDescription = captured;
+      entry.productDescription = captured;
+    }
     next = {
       ...doc,
       project: {

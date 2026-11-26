@@ -33,8 +33,16 @@ export function useSurfaceBudget(
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const settings = { ...doc.project.surface };
   const errors: SurfaceErrors = {};
+  const descriptionErrors: Partial<Record<SurfaceKey, string>> = {};
   for (const { key } of surfaceProducts) {
     settings[key] = { ...settings[key] };
+    const description = drafts[`${key}:description`];
+    if (description !== undefined) {
+      if (description.trim().length > 160)
+        descriptionErrors[key] =
+          "Informe até 160 caracteres para produto e embalagem.";
+      else settings[key]!.productDescription = description.trim();
+    }
     for (const field of ["percent", "yield", "price"] as const) {
       const draft = drafts[`${key}:${field}`];
       if (draft === undefined) continue;
@@ -42,7 +50,12 @@ export function useSurfaceBudget(
         const value = parseSurfaceField(field, draft);
         if (value === undefined) delete settings[key]![field];
         else settings[key]![field] = value;
-        if (field === "price") delete settings[key]!.referenceDescription;
+        if (field === "price") {
+          if (settings[key]!.productDescription === undefined)
+            settings[key]!.productDescription =
+              settings[key]!.referenceDescription;
+          delete settings[key]!.referenceDescription;
+        }
       } catch (e) {
         errors[key] = { ...errors[key], [field]: (e as Error).message };
       }
@@ -57,7 +70,10 @@ export function useSurfaceBudget(
       invalid,
     );
   }, [doc, open, busy, priceSaving, signature]);
-  const confirm = async (key: SurfaceKey, field: SurfaceField) => {
+  const confirm = async (
+    key: SurfaceKey,
+    field: SurfaceField | "description",
+  ) => {
     const state = useStore.getState(),
       latest = state.doc;
     const id = `${key}:${field}`,
@@ -70,6 +86,41 @@ export function useSurfaceBudget(
       draft === undefined
     )
       return;
+    if (field === "description") {
+      if (draft.trim().length > 160) return;
+      const description = draft.trim();
+      const entry = latest.project.surface?.[key];
+      if (
+        description !==
+        (entry?.productDescription ?? entry?.referenceDescription ?? "")
+      ) {
+        setPriceSaving(true);
+        try {
+          await state.commit(
+            {
+              ...latest,
+              project: {
+                ...latest.project,
+                surface: {
+                  ...latest.project.surface,
+                  [key]: { ...entry, productDescription: description },
+                },
+              },
+            },
+            "budget",
+          );
+        } finally {
+          setPriceSaving(false);
+        }
+      }
+      setDrafts((previous) => {
+        if (previous[id] !== draft) return previous;
+        const next = { ...previous };
+        delete next[id];
+        return next;
+      });
+      return;
+    }
     let value: number | undefined;
     try {
       value = parseSurfaceField(field, draft);
@@ -113,6 +164,7 @@ export function useSurfaceBudget(
     report,
     settings,
     errors,
+    descriptionErrors,
     drafts,
     setDrafts,
     confirm,
@@ -159,7 +211,7 @@ export function SurfaceBudgetSummary({ model: m }: { model: Model }) {
         Você pode alterar o preço de referência conforme sua compra.
       </p>
       <div
-        className={styles.quantityTable}
+        className={`${styles.quantityTable} ${styles.surfaceParameters}`}
         role="region"
         aria-label="Parâmetros de impermeabilizante e rejunte"
         tabIndex={0}
@@ -169,6 +221,7 @@ export function SurfaceBudgetSummary({ model: m }: { model: Model }) {
           <thead>
             <tr>
               <th scope="col">Produto</th>
+              <th scope="col">Produto e embalagem de referência</th>
               <th scope="col">Aplicação (%)</th>
               <th scope="col">Rendimento (m²/embalagem)</th>
               <th scope="col">Preço (R$/embalagem)</th>
@@ -177,14 +230,52 @@ export function SurfaceBudgetSummary({ model: m }: { model: Model }) {
           <tbody>
             {surfaceProducts.map(({ key, label }) => (
               <tr key={key}>
-                <th scope="row">
-                  {label}
-                  {m.settings[key]?.referenceDescription && (
-                    <p className={styles.note}>
-                      Referência: {m.settings[key]!.referenceDescription}
-                    </p>
+                <th scope="row">{label}</th>
+                <td>
+                  <input
+                    className={styles.surfaceProductDescription}
+                    aria-label={`Produto e embalagem de referência de ${label}`}
+                    maxLength={160}
+                    placeholder="Não informado"
+                    value={
+                      m.drafts[`${key}:description`] ??
+                      m.settings[key]?.productDescription ??
+                      m.settings[key]?.referenceDescription ??
+                      ""
+                    }
+                    disabled={m.blocked}
+                    aria-invalid={!!m.descriptionErrors[key]}
+                    aria-describedby={
+                      m.descriptionErrors[key]
+                        ? `surface-description-error-${key}`
+                        : undefined
+                    }
+                    onChange={(e) =>
+                      m.setDrafts((previous) => ({
+                        ...previous,
+                        [`${key}:description`]: e.target.value,
+                      }))
+                    }
+                    onBlur={() =>
+                      trackConfirmation(m.confirm(key, "description"))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }
+                    }}
+                  />
+                  {m.descriptionErrors[key] && (
+                    <span
+                      id={`surface-description-error-${key}`}
+                      role="alert"
+                      className={styles.budgetPriceError}
+                    >
+                      {m.descriptionErrors[key]}
+                    </span>
                   )}
-                </th>
+                </td>
                 {(["percent", "yield", "price"] as const).map((field) => {
                   const id = `${key}:${field}`,
                     error = m.errors[key]?.[field];
@@ -235,6 +326,7 @@ export function SurfaceBudgetSummary({ model: m }: { model: Model }) {
                               m.setDrafts((previous) => {
                                 const next = { ...previous };
                                 delete next[id];
+                                delete next[`${key}:description`];
                                 return next;
                               })
                             }

@@ -16,6 +16,7 @@ const productSchema = z
     yield: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional(),
     price: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
     referenceDescription: referenceDescriptionSchema.optional(),
+    productDescription: z.string().trim().max(160).optional(),
   })
   .strict();
 export const surfaceSettingsSchema = z

@@ -215,7 +215,7 @@ const generated = z
 const schema = z
   .object({
     format: z.literal("ecovit"),
-    schemaVersion: z.literal(36),
+    schemaVersion: z.literal(37),
     project: z
       .object({
         id,
@@ -629,6 +629,26 @@ export function validateProject(
   value: unknown,
   checkGenerated = true,
 ): Project {
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    typeof value.schemaVersion === "number" &&
+    value.schemaVersion <= 36 &&
+    "project" in value &&
+    value.project &&
+    typeof value.project === "object" &&
+    "surface" in value.project &&
+    value.project.surface &&
+    typeof value.project.surface === "object" &&
+    Object.values(value.project.surface).some(
+      (entry) =>
+        entry && typeof entry === "object" && "productDescription" in entry,
+    )
+  )
+    throw new Error(
+      "Arquivo inválido: descrição editável do produto em formato anterior.",
+    );
   if (
     value &&
     typeof value === "object" &&
@@ -1130,10 +1150,11 @@ export function validateProject(
       value.schemaVersion !== 33 &&
       value.schemaVersion !== 34 &&
       value.schemaVersion !== 35 &&
-      value.schemaVersion !== 36)
+      value.schemaVersion !== 36 &&
+      value.schemaVersion !== 37)
   )
     throw new Error(
-      "Formato incompatível. Use um projeto de versão 9 a 36; demais formatos não são convertidos.",
+      "Formato incompatível. Use um projeto de versão 9 a 37; demais formatos não são convertidos.",
     );
   if (
     value.schemaVersion === 24 ||
@@ -1199,6 +1220,13 @@ export function validateProject(
     value.schemaVersion === 35
   )
     value = { ...value, schemaVersion: 36 };
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 36
+  )
+    value = { ...value, schemaVersion: 37 };
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");

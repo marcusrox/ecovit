@@ -351,7 +351,7 @@ describe("T-028 parâmetros e transporte", () => {
     };
     expect(doc.generated).toEqual(original.generated);
     const restored = parseFile(serializeFile(doc).text);
-    expect(restored.schemaVersion).toBe(36);
+    expect(restored.schemaVersion).toBe(37);
     expect(restored.project.steelPrices).toEqual(doc.project.steelPrices);
     doc = duplicateFloor(doc, floor.id, 35000, "Superior");
     expect(doc.model.floors[1].steelBudget).toEqual(
@@ -362,7 +362,7 @@ describe("T-028 parâmetros e transporte", () => {
     );
     const old = { ...original, schemaVersion: 25 },
       source = JSON.stringify(old);
-    expect(validateProject(old).schemaVersion).toBe(36);
+    expect(validateProject(old).schemaVersion).toBe(37);
     expect(JSON.stringify(old)).toBe(source);
     expect(() => validateProject({ ...restored, schemaVersion: 25 })).toThrow(
       "formato anterior",

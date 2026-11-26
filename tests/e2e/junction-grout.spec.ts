@@ -202,7 +202,7 @@ test(
       .click();
     const file = await download;
     const loaded = parseFile(await readFile((await file.path())!, "utf8"));
-    expect(loaded.schemaVersion).toBe(36);
+    expect(loaded.schemaVersion).toBe(37);
     expect(loaded.model.floors.map((f) => f.groutMode)).toEqual([
       "simple",
       "reinforced",

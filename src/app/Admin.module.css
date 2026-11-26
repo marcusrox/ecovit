@@ -457,8 +457,7 @@
   grid-template-columns: minmax(0, 1fr) 112px;
   align-items: end;
 }
-.surfacePriceItem > label:first-child,
-.surfacePriceItem > button {
+.surfacePriceItem > label:first-child {
   grid-column: 1 / -1;
 }
 .surfacePriceItem > label input {

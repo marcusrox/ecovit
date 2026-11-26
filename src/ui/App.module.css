@@ -2526,6 +2526,18 @@ button.iconButton {
   max-width: 100%;
   text-align: right;
 }
+.surfaceParameters th:first-child {
+  width: 15%;
+}
+.surfaceParameters th:nth-child(2) {
+  width: 30%;
+  text-align: left;
+}
+.surfaceProductDescription {
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
 .budgetPriceError {
   display: block;
   max-width: 210px;

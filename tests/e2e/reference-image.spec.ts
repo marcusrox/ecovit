@@ -181,7 +181,7 @@ test(
     const output = parseFile(
       await readFile((await (await download).path())!, "utf8"),
     );
-    expect(output.schemaVersion).toBe(36);
+    expect(output.schemaVersion).toBe(37);
     expect(output.model.referenceImages).toEqual(
       (await state(page)).doc.model.referenceImages,
     );

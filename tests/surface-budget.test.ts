@@ -105,7 +105,7 @@ it("T-040: zero dispensa parâmetros; área indisponível e entradas inválidas 
   valid.project.surface.jointing!.price = Number.MAX_SAFE_INTEGER;
   expect(surfaceBudget(valid).rows[1].cost).toBeUndefined();
 });
-it("T-040: preserva descrição e origem sem vínculo futuro, permite próprio/limpeza e transporta formato 36", () => {
+it("T-040: preserva descrição e origem sem vínculo futuro, permite próprio/limpeza e transporta formato 37", () => {
   const item: PriceItem = { group: "surface", key: "jointing" };
   const reference = {
     item,
@@ -123,22 +123,62 @@ it("T-040: preserva descrição e origem sem vínculo futuro, permite próprio/l
     ]),
   ).toBe(doc);
   const restored = parseFile(serializeFile(doc).text);
-  expect(restored.schemaVersion).toBe(36);
+  expect(restored.schemaVersion).toBe(37);
   expect(importedCopy(restored).project.surface).toEqual(doc.project.surface);
   const own = withProjectPrice(restored, item, 8000);
   expect(own.project.surface?.jointing?.referenceDescription).toBeUndefined();
+  expect(own.project.surface?.jointing?.productDescription).toBe(
+    reference.description,
+  );
   expect(priceSource(own, item)).toBe("own");
   const cleared = withProjectPrice(doc, item, undefined);
+  expect(cleared.project.surface?.jointing?.productDescription).toBe(
+    reference.description,
+  );
   expect(incorporatePrices(cleared, [reference])).toBe(cleared);
   expect(() => validateProject({ ...doc, schemaVersion: 35 }, false)).toThrow(
     /formato anterior/,
   );
   expect(
     validateProject({ ...original, schemaVersion: 35 }, false).schemaVersion,
-  ).toBe(36);
+  ).toBe(37);
   const invalid = structuredClone(doc);
   delete invalid.project.surface!.jointing!.referenceDescription;
   expect(() => validateProject(invalid, false)).toThrow(/inconsistente/);
+});
+it("descrição do produto é editável e preservada no arquivo; copiar referência substitui a descrição própria", () => {
+  const item: PriceItem = { group: "surface", key: "waterproofing" };
+  const description = "Produto próprio · embalagem de 5 L";
+  const doc = fixture();
+  doc.project.surface = { waterproofing: { productDescription: description } };
+  expect(
+    validateProject(doc, false).project.surface?.waterproofing
+      ?.productDescription,
+  ).toBe(description);
+  expect(() => validateProject({ ...doc, schemaVersion: 36 }, false)).toThrow(
+    /formato anterior/,
+  );
+  const priced = withProjectPrice(doc, item, 100);
+  expect(priced.project.surface?.waterproofing?.productDescription).toBe(
+    description,
+  );
+  const captured = withProjectPrice(
+    priced,
+    item,
+    100,
+    "reference",
+    "Referência · 18 L",
+  );
+  captured.project.surface!.waterproofing!.productDescription =
+    "Outra descrição";
+  expect(
+    withProjectPrice(captured, item, 100, "reference", "Referência · 18 L")
+      .project.surface?.waterproofing?.productDescription,
+  ).toBe("Referência · 18 L");
+  const restored = parseFile(serializeFile(priced).text);
+  expect(restored.project.surface?.waterproofing?.productDescription).toBe(
+    description,
+  );
 });
 it("T-040: parsing respeita precisão e permite limpar rendimento", () => {
   expect(parseSurfaceField("yield", "12,345")).toBe(12345);

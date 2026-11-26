@@ -2,7 +2,13 @@
 
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
-## Impermeabilizante e rejunte — formato 36 vigente
+## Produto e embalagem editáveis — formato 37 vigente
+
+Formato 37 acrescenta productDescription opcional às entradas de project.surface: texto com trim e até 160 caracteres, inclusive vazio para representar limpeza intencional. É a identificação editável do produto/embalagem no projeto, independente da origem do preço. Referências copiadas preenchem preço, referência capturada e descrição editável juntos; preço próprio ou limpeza preserva productDescription e remove somente referenceDescription. A identidade das referências e as fórmulas permanecem.
+
+Normalizar envelopes 9–36 para 37 sem materializar productDescription: na ausência, a interface usa referenceDescription como valor inicial. Recusar productDescription em formatos anteriores, inclusive vazio, e preservar em histórico, cópia, transporte e PDF. Leitores anteriores recusam 37; sem migração SQL ou mudança da composição.
+
+## Impermeabilizante e rejunte — formato 36
 
 Formato 36 acrescenta `project.surface` opcional e estrito, com entradas opcionais waterproofing/jointing. Cada entrada admite percent inteiro 0–10000, yield inteiro positivo seguro em milésimos de m²/embalagem, price em centavos inteiros seguros não negativos e referenceDescription de 1–160 caracteres após trim. A união de identidades de `priceSources` inclui `{group:surface,key:waterproofing|jointing}`. Fonte reference exige preço e descrição capturada; own/cleared não conservam descrição. Cliente/API usam o mesmo leitor e validação de consistência. Parâmetros e descrições acompanham histórico, cópia e transporte; totais não são persistidos.
 

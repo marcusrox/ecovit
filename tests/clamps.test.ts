@@ -273,7 +273,7 @@ describe("T-025 grampos nominais", () => {
     delete old.generated.floors[0].clamps;
     const source = structuredClone(old),
       restored = validateProject(old);
-    expect(restored.schemaVersion).toBe(36);
+    expect(restored.schemaVersion).toBe(37);
     expect(restored.generated).toBeNull();
     expect(restored.model.floors[0].clamps).toBeUndefined();
     expect(old).toEqual(source);

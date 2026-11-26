@@ -122,7 +122,7 @@ it("A04 leitor normaliza 21 sem preço e recusa preços inválidos ou disfarçad
   const old = { ...doc, schemaVersion: 21 },
     source = JSON.stringify(old);
   const restored = validateProject(old);
-  expect(restored.schemaVersion).toBe(36);
+  expect(restored.schemaVersion).toBe(37);
   expect(restored.project.unitPrices).toBeUndefined();
   expect(JSON.stringify(old)).toBe(source);
   expect(() =>
@@ -152,7 +152,7 @@ it("perdas persistidas: arquivo, cópias e legado preservam o percentual sem inf
   });
   const legacy = { ...doc, schemaVersion: 27 };
   const restored = validateProject(legacy);
-  expect(restored.schemaVersion).toBe(36);
+  expect(restored.schemaVersion).toBe(37);
   expect(restored.project.brickLossPercent).toBeUndefined();
   expect(legacy.schemaVersion).toBe(27);
   for (const value of [0, 250, Number.MAX_SAFE_INTEGER]) {
