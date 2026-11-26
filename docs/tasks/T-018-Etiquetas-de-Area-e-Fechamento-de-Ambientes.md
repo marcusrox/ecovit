@@ -174,3 +174,6 @@ Validação proporcional à nova intenção persistida, cálculo e interação: 
 
 Solicitante confirmou o aceite manual do refinamento com ‘Ficou bom’ e autorizou commit, push e acompanhamento do workflow até confirmar a publicação em produção. Evidências e aceites anteriores preservados.
 
+### Ajuste da expectativa de versão no CI — 2026-11-26
+
+Primeiro workflow do refinamento (45815132195, commit d10aa7c) aprovou lint e 754 testes, mas EX-63 em floors.test.ts ainda enumerava 35 entre os formatos futuros recusados. Atualizada somente essa entrada para 36, mantendo a recusa dos formatos antigos não suportados e demais asserções. Recorte local dos 33 testes de pavimentos aprovado em 1,61 s, log .tools/room-areas/floors-final.log. O deploy da tentativa falha foi pulado; aguardar workflow da correção para confirmar publicação.
