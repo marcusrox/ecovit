@@ -6,7 +6,11 @@ import {
   type PriceReference,
 } from "../domain/price-references";
 import { priceText, parseUnitPrice } from "../domain/budget";
-import { referenceDescriptionSchema } from "../domain/surface-budget";
+import {
+  referenceDescriptionSchema,
+  parseSurfaceField,
+} from "../domain/surface-budget";
+import { settlementNumber } from "../domain/settlement-budget";
 import css from "./Admin.module.css";
 
 type PriceJob = {
@@ -16,6 +20,8 @@ type PriceJob = {
   price: number | null;
   description?: string;
   descriptionText?: string;
+  yield?: number;
+  yieldText?: string;
 };
 type PriceRequest = {
   job: PriceJob;
@@ -25,6 +31,8 @@ type PriceRequest = {
     expectedPrice: number | null;
     description?: string | null;
     expectedDescription?: string | null;
+    yield?: number | null;
+    expectedYield?: number | null;
     operationId: string;
     requestIssuedAt: string;
   };
@@ -48,6 +56,7 @@ export function AdminPrices({
   const [descriptionDrafts, setDescriptionDrafts] = useState<
     Record<string, string>
   >({});
+  const [yieldDrafts, setYieldDrafts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false),
     [failed, setFailed] = useState(false);
   const confirmed = useRef(new Map<string, PriceReference>()),
@@ -86,6 +95,12 @@ export function AdminPrices({
     };
   }, [account, page, revision]);
   function clearDraft(job: PriceJob) {
+    setYieldDrafts((previous) => {
+      if (previous[job.key] !== job.yieldText) return previous;
+      const next = { ...previous };
+      delete next[job.key];
+      return next;
+    });
     setDescriptionDrafts((previous) => {
       if (previous[job.key] !== job.descriptionText) return previous;
       const next = { ...previous };
@@ -116,9 +131,11 @@ export function AdminPrices({
           const expectedPrice = confirmed.current.get(job.key)?.price ?? null;
           const expectedDescription =
             confirmed.current.get(job.key)?.description ?? null;
+          const expectedYield = confirmed.current.get(job.key)?.yield ?? null;
           if (
             job.price === expectedPrice &&
-            (job.description ?? null) === expectedDescription
+            (job.description ?? null) === expectedDescription &&
+            (job.yield ?? null) === expectedYield
           ) {
             clearDraft(job);
             continue;
@@ -130,7 +147,12 @@ export function AdminPrices({
               price: job.price,
               expectedPrice,
               ...(job.item.group === "surface"
-                ? { description: job.description ?? null, expectedDescription }
+                ? {
+                    description: job.description ?? null,
+                    expectedDescription,
+                    yield: job.yield ?? null,
+                    expectedYield,
+                  }
                 : {}),
               operationId: crypto.randomUUID(),
               requestIssuedAt: requestTime(),
@@ -147,6 +169,9 @@ export function AdminPrices({
         const updated: PriceReference = {
           item: request.job.item,
           price: request.job.price,
+          ...(request.job.yield === undefined
+            ? {}
+            : { yield: request.job.yield }),
           ...(request.job.description === undefined
             ? {}
             : { description: request.job.description }),
@@ -187,11 +212,21 @@ export function AdminPrices({
   function save(row: PriceReference) {
     const key = priceItemKey(row.item),
       text = drafts[key] ?? priceText(row.price ?? undefined);
-    if (drafts[key] === undefined && descriptionDrafts[key] === undefined)
+    if (
+      drafts[key] === undefined &&
+      descriptionDrafts[key] === undefined &&
+      yieldDrafts[key] === undefined
+    )
       return;
     let value: number | undefined;
     let description: string | undefined;
     const descriptionText = descriptionDrafts[key] ?? row.description ?? "";
+    const yieldText =
+      yieldDrafts[key] ??
+      (row.yield === undefined
+        ? ""
+        : settlementNumber(BigInt(row.yield), 1000n));
+    let referenceYield: number | undefined;
     try {
       value = parseUnitPrice(text);
       // A new description without a price remains a draft until the pair is complete.
@@ -201,8 +236,11 @@ export function AdminPrices({
         drafts[key] === undefined
       )
         return;
-      if (row.item.group === "surface" && value !== undefined)
+      if (row.item.group === "surface" && value !== undefined) {
         description = referenceDescriptionSchema.parse(descriptionText);
+        referenceYield = parseSurfaceField("yield", yieldText);
+        if (referenceYield === undefined) return;
+      }
     } catch {
       return;
     }
@@ -213,6 +251,8 @@ export function AdminPrices({
       price: value ?? null,
       description,
       descriptionText,
+      yield: referenceYield,
+      yieldText,
     };
     const waiting = queue.current.findIndex((entry) => entry.key === key);
     if (waiting < 0) queue.current.push(job);
@@ -251,10 +291,10 @@ export function AdminPrices({
         </button>
       </div>
       <p>
-        Salvo ao sair do campo ou pressionar Enter. Para impermeabilizante e
-        rejunte, o preço só é confirmado com produto e embalagem preenchidos.
-        Valores já incorporados aos projetos não mudam. Zero é válido; campo
-        vazio indica referência ausente.
+        Salvo ao sair do campo ou pressionar Enter. Para impermeabilizantes e
+        rejunte, confirme produto, embalagem, rendimento e preço juntos. Valores
+        já incorporados aos projetos não mudam. Zero é válido; campo vazio
+        indica referência ausente.
       </p>
       <p>
         Esquadrias aparecem após o primeiro preço confirmado de uma combinação
@@ -285,7 +325,7 @@ export function AdminPrices({
                     "Ferragens · R$/kg",
                     "Assentamento · R$/embalagem",
                     "Esquadrias · Preço do conjunto (R$/un.)",
-                    "Impermeabilizante e rejunte · R$/embalagem",
+                    "Impermeabilizantes e rejunte · R$/embalagem",
                   ][index]
                 }
               </h4>
@@ -301,9 +341,11 @@ export function AdminPrices({
               {group === "surface" && (
                 <p>
                   Identifique o produto e a embalagem de referência. Preencha a
-                  descrição e o preço; as alterações são salvas ao sair do
-                  campo. O usuário informará o rendimento no projeto e poderá
-                  alterar o preço.
+                  descrição, o rendimento em m² por embalagem para o tratamento
+                  completo e o preço; as alterações são salvas ao sair do campo
+                  ou por Enter quando o conjunto estiver completo. Referências
+                  antigas sem rendimento precisam ser completadas. O usuário
+                  poderá ajustar os valores no projeto.
                 </p>
               )}
               <ul className={css.priceGrid}>
@@ -312,22 +354,41 @@ export function AdminPrices({
                   .map((row, index) => {
                     const key = priceItemKey(row.item),
                       value = drafts[key] ?? priceText(row.price ?? undefined);
-                    let invalid = "";
+                    let invalid = "",
+                      descriptionError = "",
+                      yieldError = "";
                     const description =
                       descriptionDrafts[key] ?? row.description ?? "";
+                    const yieldText =
+                      yieldDrafts[key] ??
+                      (row.yield === undefined
+                        ? ""
+                        : settlementNumber(BigInt(row.yield), 1000n));
                     try {
-                      const parsed = parseUnitPrice(value);
+                      parseUnitPrice(value);
+                    } catch (e) {
+                      invalid = (e as Error).message;
+                    }
+                    if (group === "surface") {
+                      const hasPrice = value.trim() !== "";
                       if (
-                        group === "surface" &&
-                        parsed !== undefined &&
+                        (hasPrice || description.trim()) &&
                         !referenceDescriptionSchema.safeParse(description)
                           .success
                       )
-                        throw new Error(
-                          "Informe o produto e a embalagem de referência (até 160 caracteres).",
-                        );
-                    } catch (e) {
-                      invalid = (e as Error).message;
+                        descriptionError =
+                          "Informe o produto e a embalagem de referência (até 160 caracteres).";
+                      if (hasPrice || yieldText.trim()) {
+                        try {
+                          if (
+                            parseSurfaceField("yield", yieldText) === undefined
+                          )
+                            yieldError =
+                              "Informe o rendimento em m² por embalagem para completar a referência.";
+                        } catch (e) {
+                          yieldError = (e as Error).message;
+                        }
+                      }
                     }
                     const id = `reference-price-${group}-${index}`,
                       errorId = `${id}-error`;
@@ -350,8 +411,12 @@ export function AdminPrices({
                                   [key]: e.target.value,
                                 }))
                               }
-                              aria-invalid={!!invalid}
-                              aria-describedby={invalid ? errorId : undefined}
+                              aria-invalid={!!descriptionError}
+                              aria-describedby={
+                                descriptionError
+                                  ? `${id}-description-error`
+                                  : undefined
+                              }
                               onBlur={() => save(row)}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
@@ -360,9 +425,58 @@ export function AdminPrices({
                                 }
                               }}
                             />
+                            {descriptionError && (
+                              <span
+                                id={`${id}-description-error`}
+                                role="alert"
+                                className={css.fieldValidation}
+                              >
+                                {descriptionError}
+                              </span>
+                            )}
+                          </label>
+                        )}
+                        {group === "surface" && (
+                          <label>
+                            Rendimento (m²/embalagem)
+                            <input
+                              aria-label={`Rendimento de referência de ${priceItemLabel(row.item)} (m²/embalagem)`}
+                              inputMode="decimal"
+                              placeholder="Não informado"
+                              value={yieldText}
+                              aria-invalid={!!yieldError}
+                              aria-describedby={
+                                yieldError ? `${id}-yield-error` : undefined
+                              }
+                              onChange={(e) =>
+                                setYieldDrafts((previous) => ({
+                                  ...previous,
+                                  [key]: e.target.value,
+                                }))
+                              }
+                              onBlur={() => save(row)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  e.currentTarget.blur();
+                                }
+                              }}
+                            />
+                            {yieldError && (
+                              <span
+                                id={`${id}-yield-error`}
+                                role="alert"
+                                className={css.fieldValidation}
+                              >
+                                {yieldError}
+                              </span>
+                            )}
                           </label>
                         )}
                         <span className={css.priceControl}>
+                          {group === "surface" && (
+                            <label htmlFor={id}>Preço</label>
+                          )}
                           <input
                             id={id}
                             aria-label={`Referência de ${priceItemLabel(row.item)}`}
@@ -389,7 +503,11 @@ export function AdminPrices({
                             <span
                               id={errorId}
                               role="alert"
-                              className={css.priceValidation}
+                              className={
+                                group === "surface"
+                                  ? css.fieldValidation
+                                  : css.priceValidation
+                              }
                             >
                               {invalid}
                             </span>

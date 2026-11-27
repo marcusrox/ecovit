@@ -2,7 +2,12 @@ import { z } from "zod";
 import { display, type Project } from "./project";
 import { pieceKinds, pieceLabels } from "./quantities";
 import { steelCatalog, steelLabel } from "./steel-budget";
-import { surfaceProducts, referenceDescriptionSchema } from "./surface-budget";
+import {
+  surfaceProducts,
+  referenceDescriptionSchema,
+  referenceYieldSchema,
+  type SurfaceConfig,
+} from "./surface-budget";
 import { settlementCatalog } from "./settlement-budget";
 import {
   openingPriceSchema,
@@ -19,7 +24,7 @@ export const priceItemSchema = z.discriminatedUnion("group", [
   z
     .object({
       group: z.literal("surface"),
-      key: z.enum(["waterproofing", "jointing"]),
+      key: z.enum(surfaceProducts.map((p) => p.key)),
     })
     .strict(),
   z.object({ group: z.literal("bricks"), key: z.enum(pieceKinds) }).strict(),
@@ -72,7 +77,16 @@ export type PriceReference = {
   item: PriceItem;
   price: number | null;
   description?: string;
+  yield?: number;
 };
+export function completePriceReference(reference: PriceReference) {
+  return (
+    reference.price !== null &&
+    (reference.item.group !== "surface" ||
+      (referenceDescriptionSchema.safeParse(reference.description).success &&
+        referenceYieldSchema.safeParse(reference.yield).success))
+  );
+}
 export const priceItemKey = (item: PriceItem) =>
   item.group === "openings"
     ? `openings:${openingOptionKey(item.option)}`
@@ -134,6 +148,7 @@ export function withProjectPrice(
   price: number | undefined,
   source: "own" | "reference" = "own",
   description?: string,
+  referenceYield?: number,
 ): Project {
   if (price !== undefined) referenceCents.parse(price);
   const actualSource = price === undefined ? "cleared" : source;
@@ -141,18 +156,23 @@ export function withProjectPrice(
     item.group === "surface" && actualSource === "reference"
       ? referenceDescriptionSchema.parse(description)
       : undefined;
+  const capturedYield =
+    captured === undefined
+      ? undefined
+      : referenceYieldSchema.parse(referenceYield);
   if (
     projectPrice(doc, item) === price &&
     priceSource(doc, item) === actualSource &&
     (item.group !== "surface" ||
       (doc.project.surface?.[item.key]?.referenceDescription === captured &&
         (actualSource !== "reference" ||
-          doc.project.surface?.[item.key]?.productDescription === captured)))
+          (doc.project.surface?.[item.key]?.productDescription === captured &&
+            doc.project.surface?.[item.key]?.yield === capturedYield))))
   )
     return doc;
   let next = doc;
   if (item.group === "surface") {
-    const entry = { ...doc.project.surface?.[item.key] };
+    const entry: SurfaceConfig = { ...doc.project.surface?.[item.key] };
     if (
       entry.productDescription === undefined &&
       entry.referenceDescription !== undefined
@@ -164,6 +184,7 @@ export function withProjectPrice(
     if (captured !== undefined) {
       entry.referenceDescription = captured;
       entry.productDescription = captured;
+      entry.yield = capturedYield;
     }
     next = {
       ...doc,
@@ -201,13 +222,28 @@ export function withProjectPrice(
 export function incorporatePrices(doc: Project, references: PriceReference[]) {
   const eligible = new Set(
     projectPriceItems(doc)
-      .filter((i) => priceSource(doc, i) === undefined)
+      .filter(
+        (i) =>
+          priceSource(doc, i) === undefined &&
+          (i.group !== "surface" ||
+            (doc.project.surface?.[i.key]?.yield === undefined &&
+              doc.project.surface?.[i.key]?.productDescription === undefined &&
+              doc.project.surface?.[i.key]?.referenceDescription ===
+                undefined)),
+      )
       .map(priceItemKey),
   );
   return references.reduce(
     (current, r) =>
-      r.price !== null && eligible.has(priceItemKey(r.item))
-        ? withProjectPrice(current, r.item, r.price, "reference", r.description)
+      completePriceReference(r) && eligible.has(priceItemKey(r.item))
+        ? withProjectPrice(
+            current,
+            r.item,
+            r.price!,
+            "reference",
+            r.description,
+            r.yield,
+          )
         : current,
     doc,
   );

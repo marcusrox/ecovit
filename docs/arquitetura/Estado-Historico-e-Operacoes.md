@@ -1,5 +1,9 @@
 # Estado, histórico e operações
 
+## Impermeabilização de bases e lajes — T-042
+
+Percentuais em pavimento/laje e parâmetros dos produtos usam confirmação Enter/blur e operação `budget`, com prévia sem persistência, histórico, salvamento e recuperação vigentes. Não recalculam composição; o detector de insumos ignora `waterproofingPercent` nas lajes, assim como os parâmetros financeiros já excluídos dos pavimentos. Confirmar parte do documento corrente e preserva os demais campos/elementos; inválido continua rascunho. Renomear/reordenar conserva valores por identidade; cópia de pavimento replica o percentual de base e o da laje para os registros novos. Remover/desfazer/refazer restaura elemento e configuração juntos, sem registros financeiros órfãos. Produto/embalagem e origem das referências seguem T-040.
+
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
 ## Incorporação e limpeza de preços — T-039
@@ -171,4 +175,4 @@ Alterar `model.roomLabels[].excludedFromAreas` é uma operação room: confirma 
 
 ## Impermeabilizante e rejunte — T-040
 
-project.surface contém somente intenção orçamentária, excluída dos insumos construtivos. Confirmações por Enter/blur usam budget, documento local mais recente, histórico e salvamento em segundo plano existentes, sem recomposição. A cópia de referência grava preço/origem/descrição juntos; preço próprio ou limpeza remove a descrição capturada da origem, preservando a identificação editável productDescription. Este campo confirma por Enter/blur em budget, com o mesmo histórico/salvamento e preservação no PDF. Desfazer/refazer restaura todo o conjunto. Percentuais e rendimentos não recebem referência. Rascunhos inválidos não confirmam e impedem captura de PDF até correção; somente leitura/processamento e recuperação mantêm os bloqueios existentes.
+project.surface contém somente intenção orçamentária, excluída dos insumos construtivos. Confirmações por Enter/blur usam budget, documento local mais recente, histórico e salvamento em segundo plano existentes, sem recomposição. A cópia de referência de superfície grava preço, origem, identificação de produto/embalagem e rendimento juntos; preço próprio ou limpeza remove a descrição capturada da origem, preservando a identificação editável productDescription. Este campo confirma por Enter/blur em budget, com o mesmo histórico/salvamento e preservação no PDF. Desfazer/refazer restaura todo o conjunto. Percentuais não recebem referência; rendimento acompanha produto/embalagem e preço nas quatro referências de superfície. A incorporação automática preserva rendimento e identificação próprios; a cópia manual substitui o conjunto completo. Rascunhos inválidos não confirmam e impedem captura de PDF até correção; somente leitura/processamento e recuperação mantêm os bloqueios existentes.

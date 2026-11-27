@@ -127,78 +127,102 @@ afterAll(async () => {
 });
 
 describe("M12 — API com PostgreSQL 18.0 real", () => {
-  it("T-040 confirma preço e descrição juntos, protege conflito de descrição e repetição", async () => {
-    const admin = await login("permanent@example.com"),
-      common = await login("surface@example.com");
-    const item: PriceItem = { group: "surface", key: "waterproofing" };
-    const payload = {
-      ...body(),
-      item,
-      price: 15000,
-      description: "Produto A · lata de 18 L",
-      expectedPrice: null,
-      expectedDescription: null,
-    };
-    const post = (value: object, user = admin) =>
-      app.inject({
-        method: "POST",
-        url: "/api/admin/prices",
-        headers: headers(user),
-        payload: value,
-      });
-    expect((await post(payload, common)).statusCode).toBe(403);
-    expect((await post({ ...payload, description: null })).statusCode).toBe(
-      422,
-    );
-    expect((await post(payload)).statusCode).toBe(200);
-    expect((await post(payload)).statusCode).toBe(200);
-    const lookup = () =>
-      app.inject({
-        method: "POST",
-        url: "/api/prices/lookup",
-        headers: headers(common),
-        payload: { items: [item] },
-      });
-    expect((await lookup()).json().references).toEqual([
-      { item, price: 15000, description: payload.description },
-    ]);
-    const changed = {
-      ...body(),
-      item,
-      price: 15000,
-      description: "Produto B · lata de 20 L",
-      expectedPrice: 15000,
-      expectedDescription: payload.description,
-    };
-    expect((await post(changed)).statusCode).toBe(200);
-    expect(
-      (await post({ ...changed, ...body(), price: 16000 })).statusCode,
-    ).toBe(409);
-    expect((await lookup()).json().references).toEqual([
-      { item, price: 15000, description: changed.description },
-    ]);
-    expect(
-      (
-        await post({
-          ...body(),
-          item,
-          price: null,
-          description: null,
-          expectedPrice: 15000,
-          expectedDescription: changed.description,
-        })
-      ).statusCode,
-    ).toBe(200);
-    expect((await lookup()).json().references).toEqual([{ item, price: null }]);
-    const audits = await db.query(
-      "SELECT reason FROM ecovit_admin_audit WHERE action='price' AND actor_id=$1 ORDER BY reason",
-      [admin.id],
-    );
-    expect(audits.rowCount).toBe(3);
-    expect(
-      audits.rows.some((r) => r.reason.includes("Produto B · lata de 20 L")),
-    ).toBe(true);
-  });
+  it.each(["waterproofing", "wallBase", "slabs", "jointing"] as const)(
+    "T-040/T-042 %s confirma preço e descrição juntos, protege conflito de descrição e repetição",
+    async (key) => {
+      const admin = await login("permanent@example.com"),
+        common = await login("surface@example.com");
+      const item: PriceItem = { group: "surface", key };
+      const payload = {
+        ...body(),
+        item,
+        price: 15000,
+        description: "Produto A · lata de 18 L",
+        expectedPrice: null,
+        expectedDescription: null,
+        yield: 30000,
+        expectedYield: null,
+      };
+      const post = (value: object, user = admin) =>
+        app.inject({
+          method: "POST",
+          url: "/api/admin/prices",
+          headers: headers(user),
+          payload: value,
+        });
+      expect((await post(payload, common)).statusCode).toBe(403);
+      expect((await post({ ...payload, description: null })).statusCode).toBe(
+        422,
+      );
+      expect((await post({ ...payload, yield: null })).statusCode).toBe(422);
+      expect((await post({ ...payload, yield: 0 })).statusCode).toBe(422);
+      expect((await post(payload)).statusCode).toBe(200);
+      expect((await post(payload)).statusCode).toBe(200);
+      const lookup = () =>
+        app.inject({
+          method: "POST",
+          url: "/api/prices/lookup",
+          headers: headers(common),
+          payload: { items: [item] },
+        });
+      expect((await lookup()).json().references).toEqual([
+        { item, price: 15000, description: payload.description, yield: 30000 },
+      ]);
+      const changed = {
+        ...body(),
+        item,
+        price: 15000,
+        description: "Produto B · lata de 20 L",
+        expectedPrice: 15000,
+        expectedDescription: payload.description,
+        yield: 42000,
+        expectedYield: 30000,
+      };
+      expect((await post(changed)).statusCode).toBe(200);
+      expect((await post({ ...payload, yield: 40000 })).statusCode).toBe(409);
+      expect(
+        (
+          await post({
+            ...changed,
+            ...body(),
+            expectedDescription: changed.description,
+            expectedYield: 30000,
+          })
+        ).statusCode,
+      ).toBe(409);
+      expect(
+        (await post({ ...changed, ...body(), price: 16000 })).statusCode,
+      ).toBe(409);
+      expect((await lookup()).json().references).toEqual([
+        { item, price: 15000, description: changed.description, yield: 42000 },
+      ]);
+      expect(
+        (
+          await post({
+            ...body(),
+            item,
+            price: null,
+            description: null,
+            expectedPrice: 15000,
+            expectedDescription: changed.description,
+            yield: null,
+            expectedYield: 42000,
+          })
+        ).statusCode,
+      ).toBe(200);
+      expect((await lookup()).json().references).toEqual([
+        { item, price: null },
+      ]);
+      const audits = await db.query(
+        "SELECT reason FROM ecovit_admin_audit WHERE action='price' AND actor_id=$1 ORDER BY reason",
+        [admin.id],
+      );
+      expect(audits.rowCount).toBe(3);
+      expect(
+        audits.rows.some((r) => r.reason.includes("Produto B · lata de 20 L")),
+      ).toBe(true);
+    },
+  );
   it("T-039 protege referências, audita alterações, repete operação sem duplicar e preserva concorrência administrativa", async () => {
     const admin = await login("permanent@example.com"),
       common = await login("prices-user@example.com");
@@ -272,7 +296,7 @@ describe("M12 — API com PostgreSQL 18.0 real", () => {
       url: "/api/admin/prices",
       headers: headers(admin),
     });
-    expect(listed.json().references).toHaveLength(17);
+    expect(listed.json().references).toHaveLength(19);
     expect(
       (
         await app.inject({

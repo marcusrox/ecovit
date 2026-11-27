@@ -40,6 +40,8 @@ Na translação, atualizar extremidades e coordenadas dos ajustes exclusivos de 
 
 ## Lajes
 
+Na T-042, pavimentos e lajes admitem `waterproofingPercent?: number`, inteiro em centésimos de ponto percentual de 0 a 10000; ausência significa 0%. No pavimento refere-se à base das paredes; na laje, à superfície horizontal líquida. É intenção orçamentária associada ao próprio ID, sem mudar geometria, espessura, composição ou validade construtiva. Duplicação de pavimento conserva os dois percentuais nos elementos novos; exclusão e histórico acompanham os registros, sem configuração externa órfã. A área líquida derivada da laje pode alimentar esta impermeabilização, sem persistir área ou acrescentar volume/concreto/aço. Fórmulas e disponibilidade em Caderno Técnico/Quantitativos.
+
 ```ts
 type SlabOpening = { id: string; contour: Point[] };
 type Slab = {

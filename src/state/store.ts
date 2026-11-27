@@ -45,6 +45,12 @@ const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
     {
       ...previous.model,
+      slabs: previous.model.slabs.map(
+        ({ waterproofingPercent: ignored, ...slab }) => {
+          void ignored;
+          return slab;
+        },
+      ),
       texts: undefined,
       openings: constructionOpenings(previous.model.openings),
       terrain: undefined,
@@ -72,6 +78,12 @@ const changedInputs = (previous: Project, next: Project) =>
   JSON.stringify([
     {
       ...next.model,
+      slabs: next.model.slabs.map(
+        ({ waterproofingPercent: ignored, ...slab }) => {
+          void ignored;
+          return slab;
+        },
+      ),
       texts: undefined,
       openings: constructionOpenings(next.model.openings),
       terrain: undefined,

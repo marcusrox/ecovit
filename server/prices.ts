@@ -12,7 +12,10 @@ import {
   priceSource,
   referenceCents,
 } from "../src/domain/price-references";
-import { referenceDescriptionSchema } from "../src/domain/surface-budget";
+import {
+  referenceDescriptionSchema,
+  referenceYieldSchema,
+} from "../src/domain/surface-budget";
 import type { RemoteProject } from "../src/persistence/remote-document";
 import type { Config } from "./config";
 import { transaction } from "./db";
@@ -56,6 +59,8 @@ const patchSchema = z
     expectedPrice: referenceCents.nullable(),
     description: referenceDescriptionSchema.nullable().optional(),
     expectedDescription: referenceDescriptionSchema.nullable().optional(),
+    yield: referenceYieldSchema.nullable().optional(),
+    expectedYield: referenceYieldSchema.nullable().optional(),
     operationId: z.string().uuid(),
     requestIssuedAt: z.string().datetime(),
   })
@@ -64,21 +69,25 @@ const patchSchema = z
     if (input.item.group === "surface") {
       if (
         (input.price !== null) !== (input.description != null) ||
-        input.expectedDescription === undefined
+        (input.price !== null) !== (input.yield != null) ||
+        input.expectedDescription === undefined ||
+        input.expectedYield === undefined
       )
         ctx.addIssue({
           code: "custom",
           message:
-            "Informe produto e embalagem da referência com preço e seu valor anterior.",
+            "Informe produto, embalagem, rendimento e preço da referência com seus valores anteriores.",
         });
     } else if (
       input.description !== undefined ||
-      input.expectedDescription !== undefined
+      input.expectedDescription !== undefined ||
+      input.yield !== undefined ||
+      input.expectedYield !== undefined
     ) {
       ctx.addIssue({
         code: "custom",
         message:
-          "Descrição permitida somente para impermeabilizante e rejunte.",
+          "Descrição e rendimento permitidos somente para impermeabilizantes e rejunte.",
       });
     }
   });
@@ -98,13 +107,14 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
       .strict()
       .parse(request.body);
     const result = await db.query(
-      "SELECT item,price::text,description FROM ecovit_price_references WHERE key=ANY($1::text[])",
+      "SELECT item,price::text,description,yield_milli::text FROM ecovit_price_references WHERE key=ANY($1::text[])",
       [[...new Set(items.map(priceItemKey))]],
     );
     return {
       references: result.rows.map((r) => ({
         item: r.item,
         ...(r.description == null ? {} : { description: r.description }),
+        ...(r.yield_milli == null ? {} : { yield: Number(r.yield_milli) }),
         price: r.price === null ? null : Number(r.price),
       })),
     };
@@ -117,7 +127,7 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
       .strict()
       .parse(request.query);
     const fixed = await db.query(
-      "SELECT key,item,price::text,description FROM ecovit_price_references WHERE item->>'group'<>'openings'",
+      "SELECT key,item,price::text,description,yield_milli::text FROM ecovit_price_references WHERE item->>'group'<>'openings'",
     );
     const openings = await db.query(
       "SELECT item,price::text,description FROM ecovit_price_references WHERE item->>'group'='openings' ORDER BY key LIMIT 26 OFFSET $1",
@@ -131,6 +141,9 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
           ...(map.get(priceItemKey(item))?.description == null
             ? {}
             : { description: map.get(priceItemKey(item))!.description }),
+          ...(map.get(priceItemKey(item))?.yield_milli == null
+            ? {}
+            : { yield: Number(map.get(priceItemKey(item))!.yield_milli) }),
           price:
             map.get(priceItemKey(item))?.price === undefined ||
             map.get(priceItemKey(item))?.price === null
@@ -185,7 +198,7 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
       );
       const row = (
         await client.query(
-          "SELECT price::text,description FROM ecovit_price_references WHERE key=$1 FOR UPDATE",
+          "SELECT price::text,description,yield_milli::text FROM ecovit_price_references WHERE key=$1 FOR UPDATE",
           [key],
         )
       ).rows[0];
@@ -199,7 +212,9 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
       if (
         current !== input.expectedPrice ||
         (input.item.group === "surface" &&
-          (row?.description ?? null) !== input.expectedDescription)
+          ((row?.description ?? null) !== input.expectedDescription ||
+            (row?.yield_milli == null ? null : Number(row.yield_milli)) !==
+              input.expectedYield))
       )
         throw new ApiError(
           409,
@@ -207,12 +222,13 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
           "A referência mudou. Atualize a consulta antes de confirmar outro valor.",
         );
       await client.query(
-        "INSERT INTO ecovit_price_references(key,item,price,description) VALUES($1,$2::jsonb,$3,$4) ON CONFLICT(key) DO UPDATE SET price=EXCLUDED.price,description=EXCLUDED.description,updated_at=clock_timestamp()",
+        "INSERT INTO ecovit_price_references(key,item,price,description,yield_milli) VALUES($1,$2::jsonb,$3,$4,$5) ON CONFLICT(key) DO UPDATE SET price=EXCLUDED.price,description=EXCLUDED.description,yield_milli=EXCLUDED.yield_milli,updated_at=clock_timestamp()",
         [
           key,
           JSON.stringify(input.item),
           input.price,
           input.description ?? null,
+          input.yield ?? null,
         ],
       );
       await client.query(
@@ -220,7 +236,7 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
         [
           randomUUID(),
           actor.id,
-          `Referência ${priceItemLabel(input.item)}: ${current ?? "ausente"} → ${input.price ?? "ausente"} centavos.${input.item.group === "surface" ? ` Produto/embalagem: ${row?.description ?? "ausente"} → ${input.description ?? "ausente"}.` : ""}`,
+          `Referência ${priceItemLabel(input.item)}: ${current ?? "ausente"} → ${input.price ?? "ausente"} centavos.${input.item.group === "surface" ? ` Produto/embalagem: ${row?.description ?? "ausente"} → ${input.description ?? "ausente"}. Rendimento (milésimos de m²/embalagem): ${row?.yield_milli ?? "ausente"} → ${input.yield ?? "ausente"}.` : ""}`,
           input.operationId,
           fingerprint,
         ],

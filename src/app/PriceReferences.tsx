@@ -7,12 +7,14 @@ import {
   priceItemKey,
   priceItemLabel,
   withProjectPrice,
+  completePriceReference,
   type PriceItem,
   type PriceReference,
 } from "../domain/price-references";
 import type { Project } from "../domain/project";
 import { Icon } from "../ui/Icon";
 import styles from "../ui/App.module.css";
+import { settlementNumber } from "../domain/settlement-budget";
 
 const lookup = (items: PriceItem[]) =>
   api<{ references: PriceReference[] }>("/prices/lookup", {
@@ -110,8 +112,12 @@ export function useBudgetReferences(
       const reference = result.references.find(
         (r) => priceItemKey(r.item) === priceItemKey(item),
       );
-      if (reference?.price == null)
-        throw new Error("Preço de referência não disponível para este item.");
+      if (!reference || !completePriceReference(reference))
+        throw new Error(
+          item.group === "surface"
+            ? "Referência indisponível ou incompleta. Complete produto, embalagem, rendimento e preço na Administração."
+            : "Preço de referência não disponível para este item.",
+        );
       const s = useStore.getState();
       if (
         !s.doc ||
@@ -126,9 +132,10 @@ export function useBudgetReferences(
       const next = withProjectPrice(
         s.doc,
         item,
-        reference.price,
+        reference.price!,
         "reference",
         reference.description,
+        reference.yield,
       );
       if (next !== s.doc) {
         setPriceSaving(true);
@@ -178,20 +185,23 @@ export function ReferencePriceButton({
   const reference = context.references.find(
     (r) => priceItemKey(r.item) === priceItemKey(item) && r.price !== null,
   );
-  const available = reference !== undefined;
+  const available =
+    reference !== undefined && completePriceReference(reference);
   const hint = available
     ? item.group === "surface"
-      ? `Usar preço de referência: ${reference.description}`
+      ? `Usar referência completa: ${reference.description} · ${settlementNumber(BigInt(reference.yield!), 1000n)} m²/embalagem`
       : item.group === "openings"
         ? "Usar preço de referência do conjunto completo, sem instalação"
         : "Usar preço de referência"
-    : "Preço de referência indisponível";
+    : reference?.item.group === "surface"
+      ? "Referência incompleta: informe o rendimento na Administração"
+      : "Preço de referência indisponível";
   return (
     <span className={styles.referenceHint} data-tooltip={hint}>
       <button
         type="button"
         className={`${styles.iconButton} ${styles.referencePrice}`}
-        aria-label={`Usar preço de referência de ${priceItemLabel(item)}`}
+        aria-label={`${item.group === "surface" ? "Usar referência completa" : "Usar preço de referência"} de ${priceItemLabel(item)}`}
         title={hint}
         aria-disabled={context.blocked || !available}
         onMouseDown={(e) => e.preventDefault()}

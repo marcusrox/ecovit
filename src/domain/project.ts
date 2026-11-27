@@ -96,6 +96,7 @@ export type SlabConstruction = {
   topping?: number;
 };
 export type Slab = {
+  waterproofingPercent?: number;
   id: string;
   floorId: string;
   thickness: number;
@@ -202,6 +203,7 @@ export type Project = {
   model: {
     terrain: Terrain | null;
     floors: {
+      waterproofingPercent?: number;
       id: string;
       name: string;
       level: number;

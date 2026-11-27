@@ -4,9 +4,21 @@
 
 ## Versão vigente e faixa suportada
 
+### Rendimento nas referências de superfície — migração SQL 005
+
+`ecovit_price_references.yield_milli` guarda rendimento positivo seguro em milésimos de m²/embalagem somente para itens `surface` com preço. NULL preserva referências antigas sem inventar rendimento; não converter zero em ausência. GET administrativo e lookup retornam `yield` quando cadastrado. POST administrativo exige, para preço presente, descrição e rendimento válidos; limpeza confirma preço/descrição/rendimento nulos juntos. Compara `expectedPrice`, `expectedDescription` e `expectedYield` na mesma transação, incluindo conflito por mudança exclusiva de rendimento, e conserva autorização, repetição segura e auditoria do conjunto. Outros grupos não admitem rendimento/descrição. Migração preserva preço/descrição existentes e é executada pelo fluxo incremental mantido, sem aplicação manual ao banco do aplicativo.
+
+O projeto já comporta `yield` nas entradas de superfície: incorporação/cópia grava o conjunto com origem/descrições no formato 38, sem novo campo ou versão de envelope. Valores próprios e referências já capturadas permanecem estáveis; campos financeiros editáveis continuam preservados em histórico, cópia, transporte e PDF. Referência administrativa incompleta não é incorporada. Os snapshots legados com origem de referência e rendimento ausente continuam válidos, sem backfill automático.
+
 `src/domain/project-format.ts` é a fonte única de CURRENT_PROJECT_FORMAT e MIN_SUPPORTED_PROJECT_FORMAT. Criação, tipo Project, schema do leitor e identificação de compatibilidade usam essas definições e isSupportedProjectFormat, que aceita somente inteiros na faixa inclusiva. O leitor verifica a versão original antes das migrações. Fronteiras e passos históricos continuam com números explícitos: aumentar a versão vigente não substitui a implementação da migração correspondente. Testes de versão atual usam a constante; testes de versão futura usam CURRENT_PROJECT_FORMAT + 1, preservando os casos históricos fixos.
 
-## Produto e embalagem editáveis — formato 37 vigente
+## Impermeabilização de bases e lajes — formato 38 vigente
+
+Formato 38 acrescenta `project.surface.wallBase/slabs`, com rendimento/preço/descrições no padrão T-040 e sem percentual global, e `waterproofingPercent` opcional em cada pavimento/laje, inteiro de 0–10000, ausência equivalente a 0%. As novas identidades de referência são `surface:wallBase/slabs`; captura, origem e limpeza seguem as referências de superfície. O leitor compartilhado cliente/API normaliza 9–37 para 38 sem materializar aplicação ou copiar a impermeabilização vertical, recusando campos/identidades novos declarados em formatos anteriores. Preservar versões históricas e rejeição de versões futuras; leitores até 37 recusam 38.
+
+Os percentuais pertencem aos registros com IDs estáveis: renomear/reordenar não muda a associação; duplicar pavimento conserva o percentual e o da laje copiada com o novo ID. Exclusão remove a contribuição com o elemento; histórico restaura ambos. Cópia/transporte preservam os novos dados sem compartilhamento de mutações. Não muda o formato remoto nem requer migração SQL: as duas referências usam a tabela e a confirmação atômica de descrição/preço da migração 004. Edição exclusiva destes campos não altera insumos do motor ou estado da composição.
+
+## Produto e embalagem editáveis — formato 37
 
 Formato 37 acrescenta productDescription opcional às entradas de project.surface: texto com trim e até 160 caracteres, inclusive vazio para representar limpeza intencional. É a identificação editável do produto/embalagem no projeto, independente da origem do preço. Referências copiadas preenchem preço, referência capturada e descrição editável juntos; preço próprio ou limpeza preserva productDescription e remove somente referenceDescription. A identidade das referências e as fórmulas permanecem.
 
@@ -18,7 +30,7 @@ Formato 36 acrescenta `project.surface` opcional e estrito, com entradas opciona
 
 Normalizar envelopes 9–35 para 36 em memória sem materializar parâmetros, preços ou referências. Recusar surface e novas identidades em envelopes anteriores, inclusive grupo vazio. Leitores anteriores recusam 36 antes de substituir o desenho. Composição nominal-v13 e representação remota 1 permanecem.
 
-A migração SQL 004 adiciona description ao cadastro de referências. Nos itens surface, preço presente exige descrição de produto e embalagem, e limpeza remove ambos; outros grupos não usam descrição. GET administrativo e lookup retornam o par. POST administrativo valida description e expectedDescription, confirma preço/descrição juntos e compara ambos os valores anteriores na transação; mantém autorização revalidada, CSRF, idempotência, conflito e auditoria com descrição anterior/nova. Rendimento e percentual não entram no cadastro. Edições de projeto não contribuem referências destes produtos.
+A migração SQL 004 adiciona description ao cadastro de referências. Nos itens surface, preço presente exige descrição de produto e embalagem, e limpeza remove ambos; outros grupos não usam descrição. GET administrativo e lookup retornam o par. POST administrativo valida description e expectedDescription, confirma preço/descrição juntos e compara ambos os valores anteriores na transação; mantém autorização revalidada, CSRF, idempotência, conflito e auditoria com descrição anterior/nova. A migração 005 acrescenta rendimento ao conjunto; percentual continua fora do cadastro. Edições de projeto não contribuem referências destes produtos.
 
 ## Ambientes desconsiderados — formato 35
 

@@ -8,6 +8,7 @@ import {
 } from "../../src/domain/project";
 import {
   priceItemKey,
+  priceItemLabel,
   projectPriceItems,
   type PriceItem,
 } from "../../src/domain/price-references";
@@ -25,7 +26,7 @@ test.afterAll(async () => {
 });
 async function seed(item: PriceItem, value: number) {
   await db.query(
-    "INSERT INTO ecovit_price_references(key,item,price,description) VALUES($1,$2::jsonb,$3,$4) ON CONFLICT(key) DO UPDATE SET price=EXCLUDED.price,description=EXCLUDED.description",
+    "INSERT INTO ecovit_price_references(key,item,price,description,yield_milli) VALUES($1,$2::jsonb,$3,$4,$5) ON CONFLICT(key) DO UPDATE SET price=EXCLUDED.price,description=EXCLUDED.description,yield_milli=EXCLUDED.yield_milli",
     [
       priceItemKey(item),
       JSON.stringify(item),
@@ -33,6 +34,7 @@ async function seed(item: PriceItem, value: number) {
       item.group === "surface"
         ? "Produto de referência · embalagem de 5 kg"
         : null,
+      item.group === "surface" ? 30000 : null,
     ],
   );
 }
@@ -97,10 +99,10 @@ const button = (p: Page) =>
 async function open(p: Page) {
   await p.getByRole("button", { name: "Orçamento", exact: true }).click();
   await expect(
-    budget(p)
-      .getByRole("status")
-      .filter({ hasText: "Consultando e incorporando" }),
-  ).toHaveCount(0);
+    budget(p).getByText("Consultando e incorporando preços de referência…", {
+      exact: true,
+    }),
+  ).toBeHidden();
   await expect(
     budget(p).getByRole("status").filter({ hasText: "Salvo" }),
   ).toBeVisible();
@@ -139,6 +141,158 @@ async function administrationPrices(page: Page) {
   await admin.getByRole("button", { name: "Preços", exact: true }).click();
   return admin;
 }
+
+test(
+  "Rendimento nas quatro referências de superfície acompanha produto e preço até o Orçamento",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    const doc = await fixture(page);
+    const keys = ["waterproofing", "wallBase", "slabs", "jointing"] as const;
+    await seed({ group: "surface", key: "waterproofing" }, 15000);
+    await db.query(
+      "UPDATE ecovit_price_references SET yield_milli=NULL WHERE key='surface:waterproofing'",
+    );
+    const admin = await administrationPrices(page);
+    const legacyLabel = priceItemLabel({
+      group: "surface",
+      key: "waterproofing",
+    });
+    await expect(
+      admin.getByRole("textbox", {
+        name: `Rendimento de referência de ${legacyLabel} (m²/embalagem)`,
+        exact: true,
+      }),
+    ).toHaveValue("");
+    const legacyYield = admin.getByRole("textbox", {
+      name: `Rendimento de referência de ${legacyLabel} (m²/embalagem)`,
+      exact: true,
+    });
+    const legacyPrice = admin.getByRole("textbox", {
+      name: `Referência de ${legacyLabel}`,
+      exact: true,
+    });
+    const legacyDescription = admin.getByRole("textbox", {
+      name: `Produto e embalagem de referência de ${legacyLabel}`,
+      exact: true,
+    });
+    await expect(legacyYield).toHaveAttribute("aria-invalid", "true");
+    await expect(legacyYield).toHaveCSS("border-color", "rgb(183, 105, 93)");
+    await expect(legacyPrice).toHaveAttribute("aria-invalid", "false");
+    await expect(legacyDescription).toHaveAttribute("aria-invalid", "false");
+    const yieldMessage = legacyYield.locator("..").getByRole("alert");
+    await expect(yieldMessage).toContainText("Informe o rendimento");
+    await expect(yieldMessage).toBeVisible();
+    const inputBox = await legacyYield.boundingBox(),
+      messageBox = await yieldMessage.boundingBox();
+    expect(messageBox!.y).toBeGreaterThanOrEqual(
+      inputBox!.y + inputBox!.height,
+    );
+    await expect(legacyPrice.locator("..").getByRole("alert")).toHaveCount(0);
+    await page.screenshot({ path: ".tools/logs/reference-field-errors.png" });
+    for (const key of keys) {
+      const label = priceItemLabel({ group: "surface", key });
+      await admin
+        .getByRole("textbox", {
+          name: `Produto e embalagem de referência de ${label}`,
+          exact: true,
+        })
+        .fill(`${key} · embalagem de 18 L`);
+      const input = admin.getByRole("textbox", {
+        name: `Rendimento de referência de ${label} (m²/embalagem)`,
+        exact: true,
+      });
+      await input.fill("35,5");
+      if (key === "waterproofing") {
+        const saved = page.waitForResponse(
+          (r) =>
+            r.url().endsWith("/api/admin/prices") &&
+            r.request().method() === "POST",
+        );
+        await input.press("Enter");
+        const response = await saved;
+        expect(response.status()).toBe(200);
+        expect(response.request().postDataJSON()).toMatchObject({
+          yield: 35500,
+          expectedYield: null,
+        });
+      } else await input.press("Enter");
+      const price = admin.getByRole("textbox", {
+        name: `Referência de ${label}`,
+        exact: true,
+      });
+      await price.fill("100,50");
+      const saved = page.waitForResponse(
+        (r) =>
+          r.url().endsWith("/api/admin/prices") &&
+          r.request().method() === "POST",
+      );
+      await price.press("Enter");
+      const response = await saved;
+      expect(response.status()).toBe(200);
+      expect(response.request().postDataJSON()).toMatchObject({
+        price: 10050,
+        yield: 35500,
+        description: `${key} · embalagem de 18 L`,
+      });
+    }
+    await admin
+      .getByRole("textbox", {
+        name: `Rendimento de referência de ${legacyLabel} (m²/embalagem)`,
+        exact: true,
+      })
+      .scrollIntoViewIfNeeded();
+    await legacyDescription.fill("");
+    await expect(legacyDescription).toHaveAttribute("aria-invalid", "true");
+    await expect(
+      legacyDescription.locator("..").getByRole("alert"),
+    ).toBeVisible();
+    await expect(legacyYield).toHaveAttribute("aria-invalid", "false");
+    await expect(legacyPrice).toHaveAttribute("aria-invalid", "false");
+    await legacyDescription.fill("waterproofing · embalagem de 18 L");
+    await legacyPrice.fill("inválido");
+    await expect(legacyPrice).toHaveAttribute("aria-invalid", "true");
+    await expect(legacyPrice.locator("..").getByRole("alert")).toBeVisible();
+    await expect(legacyDescription).toHaveAttribute("aria-invalid", "false");
+    await expect(legacyYield).toHaveAttribute("aria-invalid", "false");
+    await legacyPrice.fill("100,50");
+    await legacyPrice.press("Enter");
+    await expect(legacyPrice).toHaveAttribute("aria-invalid", "false");
+    await page.screenshot({ path: ".tools/logs/reference-yield-admin.png" });
+    await admin
+      .getByRole("button", { name: "Fechar administração", exact: true })
+      .click();
+    await page
+      .getByText(`${doc.project.name} (cópia)`, { exact: true })
+      .click();
+    await expect(page.getByRole("status")).toContainText("Salvo");
+    await open(page);
+    const captured = await state(page);
+    for (const key of keys)
+      expect(captured.doc.project.surface?.[key]).toMatchObject({
+        price: 10050,
+        yield: 35500,
+        productDescription: `${key} · embalagem de 18 L`,
+        referenceDescription: `${key} · embalagem de 18 L`,
+      });
+    const yieldInput = budget(page).getByRole("textbox", {
+      name: "Rendimento de Rejunte (m²/embalagem)",
+      exact: true,
+    });
+    await yieldInput.fill("7");
+    await yieldInput.press("Enter");
+    await close(page);
+    await open(page);
+    await expect(yieldInput).toHaveValue("7");
+    await budget(page)
+      .getByRole("button", {
+        name: "Usar referência completa de Rejunte · embalagem",
+        exact: true,
+      })
+      .click();
+    await expect(yieldInput).toHaveValue("35,5");
+    expect((await state(page)).doc.generated).toEqual(captured.doc.generated);
+  },
+);
 test(
   "T-039 incorpora os quatro grupos uma vez, mantém zero, permite limpar e usar referência por teclado",
   { tag: "@fluxo" },
@@ -159,7 +313,15 @@ test(
       initial.history.past.length + 1,
     );
     expect(incorporated.doc.generated).toEqual(initial.doc.generated);
-    expect(incorporated.doc.project.priceSources).toHaveLength(17);
+    expect(incorporated.doc.project.priceSources).toHaveLength(19);
+    for (const key of ["wallBase", "slabs"] as const) {
+      expect(incorporated.doc.project.surface?.[key]).toMatchObject({
+        price: 100,
+        referenceDescription: "Produto de referência · embalagem de 5 kg",
+        productDescription: "Produto de referência · embalagem de 5 kg",
+        yield: 30000,
+      });
+    }
     await close(page);
     await seed({ group: "bricks", key: "half" }, 200);
     await open(page);

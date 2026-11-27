@@ -14,7 +14,7 @@ import {
   openingOptionKey,
 } from "../domain/opening-budget";
 import { settlementCatalog } from "../domain/settlement-budget";
-import { surfaceProducts } from "../domain/surface-budget";
+import { surfaceProducts, isConcreteProduct } from "../domain/surface-budget";
 import type { useSteelBudget } from "./SteelBudget";
 import type { useSettlementBudget } from "./SettlementBudget";
 import type { useOpeningBudget } from "./OpeningBudget";
@@ -26,6 +26,7 @@ export type BudgetSection =
   | "settlement"
   | "openings"
   | "surface"
+  | "concrete"
   | "summary"
   | "detail";
 export type BudgetIssue = {
@@ -314,6 +315,13 @@ export function budgetIssues(m: Input): BudgetIssue[] {
   const surface = m.surface;
   for (const { key, label } of surfaceProducts) {
     const row = surface.report.rows.find((r) => r.key === key)!;
+    const section = isConcreteProduct(key) ? "concrete" : "surface";
+    const localLabel = (field: string) => {
+      const entry = surface.report.applications?.find(
+        (e) => e.key === key && `percent:${e.id}` === field,
+      );
+      return entry ? `${label} · ${entry.label}` : label;
+    };
     if (
       !surface.report.area.available &&
       (surface.settings[key]?.percent ?? 0) > 0 &&
@@ -323,10 +331,15 @@ export function budgetIssues(m: Input): BudgetIssue[] {
     else if (row.error) {
       const target = row.errorField;
       if (target)
-        field("surface", `surface:${key}:${target}`, label, row.error);
+        field(
+          section,
+          `surface:${key}:${target}`,
+          localLabel(target),
+          row.error,
+        );
       else
         sectionIssue(
-          "surface",
+          section,
           label,
           row.error,
           "Confira a aplicação e o rendimento do produto.",
@@ -345,14 +358,16 @@ export function budgetIssues(m: Input): BudgetIssue[] {
       );
     for (const [name, reason] of Object.entries(surface.errors[key] ?? {}))
       field(
-        "surface",
+        section,
         `surface:${key}:${name}`,
-        row.cost !== undefined ? `${label} · edição para exportação` : label,
-        reason,
+        row.cost !== undefined
+          ? `${localLabel(name)} · edição para exportação`
+          : localLabel(name),
+        reason!,
       );
     if (surface.descriptionErrors[key])
       field(
-        "surface",
+        section,
         `surface:${key}:description`,
         `${label} · edição para exportação`,
         surface.descriptionErrors[key]!,

@@ -336,6 +336,12 @@ const schema = z
                 name: z.string().trim().min(1).max(100),
                 level: integer,
                 defaultHeight: positive,
+                waterproofingPercent: z
+                  .number()
+                  .int()
+                  .min(0)
+                  .max(10000)
+                  .optional(),
                 groutMode: z.enum(["simple", "reinforced"]).optional(),
                 steelBudget: z
                   .object({
@@ -543,6 +549,12 @@ const schema = z
                 id,
                 floorId: id,
                 thickness: positive,
+                waterproofingPercent: z
+                  .number()
+                  .int()
+                  .min(0)
+                  .max(10000)
+                  .optional(),
                 construction: z
                   .object({
                     type: z.enum(slabTypes),
@@ -1229,9 +1241,33 @@ export function validateProject(
     value.schemaVersion === 36
   )
     value = { ...value, schemaVersion: 37 };
+  const sourceFormat =
+    value && typeof value === "object" && "schemaVersion" in value
+      ? value.schemaVersion
+      : undefined;
+  if (sourceFormat === 37) value = { ...(value as object), schemaVersion: 38 };
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");
+  if (
+    sourceFormat === 37 &&
+    (parsed.data.project.surface?.wallBase !== undefined ||
+      parsed.data.project.surface?.slabs !== undefined ||
+      parsed.data.model.floors.some(
+        (f) => f.waterproofingPercent !== undefined,
+      ) ||
+      parsed.data.model.slabs.some(
+        (s) => s.waterproofingPercent !== undefined,
+      ) ||
+      parsed.data.project.priceSources?.some(
+        (p) =>
+          p.item.group === "surface" &&
+          (p.item.key === "wallBase" || p.item.key === "slabs"),
+      ))
+  )
+    throw new Error(
+      "Arquivo inválido: impermeabilização de bases/lajes em formato anterior.",
+    );
   // Old results are disposable; never weaken validation of the drawing or of current snapshots.
   const doc = (
     parsed.data.generated && parsed.data.generated.convention !== "nominal-v13"
@@ -1449,6 +1485,7 @@ export function importedCopy(doc: Project): Project {
     ...doc,
     model: {
       ...doc.model,
+      floors: doc.model.floors.map((floor) => ({ ...floor })),
       texts: doc.model.texts.map((t) => ({ ...t })),
       slabs: doc.model.slabs.map((slab) => ({
         ...slab,
@@ -1459,6 +1496,9 @@ export function importedCopy(doc: Project): Project {
     },
     project: {
       ...doc.project,
+      ...(doc.project.surface
+        ? { surface: structuredClone(doc.project.surface) }
+        : {}),
       id: crypto.randomUUID(),
       name: `${doc.project.name.slice(0, 90)} (cópia)`,
     },

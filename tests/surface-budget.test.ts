@@ -63,6 +63,8 @@ it("T-040: duas faces, percentuais independentes, compra global e exemplos de cu
   expect(report.rows).toMatchObject([
     { area: 100n * assignedAreaScale, packages: 4, cost: 60000 },
     { area: 90n * assignedAreaScale, packages: 5, cost: 40000 },
+    { key: "wallBase", area: 0n, packages: 0, cost: 0 },
+    { key: "slabs", area: 0n, packages: 0, cost: 0 },
   ]);
   expect(doc).toEqual(before);
 });
@@ -118,6 +120,7 @@ it("T-040: preserva descrição e origem sem vínculo futuro, permite próprio/l
     item,
     price: 8000,
     description: "Rejunte escolhido · saco de 5 kg",
+    yield: 12000,
   };
   const original = fixture();
   const doc = incorporatePrices(original, [reference]);
@@ -175,12 +178,19 @@ it("descrição do produto é editável e preservada no arquivo; copiar referên
     100,
     "reference",
     "Referência · 18 L",
+    30000,
   );
   captured.project.surface!.waterproofing!.productDescription =
     "Outra descrição";
   expect(
-    withProjectPrice(captured, item, 100, "reference", "Referência · 18 L")
-      .project.surface?.waterproofing?.productDescription,
+    withProjectPrice(
+      captured,
+      item,
+      100,
+      "reference",
+      "Referência · 18 L",
+      30000,
+    ).project.surface?.waterproofing?.productDescription,
   ).toBe("Referência · 18 L");
   const restored = parseFile(serializeFile(priced).text);
   expect(restored.project.surface?.waterproofing?.productDescription).toBe(

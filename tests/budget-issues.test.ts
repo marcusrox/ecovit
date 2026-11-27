@@ -111,7 +111,7 @@ it("base indisponível tem uma causa comum, preserva esquadrias independentes e 
   const issues = budgetIssues(input(doc));
   expect(issues).toHaveLength(2);
   expect(issues[0].label).toBe(
-    "Tijolos / Ferragens / Assentamento / Impermeabilizante",
+    "Tijolos / Ferragens / Assentamento / Impermeabilizante de superfície de paredes",
   );
   expect(issues[0].reason).toContain("Composição indisponível");
   expect(issues[1].label).toContain("Esquadrias");

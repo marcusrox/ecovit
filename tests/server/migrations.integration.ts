@@ -42,6 +42,37 @@ async function structure() {
 }
 
 describe("incremental PostgreSQL migrations", () => {
+  it("surface reference yield upgrades legacy references without inventing yields", async () => {
+    const migrations = await loadMigrations();
+    await migrate(db, migrations.slice(0, 4));
+    await db.query(
+      'INSERT INTO ecovit_price_references(key,item,price,description) VALUES(\'surface:jointing\',\'{"group":"surface","key":"jointing"}\',1200,\'Rejunte · 5 kg\')',
+    );
+    await migrate(db, migrations);
+    expect(
+      (
+        await db.query(
+          "SELECT price::text,description,yield_milli FROM ecovit_price_references",
+        )
+      ).rows,
+    ).toEqual([
+      { price: "1200", description: "Rejunte · 5 kg", yield_milli: null },
+    ]);
+    await expect(
+      db.query("UPDATE ecovit_price_references SET yield_milli=0"),
+    ).rejects.toThrow();
+    await db.query("UPDATE ecovit_price_references SET yield_milli=12345");
+    await migrate(db, migrations);
+    expect(
+      (await db.query("SELECT yield_milli::text FROM ecovit_price_references"))
+        .rows[0].yield_milli,
+    ).toBe("12345");
+    await expect(
+      db.query(
+        'INSERT INTO ecovit_price_references(key,item,price,yield_milli) VALUES(\'bricks:whole\',\'{"group":"bricks","key":"whole"}\',100,1000)',
+      ),
+    ).rejects.toThrow();
+  });
   it("T031 upgrades existing accounts and preserves the complete upgraded schema on repeat", async () => {
     await migrate(db, initial);
     const id = randomUUID();
@@ -52,7 +83,7 @@ describe("incremental PostgreSQL migrations", () => {
     await migrate(db, await loadMigrations());
     const upgraded = await structure(),
       versions = await history();
-    expect(versions.map((row) => row.version)).toEqual([1, 2, 3]);
+    expect(versions.map((row) => row.version)).toEqual([1, 2, 3, 4, 5]);
     expect(
       (
         await db.query(

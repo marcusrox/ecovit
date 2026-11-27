@@ -159,6 +159,9 @@ export function duplicateFloor(
     name,
     level,
     defaultHeight: source.defaultHeight,
+    ...(source.waterproofingPercent !== undefined
+      ? { waterproofingPercent: source.waterproofingPercent }
+      : {}),
     ...(source.groutMode !== undefined ? { groutMode: source.groutMode } : {}),
     ...(source.groutDiameter !== undefined
       ? { groutDiameter: source.groutDiameter }

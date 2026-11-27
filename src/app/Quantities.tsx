@@ -5,6 +5,7 @@ import {
   type BudgetIssue,
 } from "./budget-issues";
 import { openingBox } from "../domain/openings";
+import { surfaceProducts, isConcreteProduct } from "../domain/surface-budget";
 import { flushSync } from "react-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -322,11 +323,15 @@ export function Quantities({
     ...surface.report.rows.map((row) => ({
       label:
         row.key === "waterproofing"
-          ? "Subtotal de impermeabilizante"
-          : "Subtotal de rejunte",
+          ? "Subtotal de impermeabilização · superfície de paredes"
+          : row.key === "jointing"
+            ? "Subtotal de rejunte"
+            : `Subtotal de impermeabilização · ${surfaceProducts.find((p) => p.key === row.key)!.label}`,
       value: row.cost,
       partial:
-        surface.report.partial && (surface.settings[row.key]?.percent ?? 0) > 0,
+        !isConcreteProduct(row.key) &&
+        surface.report.partial &&
+        (surface.settings[row.key]?.percent ?? 0) > 0,
     })),
   );
   const { total: materialTotal, error: materialError } = materialCosts(
@@ -551,10 +556,10 @@ export function Quantities({
               </p>
               <p className={styles.note}>
                 Quantitativos e estimativa de custos de tijolos, ferragens,
-                materiais de assentamento, esquadrias, impermeabilizante e
-                rejunte do projeto, com base nos preços informados e nas perdas
-                de tijolos definidas. Inclui resumo dos materiais e detalhamento
-                por pavimento e fiada.
+                materiais de assentamento, esquadrias, impermeabilização de
+                superfície de paredes, bases e lajes e rejunte do projeto, com
+                base nos preços informados e nas perdas de tijolos definidas. Inclui resumo dos
+                materiais e detalhamento por pavimento e fiada.
               </p>
             </header>
             <p data-print-omit className={styles.note}>
@@ -874,6 +879,7 @@ export function Quantities({
               <SettlementBudgetSummary model={settlement} />
               <OpeningBudgetSummary model={openings} />
               <SurfaceBudgetSummary model={surface} />
+              <SurfaceBudgetSummary model={surface} concrete />
             </section>
             {!printing && (
               <button
@@ -945,6 +951,14 @@ export function Quantities({
                   key={`surface:${f.id}`}
                   model={surface}
                   floorId={f.id}
+                />
+              ))}
+              {consultedDocumentFloors.map((f) => (
+                <SurfaceBudgetDetail
+                  key={`concrete:${f.id}`}
+                  model={surface}
+                  floorId={f.id}
+                  concrete
                 />
               ))}
               {report.available && consultedFloors.length > 0 && (
