@@ -61,13 +61,11 @@ test(
         1,
       )!,
     ];
-    await page
-      .getByTestId("import-file")
-      .setInputFiles({
-        name: "grout.ecovit",
-        mimeType: "application/json",
-        buffer: Buffer.from(JSON.stringify(doc)),
-      });
+    await page.getByTestId("import-file").setInputFiles({
+      name: "grout.ecovit",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(doc)),
+    });
     await expect(page.getByRole("status")).toContainText("Salvo");
     await page.getByRole("button", { name: "Orçamento", exact: true }).click();
     const dialog = page.getByRole("dialog", { name: "Orçamento", exact: true });
@@ -77,10 +75,10 @@ test(
     });
     await expect(
       group.getByLabel(groutLabels.verticalConsumption, { exact: true }),
-    ).toHaveValue("4,220");
+    ).toHaveValue("4,22");
     await expect(
       group.getByLabel(groutLabels.horizontalConsumption, { exact: true }),
-    ).toHaveValue("2,560");
+    ).toHaveValue("2,56");
     await expect(
       group.getByLabel(groutLabels.horizontalLoss, { exact: true }),
     ).toBeEnabled();
@@ -97,7 +95,7 @@ test(
     await group
       .getByLabel(groutLabels.horizontalLoss, { exact: true })
       .press("Enter");
-    await expect(group).toContainText("12,8 L · 0,0128 m³");
+    await expect(group).toContainText("12,80 L · 0,0128 m³");
     await expect(
       dialog.getByRole("status").filter({ hasText: "Salvo" }),
     ).toBeVisible();
@@ -119,6 +117,29 @@ test(
     expect(bytes.subarray(0, 5).toString()).toBe("%PDF-");
     await page.setViewportSize({ width: 900, height: 680 });
     await group.scrollIntoViewIfNeeded();
+    const parameters = group.getByRole("region", {
+      name: "Parâmetros do microconcreto",
+      exact: true,
+    });
+    await expect(parameters.getByRole("columnheader")).toHaveCount(2);
+    await expect(parameters.locator("tbody > tr")).toHaveCount(3);
+    const input = await parameters
+      .getByLabel(groutLabels.verticalConsumption, { exact: true })
+      .boundingBox();
+    const reference = await parameters
+      .getByRole("button", {
+        name: `Usar referência de ${groutLabels.verticalConsumption}`,
+        exact: true,
+      })
+      .boundingBox();
+    expect(input).not.toBeNull();
+    expect(reference).not.toBeNull();
+    expect(
+      Math.abs(
+        input!.y + input!.height / 2 - reference!.y - reference!.height / 2,
+      ),
+    ).toBeLessThan(2);
+    expect(reference!.x).toBeGreaterThanOrEqual(input!.x + input!.width);
     await page.screenshot({ path: ".tools/logs/t043-budget.png" });
   },
 );

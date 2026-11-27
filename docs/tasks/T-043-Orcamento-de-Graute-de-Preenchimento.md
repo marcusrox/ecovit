@@ -66,7 +66,7 @@ Exemplo meramente aritmético, sem recomendação de consumo: 100 m verticais a 
 
 Nesse exemplo, as perdas acrescentam 21,1 L verticais e 12,8 L horizontais, somando 33,9 L sobre os 550 L base. Com ambas as perdas em 0%, o total seria 550 L = 0,55 m³ e o custo R$ 550,00 ao mesmo preço. Alterar a perda horizontal não modifica o consumo vertical, e vice-versa.
 
-Usar precisão decimal exata para os coeficientes e comprimentos na escala do modelo, com limites seguros. A conversão de litros para m³ é exata (1.000 L = 1 m³), sem arredondamento intermediário; as duas apresentações do total representam o mesmo consumo. Calcular custos antes do arredondamento de apresentação do consumo, arredondando o resultado monetário final em centavos pelos contratos vigentes. Não arredondar consumos locais antes de consolidar o projeto. Detalhes devem conciliar com os totais apresentados; não introduzir compras ou arredondamentos para embalagens.
+Usar precisão decimal exata para os coeficientes e comprimentos na escala do modelo, com limites seguros. A conversão de litros para m³ é exata (1.000 L = 1 m³), sem arredondamento intermediário; as duas apresentações do total representam o mesmo consumo. Calcular custos antes do arredondamento de apresentação do consumo, arredondando o resultado monetário final em centavos pelos contratos vigentes. Não arredondar consumos locais antes de consolidar o projeto. Detalhes usam os mesmos valores integrais do total; a apresentação em litros com duas casas pode causar diferenças na soma dos textos arredondados. Não introduzir compras ou arredondamentos para embalagens.
 
 ### Disponibilidade, total e relatório
 
@@ -131,3 +131,9 @@ Validação ampliada para domínio, formatos, API e dois fluxos de Chrome pelo i
 O primeiro preparo de API não identificou o processo já existente devido à restrição de processos do sandbox. A instância foi identificada pelo PID/porta e pelo diretório gerenciado e o preparo foi repetido uma vez com permissão de execução adequada, com sucesso; nenhum servidor desconhecido foi encerrado. Logs: .tools/logs/t043-env.log e t043-env-retry.log. Porta 5173 preservada.
 
 A migração 006 foi validada nos bancos isolados de teste. Consulta posterior, somente leitura, ao histórico do banco configurado do aplicativo confirmou as migrações 001–006 aplicadas, sem pendências; essa consulta não alterou o banco.
+
+### Ajuste posterior — apresentação do microconcreto
+
+Pedido posterior à entrega inicial: organizar a tabela de parâmetros em duas colunas de campos, com consumo e perda de cada aplicação lado a lado, preço na primeira coluna da última linha e controle de referência à direita do valor. Exibir duas casas decimais fixas nos consumos vertical/horizontal em L/m, consumo base/com perdas em litros e total estimado em litros, no Orçamento e no PDF compartilhado. Administração e apresentação de comprimentos/m³ conservam o comportamento vigente. A precisão persistida e o cálculo integral dos custos/consumos permanecem; a exibição arredondada em litros substitui a apresentação exata registrada na entrega inicial. Aceite manual deste ajuste permanece pendente.
+
+Validação do ajuste: 15 testes de domínio/relatório aprovados em 1,16 s; um fluxo específico no Chrome aprovado em 22,9 s, com conferência da tabela de duas colunas e da seta alinhada horizontalmente ao campo. Captura em 900 × 680 inspecionada visualmente. Lint dos arquivos alterados e diff sem erros. O recorte de navegador foi necessário para conferir largura e alinhamento dos controles na tabela reorganizada. Logs: .tools/logs/t043-adjust-unit.log, t043-adjust-browser.log e t043-adjust-lint.log. Precisão dos dados/custos preservada nos testes; a apresentação em litros segue as duas casas solicitadas.

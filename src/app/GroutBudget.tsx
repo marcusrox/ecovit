@@ -97,7 +97,12 @@ export function useGroutBudget(
   };
 }
 type Model = ReturnType<typeof useGroutBudget>;
-function numberText(n: bigint | undefined, scale: bigint) {
+function numberText(n: bigint | undefined, scale: bigint, decimals?: number) {
+  if (n !== undefined && decimals !== undefined) {
+    const factor = 10n ** BigInt(decimals),
+      rounded = (n * factor + scale / 2n) / scale;
+    return `${(rounded / factor).toLocaleString("pt-BR")},${String(rounded % factor).padStart(decimals, "0")}`;
+  }
   if (n === undefined) return "Indisponível";
   // All scales are powers of ten: preserve exact sums across applications/floors.
   const fraction = String(n % scale)
@@ -144,9 +149,9 @@ function Results({
                     : "Canaletas horizontais"}
                 </th>
                 <td>{numberText(r.length, 10000n)}</td>
-                <td>{numberText(r.base, groutVolumeScale)}</td>
+                <td>{numberText(r.base, groutVolumeScale, 2)}</td>
                 <td>
-                  {numberText(r.estimated, groutVolumeScale)}
+                  {numberText(r.estimated, groutVolumeScale, 2)}
                   {r.error && (
                     <span className={styles.errorText}> · {r.error}</span>
                   )}
@@ -159,7 +164,7 @@ function Results({
       <p>
         Total estimado:{" "}
         <strong>
-          {numberText(total, groutVolumeScale)} L ·{" "}
+          {numberText(total, groutVolumeScale, 2)} L ·{" "}
           {numberText(total, groutVolumeScale * 1000n)} m³
         </strong>
         . Custo:{" "}
@@ -184,7 +189,7 @@ export function GroutBudgetSummary({ model: m }: { model: Model }) {
         obra ou frete.
       </p>
       <div
-        className={styles.quantityTable}
+        className={`${styles.quantityTable} ${styles.groutParameters}`}
         role="region"
         aria-label="Parâmetros do microconcreto"
         tabIndex={0}
@@ -193,63 +198,85 @@ export function GroutBudgetSummary({ model: m }: { model: Model }) {
           <caption>Microconcreto · parâmetros do projeto</caption>
           <thead>
             <tr>
-              <th>Parâmetro</th>
-              <th>Valor</th>
+              <th scope="col">Consumo / preço</th>
+              <th scope="col">Perdas</th>
             </tr>
           </thead>
           <tbody>
-            {groutFields.map((key) => {
-              const id = `grout-${key}`,
-                error = m.errors[key];
-              return (
-                <tr key={key}>
-                  <th scope="row">
-                    <label htmlFor={id}>{groutLabels[key]}</label>
-                  </th>
-                  <td>
-                    <input
-                      id={id}
-                      aria-label={groutLabels[key]}
-                      data-budget-target={`grout:${key}`}
-                      inputMode="decimal"
-                      placeholder="Não informado"
-                      disabled={m.blocked}
-                      value={
-                        m.drafts[key] ?? groutFieldText(key, m.settings[key])
-                      }
-                      aria-invalid={!!error}
-                      aria-describedby={error ? `${id}-error` : undefined}
-                      onChange={(e) =>
-                        m.setDrafts((previous) => ({
-                          ...previous,
-                          [key]: e.target.value,
-                        }))
-                      }
-                      onBlur={() => track(m.confirm(key))}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          e.currentTarget.blur();
-                        }
-                      }}
-                    />
-                    <ReferencePriceButton
-                      item={{ group: "grout", key }}
-                      clearDraft={() => m.clearDraft(key)}
-                    />
-                    {error && (
-                      <span
-                        id={`${id}-error`}
-                        role="alert"
-                        className={styles.errorText}
+            {(
+              [
+                ["verticalConsumption", "verticalLoss"],
+                ["horizontalConsumption", "horizontalLoss"],
+                ["price"],
+              ] as GroutField[][]
+            ).map((keys, index) => (
+              <tr key={index}>
+                {keys.map((key) => {
+                  const id = `grout-${key}`,
+                    error = m.errors[key];
+                  return (
+                    <td key={key}>
+                      <label
+                        className={styles.groutParameterLabel}
+                        htmlFor={id}
                       >
-                        {error}
+                        {groutLabels[key]}
+                      </label>
+                      <span className={styles.groutValue}>
+                        <input
+                          id={id}
+                          aria-label={groutLabels[key]}
+                          data-budget-target={`grout:${key}`}
+                          inputMode="decimal"
+                          placeholder="Não informado"
+                          disabled={m.blocked}
+                          value={
+                            m.drafts[key] ??
+                            (key.endsWith("Consumption") &&
+                            m.settings[key] !== undefined
+                              ? numberText(
+                                  BigInt(m.settings[key]!),
+                                  1000n,
+                                  2,
+                                ).replaceAll(".", "")
+                              : groutFieldText(key, m.settings[key]))
+                          }
+                          aria-invalid={!!error}
+                          aria-describedby={error ? `${id}-error` : undefined}
+                          onChange={(e) =>
+                            m.setDrafts((previous) => ({
+                              ...previous,
+                              [key]: e.target.value,
+                            }))
+                          }
+                          onBlur={() => track(m.confirm(key))}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              e.currentTarget.blur();
+                            }
+                          }}
+                        />
+                        <ReferencePriceButton
+                          item={{ group: "grout", key }}
+                          clearDraft={() => m.clearDraft(key)}
+                        />
                       </span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+                      {error && (
+                        <span
+                          id={`${id}-error`}
+                          role="alert"
+                          className={styles.errorText}
+                        >
+                          {error}
+                        </span>
+                      )}
+                    </td>
+                  );
+                })}
+                {keys.length === 1 && <td />}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

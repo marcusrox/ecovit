@@ -222,13 +222,13 @@ it("T-043 relatório compartilha parâmetros em L/m, perdas, litros, m³ e todos
   const html = renderBudgetMarkup(doc);
   expect(html).toContain("Graute de preenchimento");
   expect(html).toContain("Superior");
-  expect(html).toContain('value="4,220"');
+  expect(html).toContain('value="4,22"');
   expect(html).toContain('value="5,00"');
   expect(html).toContain("L/m");
   expect(html).toContain("m³");
-  expect(html).toContain("281,6");
+  expect(html).toContain("281,60");
 });
-it("T-043 apresentação conserva parcelas pequenas e a soma exata entre aplicações", () => {
+it("T-043 arredonda apenas a apresentação em litros e preserva precisão interna e m³", () => {
   const doc = fixture(),
     result = doc.generated!.floors[0];
   result.grouts = [
@@ -249,6 +249,7 @@ it("T-043 apresentação conserva parcelas pequenas e a soma exata entre aplica�
   };
   const html = renderBudgetMarkup(doc);
   expect(report(doc).total).toBe(10000n);
-  expect(html).toContain("0,0000001");
+  expect(html).toContain("0,00 L");
+  expect(report(doc).cost).toBe(0);
   expect(html).toContain("0,0000000001");
 });

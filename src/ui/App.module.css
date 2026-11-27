@@ -2742,6 +2742,29 @@ button.referencePrice[aria-disabled="true"] {
 .quantityTable input:focus {
   background: #fff;
 }
+.groutValue {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.groutValue input {
+  flex: 1 1 0;
+  text-align: right;
+}
+.quantityTable.groutParameters th:first-child {
+  width: 50%;
+}
+.quantityTable.groutParameters th,
+.quantityTable.groutParameters tbody td {
+  text-align: left;
+  vertical-align: top;
+  font-family: inherit;
+}
+.groutParameterLabel {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
 .quantityGroup[aria-labelledby="budget-bricks-title"] tbody tr:last-child {
   background: transparent;
   font-weight: 500;
