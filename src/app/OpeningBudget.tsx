@@ -107,8 +107,9 @@ export function OpeningBudgetSummary({ model: m }: { model: Model }) {
     <section
       className={styles.quantityGroup}
       aria-label="Esquadrias do projeto"
+      data-budget-section="openings"
     >
-      <h3>Esquadrias do projeto</h3>
+      <h3 tabIndex={-1}>Esquadrias do projeto</h3>
       <p className={styles.note}>
         Portas e janelas por tipo, tamanho e material. Dimensões de referência
         do vão bruto, não de fabricação. Informe o preço por conjunto completo:
@@ -147,6 +148,7 @@ export function OpeningBudgetSummary({ model: m }: { model: Model }) {
                       {row.option.type && row.option.material ? (
                         <span className={styles.priceField}>
                           <input
+                            data-budget-target={`openings:${row.key}`}
                             className={styles.budgetPrice}
                             aria-label={`Preço de ${openingOptionLabel(row.option)} · ${display(row.option.width)} × ${display(row.option.height)} cm · ${openingMaterialLabel(row.option.material)} (R$/unidade)`}
                             inputMode="decimal"

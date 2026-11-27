@@ -35,6 +35,7 @@ export type SurfaceRow = {
   packages?: number;
   cost?: number;
   error?: string;
+  errorField?: SurfaceField;
 };
 export function parseSurfaceField(field: SurfaceField, text: string) {
   if (field === "yield" && !text.trim()) return undefined;
@@ -73,11 +74,12 @@ export function surfaceBudget(
       f.rows.push(r);
       return r;
     });
-    const fail = (message: string) => {
+    const fail = (message: string, field?: SurfaceField) => {
       row.error = message;
+      if (field) row.errorField = field;
       return row;
     };
-    if (invalid[key]?.percent) return fail(invalid[key]!.percent!);
+    if (invalid[key]?.percent) return fail(invalid[key]!.percent!, "percent");
     const percent = BigInt(config?.percent ?? 0);
     if (percent === 0n) {
       local.forEach((r) => Object.assign(r, { area: 0n, cost: 0 }));
@@ -92,18 +94,18 @@ export function surfaceBudget(
     if (row.area === 0n) return { ...row, packages: 0, cost: 0 };
     if (row.area > max * assignedAreaScale)
       return fail("Área fora da representação numérica segura.");
-    if (invalid[key]?.yield) return fail(invalid[key]!.yield!);
+    if (invalid[key]?.yield) return fail(invalid[key]!.yield!, "yield");
     if (config?.yield === undefined)
-      return fail("Informe o rendimento por embalagem.");
+      return fail("Informe o rendimento por embalagem.", "yield");
     // Yield is stored in thousandths of m² per package.
     const denominator = assignedAreaScale * BigInt(config.yield);
     const packages = (row.area * 1000n + denominator - 1n) / denominator;
     if (packages > max)
       return fail("Compra fora da representação numérica segura.");
     row.packages = Number(packages);
-    if (invalid[key]?.price) return fail(invalid[key]!.price!);
+    if (invalid[key]?.price) return fail(invalid[key]!.price!, "price");
     if (config.price === undefined)
-      return fail("Informe o preço por embalagem.");
+      return fail("Informe o preço por embalagem.", "price");
     const cost = packages * BigInt(config.price);
     if (cost > max) return fail("Custo fora da representação numérica segura.");
     row.cost = Number(cost);

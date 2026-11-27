@@ -2351,6 +2351,33 @@ button.iconButton {
   padding: 0;
   border: 0;
 }
+.budgetIssues {
+  padding: 12px;
+  border: 1px solid #d8ddd2;
+  border-radius: 6px;
+  background: #f5f7f2;
+}
+.budgetIssues ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.budgetIssues li + li {
+  margin-top: 8px;
+}
+.budgetIssues p {
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+.budgetIssues button {
+  padding: 2px 5px;
+  font-size: 11px;
+}
+[data-budget-section] h3:focus,
+[data-budget-section] h2:focus,
+h2[data-budget-section]:focus {
+  outline: 2px solid #526b57;
+  outline-offset: 3px;
+}
 .quantityGroup + .quantityGroup {
   margin-top: 18px;
 }

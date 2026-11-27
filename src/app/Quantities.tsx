@@ -1,4 +1,5 @@
 import { BudgetConfirmationContext } from "./BudgetConfirmation";
+import { budgetIssues, type BudgetIssue } from "./budget-issues";
 import { flushSync } from "react-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -94,6 +95,7 @@ export function Quantities({
   const [exportError, setExportError] = useState("");
   const [, refreshConfirmedFields] = useState(0);
   const confirmations = useRef(new Set<Promise<void>>());
+  const navigationVersion = useRef(0);
   const trackConfirmation = (confirmation: Promise<void>) => {
     confirmations.current.add(confirmation);
     const settled = () => {
@@ -126,6 +128,7 @@ export function Quantities({
     }
   }, [doc, busy, priceSaving, open]);
   useEffect(() => {
+    navigationVersion.current++;
     const node = dialog.current!;
     if (open) {
       node.showModal();
@@ -134,7 +137,7 @@ export function Quantities({
       node.close();
       restoreFocus.current = true;
     }
-  }, [open]);
+  }, [open, doc.project.id]);
   useEffect(() => {
     if (!open && !busy && restoreFocus.current) {
       trigger.current?.focus();
@@ -164,12 +167,11 @@ export function Quantities({
     floorId === "all" ? documentFloors : [selectedDocumentFloor];
   let estimate: ReturnType<typeof estimateLosses> | undefined;
   let lossError = "";
-  if (report.available) {
-    try {
-      estimate = estimateLosses(report.counts, parseLossPercent(percent));
-    } catch (e) {
-      lossError = (e as Error).message;
-    }
+  try {
+    const loss = parseLossPercent(percent);
+    if (report.available) estimate = estimateLosses(report.counts, loss);
+  } catch (e) {
+    lossError = (e as Error).message;
   }
   const priceErrors: Partial<Record<(typeof pieceKinds)[number], string>> = {};
   const previewPrices = { ...doc.project.unitPrices };
@@ -323,6 +325,61 @@ export function Quantities({
   const { total: materialTotal, error: materialError } = materialCosts(
     totals.map((t) => t.value),
   );
+  const issues = budgetIssues({
+    doc,
+    processing: busy && !priceSaving,
+    report,
+    estimate,
+    lossError,
+    prices: previewPrices,
+    priceErrors,
+    budgetError,
+    materialError,
+    steel,
+    settlement,
+    openings,
+    surface,
+  });
+  async function locateIssue(issue: BudgetIssue) {
+    const version = ++navigationVersion.current;
+    const projectId = doc.project.id;
+    // Click follows the normal blur. Keep its section as fallback while that
+    // confirmation settles, and discard navigation from a previous opening.
+    await Promise.all(confirmations.current);
+    if (
+      !dialog.current?.open ||
+      version !== navigationVersion.current ||
+      useStore.getState().doc?.project.id !== projectId
+    )
+      return;
+    flushSync(() => {
+      if (issue.section === "detail") {
+        setDetailVisible(true);
+        setFloorId("all");
+      }
+      refreshConfirmedFields((revision) => revision + 1);
+    });
+    const root = dialog.current;
+    const field = issue.target
+      ? [
+          ...root.querySelectorAll<HTMLInputElement>("[data-budget-target]"),
+        ].find(
+          (node) =>
+            node.dataset.budgetTarget === issue.target && !node.disabled,
+        )
+      : undefined;
+    const section = root.querySelector<HTMLElement>(
+      `[data-budget-section="${issue.section}"]`,
+    );
+    const destination =
+      field ??
+      (section?.matches("h2, h3")
+        ? section
+        : section?.querySelector<HTMLElement>("h2, h3")) ??
+      heading.current;
+    destination?.focus({ preventScroll: true });
+    destination?.scrollIntoView({ block: "center", behavior: "instant" });
+  }
   exportState.current = {
     hasDrafts:
       lossDraft !== undefined ||
@@ -503,7 +560,11 @@ export function Quantities({
             )}
             {!report.available && <p role="alert">{report.reason}</p>}
             <section className={styles.quantitySection}>
-              <h2 id="budget-summary-title">
+              <h2
+                id="budget-summary-title"
+                tabIndex={-1}
+                data-budget-section="summary"
+              >
                 <span
                   className={styles.quantitySectionIndex}
                   aria-hidden="true"
@@ -539,18 +600,43 @@ export function Quantities({
                   </dd>
                 </div>
               </dl>
-              {materialError && <p role="alert">{materialError}</p>}
-              {materialTotal === undefined && (
-                <p className={styles.note}>
-                  O total depende de quantitativos disponíveis, massas
-                  cadastradas, perdas de tijolos válidas, distribuição de
-                  assentamento completa, tipo/material de esquadrias definidos e
-                  preços informados para os materiais utilizados, além de
-                  rendimento e preço por embalagem de impermeabilizante e
-                  rejunte quando sua aplicação for maior que zero. Preço zero é
-                  diferente de preço ausente.
-                </p>
-              )}
+              <section
+                className={styles.budgetIssues}
+                aria-labelledby="budget-issues-title"
+              >
+                <h3 id="budget-issues-title">Pendências do orçamento</h3>
+                {issues.length ? (
+                  <ul>
+                    {issues.map((issue) => (
+                      <li key={issue.id}>
+                        <p>
+                          <strong>{issue.label}</strong> — {issue.reason}{" "}
+                          {issue.guidance}
+                        </p>
+                        {!printing && (
+                          <button
+                            type="button"
+                            aria-label={`Localizar: ${issue.label} — ${issue.reason}`}
+                            onClick={() => void locateIssue(issue)}
+                          >
+                            Localizar
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : !busy && !references.working ? (
+                  <p>
+                    Sem pendências nos materiais abrangidos pelo Ecovit. Esta
+                    indicação não confirma o salvamento nem a disponibilidade da
+                    exportação.
+                  </p>
+                ) : (
+                  <p>
+                    Aguarde a operação em andamento para conferir as pendências.
+                  </p>
+                )}
+              </section>
               {(!report.available || report.partial) && (
                 <p>
                   {!report.available
@@ -571,11 +657,15 @@ export function Quantities({
               <section
                 className={styles.quantityGroup}
                 aria-labelledby="budget-bricks-title"
+                data-budget-section="bricks"
               >
-                <h3 id="budget-bricks-title">Tijolos do Projeto</h3>
+                <h3 id="budget-bricks-title" tabIndex={-1}>
+                  Tijolos do Projeto
+                </h3>
                 <label className={styles.quantityLoss}>
                   Perdas de tijolos (%)
                   <input
+                    data-budget-target="bricks:loss"
                     aria-label="Perdas de tijolos (%)"
                     inputMode="decimal"
                     value={percent}
@@ -660,6 +750,7 @@ export function Quantities({
                               <>
                                 <span className={styles.priceField}>
                                   <input
+                                    data-budget-target={`bricks:${kind}`}
                                     className={styles.budgetPrice}
                                     aria-label={`Preço unitário de ${pieceLabels[kind]}`}
                                     aria-invalid={!!priceErrors[kind]}
@@ -763,11 +854,12 @@ export function Quantities({
             )}
             <section
               id="budget-detail"
+              data-budget-section="detail"
               hidden={!printing && !detailVisible}
               className={styles.quantitySection}
               aria-labelledby="budget-detail-title"
             >
-              <h2 id="budget-detail-title">
+              <h2 id="budget-detail-title" tabIndex={-1}>
                 <span
                   className={styles.quantitySectionIndex}
                   aria-hidden="true"

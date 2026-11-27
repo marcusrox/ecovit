@@ -96,15 +96,21 @@ it("T-040: zero dispensa parâmetros; área indisponível e entradas inválidas 
   valid.project.surface = { jointing: { percent: 100, yield: 1000 } };
   expect(surfaceBudget(valid).rows[1]).toMatchObject({ packages: 2 });
   expect(surfaceBudget(valid).rows[1].cost).toBeUndefined();
+  expect(surfaceBudget(valid).rows[1].errorField).toBe("price");
   expect(
     surfaceBudget(valid, false, { jointing: { yield: "Inválido" } }).rows[1]
       .packages,
   ).toBeUndefined();
+  expect(
+    surfaceBudget(valid, false, { jointing: { yield: "Inválido" } }).rows[1]
+      .errorField,
+  ).toBe("yield");
   valid.project.surface.jointing!.price = 0;
   expect(surfaceBudget(valid).rows[1].cost).toBe(0);
   valid.project.surface.jointing!.yield = 1;
   valid.project.surface.jointing!.price = Number.MAX_SAFE_INTEGER;
   expect(surfaceBudget(valid).rows[1].cost).toBeUndefined();
+  expect(surfaceBudget(valid).rows[1].errorField).toBeUndefined();
 });
 it("T-040: preserva descrição e origem sem vínculo futuro, permite próprio/limpeza e transporta formato 37", () => {
   const item: PriceItem = { group: "surface", key: "jointing" };

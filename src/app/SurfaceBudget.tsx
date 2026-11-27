@@ -184,8 +184,9 @@ export function SurfaceBudgetSummary({ model: m }: { model: Model }) {
     <section
       className={styles.quantityGroup}
       aria-label="Impermeabilizante e rejunte"
+      data-budget-section="surface"
     >
-      <h3>Impermeabilizante e rejunte</h3>
+      <h3 tabIndex={-1}>Impermeabilizante e rejunte</h3>
       <p className={styles.note}>
         Área das duas faces das paredes, descontando portas, janelas e vãos. Os
         percentuais são independentes e estimados por você: 50% não seleciona
@@ -233,6 +234,7 @@ export function SurfaceBudgetSummary({ model: m }: { model: Model }) {
                 <th scope="row">{label}</th>
                 <td>
                   <input
+                    data-budget-target={`surface:${key}:description`}
                     className={styles.surfaceProductDescription}
                     aria-label={`Produto e embalagem de referência de ${label}`}
                     maxLength={160}
@@ -290,6 +292,7 @@ export function SurfaceBudgetSummary({ model: m }: { model: Model }) {
                           : settlementNumber(BigInt(value), 1000n);
                   const input = (
                     <input
+                      data-budget-target={`surface:${id}`}
                       className={styles.budgetPrice}
                       aria-label={`${field === "percent" ? "Percentual de" : field === "yield" ? "Rendimento de" : "Preço de"} ${label} (${field === "percent" ? "%" : field === "yield" ? "m²/embalagem" : "R$/embalagem"})`}
                       inputMode="decimal"

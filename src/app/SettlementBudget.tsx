@@ -161,8 +161,9 @@ export function SettlementBudgetSummary({ model: m }: { model: Model }) {
     <section
       className={styles.quantityGroup}
       aria-label="Material de assentamento"
+      data-budget-section="settlement"
     >
-      <h3>Material de assentamento</h3>
+      <h3 tabIndex={-1}>Material de assentamento</h3>
       <p className={styles.note}>
         Área de paredes pelo comprimento × altura, descontando vãos, sem ajuste
         por espessura. Distribua 100% entre os produtos. Rendimentos são
@@ -241,6 +242,7 @@ export function SettlementBudgetSummary({ model: m }: { model: Model }) {
                         }
                       >
                         <input
+                          data-budget-target={`settlement:${id}`}
                           className={styles.budgetPrice}
                           aria-label={label}
                           inputMode="decimal"

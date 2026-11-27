@@ -111,8 +111,12 @@ export function SteelBudgetSummary({ model: m }: { model: Model }) {
     ? report.rows
     : steelCatalog.map((s) => ({ key: s.key, diameter: s.diameter }));
   return (
-    <section className={styles.quantityGroup} aria-label="Ferragens do projeto">
-      <h3>Ferragens do projeto</h3>
+    <section
+      className={styles.quantityGroup}
+      aria-label="Ferragens do projeto"
+      data-budget-section="steel"
+    >
+      <h3 tabIndex={-1}>Ferragens do projeto</h3>
       {!report.available ? (
         <p>{report.reason}</p>
       ) : (
@@ -163,6 +167,7 @@ export function SteelBudgetSummary({ model: m }: { model: Model }) {
                       <>
                         <span className={styles.priceField}>
                           <input
+                            data-budget-target={`steel:${key}`}
                             className={styles.budgetPrice}
                             aria-label={`Preço por kg de ${steelLabel(item)}`}
                             aria-invalid={!!m.errors[key]}
