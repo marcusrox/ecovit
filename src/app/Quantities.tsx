@@ -1,5 +1,10 @@
 import { BudgetConfirmationContext } from "./BudgetConfirmation";
-import { budgetIssues, type BudgetIssue } from "./budget-issues";
+import {
+  budgetIssues,
+  firstPendingOpening,
+  type BudgetIssue,
+} from "./budget-issues";
+import { openingBox } from "../domain/openings";
 import { flushSync } from "react-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -67,10 +72,12 @@ export function Quantities({
   doc,
   diagnostics,
   printing = false,
+  selectTool,
 }: {
   doc: Project;
   diagnostics: () => void;
   printing?: boolean;
+  selectTool?: () => void;
 }) {
   const busy = useStore((s) => !printing && s.busy);
   const readonly = useStore((s) => printing || s.readonly);
@@ -352,6 +359,31 @@ export function Quantities({
       useStore.getState().doc?.project.id !== projectId
     )
       return;
+    const state = useStore.getState();
+    if (issue.openingKey && !state.busy && !references.working && !exporting) {
+      const current = state.doc!;
+      const opening = firstPendingOpening(current, issue.openingKey);
+      const wall = current.model.walls.find((w) => w.id === opening?.wallId);
+      if (opening && wall) {
+        const box = openingBox(opening, wall, current.project.base.width);
+        selectTool?.();
+        state.switchFloor(wall.floorId);
+        state.choose(opening.id);
+        state.setPropertiesCollapsed(false);
+        state.inspect({
+          mode: "plan",
+          preview: null,
+          pendingOpening: null,
+          focus: {
+            x: box.x + box.width / 2,
+            y: box.y + box.height / 2,
+            scale: 0.012,
+          },
+        });
+        setOpen(false);
+        return;
+      }
+    }
     flushSync(() => {
       if (issue.section === "detail") {
         setDetailVisible(true);
@@ -617,6 +649,10 @@ export function Quantities({
                           <button
                             type="button"
                             aria-label={`Localizar: ${issue.label} — ${issue.reason}`}
+                            disabled={
+                              !!issue.openingKey &&
+                              (busy || references.working || exporting)
+                            }
                             onClick={() => void locateIssue(issue)}
                           >
                             Localizar

@@ -7,7 +7,7 @@ import {
 import { PDFDocument } from "pdf-lib";
 import { readFile } from "node:fs/promises";
 
-async function fixture(page: Page) {
+async function fixture(page: Page, pendingOpenings = false) {
   const doc = createProject(
     "Pendências T-041",
     { length: 2500, width: 1250, height: 700 },
@@ -44,6 +44,27 @@ async function fixture(page: Page) {
   };
   doc.project.settlement = { ac1: { percent: 10000, price: 0 } };
   doc.project.surface = { waterproofing: { percent: 5000, price: 0 } };
+  if (pendingOpenings) {
+    const wall = makeWall(
+      { x: 20000, y: 20000 },
+      { x: 30000, y: 20000 },
+      1250,
+      doc.model.floors[1].id,
+      2100,
+      1,
+    )!;
+    doc.model.walls.push(wall);
+    doc.model.openings = [0, 5000].map((offset) => ({
+      id: crypto.randomUUID(),
+      wallId: wall.id,
+      kind: "door",
+      appearance: { type: "swing", orientation: 0 },
+      offset,
+      width: 2500,
+      base: 0,
+      height: 1400,
+    }));
+  }
   await page.goto("/");
   await page.getByTestId("import-file").setInputFiles({
     name: "issues.ecovit",
@@ -75,6 +96,56 @@ async function snapshot(page: Page) {
     });
   });
 }
+
+test(
+  "T-041 localiza a primeira esquadria pendente na planta sem alterar o documento",
+  { tag: "@fluxo" },
+  async ({ page }) => {
+    const dialog = await fixture(page, true);
+    const before = JSON.parse(await snapshot(page));
+    await page.evaluate(async () => {
+      const path = "/src/state/store.ts";
+      const state = (await import(path)).useStore.getState();
+      state.inspect({ mode: "course" });
+      state.setPropertiesCollapsed(true);
+    });
+    await dialog.getByRole("button", { name: /Localizar: Esquadrias/ }).click();
+    await expect(dialog).toBeHidden();
+    const destination = await page.evaluate(async () => {
+      const path = "/src/state/store.ts";
+      const s = (await import(path)).useStore.getState();
+      return {
+        select: s.select,
+        floor: s.activeFloorId,
+        mode: s.mode,
+        collapsed: s.propertiesCollapsed,
+        focus: s.focus,
+      };
+    });
+    expect(destination).toMatchObject({
+      select: before.doc.model.openings[0].id,
+      floor: before.doc.model.floors[1].id,
+      mode: "plan",
+      collapsed: false,
+    });
+    expect(destination.focus).toMatchObject({
+      x: 21250,
+      y: 20625,
+      scale: 0.012,
+    });
+    await expect(page.getByText("100%", { exact: true })).toBeVisible();
+    const after = JSON.parse(await snapshot(page));
+    expect(after.doc).toEqual(before.doc);
+    expect(after.history).toEqual(before.history);
+    await expect(
+      page.getByRole("complementary", { name: "Propriedades do vão" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Orçamento", exact: true }).click();
+    await expect(
+      dialog.getByRole("button", { name: /Localizar: Esquadrias/ }),
+    ).toBeVisible();
+  },
+);
 
 test(
   "T-041 localiza campos por teclado e mouse, acompanha prévias e preserva confirmação por blur",

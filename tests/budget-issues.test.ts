@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { budgetIssues } from "../src/app/budget-issues";
+import { budgetIssues, firstPendingOpening } from "../src/app/budget-issues";
 import {
   createProject,
   makeWall,
@@ -117,6 +117,33 @@ it("base indisponível tem uma causa comum, preserva esquadrias independentes e 
   expect(issues[1].label).toContain("Esquadrias");
   expect(issues[1].guidance).toContain("propriedades");
   expect(issues.every((i) => !i.target)).toBe(true);
+});
+
+it("localiza a primeira esquadria igual ainda pendente e mantém preços no orçamento", () => {
+  const doc = fixture();
+  const first = {
+    id: "first",
+    wallId: doc.model.walls[0].id,
+    kind: "door" as const,
+    appearance: { type: "swing" as const, orientation: 0 as const },
+    offset: 0,
+    width: 2500,
+    base: 0,
+    height: 1400,
+  };
+  doc.model.openings = [first, { ...first, id: "second", offset: 5000 }];
+  const before = structuredClone(doc);
+  const issue = budgetIssues(input(doc)).find((i) => i.openingKey)!;
+  expect(firstPendingOpening(doc, issue.openingKey!)?.id).toBe("first");
+  expect(doc).toEqual(before);
+  doc.model.openings[0].material = { kind: "aluminium" };
+  expect(firstPendingOpening(doc, issue.openingKey!)?.id).toBe("second");
+  const priceIssue = budgetIssues(input(doc)).find((i) =>
+    i.target?.startsWith("openings:"),
+  )!;
+  expect(priceIssue.openingKey).toBeUndefined();
+  doc.model.openings[1].material = { kind: "aluminium" };
+  expect(firstPendingOpening(doc, issue.openingKey!)).toBeUndefined();
 });
 
 it("distribuição coletiva não inventa preços e erros de rascunho exclusivos de exportação têm destino", () => {

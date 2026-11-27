@@ -1171,6 +1171,7 @@ function EditorApp() {
                 key={doc.project.id}
                 doc={doc}
                 diagnostics={() => setDiagnostics(true)}
+                selectTool={() => changeTool("select")}
               />
               <DrawingExport />
               <button

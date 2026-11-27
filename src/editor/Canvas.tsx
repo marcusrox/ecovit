@@ -410,7 +410,8 @@ export function Canvas({
     if (focus)
       setCamera((c) => {
         const scale =
-          focus.width !== undefined && focus.height !== undefined
+          focus.scale ??
+          (focus.width !== undefined && focus.height !== undefined
             ? Math.max(
                 MIN_CAMERA_SCALE,
                 Math.min(
@@ -419,7 +420,7 @@ export function Canvas({
                   (size.height - 160) / Math.max(1, focus.height),
                 ),
               )
-            : c.scale;
+            : c.scale);
         return {
           scale,
           x: size.width / 2 - focus.x * scale,

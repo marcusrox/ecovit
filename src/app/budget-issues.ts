@@ -10,6 +10,8 @@ import { steelLabel, steelCatalog } from "../domain/steel-budget";
 import {
   openingOptionLabel,
   openingMaterialLabel,
+  openingOption,
+  openingOptionKey,
 } from "../domain/opening-budget";
 import { settlementCatalog } from "../domain/settlement-budget";
 import { surfaceProducts } from "../domain/surface-budget";
@@ -33,6 +35,7 @@ export type BudgetIssue = {
   guidance: string;
   section: BudgetSection;
   target?: string;
+  openingKey?: string;
 };
 type Input = {
   doc: Project;
@@ -289,12 +292,15 @@ export function budgetIssues(m: Input): BudgetIssue[] {
       if (row.option.type && row.option.material)
         field("openings", `openings:${row.key}`, label, row.error);
       else
-        sectionIssue(
-          "openings",
+        add({
+          id: `openings:configuration:${row.key}`,
+          section: "openings",
           label,
-          row.error,
-          "Feche o Orçamento e selecione a porta ou janela no editor para ajustar suas propriedades.",
-        );
+          reason: row.error,
+          guidance:
+            "Localize a primeira esquadria pendente na planta e ajuste suas propriedades.",
+          openingKey: row.key,
+        });
     }
     if (openings.error)
       sectionIssue(
@@ -372,4 +378,15 @@ export function budgetIssues(m: Input): BudgetIssue[] {
     })),
     ...issues,
   ];
+}
+
+// Resolve against the current document after any normal blur confirmation.
+export function firstPendingOpening(doc: Project, key: string) {
+  return doc.model.openings.find(
+    (opening) =>
+      opening.kind !== "opening" &&
+      (!opening.appearance?.type || !opening.material) &&
+      openingOptionKey(openingOption(opening)) === key &&
+      doc.model.walls.some((wall) => wall.id === opening.wallId),
+  );
 }
