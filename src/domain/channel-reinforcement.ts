@@ -70,6 +70,20 @@ export function applyChannelReinforcement(
   const settings = doc.model.floors[0].channelReinforcement;
   if (!settings?.enabled) return result;
   validateChannelReinforcement(settings);
+  result.reinforcement = channelSegments(doc, result).map((segment) => ({
+    ...segment,
+    count: settings.count,
+    diameter: settings.diameter,
+  }));
+  return result;
+}
+
+// Shared nominal final runs, independent of reinforcement activation/count.
+export function channelSegments(
+  doc: EditableProject,
+  result: Pick<Composition, "courses" | "channels">,
+) {
+  const segments: Omit<ChannelReinforcement, "count" | "diameter">[] = [];
   const m = doc.project.base.width;
   const walls = new Map(doc.model.walls.map((w) => [w.id, w]));
   const finalCells = new Map<number, Set<string>>();
@@ -136,7 +150,7 @@ export function applyChannelReinforcement(
     const finish = () => {
       if (!merged) return;
       const { from, to, wallIds, origins } = merged;
-      result.reinforcement!.push({
+      segments.push({
         id: `${run.course}:${run.horizontal ? "h" : "v"}:${run.coordinate}:${from}:${to}`,
         course: run.course,
         top: run.top,
@@ -146,8 +160,6 @@ export function applyChannelReinforcement(
         b: run.horizontal
           ? { x: to, y: run.coordinate }
           : { x: run.coordinate, y: to },
-        count: settings.count,
-        diameter: settings.diameter,
         wallIds: [...wallIds].sort(),
         origins: [...origins].sort(),
       });
@@ -168,5 +180,5 @@ export function applyChannelReinforcement(
     }
     finish();
   }
-  return result;
+  return segments;
 }

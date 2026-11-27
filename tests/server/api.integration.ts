@@ -127,6 +127,82 @@ afterAll(async () => {
 });
 
 describe("M12 — API com PostgreSQL 18.0 real", () => {
+  it("T-043 referências independentes validam consumos/perdas, autorização, conflitos e repetição", async () => {
+    const admin = await login("permanent@example.com"),
+      common = await login("grout@example.com");
+    const post = (payload: object, user = admin) =>
+      app.inject({
+        method: "POST",
+        url: "/api/admin/prices",
+        headers: headers(user),
+        payload,
+      });
+    const consumption = { group: "grout", key: "verticalConsumption" };
+    const payload = {
+      ...body(),
+      item: consumption,
+      price: 4220,
+      expectedPrice: null,
+    };
+    expect((await post(payload, common)).statusCode).toBe(403);
+    expect((await post({ ...payload, price: 0 })).statusCode).toBe(422);
+    expect((await post({ ...payload, price: 1.5 })).statusCode).toBe(422);
+    expect((await post(payload)).statusCode).toBe(200);
+    expect((await post(payload)).statusCode).toBe(200);
+    expect(
+      (await post({ ...payload, ...body(), price: 2560 })).statusCode,
+    ).toBe(409);
+    const loss = { group: "grout", key: "verticalLoss" };
+    expect(
+      (await post({ ...body(), item: loss, price: 0, expectedPrice: null }))
+        .statusCode,
+    ).toBe(200);
+    const lookup = await app.inject({
+      method: "POST",
+      url: "/api/prices/lookup",
+      headers: headers(common),
+      payload: { items: [consumption, loss] },
+    });
+    expect(lookup.statusCode).toBe(200);
+    expect(lookup.json().references).toEqual(
+      expect.arrayContaining([
+        { item: consumption, price: 4220 },
+        { item: loss, price: 0 },
+      ]),
+    );
+    expect(
+      (await post({ ...body(), item: loss, price: null, expectedPrice: 0 }))
+        .statusCode,
+    ).toBe(200);
+    const adminList = await app.inject({
+      url: "/api/admin/prices",
+      headers: headers(admin),
+    });
+    expect(adminList.json().references).toEqual(
+      expect.arrayContaining([
+        { item: consumption, price: 4220 },
+        { item: loss, price: null },
+      ]),
+    );
+    const doc = createProject("Graute remoto", {
+      length: 2500,
+      width: 1250,
+      height: 700,
+    });
+    const next = withProjectPrice(
+      doc,
+      { group: "grout", key: "verticalConsumption" },
+      4220,
+      "reference",
+    );
+    const saved = await app.inject({
+      method: "POST",
+      url: `/api/projects/${doc.project.id}`,
+      headers: headers(common),
+      payload: { ...body(), doc: dehydrate(next, {}) },
+    });
+    expect(saved.statusCode, saved.body).toBe(200);
+  });
   it.each(["waterproofing", "wallBase", "slabs", "jointing"] as const)(
     "T-040/T-042 %s confirma preço e descrição juntos, protege conflito de descrição e repetição",
     async (key) => {

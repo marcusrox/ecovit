@@ -188,11 +188,13 @@ export function ReferencePriceButton({
   const available =
     reference !== undefined && completePriceReference(reference);
   const hint = available
-    ? item.group === "surface"
-      ? `Usar referência completa: ${reference.description} · ${settlementNumber(BigInt(reference.yield!), 1000n)} m²/embalagem`
-      : item.group === "openings"
-        ? "Usar preço de referência do conjunto completo, sem instalação"
-        : "Usar preço de referência"
+    ? item.group === "grout"
+      ? "Usar referência de " + priceItemLabel(item)
+      : item.group === "surface"
+        ? `Usar referência completa: ${reference.description} · ${settlementNumber(BigInt(reference.yield!), 1000n)} m²/embalagem`
+        : item.group === "openings"
+          ? "Usar preço de referência do conjunto completo, sem instalação"
+          : "Usar preço de referência"
     : reference?.item.group === "surface"
       ? "Referência incompleta: informe o rendimento na Administração"
       : "Preço de referência indisponível";
@@ -201,7 +203,7 @@ export function ReferencePriceButton({
       <button
         type="button"
         className={`${styles.iconButton} ${styles.referencePrice}`}
-        aria-label={`${item.group === "surface" ? "Usar referência completa" : "Usar preço de referência"} de ${priceItemLabel(item)}`}
+        aria-label={`${item.group === "grout" ? "Usar referência" : item.group === "surface" ? "Usar referência completa" : "Usar preço de referência"} de ${priceItemLabel(item)}`}
         title={hint}
         aria-disabled={context.blocked || !available}
         onMouseDown={(e) => e.preventDefault()}

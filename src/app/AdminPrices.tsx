@@ -1,3 +1,8 @@
+import {
+  groutInfo,
+  parseGroutField,
+  groutFieldText,
+} from "../domain/grout-budget";
 import { useEffect, useRef, useState } from "react";
 import { api, getAccountScope, requestTime } from "../persistence/http";
 import {
@@ -211,7 +216,11 @@ export function AdminPrices({
   }
   function save(row: PriceReference) {
     const key = priceItemKey(row.item),
-      text = drafts[key] ?? priceText(row.price ?? undefined);
+      text =
+        drafts[key] ??
+        (row.item.group === "grout"
+          ? groutFieldText(row.item.key, row.price ?? undefined)
+          : priceText(row.price ?? undefined));
     if (
       drafts[key] === undefined &&
       descriptionDrafts[key] === undefined &&
@@ -228,7 +237,10 @@ export function AdminPrices({
         : settlementNumber(BigInt(row.yield), 1000n));
     let referenceYield: number | undefined;
     try {
-      value = parseUnitPrice(text);
+      value =
+        row.item.group === "grout"
+          ? parseGroutField(row.item.key, text)
+          : parseUnitPrice(text);
       // A new description without a price remains a draft until the pair is complete.
       if (
         row.item.group === "surface" &&
@@ -293,8 +305,9 @@ export function AdminPrices({
       <p>
         Salvo ao sair do campo ou pressionar Enter. Para impermeabilizantes e
         rejunte, confirme produto, embalagem, rendimento e preço juntos. Valores
-        já incorporados aos projetos não mudam. Zero é válido; campo vazio
-        indica referência ausente.
+        já incorporados aos projetos não mudam. Zero é válido para preços e
+        perdas; consumos devem ser positivos; campo vazio indica referência
+        ausente.
       </p>
       <p>
         Esquadrias aparecem após o primeiro preço confirmado de uma combinação
@@ -315,7 +328,7 @@ export function AdminPrices({
       )}
       {!data && !error && <p role="status">Consultando preços…</p>}
       {data &&
-        ["bricks", "steel", "settlement", "openings", "surface"].map(
+        ["bricks", "steel", "settlement", "openings", "surface", "grout"].map(
           (group, index) => (
             <section key={group}>
               <h4>
@@ -326,6 +339,7 @@ export function AdminPrices({
                     "Assentamento · R$/embalagem",
                     "Esquadrias · Preço do conjunto (R$/un.)",
                     "Impermeabilizantes e rejunte · R$/embalagem",
+                    "Graute de preenchimento — microconcreto",
                   ][index]
                 }
               </h4>
@@ -348,12 +362,23 @@ export function AdminPrices({
                   poderá ajustar os valores no projeto.
                 </p>
               )}
+              {group === "grout" && (
+                <p>
+                  {groutInfo} Os consumos são base, sem perdas embutidas; cada
+                  percentual é aplicado uma única vez à aplicação
+                  correspondente.
+                </p>
+              )}
               <ul className={css.priceGrid}>
                 {data.references
                   .filter((row) => row.item.group === group)
                   .map((row, index) => {
                     const key = priceItemKey(row.item),
-                      value = drafts[key] ?? priceText(row.price ?? undefined);
+                      value =
+                        drafts[key] ??
+                        (row.item.group === "grout"
+                          ? groutFieldText(row.item.key, row.price ?? undefined)
+                          : priceText(row.price ?? undefined));
                     let invalid = "",
                       descriptionError = "",
                       yieldError = "";
@@ -365,7 +390,9 @@ export function AdminPrices({
                         ? ""
                         : settlementNumber(BigInt(row.yield), 1000n));
                     try {
-                      parseUnitPrice(value);
+                      if (row.item.group === "grout")
+                        parseGroutField(row.item.key, value);
+                      else parseUnitPrice(value);
                     } catch (e) {
                       invalid = (e as Error).message;
                     }

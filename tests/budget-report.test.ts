@@ -1,3 +1,4 @@
+import { groutBudget, groutDefaults } from "../src/domain/grout-budget";
 import { expect, it } from "vitest";
 import {
   createProject,
@@ -71,6 +72,7 @@ function fixture() {
     "half-channel": 100,
   };
   doc.project.brickLossPercent = 500;
+  doc.project.groutBudget = { ...groutDefaults, price: 100000 };
   doc.project.settlement = { ac1: { percent: 10000, price: 3000 } };
   doc.generated = generate(doc);
   doc.generationState = {
@@ -110,7 +112,10 @@ it("projeta a mesma revisão dos quatro grupos, todos os pavimentos e fiadas, se
   );
   const s = settlementBudget(doc);
   if (!s.available) throw Error(s.reason);
+  const grout = groutBudget(doc);
+  if (!grout.available) throw Error(grout.reason);
   const total = materialCosts([
+    grout.cost,
     b.total,
     steelCosts(steelQuantities(doc), {}).total,
     s.total,

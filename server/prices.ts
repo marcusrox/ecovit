@@ -1,3 +1,4 @@
+import { validateGroutValue } from "../src/domain/grout-budget";
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Pool, PoolClient } from "pg";
@@ -66,6 +67,17 @@ const patchSchema = z
   })
   .strict()
   .superRefine((input, ctx) => {
+    if (input.item.group === "grout" && input.price !== null) {
+      try {
+        validateGroutValue(input.item.key, input.price);
+      } catch {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Consumo de microconcreto deve ser positivo e os demais parâmetros não negativos.",
+        });
+      }
+    }
     if (input.item.group === "surface") {
       if (
         (input.price !== null) !== (input.description != null) ||
@@ -236,7 +248,7 @@ export function priceRoutes(app: FastifyInstance, db: Pool, config: Config) {
         [
           randomUUID(),
           actor.id,
-          `Referência ${priceItemLabel(input.item)}: ${current ?? "ausente"} → ${input.price ?? "ausente"} centavos.${input.item.group === "surface" ? ` Produto/embalagem: ${row?.description ?? "ausente"} → ${input.description ?? "ausente"}. Rendimento (milésimos de m²/embalagem): ${row?.yield_milli ?? "ausente"} → ${input.yield ?? "ausente"}.` : ""}`,
+          `Referência ${priceItemLabel(input.item)}: ${current ?? "ausente"} → ${input.price ?? "ausente"} ${input.item.group === "grout" && input.item.key !== "price" ? "unidades escaladas (consumo: milésimos de L/m; perdas: centésimos de %)" : "centavos"}.${input.item.group === "surface" ? ` Produto/embalagem: ${row?.description ?? "ausente"} → ${input.description ?? "ausente"}. Rendimento (milésimos de m²/embalagem): ${row?.yield_milli ?? "ausente"} → ${input.yield ?? "ausente"}.` : ""}`,
           input.operationId,
           fingerprint,
         ],

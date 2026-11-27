@@ -1,3 +1,4 @@
+import type { GroutBudgetSettings } from "./grout-budget";
 import { CURRENT_PROJECT_FORMAT } from "./project-format";
 import type {
   Composition,
@@ -193,6 +194,7 @@ export type Project = {
     steelPrices?: SteelPrices;
     settlement?: SettlementSettings;
     surface?: SurfaceSettings;
+    groutBudget?: GroutBudgetSettings;
     openingPrices?: OpeningPrice[];
     priceSources?: PriceSources;
     brickLossPercent?: number;

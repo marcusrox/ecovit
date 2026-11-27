@@ -1,5 +1,12 @@
 # Persistência e compatibilidade
 
+## Microconcreto — formato 39 e migração SQL 006
+
+Formato 39 acrescenta project.groutBudget opcional/estrito, com cinco campos opcionais validados conforme Quantitativos, e identidades grout em priceSources. Leitor compartilhado cliente/API normaliza formatos 9–38 sem materializar parâmetros ou referências e recusa campos/identidades de microconcreto em envelopes anteriores. Leitores anteriores recusam 39; composição nominal-v13 e representação remota 1 permanecem. Parâmetros/origens/limpezas acompanham histórico, cópia independente e transporte; projeções não são persistidas.
+
+A migração 006 insere somente os quatro padrões administrativos de consumo/perdas, sem preço de material e sem sobrescrever linhas existentes, inclusive nulas. Valores iniciais e unidades pertencem ao Caderno Técnico. As cinco referências independentes reutilizam ecovit_price_references: a coluna price guarda centavos apenas na chave price; nas demais, milésimos de L/m ou centésimos de %. API e Administração interpretam unidade pela identidade, validam consumos positivos e demais campos não negativos; não aceitam descrição/rendimento de superfície. Auditoria explicita a unidade escalada, com os mesmos controles de autorização, conflito esperado, repetição segura e CSRF da T-039. A migração é aplicada pelo workflow incremental existente; não requer alteração manual do banco do aplicativo.
+
+
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
 ## Versão vigente e faixa suportada
@@ -12,7 +19,7 @@ O projeto já comporta `yield` nas entradas de superfície: incorporação/cópi
 
 `src/domain/project-format.ts` é a fonte única de CURRENT_PROJECT_FORMAT e MIN_SUPPORTED_PROJECT_FORMAT. Criação, tipo Project, schema do leitor e identificação de compatibilidade usam essas definições e isSupportedProjectFormat, que aceita somente inteiros na faixa inclusiva. O leitor verifica a versão original antes das migrações. Fronteiras e passos históricos continuam com números explícitos: aumentar a versão vigente não substitui a implementação da migração correspondente. Testes de versão atual usam a constante; testes de versão futura usam CURRENT_PROJECT_FORMAT + 1, preservando os casos históricos fixos.
 
-## Impermeabilização de bases e lajes — formato 38 vigente
+## Impermeabilização de bases e lajes — formato 38
 
 Formato 38 acrescenta `project.surface.wallBase/slabs`, com rendimento/preço/descrições no padrão T-040 e sem percentual global, e `waterproofingPercent` opcional em cada pavimento/laje, inteiro de 0–10000, ausência equivalente a 0%. As novas identidades de referência são `surface:wallBase/slabs`; captura, origem e limpeza seguem as referências de superfície. O leitor compartilhado cliente/API normaliza 9–37 para 38 sem materializar aplicação ou copiar a impermeabilização vertical, recusando campos/identidades novos declarados em formatos anteriores. Preservar versões históricas e rejeição de versões futuras; leitores até 37 recusam 38.
 

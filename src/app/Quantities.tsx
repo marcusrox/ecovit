@@ -1,3 +1,8 @@
+import {
+  useGroutBudget,
+  GroutBudgetSummary,
+  GroutBudgetDetail,
+} from "./GroutBudget";
 import { BudgetConfirmationContext } from "./BudgetConfirmation";
 import {
   budgetIssues,
@@ -297,7 +302,20 @@ export function Quantities({
     priceSaving,
     setPriceSaving,
   );
+  const grout = useGroutBudget(
+    doc,
+    open,
+    busy,
+    readonly || references.working,
+    priceSaving,
+    setPriceSaving,
+  );
   const totals = [
+    {
+      label: "Subtotal de graute de preenchimento",
+      value: grout.report.available ? grout.report.cost : undefined,
+      partial: grout.report.available && grout.report.partial,
+    },
     {
       label: "Subtotal de tijolos",
       value: !invalidPrices ? budget?.total : undefined,
@@ -351,6 +369,7 @@ export function Quantities({
     settlement,
     openings,
     surface,
+    grout,
   });
   async function locateIssue(issue: BudgetIssue) {
     const version = ++navigationVersion.current;
@@ -424,7 +443,8 @@ export function Quantities({
       Object.keys(steel.drafts).length > 0 ||
       Object.keys(settlement.drafts).length > 0 ||
       Object.keys(openings.drafts).length > 0 ||
-      Object.keys(surface.drafts).length > 0,
+      Object.keys(surface.drafts).length > 0 ||
+      Object.keys(grout.drafts).length > 0,
     referenceWorking: references.working,
   };
   async function exportPdf() {
@@ -557,9 +577,10 @@ export function Quantities({
               <p className={styles.note}>
                 Quantitativos e estimativa de custos de tijolos, ferragens,
                 materiais de assentamento, esquadrias, impermeabilização de
-                superfície de paredes, bases e lajes e rejunte do projeto, com
-                base nos preços informados e nas perdas de tijolos definidas. Inclui resumo dos
-                materiais e detalhamento por pavimento e fiada.
+                superfície de paredes, bases e lajes, rejunte e microconcreto do
+                projeto, com base nos preços informados e nas perdas de tijolos
+                e microconcreto definidas. Inclui resumo dos materiais e
+                detalhamento por pavimento e fiada.
               </p>
             </header>
             <p data-print-omit className={styles.note}>
@@ -878,6 +899,7 @@ export function Quantities({
               <SteelBudgetSummary model={steel} />
               <SettlementBudgetSummary model={settlement} />
               <OpeningBudgetSummary model={openings} />
+              <GroutBudgetSummary model={grout} />
               <SurfaceBudgetSummary model={surface} />
               <SurfaceBudgetSummary model={surface} concrete />
             </section>
@@ -933,6 +955,13 @@ export function Quantities({
                   ))}
                 </select>
               </label>
+              {consultedDocumentFloors.map((f) => (
+                <GroutBudgetDetail
+                  key={`grout:${f.id}`}
+                  model={grout}
+                  floorId={f.id}
+                />
+              ))}
               {openings.report.available &&
                 consultedDocumentFloors.map((f) => (
                   <OpeningBudgetDetail

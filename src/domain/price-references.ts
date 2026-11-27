@@ -1,3 +1,4 @@
+import { groutFields, groutLabels, validateGroutValue } from "./grout-budget";
 import { z } from "zod";
 import { display, type Project } from "./project";
 import { pieceKinds, pieceLabels } from "./quantities";
@@ -21,6 +22,7 @@ import {
 const { price: ignoredPrice, ...optionShape } = openingPriceSchema.shape;
 void ignoredPrice;
 export const priceItemSchema = z.discriminatedUnion("group", [
+  z.object({ group: z.literal("grout"), key: z.enum(groutFields) }).strict(),
   z
     .object({
       group: z.literal("surface"),
@@ -92,6 +94,7 @@ export const priceItemKey = (item: PriceItem) =>
     ? `openings:${openingOptionKey(item.option)}`
     : `${item.group}:${item.key}`;
 export function priceItemLabel(item: PriceItem) {
+  if (item.group === "grout") return groutLabels[item.key];
   if (item.group === "surface")
     return `${surfaceProducts.find((p) => p.key === item.key)!.label} · embalagem`;
   if (item.group === "bricks") return `${pieceLabels[item.key]} · un.`;
@@ -104,6 +107,7 @@ export function priceItemLabel(item: PriceItem) {
   return `${openingOptionLabel(item.option)} · ${display(item.option.width)} × ${display(item.option.height)} cm · ${openingMaterialLabel(item.option.material)}`;
 }
 export const fixedPriceItems: PriceItem[] = [
+  ...groutFields.map((key) => ({ group: "grout" as const, key })),
   ...surfaceProducts.map((p) => ({ group: "surface" as const, key: p.key })),
   ...pieceKinds.map((key) => ({ group: "bricks" as const, key })),
   ...steelCatalog.map((s) => ({ group: "steel" as const, key: s.key })),
@@ -126,6 +130,7 @@ export function projectPriceItems(doc: {
   return [...fixedPriceItems, ...openings.values()];
 }
 export function projectPrice(doc: Pick<Project, "project">, item: PriceItem) {
+  if (item.group === "grout") return doc.project.groutBudget?.[item.key];
   if (item.group === "surface") return doc.project.surface?.[item.key]?.price;
   if (item.group === "bricks") return doc.project.unitPrices?.[item.key];
   if (item.group === "steel") return doc.project.steelPrices?.[item.key];
@@ -150,7 +155,10 @@ export function withProjectPrice(
   description?: string,
   referenceYield?: number,
 ): Project {
-  if (price !== undefined) referenceCents.parse(price);
+  if (price !== undefined) {
+    referenceCents.parse(price);
+    if (item.group === "grout") validateGroutValue(item.key, price);
+  }
   const actualSource = price === undefined ? "cleared" : source;
   const captured =
     item.group === "surface" && actualSource === "reference"
@@ -171,7 +179,12 @@ export function withProjectPrice(
   )
     return doc;
   let next = doc;
-  if (item.group === "surface") {
+  if (item.group === "grout") {
+    const entry = { ...doc.project.groutBudget };
+    if (price === undefined) delete entry[item.key];
+    else entry[item.key] = price;
+    next = { ...doc, project: { ...doc.project, groutBudget: entry } };
+  } else if (item.group === "surface") {
     const entry: SurfaceConfig = { ...doc.project.surface?.[item.key] };
     if (
       entry.productDescription === undefined &&

@@ -42,13 +42,40 @@ async function structure() {
 }
 
 describe("incremental PostgreSQL migrations", () => {
+  it("T-043 inicializa consumos e perdas sem sobrescrever valor próprio ou limpeza administrativa", async () => {
+    const migrations = await loadMigrations();
+    await migrate(db, migrations.slice(0, 5));
+    await db.query(`INSERT INTO ecovit_price_references(key,item,price) VALUES
+      ('grout:verticalConsumption','{"group":"grout","key":"verticalConsumption"}',5000),
+      ('grout:horizontalLoss','{"group":"grout","key":"horizontalLoss"}',NULL)`);
+    await migrate(db, migrations);
+    const values = async () =>
+      (
+        await db.query(
+          "SELECT key,price::text FROM ecovit_price_references WHERE item->>'group'='grout' ORDER BY key",
+        )
+      ).rows;
+    expect(await values()).toEqual([
+      { key: "grout:horizontalConsumption", price: "2560" },
+      { key: "grout:horizontalLoss", price: null },
+      { key: "grout:verticalConsumption", price: "5000" },
+      { key: "grout:verticalLoss", price: "500" },
+    ]);
+    await db.query(
+      "UPDATE ecovit_price_references SET price=NULL WHERE key='grout:verticalLoss'",
+    );
+    await migrate(db, migrations);
+    expect(
+      (await values()).find((r) => r.key === "grout:verticalLoss").price,
+    ).toBeNull();
+  });
   it("surface reference yield upgrades legacy references without inventing yields", async () => {
     const migrations = await loadMigrations();
     await migrate(db, migrations.slice(0, 4));
     await db.query(
       'INSERT INTO ecovit_price_references(key,item,price,description) VALUES(\'surface:jointing\',\'{"group":"surface","key":"jointing"}\',1200,\'Rejunte · 5 kg\')',
     );
-    await migrate(db, migrations);
+    await migrate(db, migrations.slice(0, 5));
     expect(
       (
         await db.query(
@@ -62,7 +89,7 @@ describe("incremental PostgreSQL migrations", () => {
       db.query("UPDATE ecovit_price_references SET yield_milli=0"),
     ).rejects.toThrow();
     await db.query("UPDATE ecovit_price_references SET yield_milli=12345");
-    await migrate(db, migrations);
+    await migrate(db, migrations.slice(0, 5));
     expect(
       (await db.query("SELECT yield_milli::text FROM ecovit_price_references"))
         .rows[0].yield_milli,
@@ -83,7 +110,7 @@ describe("incremental PostgreSQL migrations", () => {
     await migrate(db, await loadMigrations());
     const upgraded = await structure(),
       versions = await history();
-    expect(versions.map((row) => row.version)).toEqual([1, 2, 3, 4, 5]);
+    expect(versions.map((row) => row.version)).toEqual([1, 2, 3, 4, 5, 6]);
     expect(
       (
         await db.query(

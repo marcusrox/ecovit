@@ -1,3 +1,5 @@
+import { groutFields, groutLabels } from "../domain/grout-budget";
+import type { useGroutBudget } from "./GroutBudget";
 import { display, type Project } from "../domain/project";
 import {
   pieceKinds,
@@ -21,6 +23,7 @@ import type { useOpeningBudget } from "./OpeningBudget";
 import type { useSurfaceBudget } from "./SurfaceBudget";
 
 export type BudgetSection =
+  | "grout"
   | "bricks"
   | "steel"
   | "settlement"
@@ -39,6 +42,7 @@ export type BudgetIssue = {
   openingKey?: string;
 };
 type Input = {
+  grout?: Pick<ReturnType<typeof useGroutBudget>, "report" | "errors">;
   doc: Project;
   processing: boolean;
   report: QuantityReport;
@@ -372,6 +376,56 @@ export function budgetIssues(m: Input): BudgetIssue[] {
         `${label} · edição para exportação`,
         surface.descriptionErrors[key]!,
       );
+  }
+  if (m.grout) {
+    const g = m.grout;
+    if (!g.report.available)
+      missingBase("grout", "Graute de preenchimento", g.report.reason);
+    else {
+      for (const row of g.report.rows)
+        if (row.error) {
+          if (row.field)
+            field(
+              "grout",
+              `grout:${row.field}`,
+              groutLabels[row.field],
+              row.error,
+            );
+          else
+            sectionIssue(
+              "grout",
+              "Graute de preenchimento",
+              row.error,
+              "Confira os parâmetros do microconcreto.",
+            );
+        }
+      if (g.report.error) {
+        if (g.report.field)
+          field(
+            "grout",
+            `grout:${g.report.field}`,
+            groutLabels[g.report.field],
+            g.report.error,
+          );
+        else
+          sectionIssue(
+            "grout",
+            "Graute de preenchimento",
+            g.report.error,
+            "Confira os parâmetros do microconcreto.",
+          );
+      }
+      if (g.report.partial)
+        partial(
+          "grout",
+          "Graute de preenchimento",
+          g.report.floors,
+          "Confira as pendências geométricas do projeto.",
+        );
+    }
+    for (const key of groutFields)
+      if (g.errors[key])
+        field("grout", `grout:${key}`, groutLabels[key], g.errors[key]!);
   }
   if (m.materialError)
     sectionIssue(

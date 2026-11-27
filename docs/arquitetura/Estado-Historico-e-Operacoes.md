@@ -1,5 +1,10 @@
 # Estado, histórico e operações
 
+## Microconcreto — T-043
+
+Coeficientes, perdas e preço usam operação budget e confirmação Enter/blur, com prévia sem escrita até confirmar. Não alteram insumos, composição ou grautes/canaletas. Valores e origens acompanham histórico, salvamento, recuperação, cópia e arquivo. Limpeza registra cleared por campo; 0%/preço zero são próprios ou referências válidas. Incorporação inicial e cópia manual seguem T-039 e só ocorrem no projeto editável; somente leitura e relatório não escrevem. Rascunhos inválidos conservam erro e impedem exportação, sem apresentar resultado antigo como válido.
+
+
 ## Impermeabilização de bases e lajes — T-042
 
 Percentuais em pavimento/laje e parâmetros dos produtos usam confirmação Enter/blur e operação `budget`, com prévia sem persistência, histórico, salvamento e recuperação vigentes. Não recalculam composição; o detector de insumos ignora `waterproofingPercent` nas lajes, assim como os parâmetros financeiros já excluídos dos pavimentos. Confirmar parte do documento corrente e preserva os demais campos/elementos; inválido continua rascunho. Renomear/reordenar conserva valores por identidade; cópia de pavimento replica o percentual de base e o da laje para os registros novos. Remover/desfazer/refazer restaura elemento e configuração juntos, sem registros financeiros órfãos. Produto/embalagem e origem das referências seguem T-040.

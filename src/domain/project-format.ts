@@ -1,6 +1,6 @@
 // Historical migration boundaries remain explicit in the document reader.
 export const MIN_SUPPORTED_PROJECT_FORMAT = 9;
-export const CURRENT_PROJECT_FORMAT = 38;
+export const CURRENT_PROJECT_FORMAT = 39;
 
 export function isSupportedProjectFormat(value: unknown): value is number {
   return (

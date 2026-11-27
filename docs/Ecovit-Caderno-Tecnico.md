@@ -631,3 +631,13 @@ Fontes consultadas em 2026-11-18: [Gerdau GG 50](https://mais.gerdau.com.br/prod
 Peso=metros estimados×kg/m; custo=peso×R$/kg. Referências independentes: graute Ø8 de 3 m com uma emenda de 20 cm →3,20 m, 1,264 kg, R$15,17 a R$12/kg; canaleta de 10 m com duas barras Ø10 e 10% →22 m, 13,574 kg, R$135,74 a R$10/kg; dez grampos Ø6,3 de 32,5 cm →3,25 m, 0,79625 kg, R$6,37 a R$8/kg. Arredondamentos/custos e estados de parcialidade seguem [Quantitativos](arquitetura/Quantitativos.md#ferragens-por-peso--t-028).
 
 A inspeção visual de um grampo pendente não representa uma ligação executável: traço vermelho tracejado e ! são anotações de pendência, com o motivo no hover, conforme Interface e iconografia. Isso não modifica as regras de descida, a programação ou os eixos, nem inclui o grampo na estimativa. Grampos distintos da mesma fiada permanecem identificáveis por suas duas células.
+
+## Consumo de microconcreto de preenchimento — T-043
+
+Estimativa orçamentária por comprimento, sem cálculo de cavidades ou novas medidas internas. Vertical usa a união dos intervalos reais dos eixos finais coincidentes por pavimento, respeitando vãos e ajustes manuais, sem emendas ou sobreposições de aço. Horizontal reutiliza os trechos nominais finais de canaleta/meia canaleta definidos em CT-09, independentemente da ativação/quantidade de barras. Unir intervalos colineares da mesma fiada/faixa; demandas simultâneas não duplicam comprimento. Trechos perpendiculares continuam distintos, sem desconto físico de cruzamento ou de interseção com grautes verticais.
+
+Padrões administrativos editáveis definidos pelo solicitante: vertical 4,22 L/m e perdas de 5%; horizontal (canaletas) 2,56 L/m e perdas de 10%. Aplicáveis como referências comuns às bases de tijolo, não como medidas universais ou comprovação de consumo/adequação estrutural. Consumos base não contêm perdas embutidas; preço não tem padrão.
+
+Para cada aplicação: base em L = metros lineares × coeficiente L/m; estimado em L = base × (1 + perdas/100). Somar estimados vertical/horizontal e dividir por 1.000 para m³; custo = m³ estimados × R$/m³. Não aplicar perdas novamente ao total, nem perdas de tijolos/acréscimos de aço. Sem descontos por armadura ou por cruzamento de aplicações; coeficientes são informados para estimativa e não derivados da geometria interna.
+
+Exemplo: 100 m verticais produzem 422 L base e 443,1 L com 5%; 50 m horizontais produzem 128 L base e 140,8 L com 10%. Total 583,9 L = 0,5839 m³, R$ 583,90 a R$ 1.000,00/m³. Perdas somam 33,9 L sobre 550 L base. Ambas em 0% resultam em 550 L = 0,55 m³ e R$ 550,00 ao mesmo preço. Mais barras na canaleta não aumentam o comprimento de preenchimento. Precisão, indisponibilidade e rateio monetário pertencem a Quantitativos.

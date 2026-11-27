@@ -1,5 +1,10 @@
 # Interface e iconografia
 
+## Graute de preenchimento — T-043
+
+Orçamento acrescenta grupo Microconcreto com cinco campos globais: consumos vertical/horizontal em L/m, perdas independentes em % e preço em R$/m³. Reutilizar tabelas, confirmação Enter/blur, prévia, estados, foco e controles de referência com Icon/referencePrice. Cada campo tem nome/unidade, erro associado e destino nas pendências; bloquear edição em somente leitura/processamento. Exportação aguarda confirmações normais e exige resolução dos rascunhos. Resumo e detalhe por pavimento apresentam comprimento, base, estimado com perdas e custo, com total em litros e m³. Administração → Preços mantém os mesmos cinco campos, com unidades próprias e gravação independente, sem novo botão Salvar. As duas telas explicam brevemente composição/uso do microconcreto; coeficientes não incluem perdas. Filtro/recolhimento seguem o fluxo vigente. Apresentar comprimentos e consumos com os decimais exatos da escala de cálculo, removendo zeros finais; parcelas positivas não viram zero e as somas por aplicação/pavimento conciliam com o total. Custo usa precisão integral, com arredondamento monetário final.
+
+
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
 ## Recorte de validação da interface

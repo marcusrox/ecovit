@@ -1,3 +1,4 @@
+import { groutSettingsSchema } from "../domain/grout-budget";
 import {
   CURRENT_PROJECT_FORMAT,
   MIN_SUPPORTED_PROJECT_FORMAT,
@@ -235,6 +236,7 @@ const schema = z
         openingPrices: openingPricesSchema.optional(),
         priceSources: priceSourcesSchema.optional(),
         surface: surfaceSettingsSchema.optional(),
+        groutBudget: groutSettingsSchema.optional(),
         settlement: z
           .object({
             ac1: settlementProduct,
@@ -1246,6 +1248,13 @@ export function validateProject(
       ? value.schemaVersion
       : undefined;
   if (sourceFormat === 37) value = { ...(value as object), schemaVersion: 38 };
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 38
+  )
+    value = { ...value, schemaVersion: 39 };
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");
@@ -1268,6 +1277,13 @@ export function validateProject(
     throw new Error(
       "Arquivo inválido: impermeabilização de bases/lajes em formato anterior.",
     );
+  if (
+    typeof sourceFormat === "number" &&
+    sourceFormat < 39 &&
+    (parsed.data.project.groutBudget !== undefined ||
+      parsed.data.project.priceSources?.some((p) => p.item.group === "grout"))
+  )
+    throw new Error("Arquivo inválido: microconcreto em formato anterior.");
   // Old results are disposable; never weaken validation of the drawing or of current snapshots.
   const doc = (
     parsed.data.generated && parsed.data.generated.convention !== "nominal-v13"
@@ -1496,6 +1512,9 @@ export function importedCopy(doc: Project): Project {
     },
     project: {
       ...doc.project,
+      ...(doc.project.groutBudget
+        ? { groutBudget: structuredClone(doc.project.groutBudget) }
+        : {}),
       ...(doc.project.surface
         ? { surface: structuredClone(doc.project.surface) }
         : {}),
