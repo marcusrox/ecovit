@@ -108,7 +108,7 @@ export function budgetIssues(m: Input): BudgetIssue[] {
   ) => {
     const outdated =
       m.doc.generationState.status !== "current" ||
-      m.doc.generated?.convention !== "nominal-v13";
+      m.doc.generated?.convention !== "nominal-v14";
     const key = m.processing ? "processing" : outdated ? "composition" : reason;
     const existing = unavailable.get(key);
     if (existing) existing.groups.push(group);

@@ -60,7 +60,7 @@ export type Component = {
   phase: 0 | 1;
 };
 export type Composition = {
-  convention: "nominal-v13";
+  convention: "nominal-v14";
   channels?: ChannelBand[];
   grouts?: GroutAxis[];
   clamps?: Clamp[];
@@ -292,7 +292,7 @@ function composeFloor(doc: Project): Composition {
   const { width: m, height: h } = doc.project.base,
     floor = doc.model.floors[0];
   const result: Composition = {
-    convention: "nominal-v13",
+    convention: "nominal-v14",
     courses: [],
     components: [],
     diagnostics: [],
@@ -659,7 +659,7 @@ export type FloorComposition = Omit<Composition, "convention"> & {
   floorId: string;
 };
 export type ProjectComposition = {
-  convention: "nominal-v13";
+  convention: "nominal-v14";
   floors: FloorComposition[];
   diagnostics: Diagnostic[];
 };
@@ -675,7 +675,7 @@ export function floorView(
     doc.generated && "floors" in doc.generated
       ? (() => {
           const f = doc.generated.floors.find((f) => f.floorId === floorId);
-          return f ? { ...f, convention: "nominal-v13" as const } : null;
+          return f ? { ...f, convention: "nominal-v14" as const } : null;
         })()
       : doc.generated;
   return {
@@ -742,7 +742,7 @@ export function generate(doc: Project): ProjectComposition {
       };
     });
   return {
-    convention: "nominal-v13",
+    convention: "nominal-v14",
     floors,
     diagnostics: floors.flatMap((f) => f.diagnostics),
   };

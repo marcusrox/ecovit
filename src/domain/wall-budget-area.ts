@@ -45,7 +45,7 @@ export function wallBudgetAreas(doc: Project, busy = false) {
     };
   if (
     doc.generationState.status !== "current" ||
-    doc.generated?.convention !== "nominal-v13"
+    doc.generated?.convention !== "nominal-v14"
   )
     return {
       available: false as const,

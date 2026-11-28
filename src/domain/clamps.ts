@@ -1,6 +1,7 @@
 import { bounds, LIMIT, type EditableProject, type Point } from "./project";
 import type { Composition } from "./composition";
 import { groutId } from "./grout";
+import { openingBox, openingIssue } from "./openings";
 
 export type ClampSchedule =
   | { mode: "list"; courses: number[] }
@@ -123,6 +124,27 @@ export function applyClamps(
     limit = clampCourseLimit(doc, floor.id);
   const axes = new Map((result.grouts ?? []).map((a) => [groutId(a), a]));
   const pieces = new Map<string, Clamp>();
+  // Only valid openings can dispense a connection. Invalid geometry keeps its
+  // existing diagnostics and composition checks.
+  const openings = doc.model.openings.flatMap((opening) => {
+    const wall = doc.model.walls.find((w) => w.id === opening.wallId);
+    if (
+      !wall ||
+      wall.floorId !== floor.id ||
+      openingIssue(doc, opening) ||
+      result.diagnostics.some(
+        (d) => d.severity === "error" && d.openingIds?.includes(opening.id),
+      )
+    )
+      return [];
+    return [
+      {
+        box: openingBox(opening, wall, m),
+        bottom: floor.level + opening.base,
+        top: floor.level + opening.base + opening.height,
+      },
+    ];
+  });
   const diagnostic = (
     course: number,
     p: Point,
@@ -219,6 +241,21 @@ export function applyClamps(
             )
           )
             pending = "composição do encontro indisponível.";
+          else if (
+            openings.some(
+              (opening) =>
+                opening.bottom < top &&
+                opening.top > top - leg &&
+                [a, b].some(
+                  (p) =>
+                    p.x >= opening.box.x &&
+                    p.x < opening.box.x + opening.box.width &&
+                    p.y >= opening.box.y &&
+                    p.y < opening.box.y + opening.box.height,
+                ),
+            )
+          )
+            continue;
           else if (![a, b].every((p) => axes.has(groutId(p))))
             pending = "um dos furos previstos não está grauteado.";
           else if (

@@ -4,6 +4,7 @@ import {
   createProject,
   defaultGroutSettings,
   makeWall,
+  bounds,
   type Project,
 } from "../src/domain/project";
 import { generate } from "../src/domain/composition";
@@ -28,7 +29,8 @@ import {
   validateProject,
 } from "../src/persistence/files";
 import { dehydrate, hydrate } from "../src/persistence/remote-document";
-import { putOpening } from "../src/domain/openings";
+import { putOpening, wallAxis, wallStart } from "../src/domain/openings";
+import { steelQuantities } from "../src/domain/steel-budget";
 
 function fixture(
   kind: "L" | "T" | "cross",
@@ -219,7 +221,7 @@ describe("T-025 grampos nominais", () => {
       courses: [1, 5, 15],
     });
   });
-  it("uma abertura abaixo da fiada impede atravessar a interrupção do graute", () => {
+  it("uma abertura abaixo da fiada omite a ligação cuja ponta atravessaria o vazio", () => {
     let d = fixture("T");
     const stem = d.model.walls.find((w) => w.a.x === w.b.x)!;
     d = putOpening(d, {
@@ -232,15 +234,135 @@ describe("T-025 grampos nominais", () => {
       height: 700,
     });
     const result = generate(d).floors[0];
-    const branch = result.clamps!.find((c) => c.b.y === 1250)!;
-    expect(branch.pending).toContain("pontas");
+    expect(result.clamps!.some((c) => c.b.y === 1250)).toBe(false);
     expect(result.clamps!.filter((c) => !c.pending)).toHaveLength(2);
+    expect(result.diagnostics.some((d) => d.code === "clamp-pending")).toBe(
+      false,
+    );
     expect(
       result.grouts!.find((a) => a.x === 0 && a.y === 1250)!.intervals,
     ).toEqual([
       { bottom: 0, top: 2100 },
       { bottom: 2800, top: 9800 },
     ]);
+    const steel = steelQuantities(calculated(d));
+    expect(steel.available).toBe(true);
+    if (!steel.available) return;
+    expect(steel.partial).toBe(false);
+    expect(steel.floors[0].pending).toEqual([]);
+    expect(
+      steel.floors[0].details.find((row) => row.application === "clamps")!.base,
+    ).toBe(65000000n);
+  });
+  it.each(["door", "window", "opening"] as const)(
+    "%s omite somente o braço impedido, em rotações/reflexões, e remover a abertura restaura a programação",
+    (kind) => {
+      for (let rotation = 0; rotation < 4; rotation++)
+        for (const reflect of [false, true]) {
+          let doc = fixture("T", true, rotation, reflect);
+          const before = generate(doc).floors[0],
+            stem = doc.model.walls[1];
+          const box = bounds(stem, doc.project.base.width);
+          const branch = before.clamps!.find(
+            (c) =>
+              c.b.x >= box.x &&
+              c.b.x < box.x + box.width &&
+              c.b.y >= box.y &&
+              c.b.y < box.y + box.height,
+          )!;
+          expect(branch).toBeDefined();
+          doc = putOpening(doc, {
+            id: crypto.randomUUID(),
+            wallId: stem.id,
+            kind,
+            offset: branch.b[wallAxis(stem)] - wallStart(stem),
+            width: 1250,
+            base: kind === "window" ? 2100 : 0,
+            height: kind === "window" ? 2100 : 4200,
+          });
+          const result = generate(doc).floors[0];
+          expect(result.clamps).toEqual(
+            before.clamps!.filter((c) => c.id !== branch.id),
+          );
+          expect(
+            result.diagnostics.some((d) => d.code === "clamp-pending"),
+          ).toBe(false);
+          const without = structuredClone(doc);
+          without.model.floors[0].clamps!.enabled = false;
+          const baseline = generate(without).floors[0];
+          expect(result.courses).toEqual(baseline.courses);
+          expect(result.grouts).toEqual(baseline.grouts);
+          expect(result.channels).toEqual(baseline.channels);
+          doc.model.openings = [];
+          expect(generate(doc).floors[0].clamps).toEqual(before.clamps);
+        }
+    },
+  );
+  it("janela dispensa só as fiadas cuja descida cruza o vazio, sem incluir contato de borda", () => {
+    let doc = fixture("T", false);
+    doc.model.floors[0].level = 14000;
+    doc.model.floors[0].clamps!.length = 4050; // legs 14 cm = two courses
+    doc.model.floors[0].clamps!.schedule = {
+      mode: "list",
+      courses: [2, 3, 5, 6],
+    };
+    const stem = doc.model.walls[1];
+    doc = putOpening(doc, {
+      id: crypto.randomUUID(),
+      wallId: stem.id,
+      kind: "window",
+      offset: 1250,
+      width: 1250,
+      base: 2100,
+      height: 700,
+    });
+    const result = generate(doc).floors[0];
+    // Below sill (2), top at sill (3), descent into window (5),
+    // and descent starting exactly at the window top (6).
+    expect(result.clamps!.map((c) => c.course)).toEqual([2, 3, 6]);
+    expect(result.clamps!.every((c) => !c.pending)).toBe(true);
+    expect(result.diagnostics.some((d) => d.code === "clamp-pending")).toBe(
+      false,
+    );
+  });
+  it("abertura distante não dispensa graute excluído; abertura inválida mantém erro e pendência", () => {
+    let doc = fixture("T");
+    const before = generate(doc).floors[0];
+    const branch = before.grouts!.find((g) => g.x === 0 && g.y === 1250)!;
+    doc = toggleGrout(doc, branch, true);
+    doc = putOpening(doc, {
+      id: crypto.randomUUID(),
+      wallId: doc.model.walls[1].id,
+      kind: "window",
+      offset: 3750,
+      width: 1250,
+      base: 2100,
+      height: 2100,
+    });
+    expect(
+      generate(doc).floors[0].clamps!.find((c) => c.b.y === 1250)!.pending,
+    ).toContain("grauteado");
+    doc.model.openings[0].offset = 1250;
+    doc.model.openings[0].height = 20000; // invalid: beyond the wall
+    const invalid = generate(doc).floors[0];
+    expect(
+      invalid.diagnostics.some((d) => d.code === "opening-outside-wall"),
+    ).toBe(true);
+    expect(invalid.diagnostics.some((d) => d.code === "clamp-pending")).toBe(
+      true,
+    );
+  });
+  it("leitor descarta snapshot nominal-v13 para recalcular grampos e recusa adulteração atual", () => {
+    const doc = calculated(fixture("T"));
+    const old = JSON.parse(serializeFile(doc).text);
+    old.generated.convention = "nominal-v13";
+    const loaded = validateProject(old);
+    expect(loaded.generated).toBeNull();
+    expect(loaded.generationState.status).toBe("outdated");
+    expect(loaded.model).toEqual(doc.model);
+    const tampered = structuredClone(doc);
+    tampered.generated!.floors[0].clamps = [];
+    expect(() => validateProject(tampered)).toThrow();
   });
   it("arquivo, remoto, cópia e pavimentos preservam intenção sem compartilhar mutações", () => {
     let d = calculated(fixture("T"));

@@ -43,7 +43,7 @@ export function root(
     ...data,
     generated: output
       ? {
-          convention: "nominal-v13",
+          convention: "nominal-v14",
           floors: [{ ...output, floorId: viewFloorId }],
           diagnostics: output.diagnostics,
         }

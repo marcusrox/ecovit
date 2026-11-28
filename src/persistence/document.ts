@@ -214,6 +214,7 @@ const generated = z
       "nominal-v11",
       "nominal-v12",
       "nominal-v13",
+      "nominal-v14",
     ]),
     floors: z.array(composition).min(1).max(4),
     diagnostics: z.array(diagnostic),
@@ -1301,7 +1302,7 @@ export function validateProject(
     throw new Error("Arquivo inválido: concreto de lajes em formato anterior.");
   // Old results are disposable; never weaken validation of the drawing or of current snapshots.
   const doc = (
-    parsed.data.generated && parsed.data.generated.convention !== "nominal-v13"
+    parsed.data.generated && parsed.data.generated.convention !== "nominal-v14"
       ? {
           ...parsed.data,
           generated: null,

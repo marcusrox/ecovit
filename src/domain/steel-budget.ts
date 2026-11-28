@@ -114,7 +114,7 @@ export function steelQuantities(doc: Project, busy = false): SteelReport {
     };
   if (
     doc.generationState.status !== "current" ||
-    doc.generated?.convention !== "nominal-v13"
+    doc.generated?.convention !== "nominal-v14"
   )
     return {
       available: false,

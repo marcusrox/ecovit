@@ -160,7 +160,7 @@ it("EX-78/79: projeto real preserva desenho e compõe 40+2 fiadas", () => {
   expect(doc.generated).toBeNull();
   expect(doc.generationState).toEqual({ status: "outdated", diagnostics: [] });
   const result = exactCoverage(doc);
-  expect(result.convention).toBe("nominal-v13");
+  expect(result.convention).toBe("nominal-v14");
   expect(result.floors[0].courses).toHaveLength(42);
   const tall = doc.model.walls
     .filter((w) => w.height === 29400)

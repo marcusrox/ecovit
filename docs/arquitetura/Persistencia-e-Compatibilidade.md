@@ -1,5 +1,9 @@
 # Persistência e compatibilidade
 
+## Omissão de grampos por aberturas — composição nominal-v14
+
+A composição nominal-v14 aplica a dispensa local de grampos impedidos por portas, janelas e vãos válidos conforme CT-17. Intenção, envelope 40 e representação remota 1 permanecem; sem migração SQL. Leitor compartilhado aceita snapshots nominal-v9 até v13 como resultados antigos descartáveis, preserva a intenção e marca o cálculo desatualizado antes da recomposição pelo motor atual. Snapshot nominal-v14 atual continua exigindo conferência integral por recomputação; adulteração é recusada. O fluxo remoto já transporta intenção sem resultado e recompõe em memória. Não reparar desenho, modificar programação nem salvar silenciosamente a recomposição.
+
 ## Concreto das lajes — formato 40
 
 Formato 40 acrescenta model.slabs[].concrete opcional e estrito: consumption positivo em milésimos de L/m², loss não negativo em centésimos de %, class entre 30/40/50 (strings), price não negativo em centavos/m³ e source own/reference/cleared, todos opcionais. Números são inteiros seguros; cleared exige preço ausente, own/reference exigem preço e reference exige classe. Origens de concreto ficam na laje, nunca em project.priceSources. Leitor cliente/API normaliza 9–39 sem parâmetros presumidos e recusa concrete em envelopes anteriores. Não persiste área/volumes/custos. Cópia independente, arquivo e histórico preservam os parâmetros; representação remota 1 e nominal-v13 permanecem. Referências fixas concrete:30/40/50 reutilizam tabela, autorização, conflito, auditoria e repetição vigentes, sem migração SQL ou preços iniciais.
@@ -214,7 +218,7 @@ Fontes: PostgreSQL 18 — [JSON](https://www.postgresql.org/docs/18/datatype-jso
 
 ## Formato e leitores vigentes
 
-Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=35; leitura aceita somente envelopes 9–35. O envelope não versiona as regras construtivas: a composição vigente é nominal-v13. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; arquivos incompatíveis não substituem o trabalho aberto; registros IndexedDB anteriores não são consultados nem apagados.
+Arquivo JSON UTF-8 com extensão .ecovit e format="ecovit". Gravação usa schemaVersion=40; leitura aceita somente envelopes 9–40. O envelope não versiona as regras construtivas: a composição vigente é nominal-v14. Versões 1–8 e desconhecidas são recusadas antes de substituir o trabalho aberto; arquivos incompatíveis não substituem o trabalho aberto; registros IndexedDB anteriores não são consultados nem apagados.
 
 | Envelope lido | Normalização em memória para 30 |
 |---|---|
@@ -255,7 +259,7 @@ O formato 31 acrescenta `model.texts`, obrigatório mesmo vazio, validado pelo m
 
 Campos obrigatórios: format, schemaVersion, project, model, adjustments, generated, generationState e metadata. project contém identificação, unidades/base, origem, referência inicial opcional de altura e configurações comuns; model contém terrain/floors/walls/openings/slabs/measurements/texts/roomLabels/roomBoundaries/referenceImages/imageElements/customImageAssets; adjustments contém junctions/channels/grout. Não persistir DOM/Konva, funções, câmera, histórico ou rascunhos. A versão de migração SQL e remoteVersion são independentes de schemaVersion.
 
-Validar com Zod e funções de domínio a estrutura estrita, relações, conteúdo de imagens, transformações e limites antes de substituir o projeto atual. Pendência geométrica íntegra pode ser transportada; laje inválida não é rascunho persistível. Um documento current exige resultado completo nominal-v13 por pavimento, diagnósticos agregados iguais aos do estado e conferência exata por recomputação, não apenas contagem de peças. Outdated exige generated=null e diagnósticos derivados vazios.
+Validar com Zod e funções de domínio a estrutura estrita, relações, conteúdo de imagens, transformações e limites antes de substituir o projeto atual. Pendência geométrica íntegra pode ser transportada; laje inválida não é rascunho persistível. Um documento current exige resultado completo nominal-v14 por pavimento, diagnósticos agregados iguais aos do estado e conferência exata por recomputação, não apenas contagem de peças. Outdated exige generated=null e diagnósticos derivados vazios.
 
 O formato 18 acrescenta terrain.compass opcional, com visible, center, size e angle; ausência significa rosa desligada, sem transformação prévia. Ocultar conserva os ajustes no arquivo. Recusar compass em envelopes 9–17, inclusive null ou visible=false; normalizar os arquivos antigos somente em memória, sem alterar sua origem. Validar estrutura estrita, finitude, precisão, tamanho e caixa rotacionada mesmo quando oculta. Leitores limitados a 17 recusam arquivos 18, sem perda silenciosa da orientação gráfica. Não serializar desenho vetorial, alças ou estado do gesto. A rosa acompanha a cópia do projeto e o terreno global entre pavimentos; exclusão do terreno remove sua configuração, restaurável pelo histórico.
 
@@ -264,7 +268,7 @@ O formato 18 acrescenta terrain.compass opcional, com visible, center, size e an
 
 ## Abertura, cálculo e sessão de edição
 
-Documento remoto tem generated=null e estado outdated. O editor valida a intenção e decodifica imagens antes de substituir o trabalho aberto; recompõe em memória sem escrever resultado. Importação de snapshot atual exige conferência por recomputação; nominal-v9/v10/v11/v12 aceito é descartado e recomposto pelo motor atual, preservando intenção e arquivo original. Não existe gerador legado. Falha de cálculo conserva intenção/download e permite Recalcular sem nova gravação.
+Documento remoto tem generated=null e estado outdated. O editor valida a intenção e decodifica imagens antes de substituir o trabalho aberto; recompõe em memória sem escrever resultado. Importação de snapshot atual exige conferência por recomputação; nominal-v9/v10/v11/v12/v13 aceito é descartado e recomposto pelo motor atual, preservando intenção e arquivo original. Não existe gerador legado. Falha de cálculo conserva intenção/download e permite Recalcular sem nova gravação.
 
 A lista chama useStore.open(projectId). O store ativa busy/openingProjectId sincronamente e permite pintar o feedback antes da leitura. Abertura repetida do ID ativo é idempotente e não substitui candidato/histórico. Criação/importação usam open(documento, true). Troca com candidato não salvo depende de descarte explícito na interface. Preparo, envio e estado ainda não enviado impedem fechamento/troca e saída da conta pelo aplicativo até resolução; beforeunload considera também essas pendências como aviso de melhor esforço, sem garantia após recarregar/fechar. Hot reload impede novas escritas do store descartado, aguarda preparo/envio e pendências agendadas e transfere memória/checkpoint/recuperação ao store substituto; não usa armazenamento persistente nem retoma uma falha automaticamente. Sem Web Lock por projeto; concorrência é arbitrada pela revisão remota.
 

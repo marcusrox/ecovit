@@ -200,7 +200,7 @@ it.each([false, true])(
       customImageAssets: [],
     });
     expect(s.doc!.adjustments).toEqual(original.adjustments);
-    expect(s.doc!.generated!.convention).toBe("nominal-v13");
+    expect(s.doc!.generated!.convention).toBe("nominal-v14");
     expect(
       s.doc!.generated!.floors[0].courses[41].pieces.length,
     ).toBeGreaterThan(0);
@@ -268,7 +268,7 @@ it.each([false, true])(
     {
       await s.retry();
       expect(useStore.getState().doc!.generated!.convention).toBe(
-        "nominal-v13",
+        "nominal-v14",
       );
     }
   },
@@ -313,7 +313,7 @@ it.each(["intenção", "convenção"])(
       ),
       spy = vi.spyOn(engine, "generate");
     if (invalid === "intenção") original.model.slabs[0].thickness = 0;
-    else original.generated.convention = "nominal-v14";
+    else original.generated.convention = "nominal-future";
     await useStore.getState().open(original, true);
     expect(useStore.getState().doc).toBe(before);
     expect(useStore.getState().busy).toBe(false);

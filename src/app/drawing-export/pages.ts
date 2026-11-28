@@ -46,7 +46,7 @@ export function preparePages(
   if (options.content !== "plan") {
     if (
       doc.generationState.status !== "current" ||
-      doc.generated?.convention !== "nominal-v13" ||
+      doc.generated?.convention !== "nominal-v14" ||
       !local.generated
     )
       throw new Error(
