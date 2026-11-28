@@ -1,4 +1,8 @@
 import {
+  useSlabConcreteBudget,
+  SlabConcreteBudget,
+} from "./SlabConcreteBudget";
+import {
   useGroutBudget,
   GroutBudgetSummary,
   GroutBudgetDetail,
@@ -310,7 +314,19 @@ export function Quantities({
     priceSaving,
     setPriceSaving,
   );
+  const slabConcrete = useSlabConcreteBudget(
+    doc,
+    busy,
+    readonly || references.working,
+    priceSaving,
+    setPriceSaving,
+  );
   const totals = [
+    {
+      label: "Subtotal de concreto",
+      value: slabConcrete.report.cost,
+      partial: false,
+    },
     {
       label: "Subtotal de graute de preenchimento",
       value: grout.report.available ? grout.report.cost : undefined,
@@ -370,6 +386,7 @@ export function Quantities({
     openings,
     surface,
     grout,
+    slabConcrete,
   });
   async function locateIssue(issue: BudgetIssue) {
     const version = ++navigationVersion.current;
@@ -444,7 +461,8 @@ export function Quantities({
       Object.keys(settlement.drafts).length > 0 ||
       Object.keys(openings.drafts).length > 0 ||
       Object.keys(surface.drafts).length > 0 ||
-      Object.keys(grout.drafts).length > 0,
+      Object.keys(grout.drafts).length > 0 ||
+      Object.keys(slabConcrete.drafts).length > 0,
     referenceWorking: references.working,
   };
   async function exportPdf() {
@@ -577,10 +595,11 @@ export function Quantities({
               <p className={styles.note}>
                 Quantitativos e estimativa de custos de tijolos, ferragens,
                 materiais de assentamento, esquadrias, impermeabilização de
-                superfície de paredes, bases e lajes, rejunte e microconcreto do
-                projeto, com base nos preços informados e nas perdas de tijolos
-                e microconcreto definidas. Inclui resumo dos materiais e
-                detalhamento por pavimento e fiada.
+                superfície de paredes, bases e lajes, rejunte, microconcreto e
+                concreto das lajes do projeto, com base nos preços informados e
+                nas perdas de tijolos e microconcreto e nas perdas de concreto
+                por laje. Inclui resumo dos materiais e detalhamento por
+                pavimento e fiada.
               </p>
             </header>
             <p data-print-omit className={styles.note}>
@@ -899,6 +918,7 @@ export function Quantities({
               <SteelBudgetSummary model={steel} />
               <SettlementBudgetSummary model={settlement} />
               <OpeningBudgetSummary model={openings} />
+              <SlabConcreteBudget model={slabConcrete} />
               <GroutBudgetSummary model={grout} />
               <SurfaceBudgetSummary model={surface} />
               <SurfaceBudgetSummary model={surface} concrete />

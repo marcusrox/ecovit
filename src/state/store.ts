@@ -46,8 +46,13 @@ const changedInputs = (previous: Project, next: Project) =>
     {
       ...previous.model,
       slabs: previous.model.slabs.map(
-        ({ waterproofingPercent: ignored, ...slab }) => {
+        ({
+          waterproofingPercent: ignored,
+          concrete: ignoredConcrete,
+          ...slab
+        }) => {
           void ignored;
+          void ignoredConcrete;
           return slab;
         },
       ),
@@ -79,8 +84,13 @@ const changedInputs = (previous: Project, next: Project) =>
     {
       ...next.model,
       slabs: next.model.slabs.map(
-        ({ waterproofingPercent: ignored, ...slab }) => {
+        ({
+          waterproofingPercent: ignored,
+          concrete: ignoredConcrete,
+          ...slab
+        }) => {
           void ignored;
+          void ignoredConcrete;
           return slab;
         },
       ),

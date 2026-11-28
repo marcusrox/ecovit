@@ -1,5 +1,9 @@
 # Persistência e compatibilidade
 
+## Concreto das lajes — formato 40
+
+Formato 40 acrescenta model.slabs[].concrete opcional e estrito: consumption positivo em milésimos de L/m², loss não negativo em centésimos de %, class entre 30/40/50 (strings), price não negativo em centavos/m³ e source own/reference/cleared, todos opcionais. Números são inteiros seguros; cleared exige preço ausente, own/reference exigem preço e reference exige classe. Origens de concreto ficam na laje, nunca em project.priceSources. Leitor cliente/API normaliza 9–39 sem parâmetros presumidos e recusa concrete em envelopes anteriores. Não persiste área/volumes/custos. Cópia independente, arquivo e histórico preservam os parâmetros; representação remota 1 e nominal-v13 permanecem. Referências fixas concrete:30/40/50 reutilizam tabela, autorização, conflito, auditoria e repetição vigentes, sem migração SQL ou preços iniciais.
+
 ## Microconcreto — formato 39 e migração SQL 006
 
 Formato 39 acrescenta project.groutBudget opcional/estrito, com cinco campos opcionais validados conforme Quantitativos, e identidades grout em priceSources. Leitor compartilhado cliente/API normaliza formatos 9–38 sem materializar parâmetros ou referências e recusa campos/identidades de microconcreto em envelopes anteriores. Leitores anteriores recusam 39; composição nominal-v13 e representação remota 1 permanecem. Parâmetros/origens/limpezas acompanham histórico, cópia independente e transporte; projeções não são persistidas.

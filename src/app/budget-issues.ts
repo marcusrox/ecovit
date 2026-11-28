@@ -1,3 +1,5 @@
+import type { useSlabConcreteBudget } from "./SlabConcreteBudget";
+import { concreteLabels } from "../domain/slab-concrete-budget";
 import { groutFields, groutLabels } from "../domain/grout-budget";
 import type { useGroutBudget } from "./GroutBudget";
 import { display, type Project } from "../domain/project";
@@ -23,6 +25,7 @@ import type { useOpeningBudget } from "./OpeningBudget";
 import type { useSurfaceBudget } from "./SurfaceBudget";
 
 export type BudgetSection =
+  | "slabConcrete"
   | "grout"
   | "bricks"
   | "steel"
@@ -42,6 +45,7 @@ export type BudgetIssue = {
   openingKey?: string;
 };
 type Input = {
+  slabConcrete?: Pick<ReturnType<typeof useSlabConcreteBudget>, "report">;
   grout?: Pick<ReturnType<typeof useGroutBudget>, "report" | "errors">;
   doc: Project;
   processing: boolean;
@@ -426,6 +430,31 @@ export function budgetIssues(m: Input): BudgetIssue[] {
     for (const key of groutFields)
       if (g.errors[key])
         field("grout", `grout:${key}`, groutLabels[key], g.errors[key]!);
+  }
+  if (m.slabConcrete) {
+    for (const row of m.slabConcrete.report.rows) {
+      for (const [key, reason] of Object.entries(row.errors))
+        field(
+          "slabConcrete",
+          `slabConcrete:${row.slab.id}:${key}`,
+          `${concreteLabels[key as keyof typeof concreteLabels]} · ${row.name} · ${display(row.level)} cm`,
+          reason,
+        );
+      if (row.error)
+        sectionIssue(
+          "slabConcrete",
+          `Concreto · ${row.name}`,
+          row.error,
+          "Confira a laje e seus parâmetros.",
+        );
+    }
+    if (m.slabConcrete.report.error)
+      sectionIssue(
+        "slabConcrete",
+        "Concreto",
+        m.slabConcrete.report.error,
+        "Revise os parâmetros das lajes.",
+      );
   }
   if (m.materialError)
     sectionIssue(

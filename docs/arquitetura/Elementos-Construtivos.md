@@ -1,5 +1,9 @@
 # Elementos construtivos
 
+## Intenção orçamentária de concreto — T-044
+
+Slab.concrete opcional pertence à identidade da laje; parâmetros/unidades e fórmulas em Quantitativos, validação/transporte em Persistência. Não altera geometria, espessura, tipo, apoios ou geração. A área líquida CT-13 alimenta também o volume por coeficiente de consumo informado, sem inferência da estrutura ou capa. Remover/restaurar acompanha o elemento; duplicação de pavimento cria configuração independente para a laje nova.
+
 [Índice da arquitetura](../Ecovit-Arquitetura-Tecnica.md) · [PRD](../Ecovit-PRD.md) · [Caderno técnico](../Ecovit-Caderno-Tecnico.md)
 
 ## Pavimentos e registros construtivos

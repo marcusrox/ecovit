@@ -127,6 +127,105 @@ afterAll(async () => {
 });
 
 describe("M12 — API com PostgreSQL 18.0 real", () => {
+  it("T-044 concreto por classe: autorização, zero, conflito, repetição, limpeza e transporte", async () => {
+    const admin = await login("permanent@example.com"),
+      common = await login("concrete@example.com");
+    const post = (payload: object, user = admin) =>
+      app.inject({
+        method: "POST",
+        url: "/api/admin/prices",
+        headers: headers(user),
+        payload,
+      });
+    const items = ["30", "40", "50"].map((key) => ({ group: "concrete", key }));
+    const initial = await app.inject({
+      url: "/api/admin/prices",
+      headers: headers(admin),
+    });
+    for (const item of items)
+      expect(initial.json().references).toContainEqual({ item, price: null });
+    const payload = {
+      ...body(),
+      item: items[0],
+      price: 0,
+      expectedPrice: null,
+    };
+    expect((await post(payload, common)).statusCode).toBe(403);
+    expect((await post({ ...payload, price: 1.5 })).statusCode).toBe(422);
+    expect((await post(payload)).statusCode).toBe(200);
+    expect((await post(payload)).statusCode).toBe(200);
+    expect((await post({ ...payload, ...body(), price: 1 })).statusCode).toBe(
+      409,
+    );
+    expect(
+      (
+        await post({
+          ...body(),
+          item: items[1],
+          price: 60000,
+          expectedPrice: null,
+        })
+      ).statusCode,
+    ).toBe(200);
+    const lookup = await app.inject({
+      method: "POST",
+      url: "/api/prices/lookup",
+      headers: headers(common),
+      payload: { items },
+    });
+    expect(lookup.statusCode).toBe(200);
+    expect(lookup.json().references).toEqual(
+      expect.arrayContaining([
+        { item: items[0], price: 0 },
+        { item: items[1], price: 60000 },
+      ]),
+    );
+    expect(
+      (await post({ ...body(), item: items[0], price: null, expectedPrice: 0 }))
+        .statusCode,
+    ).toBe(200);
+    const doc = createProject("Concreto remoto", {
+      length: 2500,
+      width: 1250,
+      height: 700,
+    });
+    doc.model.slabs.push({
+      id: randomUUID(),
+      floorId: doc.model.floors[0].id,
+      thickness: 800,
+      contour: [
+        { x: 0, y: 0 },
+        { x: 100000, y: 0 },
+        { x: 100000, y: 100000 },
+        { x: 0, y: 100000 },
+      ],
+      openings: [],
+      concrete: {
+        consumption: 60000,
+        loss: 500,
+        class: "40",
+        price: 60000,
+        source: "reference",
+      },
+    });
+    const saved = await app.inject({
+      method: "POST",
+      url: `/api/projects/${doc.project.id}`,
+      headers: headers(common),
+      payload: { ...body(), doc: dehydrate(doc, {}) },
+    });
+    expect(saved.statusCode, saved.body).toBe(200);
+    const read = await app.inject({
+      url: `/api/projects/${doc.project.id}`,
+      headers: headers(common),
+    });
+    expect(read.statusCode).toBe(200);
+    expect(JSON.stringify(read.json())).toContain('"consumption":60000');
+    const audit = await db.query(
+      "SELECT reason FROM ecovit_admin_audit WHERE action='price' AND reason LIKE '%Concreto%'",
+    );
+    expect(audit.rows.length).toBeGreaterThan(0);
+  });
   it("T-043 referências independentes validam consumos/perdas, autorização, conflitos e repetição", async () => {
     const admin = await login("permanent@example.com"),
       common = await login("grout@example.com");
@@ -372,7 +471,7 @@ describe("M12 — API com PostgreSQL 18.0 real", () => {
       url: "/api/admin/prices",
       headers: headers(admin),
     });
-    expect(listed.json().references).toHaveLength(19);
+    expect(listed.json().references).toHaveLength(27);
     expect(
       (
         await app.inject({

@@ -2751,6 +2751,35 @@ button.referencePrice[aria-disabled="true"] {
   flex: 1 1 0;
   text-align: right;
 }
+.slabConcreteTable {
+  overflow-x: auto;
+}
+.slabConcreteTable table {
+  min-width: 980px;
+}
+.slabConcreteTable th,
+.slabConcreteTable td {
+  padding: 6px 5px;
+}
+.slabConcreteTable th:first-child {
+  width: 16%;
+}
+.slabConcreteTable th:nth-child(5) {
+  width: 14%;
+}
+.slabConcreteTable th:nth-child(6) {
+  width: 14%;
+}
+.slabConcreteTable th:last-child {
+  width: 11%;
+}
+.slabConcreteTable select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 6px;
+  font: inherit;
+}
 .quantityTable.groutParameters th:first-child {
   width: 50%;
 }

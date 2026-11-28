@@ -1,5 +1,9 @@
 # Estado, histórico e operações
 
+## Concreto por laje — T-044
+
+Parâmetros de model.slabs[].concrete usam operação budget sem recálculo da alvenaria. Confirmação Enter/blur parte do documento corrente; prévia válida mostra valores dependentes, inválida permanece rascunho com erro e impede exportação. Troca de classe consulta referência antes da confirmação atômica e preserva estado em falha; respeita projeto/ciclo e bloqueios de salvamento. Selecionar a mesma classe não altera preço próprio/limpeza. Origem source (own/reference/cleared) pertence à laje e é confirmada junto ao preço; ausência com preço é própria, ausência sem preço é elegível. Exclusão/histórico acompanham a laje; duplicação de pavimento e projeto copia os parâmetros por valor. Detector de insumos ignora concrete, mantendo composição e diagnósticos nas edições financeiras. Salvamento/recuperação usam o fluxo existente.
+
 ## Microconcreto — T-043
 
 Coeficientes, perdas e preço usam operação budget e confirmação Enter/blur, com prévia sem escrita até confirmar. Não alteram insumos, composição ou grautes/canaletas. Valores e origens acompanham histórico, salvamento, recuperação, cópia e arquivo. Limpeza registra cleared por campo; 0%/preço zero são próprios ou referências válidas. Incorporação inicial e cópia manual seguem T-039 e só ocorrem no projeto editável; somente leitura e relatório não escrevem. Rascunhos inválidos conservam erro e impedem exportação, sem apresentar resultado antigo como válido.

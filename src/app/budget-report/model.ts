@@ -40,6 +40,17 @@ export function prepareBudgetReport(
   );
   const root = dom.querySelector("[data-budget-content]")!;
   root
+    .querySelectorAll<HTMLSelectElement>(
+      'select[data-budget-target^="slabConcrete:"]',
+    )
+    .forEach((select) => {
+      select.replaceWith(
+        dom.createTextNode(
+          ` ${select.selectedOptions[0]?.textContent ?? "Não informado"} `,
+        ),
+      );
+    });
+  root
     .querySelectorAll(
       "[data-print-omit], button, select, svg, [aria-hidden='true']",
     )

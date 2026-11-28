@@ -1,3 +1,4 @@
+import { concreteClasses, withConcretePrice } from "./slab-concrete-budget";
 import { groutFields, groutLabels, validateGroutValue } from "./grout-budget";
 import { z } from "zod";
 import { display, type Project } from "./project";
@@ -22,6 +23,9 @@ import {
 const { price: ignoredPrice, ...optionShape } = openingPriceSchema.shape;
 void ignoredPrice;
 export const priceItemSchema = z.discriminatedUnion("group", [
+  z
+    .object({ group: z.literal("concrete"), key: z.enum(concreteClasses) })
+    .strict(),
   z.object({ group: z.literal("grout"), key: z.enum(groutFields) }).strict(),
   z
     .object({
@@ -94,6 +98,8 @@ export const priceItemKey = (item: PriceItem) =>
     ? `openings:${openingOptionKey(item.option)}`
     : `${item.group}:${item.key}`;
 export function priceItemLabel(item: PriceItem) {
+  if (item.group === "concrete")
+    return `Concreto — FCK ${item.key} MPa · R$/m³`;
   if (item.group === "grout") return groutLabels[item.key];
   if (item.group === "surface")
     return `${surfaceProducts.find((p) => p.key === item.key)!.label} · embalagem`;
@@ -107,6 +113,7 @@ export function priceItemLabel(item: PriceItem) {
   return `${openingOptionLabel(item.option)} · ${display(item.option.width)} × ${display(item.option.height)} cm · ${openingMaterialLabel(item.option.material)}`;
 }
 export const fixedPriceItems: PriceItem[] = [
+  ...concreteClasses.map((key) => ({ group: "concrete" as const, key })),
   ...groutFields.map((key) => ({ group: "grout" as const, key })),
   ...surfaceProducts.map((p) => ({ group: "surface" as const, key: p.key })),
   ...pieceKinds.map((key) => ({ group: "bricks" as const, key })),
@@ -130,6 +137,7 @@ export function projectPriceItems(doc: {
   return [...fixedPriceItems, ...openings.values()];
 }
 export function projectPrice(doc: Pick<Project, "project">, item: PriceItem) {
+  if (item.group === "concrete") return undefined;
   if (item.group === "grout") return doc.project.groutBudget?.[item.key];
   if (item.group === "surface") return doc.project.surface?.[item.key]?.price;
   if (item.group === "bricks") return doc.project.unitPrices?.[item.key];
@@ -155,6 +163,8 @@ export function withProjectPrice(
   description?: string,
   referenceYield?: number,
 ): Project {
+  if (item.group === "concrete")
+    throw new Error("Preço de concreto pertence à laje.");
   if (price !== undefined) {
     referenceCents.parse(price);
     if (item.group === "grout") validateGroutValue(item.key, price);
@@ -246,9 +256,20 @@ export function incorporatePrices(doc: Project, references: PriceReference[]) {
       )
       .map(priceItemKey),
   );
+  for (const slab of doc.model.slabs) {
+    const c = slab.concrete;
+    if (!c?.class || c.price !== undefined || c.source !== undefined) continue;
+    const r = references.find(
+      (r) => r.item.group === "concrete" && r.item.key === c.class,
+    );
+    if (r && r.price !== null)
+      doc = withConcretePrice(doc, slab.id, r.price, "reference");
+  }
   return references.reduce(
     (current, r) =>
-      completePriceReference(r) && eligible.has(priceItemKey(r.item))
+      r.item.group !== "concrete" &&
+      completePriceReference(r) &&
+      eligible.has(priceItemKey(r.item))
         ? withProjectPrice(
             current,
             r.item,
@@ -273,6 +294,8 @@ export function validatePriceSources(doc: Project) {
       );
   }
   for (const entry of doc.project.priceSources ?? []) {
+    if (entry.item.group === "concrete")
+      throw new Error("Origem de concreto deve pertencer à laje.");
     const price = projectPrice(doc, entry.item);
     if ((entry.source === "cleared") !== (price === undefined))
       throw new Error("Origem de preço inconsistente com o valor do projeto.");

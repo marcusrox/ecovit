@@ -1,3 +1,4 @@
+import { slabConcreteSchema } from "../domain/slab-concrete-budget";
 import { groutSettingsSchema } from "../domain/grout-budget";
 import {
   CURRENT_PROJECT_FORMAT,
@@ -551,6 +552,7 @@ const schema = z
                 id,
                 floorId: id,
                 thickness: positive,
+                concrete: slabConcreteSchema.optional(),
                 waterproofingPercent: z
                   .number()
                   .int()
@@ -1255,6 +1257,13 @@ export function validateProject(
     value.schemaVersion === 38
   )
     value = { ...value, schemaVersion: 39 };
+  if (
+    value &&
+    typeof value === "object" &&
+    "schemaVersion" in value &&
+    value.schemaVersion === 39
+  )
+    value = { ...value, schemaVersion: 40 };
   const parsed = schema.safeParse(value);
   if (!parsed.success)
     throw new Error("Arquivo inválido: estrutura ou conteúdo não suportados.");
@@ -1284,6 +1293,12 @@ export function validateProject(
       parsed.data.project.priceSources?.some((p) => p.item.group === "grout"))
   )
     throw new Error("Arquivo inválido: microconcreto em formato anterior.");
+  if (
+    typeof sourceFormat === "number" &&
+    sourceFormat < 40 &&
+    parsed.data.model.slabs.some((s) => s.concrete !== undefined)
+  )
+    throw new Error("Arquivo inválido: concreto de lajes em formato anterior.");
   // Old results are disposable; never weaken validation of the drawing or of current snapshots.
   const doc = (
     parsed.data.generated && parsed.data.generated.convention !== "nominal-v13"
@@ -1505,6 +1520,7 @@ export function importedCopy(doc: Project): Project {
       texts: doc.model.texts.map((t) => ({ ...t })),
       slabs: doc.model.slabs.map((slab) => ({
         ...slab,
+        ...(slab.concrete ? { concrete: { ...slab.concrete } } : {}),
         ...(slab.construction
           ? { construction: { ...slab.construction } }
           : {}),

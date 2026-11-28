@@ -1,3 +1,4 @@
+import type { SlabConcreteSettings } from "./slab-concrete-budget";
 import type { GroutBudgetSettings } from "./grout-budget";
 import { CURRENT_PROJECT_FORMAT } from "./project-format";
 import type {
@@ -97,6 +98,7 @@ export type SlabConstruction = {
   topping?: number;
 };
 export type Slab = {
+  concrete?: SlabConcreteSettings;
   waterproofingPercent?: number;
   id: string;
   floorId: string;

@@ -8,7 +8,7 @@
 
 **Data de execução** — 2026-11-27
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado em 27/11/2026
 
 ## Alteração e limites
 
@@ -137,3 +137,7 @@ A migração 006 foi validada nos bancos isolados de teste. Consulta posterior, 
 Pedido posterior à entrega inicial: organizar a tabela de parâmetros em duas colunas de campos, com consumo e perda de cada aplicação lado a lado, preço na primeira coluna da última linha e controle de referência à direita do valor. Exibir duas casas decimais fixas nos consumos vertical/horizontal em L/m, consumo base/com perdas em litros e total estimado em litros, no Orçamento e no PDF compartilhado. Administração e apresentação de comprimentos/m³ conservam o comportamento vigente. A precisão persistida e o cálculo integral dos custos/consumos permanecem; a exibição arredondada em litros substitui a apresentação exata registrada na entrega inicial. Aceite manual deste ajuste permanece pendente.
 
 Validação do ajuste: 15 testes de domínio/relatório aprovados em 1,16 s; um fluxo específico no Chrome aprovado em 22,9 s, com conferência da tabela de duas colunas e da seta alinhada horizontalmente ao campo. Captura em 900 × 680 inspecionada visualmente. Lint dos arquivos alterados e diff sem erros. O recorte de navegador foi necessário para conferir largura e alinhamento dos controles na tabela reorganizada. Logs: .tools/logs/t043-adjust-unit.log, t043-adjust-browser.log e t043-adjust-lint.log. Precisão dos dados/custos preservada nos testes; a apresentação em litros segue as duas casas solicitadas.
+
+### Aceite manual — 2026-11-27
+
+Aceite manual confirmado expressamente pelo solicitante em 27/11/2026, incluindo os ajustes posteriores registrados nesta task. Os registros anteriores de pendência descrevem o estado histórico antes desta confirmação.

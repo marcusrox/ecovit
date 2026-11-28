@@ -8,7 +8,7 @@
 
 **Data de execução** — 2026-11-27
 
-**Aceite manual** — Pendente
+**Aceite manual** — Confirmado em 27/11/2026
 
 ## Alteração e limites
 
@@ -150,3 +150,7 @@ Evidências das revisões, sem somar repetições ou sobreposição como cobertu
 - Tipos aprovados em 16,24 s, `.tools/logs/reference-yield-types.log`; lint da revisão de rendimento em 2,21 s, `.tools/logs/reference-yield-lint.log`, e do recorte da indicação de erros em 1,62 s, `.tools/logs/reference-field-errors-lint.log`. Conferência final do diff em `.tools/logs/t042-delivery-diff.log`. Não foram repetidas suítes neste pedido de commit/push.
 
 Contratos de produto, disponibilidade, persistência, estado e interface refletem as revisões. Nenhuma task adicional, dependência ou ícone novo; nenhuma intervenção na porta 5173 ou no banco do aplicativo durante as verificações.
+
+### Aceite manual — 2026-11-27
+
+Aceite manual confirmado expressamente pelo solicitante em 27/11/2026, incluindo os ajustes posteriores registrados nesta task. Os registros anteriores de pendência descrevem o estado histórico antes desta confirmação.

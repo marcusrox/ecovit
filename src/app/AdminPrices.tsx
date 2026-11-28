@@ -328,7 +328,7 @@ export function AdminPrices({
       )}
       {!data && !error && <p role="status">Consultando preços…</p>}
       {data &&
-        ["bricks", "steel", "settlement", "openings", "surface", "grout"].map(
+        ["bricks", "steel", "settlement", "openings", "surface", "grout", "concrete"].map(
           (group, index) => (
             <section key={group}>
               <h4>
@@ -340,6 +340,7 @@ export function AdminPrices({
                     "Esquadrias · Preço do conjunto (R$/un.)",
                     "Impermeabilizantes e rejunte · R$/embalagem",
                     "Graute de preenchimento — microconcreto",
+                    "Concreto das lajes · R$/m³",
                   ][index]
                 }
               </h4>

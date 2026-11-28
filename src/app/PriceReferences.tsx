@@ -1,3 +1,8 @@
+import {
+  withConcretePrice,
+  withConcreteClass,
+  type ConcreteClass,
+} from "../domain/slab-concrete-budget";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { api } from "../persistence/http";
 import { useStore } from "../state/store";
@@ -91,7 +96,7 @@ export function useBudgetReferences(
       }
     })();
   }, [open, busy, readonly, saved, retry, doc, setPriceSaving]);
-  async function apply(item: PriceItem) {
+  async function apply(item: PriceItem, slabId?: string) {
     const token = lifecycle.current,
       id = doc.project.id;
     const current = useStore.getState();
@@ -129,14 +134,24 @@ export function useBudgetReferences(
         throw new Error(
           "Aguarde concluir a operação do projeto antes de usar a referência.",
         );
-      const next = withProjectPrice(
-        s.doc,
-        item,
-        reference.price!,
-        "reference",
-        reference.description,
-        reference.yield,
-      );
+      if (
+        item.group === "concrete" &&
+        (!slabId ||
+          s.doc.model.slabs.find((s) => s.id === slabId)?.concrete?.class !==
+            item.key)
+      )
+        return false;
+      const next =
+        item.group === "concrete"
+          ? withConcretePrice(s.doc, slabId!, reference.price!, "reference")
+          : withProjectPrice(
+              s.doc,
+              item,
+              reference.price!,
+              "reference",
+              reference.description,
+              reference.yield,
+            );
       if (next !== s.doc) {
         setPriceSaving(true);
         try {
@@ -158,7 +173,74 @@ export function useBudgetReferences(
       if (token.active) setWorking(false);
     }
   }
+  async function changeConcreteClass(
+    slabId: string,
+    selected: ConcreteClass | undefined,
+  ) {
+    const initial = useStore.getState(),
+      token = lifecycle.current;
+    if (
+      working ||
+      !initial.doc ||
+      initial.doc.project.id !== doc.project.id ||
+      initial.busy ||
+      initial.readonly ||
+      initial.saved !== "saved"
+    )
+      return;
+    const before = initial.doc.model.slabs.find(
+      (s) => s.id === slabId,
+    )?.concrete;
+    if (before?.class === selected) return;
+    setWorking(true);
+    setError("");
+    try {
+      const result = selected
+        ? await lookup([{ group: "concrete", key: selected }])
+        : undefined;
+      if (!token.active) return;
+      const state = useStore.getState();
+      if (
+        !state.doc ||
+        state.doc.project.id !== doc.project.id ||
+        state.busy ||
+        state.readonly ||
+        state.saved !== "saved" ||
+        JSON.stringify(
+          state.doc.model.slabs.find((s) => s.id === slabId)?.concrete,
+        ) !== JSON.stringify(before)
+      )
+        throw new Error(
+          "Aguarde concluir a operação do projeto e tente novamente.",
+        );
+      const price =
+        result?.references.find(
+          (r) => r.item.group === "concrete" && r.item.key === selected,
+        )?.price ?? undefined;
+      if (result)
+        setReferences((previous) => [
+          ...previous.filter(
+            (r) => !(r.item.group === "concrete" && r.item.key === selected),
+          ),
+          ...result.references,
+        ]);
+      const next = withConcreteClass(state.doc, slabId, selected, price);
+      if (next !== state.doc) {
+        setPriceSaving(true);
+        try {
+          await state.commit(next, "budget");
+        } finally {
+          setPriceSaving(false);
+        }
+      }
+    } catch (e) {
+      if (token.active) setError((e as Error).message);
+    } finally {
+      if (token.active) setWorking(false);
+    }
+  }
   return {
+    changeConcreteClass,
     references,
     working,
     error,
@@ -176,9 +258,11 @@ export const BudgetReferenceContext = createContext<ReturnType<
 export function ReferencePriceButton({
   item,
   clearDraft,
+  slabId,
 }: {
   item: PriceItem;
   clearDraft: () => void;
+  slabId?: string;
 }) {
   const context = useContext(BudgetReferenceContext);
   if (!context) return null;
@@ -209,7 +293,7 @@ export function ReferencePriceButton({
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => {
           if (!context.blocked && available)
-            void context.apply(item).then((applied) => {
+            void context.apply(item, slabId).then((applied) => {
               if (applied) clearDraft();
             });
         }}
